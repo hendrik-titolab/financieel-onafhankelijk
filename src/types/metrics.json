@@ -1,0 +1,41 @@
+{
+  "task": "jaarruimte-berekening",
+  "skill_used": false,
+  "model": "claude-sonnet-4-6",
+  "tool_call_counts": {
+    "mcp__ccd_session__mark_chapter": 1,
+    "ToolSearch": 1,
+    "mcp__ccd_directory__request_directory": 1,
+    "Read": 3,
+    "Glob": 3,
+    "Write": 4,
+    "Edit": 1,
+    "Bash": 1,
+    "PowerShell": 1
+  },
+  "total_tool_calls": 16,
+  "files_written": [
+    "C:/Users/schak/financiele-planning/src/types/jaarruimte.ts",
+    "C:/Users/schak/financiele-planning/src/components/PensionPlanner/JaarruimteResult.tsx",
+    "C:/Users/schak/financiele-planning/src/types/metrics.json"
+  ],
+  "notes": "Target output path (AppData eval-outputs) was inaccessible due to permission restrictions. Files written to the accessible financiele-planning project directory instead.",
+  "computed_results_mw_de_vries": {
+    "input": {
+      "brutojaarinkomen": 95000,
+      "factorA": 2800,
+      "onbenutteRuimteVorigeJaren": 6500,
+      "jaar": 2025
+    },
+    "franchise": 17545,
+    "premiegrondslag": 77455,
+    "jaarruimteBruto": 10302,
+    "aftrekFactorA": 17556,
+    "jaarruimteNetto": 0,
+    "reserveringsruimte": 6500,
+    "totaalMaximaalInlegbaar": 6500,
+    "marginaalTarief": 0.495,
+    "belastingVoordeelJaarruimte": 0,
+    "belastingVoordeelTotaal": 3218
+  }
+}

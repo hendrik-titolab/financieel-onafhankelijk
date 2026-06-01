@@ -1,0 +1,92 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    @apply bg-slate-50 text-slate-900 font-sans antialiased;
+  }
+}
+
+@layer components {
+  .input-field {
+    @apply w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white
+           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+           transition-colors placeholder:text-slate-400;
+  }
+  .label {
+    @apply block text-xs font-medium text-slate-500 mb-1 uppercase tracking-wide;
+  }
+  .card {
+    @apply bg-white rounded-2xl border border-slate-100 shadow-sm p-6;
+  }
+  .btn-primary {
+    @apply flex items-center gap-2 px-4 py-2 bg-primary-600 text-white text-sm font-medium
+           rounded-lg hover:bg-primary-700 transition-colors;
+  }
+  .btn-secondary {
+    @apply flex items-center gap-2 px-4 py-2 bg-white text-slate-700 text-sm font-medium
+           rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors;
+  }
+  .toggle-btn {
+    @apply px-3 py-1 text-xs font-medium rounded-md transition-colors cursor-pointer;
+  }
+  .toggle-btn-active {
+    @apply bg-primary-600 text-white;
+  }
+  .toggle-btn-inactive {
+    @apply text-slate-500 hover:text-slate-700;
+  }
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;      /* slightly taller track for easier touch */
+  background: #e2e8f0;
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;      /* larger thumb for touch */
+  height: 24px;
+  background: #2563eb;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+input[type="range"]::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  background: #2563eb;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  box-sizing: border-box;
+}
+
+/* Larger tap targets for buttons on touch devices */
+@media (pointer: coarse) {
+  .btn-primary, .btn-secondary {
+    @apply py-3 px-5;
+  }
+  .input-field {
+    @apply py-3;
+  }
+  .toggle-btn {
+    @apply px-4 py-2;
+  }
+}
+
+.print-area {
+  background: white;
+}
