@@ -281,7 +281,7 @@ function LifeEventsSection({ inputs, onChange }: Props) {
                     onChange={e => handleChange(i, 'amount', e.target.value)}
                     className={`input-field pl-7 text-sm ${isExpense ? 'text-red-600' : (!isDraft && row.amount ? 'text-emerald-600' : '')}`} />
                 </div>
-                <div className="flex-1">
+                <div className="w-20 flex-shrink-0">
                   <input type="number" value={row.year} min={currentYear - 10} max={currentYear + 60}
                     step={1} placeholder="Jaar"
                     onChange={e => handleChange(i, 'year', e.target.value)}
