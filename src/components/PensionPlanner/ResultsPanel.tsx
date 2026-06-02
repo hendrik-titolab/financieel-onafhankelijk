@@ -20,9 +20,9 @@ function eur(v: number): string {
 }
 
 function MetricCard({
-  label, value, sub, accent, size = 'normal'
+  label, value, sub, accent
 }: {
-  label: string; value: string; sub?: string; accent?: 'blue' | 'green' | 'red' | 'amber'; size?: 'normal' | 'large'
+  label: string; value: string; sub?: string; accent?: 'blue' | 'green' | 'red' | 'amber'
 }) {
   const accentClass = {
     blue: 'text-primary-600',
@@ -33,10 +33,12 @@ function MetricCard({
   }[accent ?? 'undefined']
 
   return (
-    <div className="card flex flex-col justify-between min-h-[80px]">
-      <span className="label">{label}</span>
-      <span className={`font-bold ${size === 'large' ? 'text-2xl' : 'text-xl'} ${accentClass}`}>{value}</span>
-      {sub && <span className="text-xs text-slate-400 mt-0.5">{sub}</span>}
+    <div className="bg-white rounded-xl border border-slate-100 px-3 py-2.5 flex items-center justify-between gap-2">
+      <div className="min-w-0">
+        <p className="text-xs text-slate-400 truncate">{label}</p>
+        {sub && <p className="text-xs text-slate-400 truncate">{sub}</p>}
+      </div>
+      <span className={`font-bold text-lg flex-shrink-0 ${accentClass}`}>{value}</span>
     </div>
   )
 }
@@ -160,7 +162,6 @@ export function ResultsPanel({ inputs, result, mc, isCalculating, onRunMonteCarl
           value={eur(result.projectedCapital)}
           sub={`bij leeftijd ${inputs.retirementAge}`}
           accent="blue"
-          size="large"
         />
         <MetricCard
           label="Benodigd eindvermogen"
