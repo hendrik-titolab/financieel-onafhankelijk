@@ -41,7 +41,7 @@ export default function App() {
         <div className="flex items-center gap-2 md:gap-3 min-w-0">
           {/* Client name — hidden on very small screens */}
           <div className="hidden sm:flex items-center gap-2 min-w-0">
-            <span className="text-xs text-slate-400 flex-shrink-0">Klant:</span>
+            <span className="text-xs text-slate-400 flex-shrink-0">Naam:</span>
             {editingName ? (
               <input
                 autoFocus
