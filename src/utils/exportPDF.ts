@@ -13,7 +13,7 @@ function pct(v: number): string {
 export async function exportToPDF(
   inputs: PensionInputs,
   result: PensionResult,
-  mc: MonteCarloResult,
+  mc: MonteCarloResult | null,
   clientName: string,
   chartElementId: string
 ) {
@@ -45,7 +45,7 @@ export async function exportToPDF(
     { label: 'Verwacht eindvermogen', value: eur(result.projectedCapital), color: [37, 99, 235] as [number, number, number] },
     { label: 'Benodigd eindvermogen', value: eur(result.requiredCapital), color: [100, 116, 139] as [number, number, number] },
     { label: isOnTrack ? 'Overschot' : 'Tekort', value: eur(Math.abs(surplus)), color: isOnTrack ? [5, 150, 105] as [number, number, number] : [220, 38, 38] as [number, number, number] },
-    { label: 'Slagingskans', value: pct(mc.successRate), color: mc.successRate >= 80 ? [5, 150, 105] as [number, number, number] : mc.successRate >= 60 ? [217, 119, 6] as [number, number, number] : [220, 38, 38] as [number, number, number] },
+    { label: 'Slagingskans', value: mc ? pct(mc.successRate) : 'Niet berekend', color: mc && mc.successRate >= 80 ? [5, 150, 105] as [number, number, number] : mc && mc.successRate >= 60 ? [217, 119, 6] as [number, number, number] : [100, 116, 139] as [number, number, number] },
   ]
 
   const boxW = contentW / 4 - 2

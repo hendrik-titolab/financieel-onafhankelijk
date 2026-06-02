@@ -99,7 +99,7 @@ export function ResultsPanel({ inputs, result, mc, isCalculating, onRunMonteCarl
   const handlePDF = async () => {
     setIsExportingPdf(true)
     try {
-      await exportToPDF(inputs, result, mc ?? { successRate: 0, successRate75: 0, percentileData: [] }, clientName, 'wealth-chart')
+      await exportToPDF(inputs, result, mc, clientName, 'wealth-chart')
     } finally {
       setIsExportingPdf(false)
     }
@@ -116,7 +116,7 @@ export function ResultsPanel({ inputs, result, mc, isCalculating, onRunMonteCarl
       // Excel first (sync, fast)
       exportToExcel(inputs, result, mc ?? { successRate: 0, successRate75: 0, percentileData: [] }, clientName)
       // Then PDF (async, may take a moment)
-      await exportToPDF(inputs, result, mc ?? { successRate: 0, successRate75: 0, percentileData: [] }, clientName, 'wealth-chart')
+      await exportToPDF(inputs, result, mc, clientName, 'wealth-chart')
       // All exports done — wipe the session
       onCloseSession()
     } finally {
