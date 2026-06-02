@@ -150,7 +150,7 @@ function ParametersTab({ inputs, onChange }: Props) {
             Te vinden op{' '}
             <a href="https://www.mijnpensioenoverzicht.nl" target="_blank" rel="noopener noreferrer"
               className="text-primary-500 hover:underline">mijnpensioenoverzicht.nl</a>.
-            {' '}Alleenstaand ~€1.550/mnd, samenwonend ~€1.060/mnd.
+            {' '}Alleenstaand ~€1.558/mnd, samenwonend ~€1.068/mnd (2026, met heffingskorting).
           </p>
         </Field>
         <Field label="AOW ingangsdatum (leeftijd)">
