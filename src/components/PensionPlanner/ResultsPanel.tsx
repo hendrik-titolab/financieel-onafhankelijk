@@ -318,7 +318,7 @@ export function ResultsPanel({ inputs, result, mc, isCalculating, onRunMonteCarl
           <div className="h-[300px] flex flex-col items-center justify-center text-slate-400 gap-3">
             <TrendingUp size={40} strokeWidth={1} />
             <div className="text-center">
-              <p className="text-sm font-medium">Klik op Monte Carlo om de simulatie te starten</p>
+              <p className="text-sm font-medium">Klik op Bereken om de simulatie te starten</p>
               <p className="text-xs mt-1">2.000 scenario's gebaseerd op opgegeven volatiliteit</p>
             </div>
           </div>
