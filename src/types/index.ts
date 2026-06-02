@@ -1,6 +1,5 @@
 export type IncomeType = 'bruto' | 'netto'
 export type ContributionFrequency = 'maandelijks' | 'jaarlijks'
-export type AowType = 'alleenstaand' | 'samenwonend'
 
 // A life event is a named one-time financial event (schenking, woningaankoop, erfenis…).
 export interface LifeEvent {
@@ -33,9 +32,8 @@ export interface PensionInputs {
   desiredRetirementIncome: number
   desiredRetirementIncomeType: IncomeType
 
-  aowPercentage: number       // 0-100, percentage of full AOW (for partial opbouw)
+  aowMaandBedragNetto: number  // net monthly AOW amount (find on mijnpensioenoverzicht.nl)
   aowStartAge: number         // age at which AOW kicks in
-  aowType: AowType            // alleenstaand or samenwonend — big impact on AOW amount!
   employerPension: number     // gross monthly (bruto/maand)
   employerPensionStartAge: number  // age at which employer pension kicks in (default 67, see UPO)
 

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
-import type { PensionInputs, IncomeType, ContributionFrequency, AowType, LifeEvent, Storting } from '../../types'
-import { AOW_NETTO } from '../../utils/pensionCalc'
+import type { PensionInputs, IncomeType, ContributionFrequency, LifeEvent, Storting } from '../../types'
 
 const MAX_ROWS = 20
 
@@ -55,6 +54,7 @@ function NumberInput({ value, onChange, prefix, suffix, step = 1, min = 0, max }
       {prefix && <span className="absolute left-3 text-slate-400 text-sm">{prefix}</span>}
       <input type="number" value={value} min={min} max={max} step={step}
         onChange={e => onChange(parseFloat(e.target.value) || 0)}
+        onFocus={e => e.target.select()}
         className={`input-field ${prefix ? 'pl-7' : ''} ${suffix ? 'pr-8' : ''}`} />
       {suffix && <span className="absolute right-3 text-slate-400 text-sm">{suffix}</span>}
     </div>
@@ -82,7 +82,6 @@ function AgeSliderRow({ label, value, min, max, onChange }: {
 // ---- Parameters tab ----
 
 function ParametersTab({ inputs, onChange }: Props) {
-  const fullAow = AOW_NETTO[inputs.aowType]
   return (
     <div className="space-y-5 pb-4">
       <Section title="Leeftijd">
@@ -144,33 +143,16 @@ function ParametersTab({ inputs, onChange }: Props) {
       <div className="border-t border-slate-100" />
 
       <Section title="Pensioenuitkeringen">
-        <div className="space-y-2">
-          <div className="flex justify-between items-center">
-            <label className="label mb-0">AOW-type</label>
-            <Toggle value={inputs.aowType} onChange={v => onChange({ aowType: v as AowType })}
-              options={[
-                { value: 'alleenstaand', label: 'Alleenstaand' },
-                { value: 'samenwonend', label: 'Samenwonend' },
-              ]} />
-          </div>
-          <p className="text-xs text-slate-400">
-            {inputs.aowType === 'alleenstaand'
-              ? 'Volledig AOW alleenstaand: ~€1.550/mnd netto'
-              : 'AOW per persoon samenwonend/gehuwd: ~€1.060/mnd netto'}
+        <Field label="AOW netto per maand">
+          <NumberInput value={inputs.aowMaandBedragNetto}
+            onChange={v => onChange({ aowMaandBedragNetto: v })} prefix="€" step={50} />
+          <p className="text-xs text-slate-400 mt-1">
+            Te vinden op{' '}
+            <a href="https://www.mijnpensioenoverzicht.nl" target="_blank" rel="noopener noreferrer"
+              className="text-primary-500 hover:underline">mijnpensioenoverzicht.nl</a>.
+            {' '}Alleenstaand ~€1.550/mnd, samenwonend ~€1.060/mnd.
           </p>
-        </div>
-        <div className="space-y-1">
-          <div className="flex justify-between items-center">
-            <label className="label mb-0">AOW-opbouw</label>
-            <span className="text-xs font-semibold text-primary-600">{inputs.aowPercentage}%</span>
-          </div>
-          <input type="range" min={0} max={100} step={5} value={inputs.aowPercentage}
-            onChange={e => onChange({ aowPercentage: parseInt(e.target.value) })} />
-          <p className="text-xs text-slate-400">
-            ≈ €{Math.round((inputs.aowPercentage / 100) * fullAow).toLocaleString('nl-NL')}/mnd netto
-            {inputs.aowPercentage < 100 && ` (${inputs.aowPercentage / 2} opbouwjaren)`}
-          </p>
-        </div>
+        </Field>
         <Field label="AOW ingangsdatum (leeftijd)">
           <NumberInput value={inputs.aowStartAge} onChange={v => onChange({ aowStartAge: v })}
             suffix="jr" step={1} min={60} max={75} />
@@ -186,7 +168,11 @@ function ParametersTab({ inputs, onChange }: Props) {
                 onChange={v => onChange({ employerPensionStartAge: v })}
                 suffix="jr" step={1} min={55} max={75} />
             </Field>
-            <p className="text-xs text-slate-400 mt-1">Controleer op de UPO. Default is 67.</p>
+            <p className="text-xs text-slate-400 mt-1">
+              Controleer op de UPO of via{' '}
+              <a href="https://www.mijnpensioenoverzicht.nl" target="_blank" rel="noopener noreferrer"
+                className="text-primary-500 hover:underline">mijnpensioenoverzicht.nl</a>.
+            </p>
           </div>
         </div>
         {inputs.retirementAge < Math.min(inputs.aowStartAge, inputs.employerPensionStartAge) && (

@@ -1,5 +1,5 @@
 import type { PensionInputs, MonteCarloResult, PercentilePoint } from '../types'
-import { brutoToNetto, getMonthlyWithdrawal, AOW_NETTO } from './pensionCalc'
+import { brutoToNetto, getMonthlyWithdrawal } from './pensionCalc'
 
 const N_SIMULATIONS = 2000
 
@@ -27,14 +27,14 @@ export function runMonteCarlo(inputs: PensionInputs): MonteCarloResult {
     currentCapital, monthlyContribution, contributionFrequency,
     returnBeforeRetirement, returnAfterRetirement, inflation,
     desiredRetirementIncome, desiredRetirementIncomeType,
-    aowPercentage, aowStartAge, aowType,
+    aowMaandBedragNetto, aowStartAge,
     employerPension, employerPensionStartAge,
     lifeEvents = [],
     stortingen = [],
     volatilityPre, volatilityPost,
   } = inputs
 
-  const aowMonthlyNetto = (aowPercentage / 100) * AOW_NETTO[aowType]
+  const aowMonthlyNetto = aowMaandBedragNetto
 
   const currentYear = new Date().getFullYear()
   const retirementYear = currentYear + Math.max(0, retirementAge - currentAge)

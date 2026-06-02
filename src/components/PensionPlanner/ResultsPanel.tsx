@@ -135,21 +135,20 @@ export function ResultsPanel({ inputs, result, mc, isCalculating, onRunMonteCarl
         <div className="flex flex-wrap gap-2">
           <button onClick={handleExcel} className="btn-secondary">
             <Sheet size={14} />
-            Excel
+            Download Excel
           </button>
           <button onClick={handlePDF} disabled={isExportingPdf} className="btn-primary">
             <FileText size={14} />
-            {isExportingPdf ? 'Laden...' : 'PDF klant'}
+            {isExportingPdf ? 'Laden...' : 'Download PDF'}
           </button>
-          {/* Combined export + wipe — the key mobile/session workflow button */}
           <button
             onClick={handleExportAndClose}
             disabled={isClosingSession || isExportingPdf}
             className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-            title="Exporteer PDF + Excel en wis daarna alle invoergegevens"
+            title="Wist alle invoergegevens en start opnieuw"
           >
             <LogOut size={14} />
-            {isClosingSession ? 'Exporteren…' : 'Exporteer & sluit sessie'}
+            {isClosingSession ? 'Bezig…' : 'Sluit af en wis alles'}
           </button>
         </div>
       </div>
@@ -302,7 +301,7 @@ export function ResultsPanel({ inputs, result, mc, isCalculating, onRunMonteCarl
               className="btn-secondary py-1 text-xs"
             >
               <RefreshCw size={12} className={isCalculating ? 'animate-spin' : ''} />
-              {isCalculating ? 'Berekenen…' : 'Monte Carlo'}
+              {isCalculating ? 'Berekenen…' : 'Bereken'}
             </button>
           </div>
         </div>
@@ -344,9 +343,13 @@ export function ResultsPanel({ inputs, result, mc, isCalculating, onRunMonteCarl
 
       {/* Assumptions note */}
       <p className="text-xs text-slate-400 leading-relaxed px-1">
-        Berekeningen op basis van reëel rendement (na inflatie van {inputs.inflation}%). AOW en werkgeverspensioen zijn in netto termen.
-        Monte Carlo simuleert {2000} scenario's met jaarlijkse rendementsschommelingen.
+        We berekenen in 2.000 scenario's met verschillende toekomstige rendementen hoe groot de kans is dat je jouw doel haalt.
+        Voor het gemiddelde rendement en de inflatie gaan we uit van wat er is ingevoerd.
         Dit is een indicatieve berekening en geen financieel advies.
+        Voor goed advies raden wij aan een financieel planner te raadplegen —
+        vind een geschikte specialist op{' '}
+        <a href="https://www.ffp.nl" target="_blank" rel="noopener noreferrer"
+          className="text-primary-500 hover:underline">ffp.nl</a>.
       </p>
     </div>
   )

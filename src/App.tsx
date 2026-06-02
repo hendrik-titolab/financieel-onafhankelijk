@@ -1,12 +1,8 @@
 import { useState, useCallback } from 'react'
-import { TrendingUp, Calculator, LogOut, CheckCircle } from 'lucide-react'
+import { TrendingUp, LogOut, CheckCircle } from 'lucide-react'
 import { PensionPlanner } from './components/PensionPlanner'
-import { JaarruimteTab } from './components/Jaarruimte'
-
-type Tab = 'planning' | 'jaarruimte'
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<Tab>('planning')
   const [clientName, setClientName] = useState('Nieuwe klant')
   const [editingName, setEditingName] = useState(false)
   // Incrementing this key forces a full remount of the active components, wiping all their state
@@ -16,7 +12,6 @@ export default function App() {
   const closeSession = useCallback(() => {
     setSessionKey(k => k + 1)
     setClientName('Nieuwe klant')
-    setActiveTab('planning')
     setSessionClosed(true)
     setTimeout(() => setSessionClosed(false), 3000)
   }, [])
@@ -39,7 +34,7 @@ export default function App() {
           </div>
           <div className="hidden sm:block">
             <h1 className="text-sm font-bold text-slate-900 leading-none">Financiële Planning</h1>
-            <p className="text-xs text-slate-400 mt-0.5">Pensioenplanner & Jaarruimte</p>
+            <p className="text-xs text-slate-400 mt-0.5">Pensioenplanner</p>
           </div>
         </div>
 
@@ -71,42 +66,13 @@ export default function App() {
         </div>
       </header>
 
-      {/* Tab bar */}
-      <div className="bg-white border-b border-slate-100 px-4 md:px-6 flex-shrink-0">
-        <div className="flex gap-1">
-          {([
-            { id: 'planning', label: 'Pensioenplanning', shortLabel: 'Planning', icon: TrendingUp },
-            { id: 'jaarruimte', label: 'Jaarruimte', shortLabel: 'Jaarruimte', icon: Calculator },
-          ] as const).map(({ id, label, shortLabel, icon: Icon }) => (
-            <button
-              key={id}
-              onClick={() => setActiveTab(id)}
-              className={`flex items-center gap-1.5 px-3 md:px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === id
-                  ? 'border-primary-600 text-primary-600'
-                  : 'border-transparent text-slate-500 hover:text-slate-700'
-              }`}
-            >
-              <Icon size={14} />
-              <span className="hidden sm:inline">{label}</span>
-              <span className="sm:hidden">{shortLabel}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
       {/* Main content — scrollable on mobile, fills height on desktop */}
       <main className="flex-1 overflow-y-auto md:overflow-hidden p-4 md:p-6">
-        {activeTab === 'planning' && (
-          <PensionPlanner
-            key={sessionKey}
-            clientName={clientName}
-            onCloseSession={closeSession}
-          />
-        )}
-        {activeTab === 'jaarruimte' && (
-          <JaarruimteTab key={sessionKey} />
-        )}
+        <PensionPlanner
+          key={sessionKey}
+          clientName={clientName}
+          onCloseSession={closeSession}
+        />
       </main>
     </div>
   )

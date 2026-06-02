@@ -111,7 +111,7 @@ export function calculatePension(inputs: PensionInputs): PensionResult {
     currentCapital, monthlyContribution, contributionFrequency,
     returnBeforeRetirement, returnAfterRetirement, inflation,
     desiredRetirementIncome, desiredRetirementIncomeType,
-    aowPercentage, aowStartAge, aowType,
+    aowMaandBedragNetto, aowStartAge,
     employerPension, employerPensionStartAge,
     lifeEvents = [],
     stortingen = [],
@@ -146,8 +146,7 @@ export function calculatePension(inputs: PensionInputs): PensionResult {
     ? brutoToNetto(desiredRetirementIncome, true)
     : desiredRetirementIncome
 
-  const fullAowNetto = AOW_NETTO[aowType]
-  const aowMonthlyNetto = (aowPercentage / 100) * fullAowNetto
+  const aowMonthlyNetto = aowMaandBedragNetto
 
   // Required capital = PV of all future withdrawals at retirement.
   // Employer pension tax rate is age-dependent (36.97% pre-AOW, 19.07% post-AOW).
