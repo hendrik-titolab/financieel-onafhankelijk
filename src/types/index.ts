@@ -8,8 +8,9 @@ export interface LifeEvent {
   year: number    // calendar year
 }
 
-// A planned extra deposit or withdrawal — simpler than a life event, no label needed.
+// A planned extra deposit or withdrawal
 export interface Storting {
+  name?: string   // optionele omschrijving
   amount: number  // positive = storting, negative = onttrekking
   year: number
 }

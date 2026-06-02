@@ -302,19 +302,19 @@ function LifeEventsSection({ inputs, onChange }: Props) {
 // Progressive rows for stortingen/onttrekkingen (just amount + year, no name)
 function StoringenSection({ inputs, onChange }: Props) {
   const currentYear = new Date().getFullYear()
-  type DraftStorting = { amount: string; year: string }
+  type DraftStorting = { name: string; amount: string; year: string }
 
   const [rows, setRows] = useState<DraftStorting[]>(() => {
     const saved = (inputs.stortingen ?? []).map(s => ({
-      amount: String(s.amount), year: String(s.year),
+      name: s.name ?? '', amount: String(s.amount), year: String(s.year),
     }))
-    return [...saved, { amount: '', year: String(currentYear) }]
+    return [...saved, { name: '', amount: '', year: String(currentYear) }]
   })
 
   useEffect(() => {
     const valid: Storting[] = rows
       .filter(r => r.amount && r.year && !isNaN(Number(r.amount)) && Number(r.amount) !== 0 && !isNaN(Number(r.year)))
-      .map(r => ({ amount: Number(r.amount), year: Number(r.year) }))
+      .map(r => ({ name: r.name.trim() || undefined, amount: Number(r.amount), year: Number(r.year) }))
     onChange({ stortingen: valid })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rows])
@@ -324,14 +324,14 @@ function StoringenSection({ inputs, onChange }: Props) {
   const handleChange = (i: number, field: keyof DraftStorting, value: string) => {
     const newRows = rows.map((r, idx) => idx === i ? { ...r, [field]: value } : r)
     if (i === newRows.length - 1 && isFilled(newRows[i]) && newRows.length < MAX_ROWS)
-      newRows.push({ amount: '', year: String(currentYear) })
+      newRows.push({ name: '', amount: '', year: String(currentYear) })
     setRows(newRows)
   }
 
   const handleDelete = (i: number) => {
     const newRows = rows.filter((_, idx) => idx !== i)
     if (newRows.length === 0 || isFilled(newRows[newRows.length - 1]))
-      newRows.push({ amount: '', year: String(currentYear) })
+      newRows.push({ name: '', amount: '', year: String(currentYear) })
     setRows(newRows)
   }
 
@@ -344,29 +344,34 @@ function StoringenSection({ inputs, onChange }: Props) {
       <p className="text-xs text-slate-400 -mt-1 leading-relaxed">
         Geplande extra inleg (positief) of opname (negatief) uit je portefeuille.
       </p>
-      <div className="space-y-2">
+      <div className="space-y-3">
         {rows.map((row, i) => {
           const isLast = i === rows.length - 1
           const isDraft = isLast && !isFilled(row)
           const isWithdrawal = Number(row.amount) < 0
           return (
-            <div key={i} className={`flex gap-1.5 items-center ${isDraft ? 'opacity-50' : ''}`}>
-              <div className="flex-[2] relative flex items-center">
-                <span className="absolute left-3 text-slate-400 text-sm">€</span>
-                <input type="number" value={row.amount} step={500}
-                  placeholder="Bedrag (− = opname)"
-                  onChange={e => handleChange(i, 'amount', e.target.value)}
-                  className={`input-field pl-7 text-sm ${isWithdrawal ? 'text-red-600' : (!isDraft && row.amount ? 'text-emerald-600' : '')}`} />
+            <div key={i} className={`space-y-1 ${isDraft ? 'opacity-50' : ''}`}>
+              <input type="text" value={row.name} placeholder="Omschrijving (optioneel)"
+                onChange={e => handleChange(i, 'name', e.target.value)}
+                className="input-field text-sm" />
+              <div className="flex gap-1.5 items-center">
+                <div className="flex-[2] relative flex items-center">
+                  <span className="absolute left-3 text-slate-400 text-sm">€</span>
+                  <input type="number" value={row.amount} step={500}
+                    placeholder="Bedrag (− = opname)"
+                    onChange={e => handleChange(i, 'amount', e.target.value)}
+                    className={`input-field pl-7 text-sm ${isWithdrawal ? 'text-red-600' : (!isDraft && row.amount ? 'text-emerald-600' : '')}`} />
+                </div>
+                <div className="w-20 flex-shrink-0">
+                  <input type="number" value={row.year} min={currentYear - 10} max={currentYear + 60}
+                    step={1} placeholder="Jaar"
+                    onChange={e => handleChange(i, 'year', e.target.value)}
+                    className="input-field text-center text-sm" />
+                </div>
+                {!isDraft
+                  ? <button onClick={() => handleDelete(i)} className="flex-shrink-0 p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"><X size={13} /></button>
+                  : <div className="w-7 flex-shrink-0" />}
               </div>
-              <div className="flex-1">
-                <input type="number" value={row.year} min={currentYear - 10} max={currentYear + 60}
-                  step={1} placeholder="Jaar"
-                  onChange={e => handleChange(i, 'year', e.target.value)}
-                  className="input-field text-center text-sm" />
-              </div>
-              {!isDraft
-                ? <button onClick={() => handleDelete(i)} className="flex-shrink-0 p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"><X size={13} /></button>
-                : <div className="w-7 flex-shrink-0" />}
             </div>
           )
         })}
