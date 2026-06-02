@@ -135,19 +135,21 @@ export function ResultsPanel({ inputs, result, mc, isCalculating, onRunMonteCarl
           <p className="text-xs text-slate-400">Alle bedragen in huidige koopkracht (reëel)</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button onClick={handleExcel} className="btn-secondary">
+          <button onClick={handleExcel}
+            className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-colors">
             <Sheet size={14} />
             Download Excel
           </button>
-          <button onClick={handlePDF} disabled={isExportingPdf} className="btn-primary">
+          <button onClick={handlePDF} disabled={isExportingPdf}
+            className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium bg-primary-600 hover:bg-primary-700 text-white rounded-xl transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
             <FileText size={14} />
             {isExportingPdf ? 'Laden...' : 'Download PDF'}
           </button>
           <button
             onClick={handleExportAndClose}
             disabled={isClosingSession || isExportingPdf}
-            className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-            title="Wist alle invoergegevens en start opnieuw"
+            className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-xl transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            title="Exporteer en wis alle invoergegevens"
           >
             <LogOut size={14} />
             {isClosingSession ? 'Bezig…' : 'Sluit af en wis alles'}
