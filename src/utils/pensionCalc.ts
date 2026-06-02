@@ -7,24 +7,40 @@ export const AOW_NETTO = {
   samenwonend: 1060,
 }
 
-// Box 1 gross-to-net conversion.
-// CRITICAL: pastAowAge changes the tax rate — before AOW age, employer pension is still
-// subject to the AOW premium (36.97% total), which drops to 19.07% once AOW starts.
-// This affects the overbrugging period: never use a fixed 19.07% for pre-AOW ages.
+// Box 1 gross-to-net conversion — 2026 tarieven (Lindenhaege advieskaart 2026).
+// !! Jaarlijks updaten: schijfgrenzen en tarieven wijzigen elk jaar !!
+// Bron: Lindenhaege advieskaart, map Parametercheck fin onafhankelijk tool
+//
+// 2026: 3 schijven
+//   Pre-AOW:  schijf 1 (t/m €38.883) 35,75% | schijf 2 (t/m €78.426) 37,56% | schijf 3 49,50%
+//   Post-AOW: schijf 1 (t/m €38.883) 17,85% | schijf 2 (t/m €78.426) 37,56% | schijf 3 49,50%
+const TAX_2026 = {
+  bracket1: 38883,
+  bracket2: 78426,
+  rate1PreAow: 0.3575,
+  rate1PostAow: 0.1785,
+  rate2: 0.3756,
+  rate3: 0.495,
+}
+
 export function brutoToNetto(bruto: number, pastAowAge: boolean): number {
-  const rate1 = pastAowAge ? 0.1907 : 0.3697
-  const bracket1 = 75624
   if (bruto <= 0) return 0
+  const { bracket1, bracket2, rate1PreAow, rate1PostAow, rate2, rate3 } = TAX_2026
+  const rate1 = pastAowAge ? rate1PostAow : rate1PreAow
   if (bruto <= bracket1) return bruto * (1 - rate1)
-  return bruto - bracket1 * rate1 - (bruto - bracket1) * 0.495
+  if (bruto <= bracket2) return bracket1 * (1 - rate1) + (bruto - bracket1) * (1 - rate2)
+  return bracket1 * (1 - rate1) + (bracket2 - bracket1) * (1 - rate2) + (bruto - bracket2) * (1 - rate3)
 }
 
 export function nettoToBruto(netto: number, pastAowAge: boolean): number {
-  const rate1 = pastAowAge ? 0.1907 : 0.3697
-  const netBracket1 = 75624 * (1 - rate1)
   if (netto <= 0) return 0
-  if (netto <= netBracket1) return netto / (1 - rate1)
-  return (netto - 75624 * (1 - rate1)) / 0.505 + 75624
+  const { bracket1, bracket2, rate1PreAow, rate1PostAow, rate2, rate3 } = TAX_2026
+  const rate1 = pastAowAge ? rate1PostAow : rate1PreAow
+  const net1 = bracket1 * (1 - rate1)
+  const net2 = net1 + (bracket2 - bracket1) * (1 - rate2)
+  if (netto <= net1) return netto / (1 - rate1)
+  if (netto <= net2) return bracket1 + (netto - net1) / (1 - rate2)
+  return bracket2 + (netto - net2) / (1 - rate3)
 }
 
 function realAnnualReturn(nominal: number, inflation: number): number {

@@ -1,28 +1,38 @@
 import type { JaarruimteInputs, JaarruimteResult, PensioenType } from '../types'
 
-// Dutch jaarruimte parameters per tax year.
-// Source: belastingdienst.nl — update annually.
-// Pre-2023: old regime (13.3%, factor 7.44). 2023+: Wtp (30%, factor 6.27).
-const PARAMS: Record<number, { franchise: number; factorMultiplier: number; maxIncome: number; percentage: number; belastingSchijf: number }> = {
-  // --- Pre-Wtp (oude regime) ---
-  2020: { franchise: 11408,  factorMultiplier: 7.44, maxIncome: 110111, percentage: 0.133, belastingSchijf: 68507 },
-  2021: { franchise: 11954,  factorMultiplier: 7.44, maxIncome: 112189, percentage: 0.133, belastingSchijf: 68507 },
-  2022: { franchise: 12837,  factorMultiplier: 7.44, maxIncome: 114866, percentage: 0.133, belastingSchijf: 69398 },
+// Jaarruimte parameters per belastingjaar.
+// !! Jaarlijks updaten met de nieuwe Lindenhaege advieskaart !!
+// Bron: Lindenhaege advieskaart 2026 (C:\Users\schak\Desktop\Claude local files HS - niet wissen\Parametercheck fin onafhankelijk tool)
+// Pre-2023: oud regime (13,3%, factor 7,44). 2023+: Wtp (30%, factor 6,27).
+const PARAMS: Record<number, { franchise: number; factorMultiplier: number; maxIncome: number; percentage: number; belastingSchijf1: number; belastingSchijf2: number }> = {
+  // --- Pre-Wtp (oud regime) ---
+  2019: { franchise: 12275,  factorMultiplier: 6.27, maxIncome: 107593, percentage: 0.133, belastingSchijf1: 68507, belastingSchijf2: 68507 },
+  2020: { franchise: 12472,  factorMultiplier: 6.27, maxIncome: 110111, percentage: 0.133, belastingSchijf1: 68507, belastingSchijf2: 68507 },
+  2021: { franchise: 12672,  factorMultiplier: 6.27, maxIncome: 112189, percentage: 0.133, belastingSchijf1: 68507, belastingSchijf2: 68507 },
+  2022: { franchise: 12837,  factorMultiplier: 7.44, maxIncome: 114866, percentage: 0.133, belastingSchijf1: 69398, belastingSchijf2: 69398 },
   // --- Wtp (nieuw regime, vanaf 2023) ---
-  2023: { franchise: 16322,  factorMultiplier: 6.27, maxIncome: 128810, percentage: 0.30,  belastingSchijf: 73031 },
-  2024: { franchise: 17545,  factorMultiplier: 6.27, maxIncome: 137800, percentage: 0.30,  belastingSchijf: 75624 },
-  2025: { franchise: 17848,  factorMultiplier: 6.27, maxIncome: 141224, percentage: 0.30,  belastingSchijf: 75624 },
-  // 2026 values not yet published — estimated based on indexation trend.
-  // Verify at belastingdienst.nl before advising clients for 2026.
-  2026: { franchise: 18171,  factorMultiplier: 6.27, maxIncome: 143800, percentage: 0.30,  belastingSchijf: 76817 },
+  2023: { franchise: 13646,  factorMultiplier: 6.27, maxIncome: 128810, percentage: 0.30,  belastingSchijf1: 73031, belastingSchijf2: 73031 },
+  2024: { franchise: 17545,  factorMultiplier: 6.27, maxIncome: 137800, percentage: 0.30,  belastingSchijf1: 75624, belastingSchijf2: 75624 },
+  2025: { franchise: 18475,  factorMultiplier: 6.27, maxIncome: 137800, percentage: 0.30,  belastingSchijf1: 38883, belastingSchijf2: 78426 },
+  // 2026: Lindenhaege advieskaart 2026 (januari 2026)
+  2026: { franchise: 19172,  factorMultiplier: 6.27, maxIncome: 137800, percentage: 0.30,  belastingSchijf1: 38883, belastingSchijf2: 78426 },
 }
 
-// Reserveringsruimte caps also changed with Wtp
-function getReserveringsCap(year: number): number {
-  return year >= 2023 ? 8000 : Math.round(7587 * Math.pow(1.02, year - 2022)) // approx pre-2023
+// Reserveringsruimte totaalplafond per jaar (bron: Lindenhaege advieskaart)
+// !! Jaarlijks updaten !!
+const RESERVERINGSRUIMTE_MAX: Record<number, number> = {
+  2026: 42753,
+  2025: 38000,  // schatting — controleer met advieskaart 2025
+  2024: 36000,  // schatting — controleer met advieskaart 2024
+}
+const RESERVERINGSRUIMTE_MAX_DEFAULT = 42753
+
+
+function getReserveringsruimteMax(year: number): number {
+  return RESERVERINGSRUIMTE_MAX[year] ?? RESERVERINGSRUIMTE_MAX_DEFAULT
 }
 
-const MAX_RESERVERINGSRUIMTE_TOTAAL = 80000
+// Verwijderd — reserveringsruimteplafond staat nu per jaar in RESERVERINGSRUIMTE_MAX
 
 function getParams(year: number) {
   return PARAMS[year] ?? PARAMS[2025]
@@ -64,17 +74,15 @@ export function calculateJaarruimte(inputs: JaarruimteInputs): JaarruimteResult 
     jaarruimte = Math.max(0, p.percentage * base)
   }
 
-  // Sum up reserveringsruimte from past years.
-  // Each year's contribution is capped at the cap for that year,
-  // and the total is capped at MAX_RESERVERINGSRUIMTE_TOTAAL.
+  // Reserveringsruimte: som van onbenutte jaarruimten vorige jaren,
+  // gemaximeerd op het totaalplafond voor dit belastingjaar (Lindenhaege advieskaart).
+  const maxReserveringsruimte = getReserveringsruimteMax(year)
   let beschikbareReserveringsruimte = 0
   for (const rij of reserveringsruimteRijen) {
     if (rij.onbenutBedrag > 0) {
-      const capVoorJaar = getReserveringsCap(rij.jaar)
-      const bijdrage = Math.min(rij.onbenutBedrag, capVoorJaar)
       beschikbareReserveringsruimte = Math.min(
-        beschikbareReserveringsruimte + bijdrage,
-        MAX_RESERVERINGSRUIMTE_TOTAAL
+        beschikbareReserveringsruimte + rij.onbenutBedrag,
+        maxReserveringsruimte
       )
     }
   }
@@ -82,8 +90,12 @@ export function calculateJaarruimte(inputs: JaarruimteInputs): JaarruimteResult 
   const totaalBeschikbaar = jaarruimte + beschikbareReserveringsruimte
   const nogTeDoen = Math.max(0, totaalBeschikbaar - (alIngelegd ?? 0))
 
-  // Tax benefit: use the bracket threshold for the chosen year
-  const belastingTarief = income > p.belastingSchijf ? 0.495 : 0.3697
+  // Marginaal belastingtarief op basis van 3-schijvensysteem 2026
+  // (belastingvoordeel = hoeveel belasting je bespaart door de aftrek)
+  let belastingTarief: number
+  if (income > p.belastingSchijf2) belastingTarief = 0.495
+  else if (income > p.belastingSchijf1) belastingTarief = 0.3756
+  else belastingTarief = p.percentage >= 0.30 ? 0.3575 : 0.3693 // pre/post Wtp schijf 1
   const belastingVoordeel = nogTeDoen * belastingTarief
 
   return {
@@ -108,10 +120,8 @@ export function isPreWtp(year: number): boolean {
 // Return a human-readable note about the chosen year's parameters
 export function getJaarruimteParamsNote(year: number): string {
   const p = getParams(year)
-  const isEstimate = year >= 2026
   const isOld = isPreWtp(year)
-  const estremark = isEstimate ? ' (geschat — controleer belastingdienst.nl)' : ''
   const pct = isOld ? '13,3%' : '30%'
   const factor = isOld ? '7,44' : '6,27'
-  return `Franchise €${p.franchise.toLocaleString('nl-NL')} · Max inkomen €${p.maxIncome.toLocaleString('nl-NL')} · ${pct} − ${factor} × factor A${estremark}`
+  return `Franchise €${p.franchise.toLocaleString('nl-NL')} · Max inkomen €${p.maxIncome.toLocaleString('nl-NL')} · ${pct} − ${factor} × factor A`
 }
