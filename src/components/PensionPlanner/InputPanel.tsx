@@ -410,9 +410,13 @@ export function InputPanel({ inputs, onChange }: Props) {
         ] as const).map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
             className={`px-3 py-2 text-xs font-semibold border-b-2 transition-colors -mb-px ${
-              tab === t.id
-                ? 'border-primary-500 text-primary-600'
-                : 'border-transparent text-slate-400 hover:text-slate-600'
+              t.id === 'events'
+                ? tab === 'events'
+                  ? 'border-amber-400 text-amber-600'
+                  : 'border-transparent text-amber-500 hover:text-amber-600'
+                : tab === 'parameters'
+                  ? 'border-primary-500 text-primary-600'
+                  : 'border-transparent text-slate-400 hover:text-slate-600'
             }`}>
             {t.label}
           </button>

@@ -85,7 +85,7 @@ function nominalIncome(realMonthly: number, inflation: number, yearsFromNow: num
 }
 
 export function ResultsPanel({ inputs, result, mc, isCalculating, onRunMonteCarlo, clientName, onCloseSession }: Props) {
-  const [showMonteCarlo, setShowMonteCarlo] = useState(false)
+  const [showMonteCarlo, setShowMonteCarlo] = useState(true)
   const [isExportingPdf, setIsExportingPdf] = useState(false)
   const [isClosingSession, setIsClosingSession] = useState(false)
   const [showInflationDetail, setShowInflationDetail] = useState(false)
