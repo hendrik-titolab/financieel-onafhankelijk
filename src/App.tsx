@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import { TrendingUp, CheckCircle } from 'lucide-react'
+import { SpeedInsights } from '@vercel/speed-insights/react'
 import { PensionPlanner } from './components/PensionPlanner'
 
 export default function App() {
@@ -17,7 +18,9 @@ export default function App() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <>
+      <SpeedInsights />
+      <div className="min-h-screen bg-slate-50 flex flex-col">
       {/* Session closed banner */}
       {sessionClosed && (
         <div className="fixed top-0 inset-x-0 z-50 bg-emerald-500 text-white text-sm font-medium text-center py-2.5 flex items-center justify-center gap-2 shadow-lg animate-pulse">
@@ -73,5 +76,6 @@ export default function App() {
         />
       </main>
     </div>
+    </>
   )
 }
