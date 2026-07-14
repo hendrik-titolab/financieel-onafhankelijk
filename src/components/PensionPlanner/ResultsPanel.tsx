@@ -186,6 +186,13 @@ export function ResultsPanel({ inputs, result, mc, isCalculating, onRunMonteCarl
             <FileText size={14} />
             {isExportingPdf ? 'Laden...' : 'Download PDF'}
           </button>
+          {FEEDBACK_URL && (
+            <a href={FEEDBACK_URL} target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium bg-white text-primary-700 border border-primary-200 hover:bg-primary-50 rounded-xl transition-colors">
+              <MessageSquare size={14} />
+              Laat een reactie achter
+            </a>
+          )}
           <button
             onClick={() => setConfirmingClose(true)}
             className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-xl transition-colors"
@@ -381,21 +388,6 @@ export function ResultsPanel({ inputs, result, mc, isCalculating, onRunMonteCarl
             title="Kans op volledig inkomensdoel"
             subtitle="Volledig doelbedrag"
           />
-        </div>
-      )}
-
-      {/* Feedback */}
-      {FEEDBACK_URL && (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50 p-4">
-          <div>
-            <p className="text-sm font-semibold text-slate-700">Wat vind je van deze tool?</p>
-            <p className="text-xs text-slate-500">We horen graag je feedback of gedachten.</p>
-          </div>
-          <a href={FEEDBACK_URL} target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-primary-600 hover:bg-primary-700 text-white rounded-xl transition-colors self-start sm:self-auto">
-            <MessageSquare size={15} />
-            Laat een reactie achter
-          </a>
         </div>
       )}
 
