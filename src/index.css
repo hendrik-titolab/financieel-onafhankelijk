@@ -90,3 +90,26 @@ input[type="range"]::-moz-range-thumb {
 .print-area {
   background: white;
 }
+
+/* Altijd zichtbare scrollbar voor het invoerpaneel, zodat gebruikers zien dat
+   er verder naar beneden meer velden zijn */
+.visible-scrollbar {
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;               /* Firefox */
+  scrollbar-color: #94a3b8 #e2e8f0;    /* thumb / track — Firefox */
+}
+.visible-scrollbar::-webkit-scrollbar {
+  width: 10px;
+}
+.visible-scrollbar::-webkit-scrollbar-track {
+  background: #e2e8f0;
+  border-radius: 8px;
+}
+.visible-scrollbar::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 8px;
+  border: 2px solid #e2e8f0;
+}
+.visible-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}

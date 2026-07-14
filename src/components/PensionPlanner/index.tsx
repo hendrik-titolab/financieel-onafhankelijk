@@ -63,9 +63,10 @@ export function PensionPlanner({ clientName, onCloseSession }: Props) {
   return (
     // Responsive: stacked on mobile/portrait tablet, side-by-side on desktop/landscape
     <div className="flex flex-col lg:flex-row gap-5 lg:gap-6 min-h-0">
-      {/* Left: Input panel — full width on mobile, fixed sidebar on desktop */}
-      <div className="w-full lg:w-72 lg:flex-shrink-0 lg:overflow-y-auto">
-        <div className="card">
+      {/* Left: Input panel — bounded height met altijd zichtbare scrollbar,
+          zodat gebruikers zien dat er meer velden onder staan */}
+      <div className="w-full lg:w-72 lg:flex-shrink-0">
+        <div className="card !p-4 max-h-[65vh] lg:max-h-[calc(100vh-140px)] overflow-y-auto visible-scrollbar">
           <h2 className="text-sm font-semibold text-slate-800 mb-4">Invoer parameters</h2>
           <InputPanel inputs={inputs} onChange={handleChange} />
         </div>

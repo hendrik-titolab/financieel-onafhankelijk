@@ -1,4 +1,4 @@
-import { FileText, Sheet, RefreshCw, TrendingUp, LogOut } from 'lucide-react'
+import { FileText, Sheet, RefreshCw, TrendingUp, LogOut, X } from 'lucide-react'
 import type { PensionResult, MonteCarloResult, PensionInputs } from '../../types'
 import { WealthChart } from './WealthChart'
 import { exportToExcel } from '../../utils/exportExcel'
@@ -89,8 +89,9 @@ function nominalIncome(realMonthly: number, inflation: number, yearsFromNow: num
 export function ResultsPanel({ inputs, result, mc, isCalculating, onRunMonteCarlo, clientName, onCloseSession }: Props) {
   const [showMonteCarlo, setShowMonteCarlo] = useState(true)
   const [isExportingPdf, setIsExportingPdf] = useState(false)
-  const [isClosingSession, setIsClosingSession] = useState(false)
   const [showInflationDetail, setShowInflationDetail] = useState(false)
+  const [confirmingClose, setConfirmingClose] = useState(false)
+  const [showIntro, setShowIntro] = useState(true)
   const surplus = result.projectedCapital - result.requiredCapital
   const isOnTrack = surplus >= 0
   const currentMonthlyPMT = inputs.contributionFrequency === 'maandelijks'
@@ -111,23 +112,62 @@ export function ResultsPanel({ inputs, result, mc, isCalculating, onRunMonteCarl
     exportToExcel(inputs, result, mc ?? { successRate: 0, successRate75: 0, percentileData: [] }, clientName)
   }
 
-  // Export both PDF + Excel, then wipe the session
-  const handleExportAndClose = async () => {
-    setIsClosingSession(true)
-    try {
-      // Excel first (sync, fast)
-      exportToExcel(inputs, result, mc ?? { successRate: 0, successRate75: 0, percentileData: [] }, clientName)
-      // Then PDF (async, may take a moment)
-      await exportToPDF(inputs, result, mc, clientName, 'wealth-chart')
-      // All exports done — wipe the session
-      onCloseSession()
-    } finally {
-      setIsClosingSession(false)
-    }
+  // Wis alle invoer zonder iets op te slaan (na bevestiging)
+  const handleWipe = () => {
+    setConfirmingClose(false)
+    onCloseSession()
   }
 
   return (
     <div className="space-y-5" id="results-panel">
+      {/* Welkom / invulinstructie */}
+      {showIntro && (
+        <div className="relative rounded-xl border border-primary-100 bg-primary-50 p-4 pr-10">
+          <button
+            onClick={() => setShowIntro(false)}
+            className="absolute top-2.5 right-2.5 text-primary-400 hover:text-primary-600 transition-colors"
+            title="Sluiten"
+          >
+            <X size={16} />
+          </button>
+          <p className="text-sm font-semibold text-primary-800 mb-1">Hallo, welkom op deze pagina! 👋</p>
+          <p className="text-sm text-primary-700 leading-relaxed">
+            Vul eerst links de <span className="font-medium">Parameters</span> in en eventueel de{' '}
+            <span className="font-medium">Events</span>. Klik daarna op{' '}
+            <span className="font-medium">Bereken</span> en je krijgt antwoord op de vraag:
+            {' '}<span className="italic">"Ben ik financieel onafhankelijk?"</span>{' '}
+            Veel plezier met rekenen — en laat gerust een reactie achter als je feedback of
+            gedachten met ons wilt delen!
+          </p>
+        </div>
+      )}
+
+      {/* Bevestiging bij afsluiten */}
+      {confirmingClose && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4" onClick={() => setConfirmingClose(false)}>
+          <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-5" onClick={e => e.stopPropagation()}>
+            <p className="text-base font-semibold text-slate-800 mb-1">Weet je het zeker?</p>
+            <p className="text-sm text-slate-500 mb-4 leading-relaxed">
+              Wil je afsluiten zonder iets op te slaan? Alle ingevoerde gegevens worden gewist.
+            </p>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setConfirmingClose(false)}
+                className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+              >
+                Nee, terug
+              </button>
+              <button
+                onClick={handleWipe}
+                className="px-4 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-xl transition-colors"
+              >
+                Ja, wis alles
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Export bar — responsive: stacks on mobile */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
@@ -146,13 +186,12 @@ export function ResultsPanel({ inputs, result, mc, isCalculating, onRunMonteCarl
             {isExportingPdf ? 'Laden...' : 'Download PDF'}
           </button>
           <button
-            onClick={handleExportAndClose}
-            disabled={isClosingSession || isExportingPdf}
-            className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-xl transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-            title="Exporteer en wis alle invoergegevens"
+            onClick={() => setConfirmingClose(true)}
+            className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-xl transition-colors"
+            title="Wis alle invoergegevens"
           >
             <LogOut size={14} />
-            {isClosingSession ? 'Bezig…' : 'Sluit af en wis alles'}
+            Sluit af en wis alles
           </button>
         </div>
       </div>
@@ -301,9 +340,9 @@ export function ResultsPanel({ inputs, result, mc, isCalculating, onRunMonteCarl
             <button
               onClick={onRunMonteCarlo}
               disabled={isCalculating}
-              className="btn-secondary py-1 text-xs"
+              className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold bg-amber-400 hover:bg-amber-500 text-amber-950 rounded-xl shadow-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              <RefreshCw size={12} className={isCalculating ? 'animate-spin' : ''} />
+              <RefreshCw size={16} className={isCalculating ? 'animate-spin' : ''} />
               {isCalculating ? 'Berekenen…' : 'Bereken'}
             </button>
           </div>
