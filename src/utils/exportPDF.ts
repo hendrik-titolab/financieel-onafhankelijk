@@ -45,12 +45,11 @@ export async function exportToPDF(
     { label: 'Verwacht eindvermogen', value: eur(result.projectedCapital), color: [37, 99, 235] as [number, number, number] },
     { label: 'Benodigd eindvermogen', value: eur(result.requiredCapital), color: [100, 116, 139] as [number, number, number] },
     { label: isOnTrack ? 'Overschot' : 'Tekort', value: eur(Math.abs(surplus)), color: isOnTrack ? [5, 150, 105] as [number, number, number] : [220, 38, 38] as [number, number, number] },
-    { label: 'Slagingskans', value: mc ? pct(mc.successRate) : 'Niet berekend', color: mc && mc.successRate >= 80 ? [5, 150, 105] as [number, number, number] : mc && mc.successRate >= 60 ? [217, 119, 6] as [number, number, number] : [100, 116, 139] as [number, number, number] },
   ]
 
-  const boxW = contentW / 4 - 2
+  const boxW = contentW / 3 - 2.67
   metrics.forEach((m, i) => {
-    const x = margin + i * (boxW + 2.67)
+    const x = margin + i * (boxW + 4)
     pdf.setFillColor(248, 250, 252)
     pdf.roundedRect(x, y, boxW, 22, 2, 2, 'F')
     pdf.setFontSize(7)
@@ -63,6 +62,37 @@ export async function exportToPDF(
     pdf.setFont('helvetica', 'normal')
   })
   y += 28
+
+  // --- Slagingskans (uitkomst Monte Carlo) — prominent weergegeven ---
+  const kansKleur = (v: number): [number, number, number] =>
+    v >= 80 ? [5, 150, 105] : v >= 60 ? [217, 119, 6] : [220, 38, 38]
+
+  pdf.setFontSize(11)
+  pdf.setFont('helvetica', 'bold')
+  pdf.setTextColor(15, 23, 42)
+  pdf.text('Ben ik financieel onafhankelijk?', margin, y)
+  y += 5
+
+  const halfW = contentW / 2 - 2
+  const kansen: { label: string; value: number | null }[] = [
+    { label: 'Kans op 100% van je inkomensdoel', value: mc ? mc.successRate : null },
+    { label: 'Kans op 75% van je inkomensdoel', value: mc ? mc.successRate75 : null },
+  ]
+  kansen.forEach((k, i) => {
+    const x = margin + i * (halfW + 4)
+    const kleur: [number, number, number] = k.value === null ? [100, 116, 139] : kansKleur(k.value)
+    pdf.setFillColor(kleur[0], kleur[1], kleur[2])
+    pdf.roundedRect(x, y, halfW, 20, 2, 2, 'F')
+    pdf.setTextColor(255, 255, 255)
+    pdf.setFont('helvetica', 'normal')
+    pdf.setFontSize(8)
+    pdf.text(k.label, x + halfW / 2, y + 7, { align: 'center' })
+    pdf.setFont('helvetica', 'bold')
+    pdf.setFontSize(15)
+    pdf.text(k.value === null ? 'Niet berekend' : pct(k.value), x + halfW / 2, y + 15.5, { align: 'center' })
+    pdf.setFont('helvetica', 'normal')
+  })
+  y += 26
 
   // --- Inkomen per fase ---
   pdf.setTextColor(15, 23, 42)

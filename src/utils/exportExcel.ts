@@ -129,5 +129,19 @@ export function exportToExcel(
   XLSX.utils.book_append_sheet(wb, ws4, 'Monte Carlo')
 
   const filename = `financiele-planning_${clientName.replace(/\s/g, '_')}_${new Date().toISOString().slice(0, 10)}.xlsx`
-  XLSX.writeFile(wb, filename)
+
+  // Expliciete blob-download i.p.v. XLSX.writeFile — browsers blokkeren de laatste
+  // soms als "automatische download". Deze aanpak telt als door de gebruiker gestart.
+  const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' })
+  const blob = new Blob([wbout], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
