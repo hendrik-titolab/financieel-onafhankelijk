@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
-import type { PensionInputs, IncomeType, ContributionFrequency, LifeEvent, Storting } from '../../types'
+import type { PensionInputs, IncomeType, ContributionFrequency, LifeEvent, Storting, RiskProfile } from '../../types'
+import { RISICOPROFIELEN, PROFIEL_VOLGORDE } from '../../config/risicoprofielen'
 
 const MAX_ROWS = 20
 
@@ -138,6 +139,11 @@ function ParametersTab({ inputs, onChange }: Props) {
             prefix="€" suffix="/mnd" step={100} />
           <p className="text-xs text-slate-400">In koopkracht van vandaag — inflatie wordt automatisch verwerkt</p>
         </div>
+        <Field label="Inflatie">
+          <NumberInput value={inputs.inflation}
+            onChange={v => onChange({ inflation: v })} suffix="%" step={0.1} min={0} max={10} />
+          <p className="text-xs text-slate-400 mt-1">Waarmee we je koopkracht corrigeren (langjarig gemiddelde ~2%).</p>
+        </Field>
       </Section>
 
       <div className="border-t border-slate-100" />
@@ -184,37 +190,100 @@ function ParametersTab({ inputs, onChange }: Props) {
 
       <div className="border-t border-slate-100" />
 
-      <Section title="Rendement & Inflatie">
-        <Field label="Rendement vóór pensioendatum">
-          <NumberInput value={inputs.returnBeforeRetirement}
-            onChange={v => onChange({ returnBeforeRetirement: v })} suffix="%" step={0.5} min={0} max={20} />
-        </Field>
-        <Field label="Rendement ná pensioendatum">
-          <NumberInput value={inputs.returnAfterRetirement}
-            onChange={v => onChange({ returnAfterRetirement: v })} suffix="%" step={0.5} min={0} max={15} />
-        </Field>
-        <Field label="Inflatie">
-          <NumberInput value={inputs.inflation}
-            onChange={v => onChange({ inflation: v })} suffix="%" step={0.1} min={0} max={10} />
-        </Field>
-      </Section>
-
-      <div className="border-t border-slate-100" />
-
-      <Section title="Monte Carlo (volatiliteit)">
-        <Field label="Volatiliteit vóór pensioendatum">
-          <NumberInput value={inputs.volatilityPre}
-            onChange={v => onChange({ volatilityPre: v })} suffix="%" step={1} min={0} max={40} />
-        </Field>
-        <Field label="Volatiliteit ná pensioendatum">
-          <NumberInput value={inputs.volatilityPost}
-            onChange={v => onChange({ volatilityPost: v })} suffix="%" step={1} min={0} max={30} />
-        </Field>
-        <p className="text-xs text-slate-400 leading-relaxed">
-          Typisch: 15% groeiportefeuille, 8% defensief. 2.000 simulaties.
-        </p>
-      </Section>
+      <RisicoprofielSection inputs={inputs} onChange={onChange} />
     </div>
+  )
+}
+
+// ---- Risicoprofiel: schuif + uitleg, of zelf invullen ----
+function RisicoprofielSection({ inputs, onChange }: Props) {
+  const profiel = RISICOPROFIELEN[inputs.riskProfile]
+  const index = Math.max(0, PROFIEL_VOLGORDE.indexOf(inputs.riskProfile))
+
+  const kiesProfiel = (i: number) => {
+    const key = PROFIEL_VOLGORDE[i] as RiskProfile
+    const p = RISICOPROFIELEN[key]
+    onChange({
+      riskProfile: key,
+      returnBeforeRetirement: p.rendementVoor,
+      returnAfterRetirement: p.rendementNa,
+      volatilityPre: p.volatiliteitVoor,
+      volatilityPost: p.volatiliteitNa,
+    })
+  }
+
+  return (
+    <Section title="Risicoprofiel">
+      {!inputs.useCustomReturns && (
+        <div className="space-y-2">
+          <div className="flex justify-between items-center">
+            <label className="label mb-0">Beleggingsprofiel</label>
+            <span className="text-sm font-semibold text-primary-600">{profiel.label}</span>
+          </div>
+          <input type="range" min={0} max={PROFIEL_VOLGORDE.length - 1} step={1} value={index}
+            onChange={e => kiesProfiel(parseInt(e.target.value))} />
+          <div className="flex justify-between text-xs text-slate-400">
+            <span>Defensiever</span><span>Offensiever</span>
+          </div>
+          <div className="rounded-lg bg-slate-50 border border-slate-100 p-3 space-y-1.5">
+            <div className="flex justify-between text-xs">
+              <span className="text-slate-500">Verwacht rendement</span>
+              <span className="font-medium text-slate-700">{profiel.rendementVoor}% vóór · {profiel.rendementNa}% ná pensioen</span>
+            </div>
+            <div className="flex justify-between text-xs">
+              <span className="text-slate-500">Schommeling (volatiliteit)</span>
+              <span className="font-medium text-slate-700">{profiel.volatiliteitVoor}% / {profiel.volatiliteitNa}%</span>
+            </div>
+            <p className="text-xs text-slate-400 leading-relaxed pt-1">{profiel.uitleg}</p>
+          </div>
+        </div>
+      )}
+
+      <label className="flex items-center gap-2 cursor-pointer pt-1">
+        <input type="checkbox" checked={inputs.useCustomReturns}
+          onChange={e => {
+            const aan = e.target.checked
+            // Bij terugschakelen naar profiel: rendement/volatiliteit van het profiel herstellen
+            if (!aan) {
+              onChange({
+                useCustomReturns: false,
+                returnBeforeRetirement: profiel.rendementVoor,
+                returnAfterRetirement: profiel.rendementNa,
+                volatilityPre: profiel.volatiliteitVoor,
+                volatilityPost: profiel.volatiliteitNa,
+              })
+            } else {
+              onChange({ useCustomReturns: true })
+            }
+          }}
+          className="rounded" />
+        <span className="text-xs text-slate-600">Zelf rendement en volatiliteit invullen</span>
+      </label>
+
+      {inputs.useCustomReturns && (
+        <div className="space-y-3 pt-1">
+          <Field label="Rendement vóór pensioendatum">
+            <NumberInput value={inputs.returnBeforeRetirement}
+              onChange={v => onChange({ returnBeforeRetirement: v })} suffix="%" step={0.5} min={0} max={20} />
+          </Field>
+          <Field label="Rendement ná pensioendatum">
+            <NumberInput value={inputs.returnAfterRetirement}
+              onChange={v => onChange({ returnAfterRetirement: v })} suffix="%" step={0.5} min={0} max={15} />
+          </Field>
+          <Field label="Volatiliteit vóór pensioendatum">
+            <NumberInput value={inputs.volatilityPre}
+              onChange={v => onChange({ volatilityPre: v })} suffix="%" step={1} min={0} max={40} />
+          </Field>
+          <Field label="Volatiliteit ná pensioendatum">
+            <NumberInput value={inputs.volatilityPost}
+              onChange={v => onChange({ volatilityPost: v })} suffix="%" step={1} min={0} max={30} />
+          </Field>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            Monte Carlo rekent met 2.000 scenario's rond dit gemiddelde rendement.
+          </p>
+        </div>
+      )}
+    </Section>
   )
 }
 

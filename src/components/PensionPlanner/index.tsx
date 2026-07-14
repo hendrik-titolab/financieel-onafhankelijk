@@ -12,7 +12,7 @@ const DEFAULT_INPUTS: PensionInputs = {
   currentCapital: 100000,
   monthlyContribution: 0,
   contributionFrequency: 'maandelijks',
-  returnBeforeRetirement: 7,
+  returnBeforeRetirement: 6,
   returnAfterRetirement: 4,
   inflation: 2.5,
   currentIncome: 80000,
@@ -25,8 +25,10 @@ const DEFAULT_INPUTS: PensionInputs = {
   employerPensionStartAge: 67,
   lifeEvents: [],
   stortingen: [],
-  volatilityPre: 15,
+  volatilityPre: 12,
   volatilityPost: 8,
+  riskProfile: 'neutraal',
+  useCustomReturns: false,
 }
 
 interface Props {

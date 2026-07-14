@@ -1,5 +1,7 @@
 export type IncomeType = 'bruto' | 'netto'
 export type ContributionFrequency = 'maandelijks' | 'jaarlijks'
+export type { RiskProfile } from '../config/risicoprofielen'
+import type { RiskProfile } from '../config/risicoprofielen'
 
 // A life event is a named one-time financial event (schenking, woningaankoop, erfenis…).
 export interface LifeEvent {
@@ -43,6 +45,9 @@ export interface PensionInputs {
 
   volatilityPre: number       // std dev annual % for Monte Carlo
   volatilityPost: number
+
+  riskProfile: RiskProfile      // gekozen risicoprofiel (stuurt rendement + volatiliteit)
+  useCustomReturns: boolean     // true = gebruiker vult rendement/volatiliteit zelf in
 }
 
 export interface YearData {
