@@ -1,46 +1,29 @@
 import type { PensionInputs, PensionResult, YearData, IncomePhase, LifeEvent, Storting } from '../types'
+import { BOX1_PRE_AOW, BOX1_POST_AOW, AOW_NETTO_MAAND } from '../config/fiscaleParameters'
 
-// AOW net monthly amounts (2025). Amount depends on living situation — always ask!
-// Alleenstaand: ~€1.550/mnd netto | Samenwonend/gehuwd: ~€1.060/mnd netto per person
+// AOW netto maandbedragen — uit centrale config (fiscaleParameters.ts)
 export const AOW_NETTO = {
-  alleenstaand: 1550,
-  samenwonend: 1060,
+  alleenstaand: AOW_NETTO_MAAND.alleenstaand,
+  samenwonend:  AOW_NETTO_MAAND.samenwonend,
 }
 
-// Box 1 gross-to-net conversion — 2026 tarieven (Lindenhaege advieskaart 2026).
-// !! Jaarlijks updaten: schijfgrenzen en tarieven wijzigen elk jaar !!
-// Bron: Lindenhaege advieskaart, map Parametercheck fin onafhankelijk tool
-//
-// 2026: 3 schijven
-//   Pre-AOW:  schijf 1 (t/m €38.883) 35,75% | schijf 2 (t/m €78.426) 37,56% | schijf 3 49,50%
-//   Post-AOW: schijf 1 (t/m €38.883) 17,85% | schijf 2 (t/m €78.426) 37,56% | schijf 3 49,50%
-const TAX_2026 = {
-  bracket1: 38883,
-  bracket2: 78426,
-  rate1PreAow: 0.3575,
-  rate1PostAow: 0.1785,
-  rate2: 0.3756,
-  rate3: 0.495,
-}
-
+// Box 1 bruto → netto conversie — tarieven uit centrale config (fiscaleParameters.ts)
 export function brutoToNetto(bruto: number, pastAowAge: boolean): number {
   if (bruto <= 0) return 0
-  const { bracket1, bracket2, rate1PreAow, rate1PostAow, rate2, rate3 } = TAX_2026
-  const rate1 = pastAowAge ? rate1PostAow : rate1PreAow
-  if (bruto <= bracket1) return bruto * (1 - rate1)
-  if (bruto <= bracket2) return bracket1 * (1 - rate1) + (bruto - bracket1) * (1 - rate2)
-  return bracket1 * (1 - rate1) + (bracket2 - bracket1) * (1 - rate2) + (bruto - bracket2) * (1 - rate3)
+  const t = pastAowAge ? BOX1_POST_AOW : BOX1_PRE_AOW
+  if (bruto <= t.schijf1Grens) return bruto * (1 - t.schijf1Tarief)
+  if (bruto <= t.schijf2Grens) return t.schijf1Grens * (1 - t.schijf1Tarief) + (bruto - t.schijf1Grens) * (1 - t.schijf2Tarief)
+  return t.schijf1Grens * (1 - t.schijf1Tarief) + (t.schijf2Grens - t.schijf1Grens) * (1 - t.schijf2Tarief) + (bruto - t.schijf2Grens) * (1 - t.schijf3Tarief)
 }
 
 export function nettoToBruto(netto: number, pastAowAge: boolean): number {
   if (netto <= 0) return 0
-  const { bracket1, bracket2, rate1PreAow, rate1PostAow, rate2, rate3 } = TAX_2026
-  const rate1 = pastAowAge ? rate1PostAow : rate1PreAow
-  const net1 = bracket1 * (1 - rate1)
-  const net2 = net1 + (bracket2 - bracket1) * (1 - rate2)
-  if (netto <= net1) return netto / (1 - rate1)
-  if (netto <= net2) return bracket1 + (netto - net1) / (1 - rate2)
-  return bracket2 + (netto - net2) / (1 - rate3)
+  const t = pastAowAge ? BOX1_POST_AOW : BOX1_PRE_AOW
+  const net1 = t.schijf1Grens * (1 - t.schijf1Tarief)
+  const net2 = net1 + (t.schijf2Grens - t.schijf1Grens) * (1 - t.schijf2Tarief)
+  if (netto <= net1) return netto / (1 - t.schijf1Tarief)
+  if (netto <= net2) return t.schijf1Grens + (netto - net1) / (1 - t.schijf2Tarief)
+  return t.schijf2Grens + (netto - net2) / (1 - t.schijf3Tarief)
 }
 
 function realAnnualReturn(nominal: number, inflation: number): number {
