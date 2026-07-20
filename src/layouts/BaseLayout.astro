@@ -24,7 +24,7 @@ const {
   description,
   canonical = Astro.url.pathname,
   ogType = 'website',
-  image = '/favicon.svg',
+  image = '/og-default.png',
   noindex = false,
   jsonLd = [],
   showFooter = true,
@@ -51,6 +51,9 @@ const schemas = [organizationSchema(), websiteSchema(), ...jsonLd]
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonicalUrl} />
     <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:type" content="image/png" />
     <meta property="og:site_name" content={SITE.name} />
     <meta property="og:locale" content={SITE.locale} />
     <!-- Twitter -->
