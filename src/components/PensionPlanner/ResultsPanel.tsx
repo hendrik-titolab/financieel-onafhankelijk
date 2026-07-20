@@ -109,8 +109,8 @@ export function ResultsPanel({ inputs, result, mc, isCalculating, onRunMonteCarl
     }
   }
 
-  const handleExcel = () => {
-    exportToExcel(inputs, result, mc ?? { successRate: 0, successRate75: 0, percentileData: [] }, clientName)
+  const handleExcel = async () => {
+    await exportToExcel(inputs, result, mc ?? { successRate: 0, successRate75: 0, percentileData: [] }, clientName)
   }
 
   // Wis alle invoer zonder iets op te slaan (na bevestiging)

@@ -31,6 +31,27 @@ export const BOX1_POST_AOW = {
   schijf3Tarief: 0.4950,   // 49,50%
 }
 
+// ─── Heffingskortingen (box 1, jonger dan AOW-leeftijd) ─────────────────────
+// Bron: Belastingdienst (Nieuwsbrief Loonheffingen 2026) en Belastingplan 2026
+// Gebruikt door de bruto-nettotool.
+export const HEFFINGSKORTING_PRE_AOW = {
+  // Algemene heffingskorting
+  algemeneHeffingskorting: {
+    max:         3_115,      // maximum (€)
+    afbouwVanaf: 29_736,     // inkomen waarboven de korting afbouwt (€)
+    afbouwPct:   0.06398,    // afbouwpercentage (6,398%)
+    nihilBij:    78_426,     // inkomen waarbij de korting nihil is (€)
+  },
+  // Arbeidskorting (opbouw in schijven, daarna afbouw)
+  arbeidskorting: {
+    knik1: 11_965, pct1: 0.08324,   // opbouw 8,324% tot €11.965
+    knik2: 25_845, pct2: 0.31009,   // opbouw 31,009% tot €25.845
+    knik3: 45_592, pct3: 0.0195,    // opbouw 1,95% tot €45.592
+    afbouwVanaf: 45_593, afbouwPct: 0.0651,  // afbouw 6,51% vanaf €45.593
+    max: 5_685,                     // maximum (€)
+  },
+} as const
+
 // ─── AOW-bedragen ───────────────────────────────────────────────────────────
 // Bron: advieskaart pagina "Inkomen", tabel AOW-bedragen (met heffingskorting)
 

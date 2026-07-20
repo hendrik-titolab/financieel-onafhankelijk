@@ -1,0 +1,37 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro'
+import { BrutoNettoCalculator } from '../components/BrutoNetto'
+import { articleSchema, faqSchema, breadcrumbSchema } from '../lib/seo'
+
+const title = 'Bruto-netto berekenen 2026 | Ben ik financieel onafhankelijk?'
+const description =
+  'Bereken gratis je netto salaris uit je bruto loon (of andersom) voor 2026. Inclusief alle belastingschijven, de algemene heffingskorting en de arbeidskorting.'
+
+const faq = [
+  {
+    vraag: 'Hoe bereken je bruto naar netto in 2026?',
+    antwoord:
+      'Van je bruto jaarsalaris wordt de inkomstenbelasting (box 1) per schijf berekend. Daar gaan de algemene heffingskorting en de arbeidskorting vanaf. Wat overblijft aan belasting trek je van je bruto loon af; dat is je netto loon.',
+  },
+  {
+    vraag: 'Zitten toeslagen in deze berekening?',
+    antwoord:
+      'Nee. Huurtoeslag, zorgtoeslag, kinderopvangtoeslag en kindgebonden budget blijven buiten beschouwing. Ook vakantiegeld, pensioenpremie en aftrekposten zijn niet meegerekend.',
+  },
+]
+
+const schemas = [
+  articleSchema({ title, description, path: '/bruto-netto', dateModified: '2026-06-01' }),
+  faqSchema(faq),
+  breadcrumbSchema([
+    { name: 'Home', path: '/' },
+    { name: 'Bruto-netto berekenen', path: '/bruto-netto' },
+  ]),
+]
+---
+
+<BaseLayout title={title} description={description} jsonLd={schemas}>
+  <main class="flex-1 p-4 md:p-6">
+    <BrutoNettoCalculator client:load />
+  </main>
+</BaseLayout>

@@ -1,23 +1,19 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { ChevronDown, ChevronUp, Info } from 'lucide-react'
+import { BOX1_PRE_AOW, HEFFINGSKORTING_PRE_AOW } from '../../config/fiscaleParameters'
 
-// ── Fiscale parameters 2026 (Belastingdienst / Belastingplan 2026) ────────────
-// !! Jaarlijks bijwerken in januari zodra de nieuwe parameters bekend zijn !!
+// ── Fiscale parameters 2026 ───────────────────────────────────────────────────
+// Alle getallen komen uit de centrale config (fiscaleParameters.ts), zodat de
+// kwartaalcheck ze meeneemt. Hier alleen omgezet naar de vorm die de tool gebruikt.
 const P = {
   jaar: 2026,
   schijven: [
-    { tot: 38_883, tarief: 0.3575 },
-    { tot: 78_426, tarief: 0.3756 },
-    { tot: Infinity, tarief: 0.495 },
+    { tot: BOX1_PRE_AOW.schijf1Grens, tarief: BOX1_PRE_AOW.schijf1Tarief },
+    { tot: BOX1_PRE_AOW.schijf2Grens, tarief: BOX1_PRE_AOW.schijf2Tarief },
+    { tot: Infinity, tarief: BOX1_PRE_AOW.schijf3Tarief },
   ],
-  ahk: { max: 3_115, afbouwVanaf: 29_736, afbouwPct: 0.06398, nihilBij: 78_426 },
-  ak: {
-    knik1: 11_965, pct1: 0.08324,
-    knik2: 25_845, pct2: 0.31009,
-    knik3: 45_592, pct3: 0.0195,
-    afbouwVanaf: 45_593, afbouwPct: 0.0651,
-    max: 5_685,
-  },
+  ahk: HEFFINGSKORTING_PRE_AOW.algemeneHeffingskorting,
+  ak: HEFFINGSKORTING_PRE_AOW.arbeidskorting,
 } as const
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -119,28 +115,6 @@ export function BrutoNettoCalculator() {
   const [periode, setPeriode] = useState<'maand' | 'jaar'>('maand')
   const [invoer, setInvoer] = useState('')
   const [open, setOpen] = useState(false)
-
-  useEffect(() => {
-    const prevTitle = document.title
-    document.title = `Bruto netto berekenen ${P.jaar} | Financiële Planning`
-
-    let metaDesc = document.querySelector<HTMLMetaElement>('meta[name="description"]')
-    const prevDesc = metaDesc?.getAttribute('content') ?? ''
-    const newDesc = `Bereken gratis je netto salaris uit je bruto loon (of andersom) voor ${P.jaar}. Inclusief alle belastingschijven, algemene heffingskorting en arbeidskorting.`
-    if (metaDesc) {
-      metaDesc.setAttribute('content', newDesc)
-    } else {
-      metaDesc = document.createElement('meta')
-      metaDesc.name = 'description'
-      metaDesc.content = newDesc
-      document.head.appendChild(metaDesc)
-    }
-
-    return () => {
-      document.title = prevTitle
-      if (metaDesc) metaDesc.setAttribute('content', prevDesc)
-    }
-  }, [])
 
   const bedrag = parseFloat(invoer.replace(',', '.')) || 0
   const jaarBedrag = periode === 'maand' ? bedrag * 12 : bedrag

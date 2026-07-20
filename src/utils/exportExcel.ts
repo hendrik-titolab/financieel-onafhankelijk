@@ -1,16 +1,17 @@
-import * as XLSX from 'xlsx'
 import type { PensionInputs, PensionResult, MonteCarloResult } from '../types'
 
 function eur(v: number) {
   return `€ ${Math.round(v).toLocaleString('nl-NL')}`
 }
 
-export function exportToExcel(
+export async function exportToExcel(
   inputs: PensionInputs,
   result: PensionResult,
   mc: MonteCarloResult,
   clientName: string
 ) {
+  // xlsx is zwaar en alleen nodig bij export → dynamisch laden (code-splitting)
+  const XLSX = await import('xlsx')
   const wb = XLSX.utils.book_new()
 
   // --- Sheet 1: Invoer ---

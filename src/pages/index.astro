@@ -1,0 +1,141 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro'
+import { faqSchema } from '../lib/seo'
+
+const title = 'Ben ik financieel onafhankelijk? — Uitleg & gratis rekentools'
+const description =
+  'Onafhankelijke uitleg en gratis rekentools over financiële onafhankelijkheid, pensioen en vermogensopbouw. Kort, begrijpelijk en voor iedereen te gebruiken.'
+
+const tools = [
+  {
+    href: '/ben-ik-financieel-onafhankelijk',
+    naam: 'Pensioen- & FO-planner',
+    tekst:
+      'Reken uit of en wanneer je rond kunt komen zonder werk. Met een Monte Carlo-simulatie zie je hoe groot de kans is dat je vermogen genoeg is.',
+    label: 'Kernmodel',
+  },
+  {
+    href: '/bruto-netto',
+    naam: 'Bruto-netto berekenen',
+    tekst:
+      'Zie wat je van je bruto salaris netto overhoudt (of andersom), inclusief belastingschijven en heffingskortingen voor 2026.',
+    label: 'Salaris',
+  },
+  {
+    href: '/tools/jaarruimte',
+    naam: 'Jaarruimte berekenen',
+    tekst:
+      'Bereken hoeveel je fiscaal aftrekbaar mag inleggen voor extra pensioen om een pensioentekort aan te vullen.',
+    label: 'Pensioen',
+  },
+]
+
+const faq = [
+  {
+    vraag: 'Wat betekent financieel onafhankelijk zijn?',
+    antwoord:
+      'Je bent financieel onafhankelijk als je genoeg vermogen of inkomen hebt om je vaste lasten te betalen zonder dat je hoeft te werken. Je leeft dan van rendement, spaargeld, pensioen of een combinatie daarvan.',
+  },
+  {
+    vraag: 'Zijn de tools op deze site gratis?',
+    antwoord:
+      'Ja. Alle rekentools en uitleg zijn gratis te gebruiken. Je hoeft niets te installeren en geen account aan te maken.',
+  },
+]
+
+const schemas = [faqSchema(faq)]
+---
+
+<BaseLayout title={title} description={description} canonical="/" jsonLd={schemas}>
+  <main class="flex-1">
+    <!-- Hero -->
+    <section class="max-w-3xl mx-auto px-4 md:px-6 pt-12 pb-8 text-center">
+      <h1 class="text-3xl md:text-4xl font-bold text-slate-900 leading-tight">
+        Ben ik financieel onafhankelijk?
+      </h1>
+      <p class="mt-4 text-lg text-slate-600 leading-relaxed">
+        Begrijpelijke uitleg en gratis rekentools over vermogensopbouw, pensioen en financiële
+        onafhankelijkheid. Geen verkooppraat, geen kleine lettertjes — gewoon zelf uitrekenen
+        hoe je ervoor staat.
+      </p>
+      <div class="mt-6 flex flex-wrap gap-3 justify-center">
+        <a
+          href="/ben-ik-financieel-onafhankelijk"
+          class="px-5 py-2.5 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 transition"
+        >
+          Start met de planner
+        </a>
+        <a
+          href="#tools"
+          class="px-5 py-2.5 rounded-lg bg-white text-slate-700 text-sm font-medium border border-slate-200 hover:bg-slate-50 transition"
+        >
+          Bekijk alle tools
+        </a>
+      </div>
+    </section>
+
+    <!-- Tools -->
+    <section id="tools" class="max-w-5xl mx-auto px-4 md:px-6 py-8">
+      <h2 class="text-xl font-semibold text-slate-900 mb-5">Rekentools</h2>
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {
+          tools.map((t) => (
+            <a
+              href={t.href}
+              class="card hover:shadow-md hover:border-primary-100 transition group flex flex-col"
+            >
+              <span class="text-xs font-medium text-primary-600 uppercase tracking-wide">
+                {t.label}
+              </span>
+              <span class="mt-1 text-lg font-semibold text-slate-900 group-hover:text-primary-600 transition">
+                {t.naam}
+              </span>
+              <span class="mt-2 text-sm text-slate-500 leading-relaxed">{t.tekst}</span>
+              <span class="mt-4 text-sm font-medium text-primary-600">Naar de tool →</span>
+            </a>
+          ))
+        }
+      </div>
+    </section>
+
+    <!-- Wat is FO -->
+    <section class="max-w-3xl mx-auto px-4 md:px-6 py-8">
+      <h2 class="text-xl font-semibold text-slate-900 mb-3">
+        Wat betekent financieel onafhankelijk?
+      </h2>
+      <div class="prose-sm text-slate-600 leading-relaxed space-y-3">
+        <p>
+          Je bent <strong>financieel onafhankelijk</strong> als je je vaste lasten kunt betalen
+          zonder dat je hoeft te werken. Je inkomen komt dan uit vermogen, rendement, pensioen of
+          een combinatie daarvan. Voor de een is dat vervroegd stoppen met werken, voor de ander
+          simpelweg rust: weten dat het geregeld is.
+        </p>
+        <p>
+          Hoeveel je daarvoor nodig hebt, hangt af van je uitgaven, je leeftijd, je pensioen en het
+          rendement dat je verwacht. Precies die knoppen kun je op deze site zelf verdraaien in de
+          rekentools — zodat je niet hoeft te gokken, maar kunt rekenen.
+        </p>
+      </div>
+    </section>
+
+    <!-- Voor wie -->
+    <section class="max-w-5xl mx-auto px-4 md:px-6 py-8">
+      <div class="grid gap-4 sm:grid-cols-2">
+        <div class="card">
+          <h3 class="text-base font-semibold text-slate-900 mb-1">Voor iedereen</h3>
+          <p class="text-sm text-slate-500 leading-relaxed">
+            Of je nu net begint met sparen of al een vermogen hebt opgebouwd: de uitleg is in
+            gewone taal en de tools zijn gratis en zonder account te gebruiken.
+          </p>
+        </div>
+        <div class="card">
+          <h3 class="text-base font-semibold text-slate-900 mb-1">Voor adviseurs</h3>
+          <p class="text-sm text-slate-500 leading-relaxed">
+            Pensioen- en financieel adviseurs gebruiken de planner ook in klantgesprekken, met een
+            klantnaam per sessie en export naar Excel en PDF.
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+</BaseLayout>

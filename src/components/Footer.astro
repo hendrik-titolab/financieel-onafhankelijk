@@ -1,0 +1,36 @@
+---
+import { SITE } from '../config/site'
+const jaar = new Date().getFullYear()
+---
+
+<footer class="border-t border-slate-100 bg-white mt-auto flex-shrink-0">
+  <div class="max-w-5xl mx-auto px-4 md:px-6 py-8">
+    <div class="grid gap-6 sm:grid-cols-3 text-sm">
+      <div>
+        <p class="font-semibold text-slate-800 mb-1">Ben ik financieel onafhankelijk?</p>
+        <p class="text-slate-500 leading-relaxed">
+          Onafhankelijke uitleg en gratis rekentools over vermogensopbouw, pensioen en
+          financiële onafhankelijkheid.
+        </p>
+      </div>
+      <div>
+        <p class="font-semibold text-slate-800 mb-2">Rekentools</p>
+        <ul class="space-y-1.5 text-slate-500">
+          <li><a href="/ben-ik-financieel-onafhankelijk" class="hover:text-primary-600">Pensioen- &amp; FO-planner</a></li>
+          <li><a href="/bruto-netto" class="hover:text-primary-600">Bruto-netto berekenen</a></li>
+          <li><a href="/tools/jaarruimte" class="hover:text-primary-600">Jaarruimte berekenen</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="font-semibold text-slate-800 mb-2">Over</p>
+        <ul class="space-y-1.5 text-slate-500">
+          <li><a href="/over" class="hover:text-primary-600">Over deze site</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="border-t border-slate-100 mt-6 pt-4 text-xs text-slate-400 flex flex-col sm:flex-row gap-1 sm:justify-between">
+      <span>© {jaar} {SITE.url.replace('https://', '')} — een uitgave van {SITE.publisher}</span>
+      <span>Indicatieve berekeningen, geen financieel advies.</span>
+    </div>
+  </div>
+</footer>

@@ -1,0 +1,98 @@
+---
+import '../index.css'
+import Header from '../components/Header.astro'
+import Footer from '../components/Footer.astro'
+import { SITE } from '../config/site'
+import { organizationSchema, websiteSchema, absUrl } from '../lib/seo'
+
+interface Props {
+  title: string
+  description: string
+  /** Pad voor de canonical URL, bijv. "/bruto-netto". Standaard = huidige pad. */
+  canonical?: string
+  ogType?: string
+  image?: string
+  noindex?: boolean
+  /** Extra structured data (Article / FAQPage / BreadcrumbList). */
+  jsonLd?: unknown[]
+  /** Toon de footer (uit voor de full-height plannerpagina). */
+  showFooter?: boolean
+}
+
+const {
+  title,
+  description,
+  canonical = Astro.url.pathname,
+  ogType = 'website',
+  image = '/favicon.svg',
+  noindex = false,
+  jsonLd = [],
+  showFooter = true,
+} = Astro.props
+
+const canonicalUrl = absUrl(canonical)
+const ogImage = absUrl(image)
+const schemas = [organizationSchema(), websiteSchema(), ...jsonLd]
+---
+
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalUrl} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+
+    <!-- Open Graph -->
+    <meta property="og:type" content={ogType} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:site_name" content={SITE.name} />
+    <meta property="og:locale" content={SITE.locale} />
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="theme-color" content="#2563eb" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    {schemas.map((s) => <script type="application/ld+json" set:html={JSON.stringify(s)} />)}
+
+    <!-- Oude PWA/service worker opruimen (sunset van de vorige SPA-versie) -->
+    <script is:inline>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function (rs) {
+          rs.forEach(function (r) {
+            r.unregister()
+          })
+        })
+        if (window.caches) {
+          caches.keys().then(function (ks) {
+            ks.forEach(function (k) {
+              caches.delete(k)
+            })
+          })
+        }
+      }
+    </script>
+  </head>
+  <body class="min-h-screen bg-slate-50 text-slate-900 flex flex-col">
+    <Header />
+    <slot />
+    {showFooter && <Footer />}
+  </body>
+</html>

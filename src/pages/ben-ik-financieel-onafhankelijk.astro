@@ -1,0 +1,22 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro'
+import PensionPlannerApp from '../components/PensionPlannerApp.tsx'
+import { breadcrumbSchema } from '../lib/seo'
+
+const title = 'Ben ik financieel onafhankelijk? — Gratis pensioen- & FO-planner'
+const description =
+  'Reken uit of en wanneer je financieel onafhankelijk bent. Vul je vermogen, inleg en gewenste inkomen in en zie met een Monte Carlo-simulatie hoe groot de kans is dat je het redt.'
+const schemas = [
+  breadcrumbSchema([
+    { name: 'Home', path: '/' },
+    { name: 'Ben ik financieel onafhankelijk?', path: '/ben-ik-financieel-onafhankelijk' },
+  ]),
+]
+---
+
+<BaseLayout title={title} description={description} showFooter={false} jsonLd={schemas}>
+  <main class="flex-1 min-h-0 overflow-y-auto md:overflow-hidden p-4 md:p-6">
+    <h1 class="sr-only">Ben ik financieel onafhankelijk? Reken het uit met de planner</h1>
+    <PensionPlannerApp client:only="react" />
+  </main>
+</BaseLayout>

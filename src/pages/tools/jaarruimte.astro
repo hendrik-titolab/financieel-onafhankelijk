@@ -1,0 +1,44 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import { JaarruimteTab } from '../../components/Jaarruimte'
+import { articleSchema, faqSchema, breadcrumbSchema } from '../../lib/seo'
+
+const title = 'Jaarruimte berekenen 2026 | Ben ik financieel onafhankelijk?'
+const description =
+  'Bereken gratis je jaarruimte voor 2026: hoeveel je fiscaal aftrekbaar mag inleggen in een lijfrente om een pensioentekort aan te vullen. Inclusief reserveringsruimte.'
+
+const faq = [
+  {
+    vraag: 'Wat is jaarruimte?',
+    antwoord:
+      'Jaarruimte is het bedrag dat je in een jaar fiscaal aftrekbaar mag inleggen voor extra pensioen (bijvoorbeeld een lijfrente), omdat je dat jaar te weinig pensioen hebt opgebouwd. Je trekt de inleg af in box 1.',
+  },
+  {
+    vraag: 'Wat is reserveringsruimte?',
+    antwoord:
+      'Reserveringsruimte is niet-gebruikte jaarruimte uit de voorgaande jaren die je later alsnog mag inleggen, tot een jaarlijks maximum.',
+  },
+]
+
+const schemas = [
+  articleSchema({ title, description, path: '/tools/jaarruimte', dateModified: '2026-06-01' }),
+  faqSchema(faq),
+  breadcrumbSchema([
+    { name: 'Home', path: '/' },
+    { name: 'Jaarruimte berekenen', path: '/tools/jaarruimte' },
+  ]),
+]
+---
+
+<BaseLayout title={title} description={description} jsonLd={schemas}>
+  <main class="flex-1 p-4 md:p-6">
+    <div class="max-w-2xl mx-auto">
+      <h1 class="text-2xl font-semibold text-slate-900 mb-1">Jaarruimte berekenen 2026</h1>
+      <p class="text-sm text-slate-500 mb-5">
+        Bereken hoeveel je dit jaar fiscaal aftrekbaar mag inleggen in een lijfrente om een
+        pensioentekort aan te vullen. Vul je inkomen en pensioenopbouw in.
+      </p>
+      <JaarruimteTab client:only="react" />
+    </div>
+  </main>
+</BaseLayout>

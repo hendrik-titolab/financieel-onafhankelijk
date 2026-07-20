@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://benikfinancieelonafhankelijk.nl/sitemap-index.xml

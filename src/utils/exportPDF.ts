@@ -1,5 +1,3 @@
-import jsPDF from 'jspdf'
-import html2canvas from 'html2canvas'
 import type { PensionResult, MonteCarloResult, PensionInputs } from '../types'
 
 function eur(v: number): string {
@@ -17,6 +15,9 @@ export async function exportToPDF(
   clientName: string,
   chartElementId: string
 ) {
+  // jspdf + html2canvas zijn zwaar en alleen nodig bij export → dynamisch laden
+  const { default: jsPDF } = await import('jspdf')
+  const { default: html2canvas } = await import('html2canvas')
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
   const pageW = 210
   const margin = 16
