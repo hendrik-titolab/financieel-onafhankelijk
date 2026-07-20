@@ -50,13 +50,17 @@ Beurzen schommelen, en jouw keuzes bepalen hoeveel. Hoe je je geld verdeelt over
 
 Over aandelen, obligaties en verstandig beleggen schrijven we aparte artikelen; die koppelen we hier zodra ze klaar zijn.
 
-## En verder telt mee
+## 6. Hoe lang het geld mee moet
 
-Een paar factoren die het plaatje compleet maken:
+Je tijdshorizon telt zwaar. Stoppen op je 45e vraagt een groter vermogen dan stoppen op je 67e, simpelweg omdat het geld langer mee moet. Hoe langer de horizon, hoe voorzichtiger je moet zijn met hoeveel je per jaar opneemt: een lager opnamepercentage geeft meer zekerheid dat je het volhoudt.
 
-- **Hoe lang het geld mee moet.** Stoppen op je 45e vraagt meer dan stoppen op je 67e, simpelweg omdat het langer moet meegaan.
-- **Wat je nog binnenkrijgt.** AOW, werkgeverspensioen, en soms huur of deeltijdwerk verlagen je benodigde eigen vermogen. Vooral vanaf je AOW-leeftijd scheelt dat veel.
-- **Belasting.** Over vermogen boven een vrijgesteld bedrag betaal je in Nederland belasting in box 3. Dat knabbelt aan je rendement.
+## 7. Wat je nog binnenkrijgt
+
+Je hoeft niet alles uit eigen vermogen te halen. AOW, werkgeverspensioen en soms huurinkomsten of deeltijdwerk dekken een deel van je uitgaven. Vooral vanaf je [AOW-leeftijd](/uitleg/hoeveel-aow-krijg-ik) scheelt dat veel: je benodigde eigen vermogen wordt dan een stuk lager. Wil je vóór je AOW stoppen, dan moet je die jaren wél zelf overbruggen.
+
+## 8. Belasting
+
+Rendement is niet hetzelfde als wat je overhoudt. Over vermogen boven een vrijgesteld bedrag betaal je in Nederland belasting in box 3. Dat knabbelt elk jaar een stukje van je vermogen af. Reken daarom met je rendement ná belasting, niet met het brutorendement.
 
 ## Reken het uit voor jezelf
 
