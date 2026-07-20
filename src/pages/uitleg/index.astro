@@ -1,0 +1,55 @@
+---
+import { getCollection } from 'astro:content'
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import { breadcrumbSchema } from '../../lib/seo'
+
+const title = 'Uitleg over financiële onafhankelijkheid, pensioen en beleggen'
+const description =
+  'Begrijpelijke uitleg in gewone taal over financiële onafhankelijkheid, pensioen, sparen en beleggen. Eén vraag per pagina, met een kort antwoord bovenaan.'
+
+const all = await getCollection('uitleg')
+const pillars = all.filter((e) => e.data.isPillar).sort((a, b) => a.data.volgorde - b.data.volgorde)
+const clustersOf = (pillarId: string) =>
+  all.filter((e) => e.data.pillar === pillarId).sort((a, b) => a.data.volgorde - b.data.volgorde)
+
+const schemas = [
+  breadcrumbSchema([
+    { name: 'Home', path: '/' },
+    { name: 'Uitleg', path: '/uitleg' },
+  ]),
+]
+---
+
+<BaseLayout title={title} description={description} canonical="/uitleg" jsonLd={schemas}>
+  <main class="flex-1">
+    <div class="max-w-3xl mx-auto px-4 md:px-6 py-10">
+      <h1 class="text-3xl md:text-4xl font-bold text-slate-900">Uitleg</h1>
+      <p class="mt-3 text-lg text-slate-600 leading-relaxed">
+        Korte, begrijpelijke antwoorden op de vragen die het vaakst gesteld worden over
+        vermogensopbouw, pensioen en financiële onafhankelijkheid.
+      </p>
+
+      {
+        pillars.map((p) => (
+          <section class="mt-10">
+            <a href={`/uitleg/${p.id}`} class="group">
+              <h2 class="text-xl font-semibold text-slate-900 group-hover:text-primary-600 transition">
+                {p.data.titel}
+              </h2>
+            </a>
+            <p class="mt-1 text-slate-500">{p.data.beschrijving}</p>
+            <ul class="mt-4 space-y-2">
+              {clustersOf(p.id).map((c) => (
+                <li>
+                  <a href={`/uitleg/${c.id}`} class="text-primary-600 hover:underline">
+                    {c.data.titel}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))
+      }
+    </div>
+  </main>
+</BaseLayout>

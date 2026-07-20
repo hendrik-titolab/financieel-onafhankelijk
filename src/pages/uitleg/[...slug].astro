@@ -1,0 +1,156 @@
+---
+import { getCollection, render } from 'astro:content'
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import { articleSchema, faqSchema, breadcrumbSchema } from '../../lib/seo'
+
+export async function getStaticPaths() {
+  const items = await getCollection('uitleg')
+  return items.map((entry) => ({ params: { slug: entry.id }, props: { entry } }))
+}
+
+const { entry } = Astro.props
+const { Content } = await render(entry)
+const d = entry.data
+const path = `/uitleg/${entry.id}`
+
+const all = await getCollection('uitleg')
+const pillarEntry = d.pillar ? all.find((e) => e.id === d.pillar) : undefined
+const siblings = d.pillar
+  ? all.filter((e) => e.data.pillar === d.pillar && e.id !== entry.id).sort((a, b) => a.data.volgorde - b.data.volgorde)
+  : []
+const children = d.isPillar
+  ? all.filter((e) => e.data.pillar === entry.id).sort((a, b) => a.data.volgorde - b.data.volgorde)
+  : []
+
+const bijgewerkt = new Date(d.bijgewerkt).toLocaleDateString('nl-NL', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+})
+
+const crumbs = [
+  { name: 'Home', path: '/' },
+  { name: 'Uitleg', path: '/uitleg' },
+  ...(pillarEntry ? [{ name: pillarEntry.data.titel, path: `/uitleg/${pillarEntry.id}` }] : []),
+  { name: d.titel, path },
+]
+
+const schemas = [
+  articleSchema({ title: d.titel, description: d.beschrijving, path, dateModified: d.bijgewerkt }),
+  ...(d.faq.length ? [faqSchema(d.faq)] : []),
+  breadcrumbSchema(crumbs),
+]
+---
+
+<BaseLayout title={d.titel} description={d.beschrijving} canonical={path} jsonLd={schemas}>
+  <main class="flex-1">
+    <article class="max-w-2xl mx-auto px-4 md:px-6 py-8 md:py-10">
+      <!-- Kruimelpad -->
+      <nav class="text-xs text-slate-400 mb-4 flex flex-wrap items-center gap-1.5" aria-label="Kruimelpad">
+        <a href="/" class="hover:text-primary-600">Home</a><span>/</span>
+        <a href="/uitleg" class="hover:text-primary-600">Uitleg</a>
+        {pillarEntry && (
+          <>
+            <span>/</span>
+            <a href={`/uitleg/${pillarEntry.id}`} class="hover:text-primary-600">{pillarEntry.data.titel}</a>
+          </>
+        )}
+      </nav>
+
+      <h1 class="text-3xl md:text-4xl font-bold text-slate-900 leading-tight">{d.titel}</h1>
+
+      <!-- Answer-first: kort antwoord bovenaan -->
+      <div class="mt-5 rounded-xl bg-primary-50 border border-primary-100 p-5">
+        <p class="text-base text-slate-800 leading-relaxed">{d.samenvatting}</p>
+      </div>
+
+      <!-- Tool-CTA -->
+      {d.tool && (
+        <a
+          href={d.tool.href}
+          class="mt-5 inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 transition"
+        >
+          {d.tool.label}
+          <span aria-hidden="true">→</span>
+        </a>
+      )}
+
+      <!-- Inhoud -->
+      <div class="prose prose-slate mt-8 max-w-none prose-headings:text-slate-900 prose-a:text-primary-600 prose-a:no-underline hover:prose-a:underline">
+        <Content />
+      </div>
+
+      <!-- Pillar: overzicht clusters -->
+      {children.length > 0 && (
+        <section class="mt-10">
+          <h2 class="text-xl font-semibold text-slate-900 mb-4">Verder lezen</h2>
+          <div class="grid gap-3 sm:grid-cols-2">
+            {children.map((c) => (
+              <a
+                href={`/uitleg/${c.id}`}
+                class="block rounded-lg border border-slate-200 bg-white p-4 hover:border-primary-200 hover:shadow-sm transition"
+              >
+                <span class="font-medium text-slate-800">{c.data.titel}</span>
+                <span class="mt-1 block text-sm text-slate-500">{c.data.beschrijving}</span>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <!-- FAQ -->
+      {d.faq.length > 0 && (
+        <section class="mt-10">
+          <h2 class="text-xl font-semibold text-slate-900 mb-4">Veelgestelde vragen</h2>
+          <div class="space-y-3">
+            {d.faq.map((f) => (
+              <details class="rounded-lg border border-slate-200 bg-white p-4">
+                <summary class="font-medium text-slate-800 cursor-pointer">{f.vraag}</summary>
+                <p class="mt-2 text-sm text-slate-600 leading-relaxed">{f.antwoord}</p>
+              </details>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <!-- Cluster: lees ook + terug naar pillar -->
+      {(siblings.length > 0 || pillarEntry) && (
+        <section class="mt-10 border-t border-slate-100 pt-6">
+          <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Lees ook</h2>
+          <ul class="space-y-2 text-sm">
+            {pillarEntry && (
+              <li>
+                <a href={`/uitleg/${pillarEntry.id}`} class="text-primary-600 hover:underline">
+                  {pillarEntry.data.titel}
+                </a>
+              </li>
+            )}
+            {siblings.map((s) => (
+              <li>
+                <a href={`/uitleg/${s.id}`} class="text-primary-600 hover:underline">{s.data.titel}</a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <!-- Bronnen -->
+      {d.bronnen.length > 0 && (
+        <section class="mt-10 border-t border-slate-100 pt-6">
+          <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Bronnen</h2>
+          <ul class="space-y-1.5 text-sm text-slate-500 list-disc pl-5">
+            {d.bronnen.map((b) => (
+              <li>
+                <a href={b.url} rel="noopener nofollow" target="_blank" class="hover:text-primary-600">{b.titel}</a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <p class="mt-8 text-xs text-slate-400">
+        Laatst gecontroleerd: {bijgewerkt}. Deze uitleg is indicatief en educatief — geen persoonlijk financieel advies.
+      </p>
+    </article>
+  </main>
+</BaseLayout>
