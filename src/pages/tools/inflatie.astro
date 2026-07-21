@@ -1,0 +1,52 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import { InflatieCalculator } from '../../components/Inflatie'
+import { articleSchema, faqSchema, breadcrumbSchema } from '../../lib/seo'
+
+const title = 'Inflatie en je spaargeld: koopkrachtberekening | Ben ik financieel onafhankelijk?'
+const description =
+  'Bereken gratis hoe snel inflatie de koopkracht van je spaargeld uitholt — óók als je spaarrente krijgt. Zie het verschil tussen je nominale saldo en je koopkracht over de jaren.'
+
+const faq = [
+  {
+    vraag: 'Waarom daalt mijn koopkracht als ik toch spaarrente krijg?',
+    antwoord:
+      'Zolang de inflatie hoger is dan je spaarrente, stijgen de prijzen sneller dan je saldo groeit. Je hebt dan wel meer euro’s, maar je kunt er minder voor kopen. Je nominale saldo groeit, je koopkracht daalt.',
+  },
+  {
+    vraag: 'Wat is netto reëel rendement?',
+    antwoord:
+      'Het reële rendement is je rendement na aftrek van inflatie. Je berekent het als (1 + spaarrente) gedeeld door (1 + inflatie), min 1. Is het negatief, dan verlies je koopkracht; is het positief, dan wint je geld aan koopkracht.',
+  },
+  {
+    vraag: 'Houdt deze tool rekening met belasting in box 3?',
+    antwoord:
+      'Nee. De tool houdt bewust geen rekening met de vermogensrendementsheffing (box 3), omdat die afhangt van je vermogensmix, vrijstellingen en jaarlijkse wijzigingen. De uitkomst is een indicatie, geen persoonlijk advies.',
+  },
+]
+
+const schemas = [
+  articleSchema({ title, description, path: '/tools/inflatie', dateModified: '2026-07-21' }),
+  faqSchema(faq),
+  breadcrumbSchema([
+    { name: 'Home', path: '/' },
+    { name: 'Inflatie en spaargeld', path: '/tools/inflatie' },
+  ]),
+]
+---
+
+<BaseLayout title={title} description={description} jsonLd={schemas}>
+  <main class="flex-1 p-4 md:p-6">
+    <div class="max-w-2xl mx-auto">
+      <h1 class="text-2xl font-semibold text-slate-900 mb-1">
+        Hoe snel eet inflatie jouw spaargeld op?
+      </h1>
+      <p class="text-sm text-slate-500 mb-5">
+        Je spaargeld groeit met rente, maar door inflatie kun je er elk jaar iets minder voor kopen.
+        Vul je startbedrag, de verwachte inflatie en je spaarrente in en zie hoe je koopkracht zich
+        ontwikkelt.
+      </p>
+      <InflatieCalculator client:load />
+    </div>
+  </main>
+</BaseLayout>

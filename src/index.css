@@ -91,6 +91,14 @@ input[type="range"]::-moz-range-thumb {
   background: white;
 }
 
+/* Brede tabellen in artikelen (prose) mogen op smalle schermen horizontaal
+   scrollen in plaats van de pagina op te rekken. */
+.prose table {
+  display: block;
+  overflow-x: auto;
+  max-width: 100%;
+}
+
 /* Altijd zichtbare scrollbar voor het invoerpaneel, zodat gebruikers zien dat
    er verder naar beneden meer velden zijn */
 .visible-scrollbar {
