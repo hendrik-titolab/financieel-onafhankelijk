@@ -10,6 +10,19 @@ Een React+Vite webapplicatie voor pensioenplanning en jaarruimteberekeningen. Ge
 
 ---
 
+## Content & schrijfstijl
+
+Alle geschreven content (uitlegartikelen, tool-teksten, microcopy) volgt **`SCHRIJFGIDS.md`**
+(schrijfstijl Hendrik Schakel). Kernregels: nuchter en direct, actieve zinnen, onderbouwing boven
+bewering, rekenvoorbeelden/tabellen als bewijs. **Nooit** gedachtestreepjes (em-dashes) — gebruik
+een komma, dubbele punt of twee losse zinnen. Geen engagement-vraag als afsluiter, geen
+verkooptaal, geen "in dit artikel…". Website long-reads op taalniveau B1-B2.
+
+Twee artikel-formats in de `uitleg`-collectie:
+- **Standaard** (`.md`): answer-first box bovenaan, H2-secties, FAQ, bronnen.
+- **Modulair naslag** (`.mdx`): doorlopende intro die de spanning opzet, daarna factor-blokken via
+  het `Factor`-accordeon-component (`src/components/Factor.astro`); zet `toonSamenvatting: false`.
+
 ## Huidige staat van de app
 
 ### Tab 1: Pensioenplanning

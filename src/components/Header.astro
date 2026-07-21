@@ -4,10 +4,8 @@ const path = Astro.url.pathname
 const nav = [
   { href: '/', label: 'Home', exact: true },
   { href: '/uitleg', label: 'Uitleg' },
-  { href: '/ben-ik-financieel-onafhankelijk', label: 'Ben ik FO?' },
-  { href: '/bruto-netto', label: 'Bruto-netto' },
-  { href: '/tools/jaarruimte', label: 'Jaarruimte' },
-  { href: '/tools/inflatie', label: 'Inflatie' },
+  { href: '/tools', label: 'Rekentools' },
+  { href: '/over', label: 'Over' },
 ]
 const isActive = (href: string, exact?: boolean) =>
   exact ? path === href : path === href || path.startsWith(href + '/')

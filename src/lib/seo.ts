@@ -80,3 +80,17 @@ export function breadcrumbSchema(items: { name: string; path: string }[]) {
     })),
   }
 }
+
+/** Lijst met items — voor hub-/overzichtspagina's (bijv. de rekentools-hub). */
+export function itemListSchema(items: { name: string; path: string }[]) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    itemListElement: items.map((it, idx) => ({
+      '@type': 'ListItem',
+      position: idx + 1,
+      name: it.name,
+      url: absUrl(it.path),
+    })),
+  }
+}

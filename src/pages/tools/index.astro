@@ -1,0 +1,89 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import { breadcrumbSchema, itemListSchema } from '../../lib/seo'
+
+const title = 'Rekentools — gratis financiële calculators'
+const description =
+  'Alle gratis rekentools op een rij: financiële onafhankelijkheid, bruto-netto salaris, jaarruimte voor pensioen en het effect van inflatie op je spaargeld.'
+
+const tools = [
+  {
+    href: '/ben-ik-financieel-onafhankelijk',
+    naam: 'Pensioen- & FO-planner',
+    label: 'Financiële onafhankelijkheid',
+    tekst:
+      'Reken uit of en wanneer je zonder werk rond kunt komen. Een Monte Carlo-simulatie laat zien hoe groot de kans is dat je vermogen genoeg is.',
+  },
+  {
+    href: '/bruto-netto',
+    naam: 'Bruto-netto berekenen',
+    label: 'Salaris',
+    tekst:
+      'Zie wat je van je brutosalaris netto overhoudt (of andersom), inclusief belastingschijven en heffingskortingen voor 2026.',
+  },
+  {
+    href: '/tools/jaarruimte',
+    naam: 'Jaarruimte berekenen',
+    label: 'Pensioen',
+    tekst:
+      'Bereken hoeveel je fiscaal aftrekbaar mag inleggen voor extra pensioen om een pensioentekort aan te vullen.',
+  },
+  {
+    href: '/tools/inflatie',
+    naam: 'Inflatie & spaargeld',
+    label: 'Inflatie',
+    tekst:
+      'Zie hoe snel inflatie de koopkracht van je spaargeld uitholt, ook als het rente oplevert.',
+  },
+]
+
+const crumbs = [
+  { name: 'Home', path: '/' },
+  { name: 'Rekentools', path: '/tools' },
+]
+const schemas = [
+  breadcrumbSchema(crumbs),
+  itemListSchema(tools.map((t) => ({ name: t.naam, path: t.href }))),
+]
+---
+
+<BaseLayout title={title} description={description} canonical="/tools" jsonLd={schemas}>
+  <main class="flex-1">
+    <div class="max-w-5xl mx-auto px-4 md:px-6 py-10">
+      <nav class="text-xs text-slate-400 mb-4 flex flex-wrap items-center gap-1.5" aria-label="Kruimelpad">
+        <a href="/" class="hover:text-primary-600">Home</a><span>/</span>
+        <span class="text-slate-500">Rekentools</span>
+      </nav>
+
+      <h1 class="text-3xl md:text-4xl font-bold text-slate-900">Rekentools</h1>
+      <p class="mt-3 text-lg text-slate-600 leading-relaxed max-w-2xl">
+        Gratis en zonder account. Reken zelf uit hoe je ervoor staat, in plaats van te gokken.
+      </p>
+
+      <div class="mt-8 grid gap-4 sm:grid-cols-2">
+        {
+          tools.map((t) => (
+            <a
+              href={t.href}
+              class="card hover:shadow-md hover:border-primary-100 transition group flex flex-col"
+            >
+              <span class="text-xs font-medium text-primary-600 uppercase tracking-wide">
+                {t.label}
+              </span>
+              <span class="mt-1 text-lg font-semibold text-slate-900 group-hover:text-primary-600 transition">
+                {t.naam}
+              </span>
+              <span class="mt-2 text-sm text-slate-500 leading-relaxed">{t.tekst}</span>
+              <span class="mt-4 text-sm font-medium text-primary-600">Naar de tool →</span>
+            </a>
+          ))
+        }
+      </div>
+
+      <p class="mt-8 text-sm text-slate-500">
+        Op zoek naar uitleg in plaats van een rekentool?
+        <a href="/uitleg" class="text-primary-600 font-medium hover:underline">Lees de uitleg →</a>
+      </p>
+    </div>
+  </main>
+</BaseLayout>

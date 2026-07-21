@@ -28,6 +28,13 @@ const tools = [
       'Bereken hoeveel je fiscaal aftrekbaar mag inleggen voor extra pensioen om een pensioentekort aan te vullen.',
     label: 'Pensioen',
   },
+  {
+    href: '/tools/inflatie',
+    naam: 'Inflatie & spaargeld',
+    tekst:
+      'Zie hoe snel inflatie de koopkracht van je spaargeld uitholt, ook als het rente oplevert.',
+    label: 'Inflatie',
+  },
 ]
 
 const faq = [
@@ -60,23 +67,26 @@ const schemas = [faqSchema(faq)]
       </p>
       <div class="mt-6 flex flex-wrap gap-3 justify-center">
         <a
-          href="/ben-ik-financieel-onafhankelijk"
+          href="/tools"
           class="px-5 py-2.5 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 transition"
         >
-          Start met de planner
+          Bekijk de rekentools
         </a>
         <a
-          href="#tools"
+          href="/uitleg"
           class="px-5 py-2.5 rounded-lg bg-white text-slate-700 text-sm font-medium border border-slate-200 hover:bg-slate-50 transition"
         >
-          Bekijk alle tools
+          Lees de uitleg
         </a>
       </div>
     </section>
 
     <!-- Tools -->
     <section id="tools" class="max-w-5xl mx-auto px-4 md:px-6 py-8">
-      <h2 class="text-xl font-semibold text-slate-900 mb-5">Rekentools</h2>
+      <div class="flex items-baseline justify-between mb-5">
+        <h2 class="text-xl font-semibold text-slate-900">Rekentools</h2>
+        <a href="/tools" class="text-sm font-medium text-primary-600 hover:underline">Alle rekentools →</a>
+      </div>
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {
           tools.map((t) => (
