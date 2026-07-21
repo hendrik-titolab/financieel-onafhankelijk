@@ -14,19 +14,17 @@ faq:
   - vraag: "Wat is het verschil tussen inflatie en koopkracht?"
     antwoord: "Inflatie is de stijging van de prijzen. Koopkracht is wat je met je geld kunt kopen. Als de inflatie hoger is dan de stijging van je inkomen of je rendement, daalt je koopkracht: je hebt evenveel of meer euro's, maar je kunt er minder voor kopen."
 bronnen:
-  - titel: "CBS — cijfers over inflatie en consumentenprijzen"
-    url: "https://www.cbs.nl"
+  - titel: "CBS — dashboard consumentenprijzen (inflatie)"
+    url: "https://www.cbs.nl/nl-nl/visualisaties/dashboard-consumentenprijzen"
   - titel: "Europese Centrale Bank — prijsstabiliteit en het inflatiedoel"
     url: "https://www.ecb.europa.eu"
-  - titel: "De Nederlandsche Bank — uitleg over inflatie"
-    url: "https://www.dnb.nl"
 ---
 
 Inflatie is de stijging van het algemene prijspeil. Simpel gezegd: dezelfde boodschappen, dezelfde verzekering, hetzelfde dagje uit kosten volgend jaar iets meer dan nu. Je geld wordt dus niet minder in aantal euro's, maar wel in wat je ermee kunt kopen.
 
 ## Wat inflatie precies is
 
-Om inflatie te meten kijken statistici naar een vast "mandje" van producten en diensten dat een gemiddeld huishouden koopt: boodschappen, huur, energie, kleding, vervoer. Wordt dat mandje duurder, dan is er inflatie. In Nederland houdt het [CBS](https://www.cbs.nl) dit bij; de Europese Centrale Bank streeft voor de eurozone naar een inflatie van rond de 2% per jaar.
+Om inflatie te meten kijken statistici naar een vast "mandje" van producten en diensten dat een gemiddeld huishouden koopt: boodschappen, huur, energie, kleding, vervoer. Wordt dat mandje duurder, dan is er inflatie. In Nederland houdt het [CBS](https://www.cbs.nl/nl-nl/visualisaties/dashboard-consumentenprijzen) dit bij; de Europese Centrale Bank streeft voor de eurozone naar een inflatie van rond de 2% per jaar.
 
 Een lage, stabiele inflatie is normaal en zelfs gewenst. Het probleem zit niet in één jaar, maar in de optelsom over veel jaren.
 
