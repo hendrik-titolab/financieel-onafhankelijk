@@ -59,20 +59,23 @@ const schemas = [
 
       <h1 class="text-3xl md:text-4xl font-bold text-slate-900 leading-tight">{d.titel}</h1>
 
-      <!-- Answer-first: kort antwoord bovenaan -->
-      <div class="mt-5 rounded-xl bg-primary-50 border border-primary-100 p-5">
-        <p class="text-base text-slate-800 leading-relaxed">{d.samenvatting}</p>
-      </div>
+      <!-- Answer-first + tool-CTA (uit voor modulaire artikelen die met een intro openen) -->
+      {d.toonSamenvatting && (
+        <>
+          <div class="mt-5 rounded-xl bg-primary-50 border border-primary-100 p-5">
+            <p class="text-base text-slate-800 leading-relaxed">{d.samenvatting}</p>
+          </div>
 
-      <!-- Tool-CTA -->
-      {d.tool && (
-        <a
-          href={d.tool.href}
-          class="mt-5 inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 transition"
-        >
-          {d.tool.label}
-          <span aria-hidden="true">→</span>
-        </a>
+          {d.tool && (
+            <a
+              href={d.tool.href}
+              class="mt-5 inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 transition"
+            >
+              {d.tool.label}
+              <span aria-hidden="true">→</span>
+            </a>
+          )}
+        </>
       )}
 
       <!-- Inhoud -->
@@ -149,7 +152,7 @@ const schemas = [
       )}
 
       <p class="mt-8 text-xs text-slate-400">
-        Laatst gecontroleerd: {bijgewerkt}. Deze uitleg is indicatief en educatief — geen persoonlijk financieel advies.
+        Laatst gecontroleerd: {bijgewerkt}. Deze uitleg is indicatief en educatief. Geen persoonlijk financieel advies.
       </p>
     </article>
   </main>

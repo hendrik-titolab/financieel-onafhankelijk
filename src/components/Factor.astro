@@ -1,0 +1,105 @@
+---
+/**
+ * Factor — een uitklapbaar blok voor modulaire naslagartikelen (schrijfgids).
+ * Altijd zichtbaar: de factornaam + één pakkende kop-zin. Uitklapbaar: de uitleg
+ * (de default-slot, geschreven als gewone Markdown/MDX, inclusief tabellen).
+ *
+ * Gebruik in een .mdx-artikel:
+ *   <Factor naam="Toekomstige uitgaven" zin="Hoe meer je uitgeeft, hoe meer je nodig hebt.">
+ *
+ *   De uitleg hier, met een lege regel eromheen zodat Markdown werkt.
+ *
+ *   </Factor>
+ */
+interface Props {
+  naam: string
+  zin: string
+}
+const { naam, zin } = Astro.props
+---
+
+<details class="factor">
+  <summary class="factor-summary">
+    <span class="factor-tekst">
+      <span class="factor-naam">{naam}</span>
+      <span class="factor-zin">{zin}</span>
+    </span>
+    <svg
+      class="factor-chevron"
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <polyline points="6 9 12 15 18 9"></polyline>
+    </svg>
+  </summary>
+  <div class="factor-body">
+    <slot />
+  </div>
+</details>
+
+<style>
+  .factor {
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    background: #fff;
+    margin: 0.6rem 0;
+  }
+  .factor[open] {
+    border-color: #bfdbfe;
+  }
+  .factor-summary {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    cursor: pointer;
+    list-style: none;
+  }
+  .factor-summary::-webkit-details-marker {
+    display: none;
+  }
+  .factor-tekst {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+  .factor-naam {
+    font-weight: 600;
+    color: #0f172a;
+    line-height: 1.35;
+  }
+  .factor-zin {
+    color: #64748b;
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+  .factor-chevron {
+    color: #94a3b8;
+    flex-shrink: 0;
+    margin-top: 0.15rem;
+    transition: transform 0.2s ease;
+  }
+  .factor[open] .factor-chevron {
+    transform: rotate(180deg);
+  }
+  .factor-body {
+    padding: 0.25rem 1.25rem 1.15rem;
+    color: #475569;
+  }
+  /* Marges van het eerste/laatste slot-element trimmen (slot-inhoud staat buiten
+     de scope, dus via :global). */
+  .factor-body :global(> :first-child) {
+    margin-top: 0;
+  }
+  .factor-body :global(> :last-child) {
+    margin-bottom: 0;
+  }
+</style>
