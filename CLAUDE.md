@@ -18,10 +18,12 @@ bewering, rekenvoorbeelden/tabellen als bewijs. **Nooit** gedachtestreepjes (em-
 een komma, dubbele punt of twee losse zinnen. Geen engagement-vraag als afsluiter, geen
 verkooptaal, geen "in dit artikel…". Website long-reads op taalniveau B1-B2.
 
-Twee artikel-formats in de `uitleg`-collectie:
-- **Standaard** (`.md`): answer-first box bovenaan, H2-secties, FAQ, bronnen.
-- **Modulair naslag** (`.mdx`): doorlopende intro die de spanning opzet, daarna factor-blokken via
-  het `Factor`-accordeon-component (`src/components/Factor.astro`); zet `toonSamenvatting: false`.
+Elk artikel opent met een answer-first box (het `samenvatting`-veld) plus een tool-CTA, en sluit af
+met FAQ + bronnen. Twee body-formats in de `uitleg`-collectie:
+- **Standaard** (`.md`): H2-secties met lopende tekst.
+- **Modulair naslag** (`.mdx`): factor-blokken via het `Factor`-accordeon-component
+  (`src/components/Factor.astro`).
+(`toonSamenvatting: false` kan de box optioneel verbergen, maar dat gebruiken we standaard niet.)
 
 ## Huidige staat van de app
 
