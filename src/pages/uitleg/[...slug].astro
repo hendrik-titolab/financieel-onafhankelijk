@@ -30,8 +30,8 @@ const bijgewerkt = new Date(d.bijgewerkt).toLocaleDateString('nl-NL', {
 
 const crumbs = [
   { name: 'Home', path: '/' },
-  { name: 'Uitleg', path: '/uitleg' },
-  ...(pillarEntry ? [{ name: pillarEntry.data.titel, path: `/uitleg/${pillarEntry.id}` }] : []),
+  { name: 'Uitleg', path: '/uitleg/' },
+  ...(pillarEntry ? [{ name: pillarEntry.data.titel, path: `/uitleg/${pillarEntry.id}/` }] : []),
   { name: d.titel, path },
 ]
 

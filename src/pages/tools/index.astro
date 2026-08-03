@@ -8,28 +8,28 @@ const description =
 
 const tools = [
   {
-    href: '/ben-ik-financieel-onafhankelijk',
+    href: '/ben-ik-financieel-onafhankelijk/',
     naam: 'Pensioen- & FO-planner',
     label: 'Financiële onafhankelijkheid',
     tekst:
       'Reken uit of en wanneer je zonder werk rond kunt komen. Een Monte Carlo-simulatie laat zien hoe groot de kans is dat je vermogen genoeg is.',
   },
   {
-    href: '/bruto-netto',
+    href: '/bruto-netto/',
     naam: 'Bruto-netto berekenen',
     label: 'Salaris',
     tekst:
       'Zie wat je van je brutosalaris netto overhoudt (of andersom), inclusief belastingschijven en heffingskortingen voor 2026.',
   },
   {
-    href: '/tools/jaarruimte',
+    href: '/tools/jaarruimte/',
     naam: 'Jaarruimte berekenen',
     label: 'Pensioen',
     tekst:
       'Bereken hoeveel je fiscaal aftrekbaar mag inleggen voor extra pensioen om een pensioentekort aan te vullen.',
   },
   {
-    href: '/tools/inflatie',
+    href: '/tools/inflatie/',
     naam: 'Inflatie & spaargeld',
     label: 'Inflatie',
     tekst:
@@ -39,7 +39,7 @@ const tools = [
 
 const crumbs = [
   { name: 'Home', path: '/' },
-  { name: 'Rekentools', path: '/tools' },
+  { name: 'Rekentools', path: '/tools/' },
 ]
 const schemas = [
   breadcrumbSchema(crumbs),
@@ -47,7 +47,7 @@ const schemas = [
 ]
 ---
 
-<BaseLayout title={title} description={description} canonical="/tools" jsonLd={schemas}>
+<BaseLayout title={title} description={description} canonical="/tools/" jsonLd={schemas}>
   <main class="flex-1">
     <div class="max-w-5xl mx-auto px-4 md:px-6 py-10">
       <nav class="text-xs text-slate-400 mb-4 flex flex-wrap items-center gap-1.5" aria-label="Kruimelpad">

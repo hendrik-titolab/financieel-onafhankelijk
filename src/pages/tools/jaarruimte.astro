@@ -21,11 +21,11 @@ const faq = [
 ]
 
 const schemas = [
-  articleSchema({ title, description, path: '/tools/jaarruimte', dateModified: '2026-06-01' }),
+  articleSchema({ title, description, path: '/tools/jaarruimte/', dateModified: '2026-06-01' }),
   faqSchema(faq),
   breadcrumbSchema([
     { name: 'Home', path: '/' },
-    { name: 'Jaarruimte berekenen', path: '/tools/jaarruimte' },
+    { name: 'Jaarruimte berekenen', path: '/tools/jaarruimte/' },
   ]),
 ]
 ---

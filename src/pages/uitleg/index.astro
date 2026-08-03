@@ -15,12 +15,12 @@ const clustersOf = (pillarId: string) =>
 const schemas = [
   breadcrumbSchema([
     { name: 'Home', path: '/' },
-    { name: 'Uitleg', path: '/uitleg' },
+    { name: 'Uitleg', path: '/uitleg/' },
   ]),
 ]
 ---
 
-<BaseLayout title={title} description={description} canonical="/uitleg" jsonLd={schemas}>
+<BaseLayout title={title} description={description} canonical="/uitleg/" jsonLd={schemas}>
   <main class="flex-1">
     <div class="max-w-3xl mx-auto px-4 md:px-6 py-10">
       <h1 class="text-3xl md:text-4xl font-bold text-slate-900">Uitleg</h1>

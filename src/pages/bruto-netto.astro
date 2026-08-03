@@ -21,11 +21,11 @@ const faq = [
 ]
 
 const schemas = [
-  articleSchema({ title, description, path: '/bruto-netto', dateModified: '2026-06-01' }),
+  articleSchema({ title, description, path: '/bruto-netto/', dateModified: '2026-06-01' }),
   faqSchema(faq),
   breadcrumbSchema([
     { name: 'Home', path: '/' },
-    { name: 'Bruto-netto berekenen', path: '/bruto-netto' },
+    { name: 'Bruto-netto berekenen', path: '/bruto-netto/' },
   ]),
 ]
 ---
