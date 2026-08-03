@@ -37,6 +37,7 @@ export function articleSchema(opts: {
   title: string
   description: string
   path: string
+  image?: string
   datePublished?: string
   dateModified?: string
 }) {
@@ -46,6 +47,7 @@ export function articleSchema(opts: {
     headline: opts.title,
     description: opts.description,
     url: absUrl(opts.path),
+    image: absUrl(opts.image ?? '/og-default.png'),
     inLanguage: 'nl-NL',
     ...(opts.datePublished ? { datePublished: opts.datePublished } : {}),
     ...(opts.dateModified ? { dateModified: opts.dateModified } : {}),
