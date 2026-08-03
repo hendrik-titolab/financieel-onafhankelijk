@@ -11,7 +11,7 @@ export async function getStaticPaths() {
 const { entry } = Astro.props
 const { Content } = await render(entry)
 const d = entry.data
-const path = `/uitleg/${entry.id}`
+const path = `/uitleg/${entry.id}/`
 
 const all = await getCollection('uitleg')
 const pillarEntry = d.pillar ? all.find((e) => e.id === d.pillar) : undefined
