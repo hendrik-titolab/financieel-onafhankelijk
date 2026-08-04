@@ -5,7 +5,7 @@ import { breadcrumbSchema } from '../lib/seo'
 
 const title = 'Privacy en gegevensgebruik | Ben ik financieel onafhankelijk?'
 const description =
-  'Wat deze site wel en niet met je gegevens doet: geen accounts, geen tracking cookies, en welke berekeningen lokaal in je browser blijven staan.'
+  'Wat deze site wel en niet met je gegevens doet: geen accounts, geen tracking cookies, wel cookieloze bezoekersstatistieken, en welke berekeningen lokaal in je browser blijven staan.'
 
 const schemas = [
   breadcrumbSchema([
@@ -27,8 +27,9 @@ const bijgewerkt = new Date('2026-08-04').toLocaleDateString('nl-NL', {
 
       <div class="text-slate-600 leading-relaxed space-y-4">
         <p>
-          Kort samengevat: je hoeft geen account aan te maken, we zetten geen trackingcookies en
-          we verkopen je gegevens niet. Hieronder staat precies wat er wel gebeurt.
+          Kort samengevat: je hoeft geen account aan te maken, we zetten geen trackingcookies,
+          en we verkopen je gegevens niet. We tellen wel, cookieloos, hoeveel bezoekers de site
+          en de tools gebruiken. Hieronder staat precies wat er wel gebeurt.
         </p>
 
         <h2 class="text-xl font-semibold text-slate-900 pt-4">Rekentools</h2>
@@ -46,9 +47,10 @@ const bijgewerkt = new Date('2026-08-04').toLocaleDateString('nl-NL', {
 
         <h2 class="text-xl font-semibold text-slate-900 pt-4">Cookies en meetgegevens</h2>
         <p>
-          Deze site zet geen trackingcookies en gebruikt op dit moment geen
-          bezoekersanalyse (zoals Google Analytics). Verandert dat, dan werken we deze
-          pagina bij vóórdat de meting live gaat.
+          Deze site zet geen trackingcookies. We gebruiken wel Vercel Web Analytics om te
+          zien hoeveel mensen de site en de rekentools bezoeken. Die meting werkt zonder
+          cookies en zonder een profiel van jou persoonlijk op te bouwen: we zien
+          bezoekersaantallen per pagina en waar bezoekers vandaan komen, niet wie je bent.
         </p>
         <p>
           De hostingpartij (Vercel) verwerkt, zoals elke webhost, technische gegevens die
