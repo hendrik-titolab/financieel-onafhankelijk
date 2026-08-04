@@ -1,0 +1,91 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro'
+import { FEEDBACK_URL, SITE } from '../config/site'
+import { breadcrumbSchema } from '../lib/seo'
+
+const title = 'Privacy en gegevensgebruik | Ben ik financieel onafhankelijk?'
+const description =
+  'Wat deze site wel en niet met je gegevens doet: geen accounts, geen tracking cookies, en welke berekeningen lokaal in je browser blijven staan.'
+
+const schemas = [
+  breadcrumbSchema([
+    { name: 'Home', path: '/' },
+    { name: 'Privacy', path: '/privacy/' },
+  ]),
+]
+const bijgewerkt = new Date('2026-08-04').toLocaleDateString('nl-NL', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+})
+---
+
+<BaseLayout title={title} description={description} jsonLd={schemas}>
+  <main class="flex-1">
+    <article class="max-w-2xl mx-auto px-4 md:px-6 py-10">
+      <h1 class="text-3xl font-bold text-slate-900 mb-6">Privacy en gegevensgebruik</h1>
+
+      <div class="text-slate-600 leading-relaxed space-y-4">
+        <p>
+          Kort samengevat: je hoeft geen account aan te maken, we zetten geen trackingcookies en
+          we verkopen je gegevens niet. Hieronder staat precies wat er wel gebeurt.
+        </p>
+
+        <h2 class="text-xl font-semibold text-slate-900 pt-4">Rekentools</h2>
+        <p>
+          De bedragen die je invult in de rekentools worden alleen in je eigen browser
+          verwerkt, om de berekening te tonen. Ze gaan niet naar een server en worden nergens
+          door ons opgeslagen.
+        </p>
+        <p>
+          Eén uitzondering: de jaarruimtetool onthoudt eerder opgeslagen berekeningen via de
+          lokale opslag van je browser (localStorage), zodat je ze bij een volgend bezoek
+          terugziet. Die opslag staat alleen op jouw apparaat. Wissen kan via je
+          browserinstellingen; wij hebben er geen toegang toe en krijgen 'm nooit te zien.
+        </p>
+
+        <h2 class="text-xl font-semibold text-slate-900 pt-4">Cookies en meetgegevens</h2>
+        <p>
+          Deze site zet geen trackingcookies en gebruikt op dit moment geen
+          bezoekersanalyse (zoals Google Analytics). Verandert dat, dan werken we deze
+          pagina bij vóórdat de meting live gaat.
+        </p>
+        <p>
+          De hostingpartij (Vercel) verwerkt, zoals elke webhost, technische gegevens die
+          nodig zijn om de site te laten werken en beschikbaar te houden, zoals IP-adressen in
+          serverlogs. Dat gebeurt buiten onze directe controle om, op infrastructuurniveau.
+        </p>
+
+        <h2 class="text-xl font-semibold text-slate-900 pt-4">Feedbackformulier</h2>
+        <p>
+          Laat je feedback achter via het
+          {
+            FEEDBACK_URL && (
+              <a href={FEEDBACK_URL} class="text-primary-600 hover:text-primary-700 underline" rel="noopener" target="_blank">
+                feedbackformulier
+              </a>
+            )
+          }, dan loopt dat via Google Formulieren. Wat je daar invult (en eventueel je
+          e-mailadres, als je dat zelf toevoegt) valt onder het privacybeleid van Google, niet
+          onder dat van ons. We gebruiken de reacties alleen om de site en de tools te
+          verbeteren.
+        </p>
+
+        <h2 class="text-xl font-semibold text-slate-900 pt-4">Vragen</h2>
+        <p>
+          Vraag over deze pagina, of denk je dat er iets niet klopt? Laat het weten via
+          hetzelfde
+          {
+            FEEDBACK_URL && (
+              <a href={FEEDBACK_URL} class="text-primary-600 hover:text-primary-700 underline" rel="noopener" target="_blank">
+                feedbackformulier
+              </a>
+            )
+          }.
+        </p>
+
+        <p class="text-sm text-slate-400 pt-4">Laatst bijgewerkt: {bijgewerkt}.</p>
+      </div>
+    </article>
+  </main>
+</BaseLayout>
