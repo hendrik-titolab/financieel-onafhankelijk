@@ -4,15 +4,23 @@ function eur(v: number) {
   return `€ ${Math.round(v).toLocaleString('nl-NL')}`
 }
 
+function setColumnWidths(ws: import('exceljs').Worksheet, widths: number[]) {
+  widths.forEach((wch, i) => {
+    ws.getColumn(i + 1).width = wch
+  })
+}
+
 export async function exportToExcel(
   inputs: PensionInputs,
   result: PensionResult,
   mc: MonteCarloResult,
   clientName: string
 ) {
-  // xlsx is zwaar en alleen nodig bij export → dynamisch laden (code-splitting)
-  const XLSX = await import('xlsx')
-  const wb = XLSX.utils.book_new()
+  // exceljs is zwaar en alleen nodig bij export → dynamisch laden (code-splitting).
+  // De kant-en-klare browser-bundel gebruiken (niet de Node-hoofdingang), anders
+  // sleept de build fs/stream-polyfills mee.
+  const ExcelJS = (await import('exceljs/dist/exceljs.js')).default
+  const wb = new ExcelJS.Workbook()
 
   // --- Sheet 1: Invoer ---
   const inputRows = [
@@ -58,9 +66,9 @@ export async function exportToExcel(
     ['Totaal uitgaven', (inputs.lifeEvents ?? []).filter(e => e.amount < 0).reduce((s, e) => s + e.amount, 0)],
   ]
 
-  const ws1 = XLSX.utils.aoa_to_sheet(inputRows)
-  ws1['!cols'] = [{ wch: 35 }, { wch: 20 }]
-  XLSX.utils.book_append_sheet(wb, ws1, 'Invoer')
+  const ws1 = wb.addWorksheet('Invoer')
+  ws1.addRows(inputRows)
+  setColumnWidths(ws1, [35, 20])
 
   // --- Sheet 2: Resultaten ---
   const phaseRows: (string | number)[][] = []
@@ -91,9 +99,9 @@ export async function exportToExcel(
     ['Alle bedragen in huidig koopkracht (reëel rendement)'],
   ]
 
-  const ws2 = XLSX.utils.aoa_to_sheet(resultRows)
-  ws2['!cols'] = [{ wch: 40 }, { wch: 20 }, { wch: 20 }, { wch: 20 }]
-  XLSX.utils.book_append_sheet(wb, ws2, 'Resultaten')
+  const ws2 = wb.addWorksheet('Resultaten')
+  ws2.addRows(resultRows)
+  setColumnWidths(ws2, [40, 20, 20, 20])
 
   // --- Sheet 3: Jaarlijkse Prognose ---
   const headers = ['Leeftijd', 'Jaar', 'Fase', 'Vermogen (€)', 'Eigen kapitaal (€/mnd)', 'AOW (€/mnd)', 'Werkgever (€/mnd)', 'Totaal inkomen (€/mnd)']
@@ -108,9 +116,9 @@ export async function exportToExcel(
     Math.round(d.totalIncome),
   ])
 
-  const ws3 = XLSX.utils.aoa_to_sheet([headers, ...dataRows])
-  ws3['!cols'] = [{ wch: 10 }, { wch: 8 }, { wch: 12 }, { wch: 16 }, { wch: 20 }, { wch: 14 }, { wch: 18 }, { wch: 22 }]
-  XLSX.utils.book_append_sheet(wb, ws3, 'Jaarlijkse Prognose')
+  const ws3 = wb.addWorksheet('Jaarlijkse Prognose')
+  ws3.addRows([headers, ...dataRows])
+  setColumnWidths(ws3, [10, 8, 12, 16, 20, 14, 18, 22])
 
   // --- Sheet 4: Monte Carlo Percentielen ---
   const mcHeaders = ['Leeftijd', 'P10 (€)', 'P25 (€)', 'P50 mediaan (€)', 'P75 (€)', 'P90 (€)']
@@ -125,15 +133,16 @@ export async function exportToExcel(
       Math.round(d.p90),
     ])
 
-  const ws4 = XLSX.utils.aoa_to_sheet([mcHeaders, ...mcRows])
-  ws4['!cols'] = Array(6).fill({ wch: 18 })
-  XLSX.utils.book_append_sheet(wb, ws4, 'Monte Carlo')
+  const ws4 = wb.addWorksheet('Monte Carlo')
+  ws4.addRows([mcHeaders, ...mcRows])
+  setColumnWidths(ws4, Array(6).fill(18))
 
   const filename = `financiele-planning_${clientName.replace(/\s/g, '_')}_${new Date().toISOString().slice(0, 10)}.xlsx`
 
-  // Expliciete blob-download i.p.v. XLSX.writeFile — browsers blokkeren de laatste
-  // soms als "automatische download". Deze aanpak telt als door de gebruiker gestart.
-  const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' })
+  // Expliciete blob-download i.p.v. een auto-triggerde download — browsers blokkeren
+  // de laatste soms als "automatische download". Deze aanpak telt als door de
+  // gebruiker gestart.
+  const wbout = await wb.xlsx.writeBuffer()
   const blob = new Blob([wbout], {
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   })
