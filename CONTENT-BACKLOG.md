@@ -15,7 +15,7 @@ een rekentool.
 - ✅ Wat is de 4%-regel?
 - ✅ Wat is FIRE?
 - ✅ Hoeveel moet ik sparen om eerder te stoppen met werken?
-- ✍️ Waarvan hangt het af of je financieel onafhankelijk bent? (H)
+- ✅ Wanneer ben je financieel onafhankelijk? *(H, was: "waarvan hangt het af of je financieel onafhankelijk bent")*
 - 💡 De rol van een eigen woning in financiële onafhankelijkheid (H)
 - 💡 In het buitenland wonen voor je pensioen — koppelen aan kosten van levensonderhoud (H)
 - 💡 Financieel onafhankelijk als zzp'er *(persona)*
@@ -46,10 +46,11 @@ een rekentool.
     Hoek: "voor de meeste mensen niet nodig / speculatief" mét onderbouwing, binnen de
     neutrale, geen-advies-lijn van de site. Bespreken vóór schrijven.
 
-## Pillar: Inflatie & koopkracht *(nieuw)*
-- 💡 Hoe inflatie rijke mensen arm maakt (H) *(sterke, deelbare hoek)*
-- 💡 Wat doet inflatie met je spaargeld?
+## Pillar: Inflatie & koopkracht
+- ✅ Wat is inflatie en wat doet het met je geld? *(pillar)*
+- ✅ Sparen maakt mensen arm *(H, was: "hoe inflatie rijke mensen arm maakt")*
 - 💡 Reëel vs. nominaal rendement — wat is het verschil?
+- 💡 Wat doet inflatie met je spaargeld? *(actiepunt vandaag: hoek herschrijven zodat dit wezenlijk verschilt van "Sparen maakt mensen arm")*
 
 ## Pillar: Salaris & belasting *(bestaande bruto-nettotool)*
 - 💡 Wat houd ik netto over van mijn salaris? *(bruto-nettotool)*
