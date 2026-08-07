@@ -44,6 +44,8 @@ Nooit een vlakke, neutrale inleiding. Altijd een spanning die om opheldering vra
 
 De eerste zin doet altijd al iets. Geen opwarming.
 
+**Uitzondering bij uitlegartikelen:** als het stuk zelf een definitievraag beantwoordt (een "wat is X"-achtige titel), mag de eerste zin een platte definitie zijn in plaats van een wending. Bij een opiniestuk grijp ik daar veel minder snel naar. Uitgesloten is de platte opening nooit helemaal, het blijft per stuk een keuze.
+
 ## De wending-techniek
 
 Ik bouw kleine verwachtingen op om ze daarna om te draaien. Ik stuur de lezer even de ene kant op, en zet dan de hak.
@@ -136,11 +138,12 @@ Aanvullend op de algemene stijl.
 Doel: informeren én gevonden worden.
 
 - **Vakwoorden omschrijven in gewone taal.** Niet "box 3" maar "belasting over je spaargeld boven een bepaald bedrag". (In vakinhoudelijke stukken en columns mag "box 3" wél kaal.)
+- **Ongebruikelijke getallen ook omschrijven, niet alleen vakwoorden.** Niet alleen "100 biljoen", maar "100 biljoen (een 1 met twaalf nullen erachter, oftewel 1.000 miljard)". Een lezer die bij "biljoen" niet meteen een grootte-orde voor zich ziet, moet het toch kunnen volgen.
 - **Koppen als vragen of mini-stellingen.** "Dus: wel of niet sparen?" / "Veel vermogen = veel verlies". Elke kop heeft eronder een kernachtig antwoord.
 - **Nuance in de kop, stelling in de tekst.** Een scherpe kop ("(meestal)") laat de tekst eronder vrij om positie te nemen.
 - **Rekenvoorbeelden en tabellen als bewijs**, niet als versiering.
 - **Interactieve tools subtiel linken** op het moment dat de lezer denkt "en bij mij dan?".
-- **Geen harde CTA.** Eindig op een gedachte, niet op "neem contact op". Een scherpe beeldzin als laatste woord.
+- **Een harde CTA mag, maar alleen op het punt waar de lezer zelf al denkt: "nu wil ik hier iets mee doen."** Niet als vaste afsluitformule. Standaard eindigt het stuk op een gedachte, met een scherpe beeldzin als laatste woord; een tool-CTA aan het slot mag alleen als de tekst de lezer daar net naar de eigen situatie heeft gebracht.
 - **Taalniveau B1-B2.** Toegankelijk zonder het publiek te onderschatten.
 - **Titel scherp, ondertitel nuanceert.** De titel mag prikkelen en licht overdrijven; het stuk lost die spanning zelf op. Voorbeeld: "Sparen maakt mensen arm" met ondertitel "Waarom je spaargeld elk jaar minder waard wordt".
 
