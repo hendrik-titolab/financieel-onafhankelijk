@@ -23,8 +23,14 @@ export function Privacy() {
         <p>
           De bedragen die je invult in de pensioenplanner en de bruto-netto-calculator worden
           alleen in je eigen browser verwerkt, om de berekening te tonen. Ze gaan niet naar een
-          server en worden nergens door ons opgeslagen, ook niet lokaal: sluit of ververs je de
-          pagina, dan is de invoer weg.
+          server en worden nergens door ons opgeslagen: sluit of ververs je de pagina, dan is de
+          invoer weg.
+        </p>
+        <p>
+          Eén uitzondering: we houden lokaal in je browser (localStorage) een simpel getal bij,
+          hoe vaak je een Excel- of PDF-bestand hebt gedownload. Daarmee beperken we het aantal
+          gratis downloads. Dat getal bevat geen persoonsgegevens, gaat niet naar een server en
+          verdwijnt als je je browsergegevens wist.
         </p>
 
         <h2 className="text-lg font-semibold text-slate-900 pt-3">Cookies en meetgegevens</h2>

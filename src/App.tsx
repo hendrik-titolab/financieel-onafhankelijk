@@ -113,7 +113,7 @@ function Header({ clientName, editingName, setEditingName, setClientName }: Head
 function Footer() {
   return (
     <footer className="border-t border-slate-100 bg-white px-4 py-3 text-xs text-slate-400 text-center flex-shrink-0">
-      © {new Date().getFullYear()} benikfinancieelonafhankelijk.nl — Indicatieve berekeningen, geen financieel advies
+      © {new Date().getFullYear()} benikfinancieelonafhankelijk.nl. Indicatieve berekeningen, geen financieel advies
       {' · '}
       <a href="/privacy" className="hover:text-primary-600 underline">
         Privacy
@@ -150,7 +150,7 @@ export default function App() {
         {sessionClosed && (
           <div className="fixed top-0 inset-x-0 z-50 bg-emerald-500 text-white text-sm font-medium text-center py-2.5 flex items-center justify-center gap-2 shadow-lg animate-pulse">
             <CheckCircle size={15} />
-            Sessie afgesloten — alle invoer gewist
+            Sessie afgesloten, alle invoer gewist
           </div>
         )}
 
