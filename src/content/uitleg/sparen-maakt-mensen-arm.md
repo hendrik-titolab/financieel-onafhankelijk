@@ -43,7 +43,7 @@ Inflatie en spaarrentes worden uitgedrukt in percentages. Heb je €1.000 spaarg
 **Invloed van inflatie op €100.000 spaargeld bij een spaarrente van 1,25%**
 
 | Na | Op papier | Koopkracht bij 2% | bij 3% | bij 4% |
-|---|---|---|---|---|
+|---|---:|---:|---:|---:|
 | 5 jaar | €106.408 | €96.377 | €91.789 | €87.460 |
 | 10 jaar | €113.227 | €92.886 | €84.252 | €76.492 |
 | 15 jaar | €120.483 | €89.521 | €77.333 | €66.900 |
