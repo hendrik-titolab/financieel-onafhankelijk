@@ -8,4 +8,5 @@ import sitemap from '@astrojs/sitemap'
 export default defineConfig({
   site: 'https://benikfinancieelonafhankelijk.nl',
   integrations: [react(), mdx(), sitemap()],
+  devToolbar: { enabled: false },
 })

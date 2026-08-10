@@ -1,6 +1,8 @@
 ---
+import { Image } from 'astro:assets'
 import BaseLayout from '../layouts/BaseLayout.astro'
 import { faqSchema } from '../lib/seo'
+import hoofdtoolPreview from '../assets/hoofdtool-preview.webp'
 
 const title = 'Ben ik financieel onafhankelijk? — Uitleg & gratis rekentools'
 const description =
@@ -8,9 +10,10 @@ const description =
 
 const hoofdtool = {
   href: '/ben-ik-financieel-onafhankelijk',
-  naam: 'Pensioen- & FO-planner',
-  tekst:
-    'Reken uit of en wanneer je rond kunt komen zonder werk. Met een Monte Carlo-simulatie zie je hoe groot de kans is dat je vermogen genoeg is.',
+  naam: 'Rekentool financieel onafhankelijk?',
+  tekst: 'Reken eenvoudig uit wat er voor jou nodig is om financieel onafhankelijk te zijn.',
+  onderschrift:
+    'Vul je pensioen, je vermogen, het gewenste inkomen en spaargedrag in en check met welke aannames je wilt rekenen. Je krijgt als resultaat een uitgebreide kansverdeling voor het wel of niet kunnen halen van je financiële doelen.',
 }
 
 const tools = [
@@ -70,7 +73,7 @@ const schemas = [faqSchema(faq)]
           href={hoofdtool.href}
           class="px-5 py-2.5 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 transition"
         >
-          Start de FO-planner
+          Start de tool
         </a>
         <a
           href="/uitleg"
@@ -92,18 +95,35 @@ const schemas = [faqSchema(faq)]
         href={hoofdtool.href}
         class="block rounded-2xl bg-primary-600 hover:bg-primary-700 transition text-white p-6 md:p-8 group"
       >
-        <span class="text-xs font-semibold uppercase tracking-wide text-primary-100">
-          Hoofdtool
-        </span>
-        <span class="mt-2 block text-2xl md:text-3xl font-bold">
-          {hoofdtool.naam}
-        </span>
-        <span class="mt-2 block text-primary-50 leading-relaxed max-w-2xl">
-          {hoofdtool.tekst}
-        </span>
-        <span class="mt-4 inline-flex items-center gap-1.5 text-sm font-medium bg-white text-primary-700 rounded-lg px-3 py-1.5 group-hover:bg-primary-50 transition">
-          Start de planner →
-        </span>
+        <div class="md:flex md:items-center md:gap-8">
+          <div class="md:flex-1 min-w-0">
+            <span class="text-xs font-semibold uppercase tracking-wide text-primary-100">
+              Hoofdtool
+            </span>
+            <span class="mt-2 block text-2xl md:text-3xl font-bold">
+              {hoofdtool.naam}
+            </span>
+            <span class="mt-2 block text-primary-50 leading-relaxed max-w-2xl">
+              {hoofdtool.tekst}
+            </span>
+            <span class="mt-2 block text-primary-100 text-xs leading-relaxed max-w-2xl">
+              {hoofdtool.onderschrift}
+            </span>
+            <span class="mt-4 inline-flex items-center gap-1.5 text-sm font-medium bg-white text-primary-700 rounded-lg px-3 py-1.5 group-hover:bg-primary-50 transition">
+              Start de tool →
+            </span>
+          </div>
+          <div class="mt-6 md:mt-0 md:w-72 lg:w-80 flex-shrink-0">
+            <Image
+              src={hoofdtoolPreview}
+              alt="Voorbeeld van de rekentool: vermogensontwikkeling en de kans op je inkomensdoel"
+              class="w-full h-auto rounded-lg shadow-lg ring-1 ring-white/20"
+              widths={[400, 800]}
+              sizes="(min-width: 768px) 320px, 90vw"
+              loading="eager"
+            />
+          </div>
+        </div>
       </a>
 
       <p class="mt-8 mb-4 text-sm font-semibold text-slate-500 uppercase tracking-wide">

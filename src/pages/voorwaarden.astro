@@ -1,0 +1,122 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro'
+import { FEEDBACK_URL, SITE } from '../config/site'
+import { breadcrumbSchema } from '../lib/seo'
+
+const title = 'Algemene voorwaarden | Ben ik financieel onafhankelijk?'
+const description =
+  'De regels voor het gebruik van deze site en de gratis rekentools: wie erachter zit, wat je aan de uitkomsten kunt ontlenen en wat niet.'
+
+const schemas = [
+  breadcrumbSchema([
+    { name: 'Home', path: '/' },
+    { name: 'Algemene voorwaarden', path: '/voorwaarden/' },
+  ]),
+]
+const bijgewerkt = new Date('2026-08-10').toLocaleDateString('nl-NL', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+})
+---
+
+<BaseLayout title={title} description={description} jsonLd={schemas}>
+  <main class="flex-1">
+    <article class="max-w-2xl mx-auto px-4 md:px-6 py-10">
+      <h1 class="text-3xl font-bold text-slate-900 mb-6">Algemene voorwaarden</h1>
+
+      <div class="text-slate-600 leading-relaxed space-y-4">
+        <p>
+          Deze voorwaarden gelden voor het gebruik van {SITE.url.replace('https://', '')}: alle
+          rekentools en alle uitlegartikelen. Door de site te gebruiken ga je hiermee akkoord.
+          Lees ook onze <a href="/privacy" class="text-primary-600 hover:text-primary-700 underline">privacyverklaring</a>,
+          daarin staat wat we wel en niet met je gegevens doen.
+        </p>
+
+        <h2 class="text-xl font-semibold text-slate-900 pt-4">1. Wie we zijn</h2>
+        <p>
+          Deze site wordt uitgegeven door {SITE.publisher}. {SITE.publisher} is onderdeel van
+          HendrikSchakel Holding B.V., handelend onder KvK-nummer 51309963, btw-nummer
+          NL823206567B01.
+        </p>
+
+        <h2 class="text-xl font-semibold text-slate-900 pt-4">2. Wat deze site is, en wat niet</h2>
+        <p>
+          {SITE.name} geeft gratis uitleg en rekentools over financiële onafhankelijkheid,
+          pensioen en vermogensopbouw. Er is geen account nodig en je betaalt niets.
+        </p>
+        <p>
+          Wat je hier vindt is geen financieel, fiscaal of juridisch advies, en ook geen
+          aanbeveling voor een product van een specifieke aanbieder. De uitleg en de rekentools
+          zijn bedoeld om je op weg te helpen, niet om een besluit op te baseren. Voor advies dat
+          rekening houdt met je hele situatie raadpleeg je een erkend adviseur, bijvoorbeeld via
+          <a href="https://ffp.nl" class="text-primary-600 hover:text-primary-700 underline" rel="noopener" target="_blank">ffp.nl</a>.
+          Lees ook waarom we de hoofdtool zo hebben opgezet op
+          <a href="/over#waarom-deze-rekentool" class="text-primary-600 hover:text-primary-700 underline">de over-pagina</a>.
+        </p>
+
+        <h2 class="text-xl font-semibold text-slate-900 pt-4">3. Gebruik van de rekentools</h2>
+        <p>
+          De rekentools werken met de gegevens die je zelf invult en met aannames over onder meer
+          rendement, inflatie en belastingen. Welke aannames dat precies zijn, staat uitgelegd op
+          <a href="/uitleg/welke-aannames-gebruikt-de-fo-planner" class="text-primary-600 hover:text-primary-700 underline">
+            deze pagina
+          </a>. Verander je de aannames, dan verandert de uitkomst mee.
+        </p>
+        <p>
+          De uitkomsten zijn indicatief: een inschatting op basis van de huidige regels en de
+          aannames die je hebt gekozen, geen garantie voor de toekomst. Aan een berekening op deze
+          site kun je geen rechten ontlenen.
+        </p>
+
+        <h2 class="text-xl font-semibold text-slate-900 pt-4">4. Aansprakelijkheid</h2>
+        <p>
+          We besteden zorg aan de juistheid van de rekentools en de content, en rekenen met
+          openbare, controleerbare bronnen zoals cijfers van de Belastingdienst en het CBS. Toch
+          kan er een fout in zitten, of kunnen regels inmiddels zijn gewijzigd.
+        </p>
+        <p>
+          {SITE.publisher} is niet aansprakelijk voor schade die voortkomt uit het gebruik van
+          deze site of uit beslissingen die je baseert op de rekentools of de content, behalve bij
+          opzet of grove nalatigheid. Gebruik van de site is op eigen risico.
+        </p>
+
+        <h2 class="text-xl font-semibold text-slate-900 pt-4">5. Intellectueel eigendom</h2>
+        <p>
+          De teksten, rekentools en vormgeving van deze site zijn eigendom van {SITE.publisher},
+          tenzij anders vermeld. Je mag de site gebruiken voor persoonlijk gebruik en, met
+          bronvermelding, een enkel citaat of rekenvoorbeeld overnemen. Een heel artikel of de
+          rekentool zelf kopiëren, herpubliceren of commercieel hergebruiken mag alleen met
+          voorafgaande schriftelijke toestemming.
+        </p>
+
+        <h2 class="text-xl font-semibold text-slate-900 pt-4">6. Wijzigingen van deze voorwaarden</h2>
+        <p>
+          We kunnen deze voorwaarden aanpassen, bijvoorbeeld als de site of de wetgeving
+          verandert. De datum onderaan deze pagina laat zien wanneer dat voor het laatst gebeurde.
+          Gebruik je de site na een wijziging, dan geldt de nieuwe versie.
+        </p>
+
+        <h2 class="text-xl font-semibold text-slate-900 pt-4">7. Toepasselijk recht</h2>
+        <p>
+          Op deze voorwaarden is Nederlands recht van toepassing. Komen we er samen niet uit, dan
+          leggen we het geschil voor aan de bevoegde rechter in Amsterdam.
+        </p>
+
+        <h2 class="text-xl font-semibold text-slate-900 pt-4">8. Contact</h2>
+        <p>
+          Vraag over deze voorwaarden, of denk je dat er iets niet klopt? Laat het weten via
+          {
+            FEEDBACK_URL && (
+              <a href={FEEDBACK_URL} class="text-primary-600 hover:text-primary-700 underline" rel="noopener" target="_blank">
+                het feedbackformulier
+              </a>
+            )
+          }.
+        </p>
+
+        <p class="text-sm text-slate-400 pt-4">Laatst bijgewerkt: {bijgewerkt}.</p>
+      </div>
+    </article>
+  </main>
+</BaseLayout>

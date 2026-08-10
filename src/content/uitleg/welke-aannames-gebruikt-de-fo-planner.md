@@ -17,11 +17,9 @@ faq:
     antwoord: "Nee. Box 3 hangt sterk af van je vermogensmix, vrijstellingen en jaarlijkse regelwijzigingen, en zou de uitkomst minder betrouwbaar maken dan nu geen rekening ermee houden. Houd er zelf rekening mee dat je netto rendement op spaargeld en beleggingen hierdoor iets lager uitvalt."
 bronnen:
   - titel: "Belastingdienst: tarieven box 1"
-    url: "https://www.belastingdienst.nl"
+    url: "https://www.belastingdienst.nl/wps/wcm/connect/nl/werk-en-inkomen/content/hoeveel-inkomstenbelasting-betalen"
   - titel: "Monte Carlo-methode (Wikipedia)"
     url: "https://nl.wikipedia.org/wiki/Monte_Carlo-methode"
-  - titel: "Fisher-vergelijking (Wikipedia)"
-    url: "https://nl.wikipedia.org/wiki/Fisher-vergelijking"
 ---
 
 Vul je gegevens in, klik op Bereken, en je verwacht een getal. Dat is niet wat je krijgt.
