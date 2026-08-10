@@ -50,7 +50,7 @@ een rekentool.
 - ✅ Wat is inflatie en wat doet het met je geld? *(pillar)*
 - ✅ Sparen maakt mensen arm *(H, was: "hoe inflatie rijke mensen arm maakt")*
 - 💡 Reëel vs. nominaal rendement — wat is het verschil?
-- 💡 Wat doet inflatie met je spaargeld? *(actiepunt vandaag: hoek herschrijven zodat dit wezenlijk verschilt van "Sparen maakt mensen arm")*
+- ✅ Hoe hoog kan inflatie worden? *(was: "wat doet inflatie met je spaargeld", andere hoek: geschiedenis + hyperinflatie i.p.v. spaargeld)*
 
 ## Pillar: Salaris & belasting *(bestaande bruto-nettotool)*
 - 💡 Wat houd ik netto over van mijn salaris? *(bruto-nettotool)*
