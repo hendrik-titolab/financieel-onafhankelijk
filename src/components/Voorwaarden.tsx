@@ -14,6 +14,11 @@ export function Voorwaarden() {
         <p>
           Deze voorwaarden gelden voor het gebruik van benikfinancieelonafhankelijk.nl: alle
           rekentools en alle uitlegartikelen. Door de site te gebruiken ga je hiermee akkoord.
+          Lees ook onze{' '}
+          <a href="/privacy" className="text-primary-600 hover:text-primary-700 underline">
+            privacyverklaring
+          </a>
+          , daarin staat wat we wel en niet met je gegevens doen.
         </p>
 
         <h2 className="text-lg font-semibold text-slate-900 pt-3">1. Wie we zijn</h2>

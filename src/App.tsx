@@ -5,6 +5,7 @@ import { TrendingUp, CheckCircle, Calculator } from 'lucide-react'
 import { PensionPlanner } from './components/PensionPlanner'
 import { BrutoNettoCalculator } from './components/BrutoNetto'
 import { Voorwaarden } from './components/Voorwaarden'
+import { Privacy } from './components/Privacy'
 
 // ── Gedeelde header met navigatie ─────────────────────────────────────────────
 
@@ -94,12 +95,14 @@ function Header({ clientName, editingName, setEditingName, setClientName }: Head
         )}
 
         {/* Altijd bereikbaar, ook vanaf de fixed-height plannerpagina die geen Footer toont */}
-        <a
-          href="/voorwaarden"
-          className="text-xs text-slate-400 hover:text-primary-600 transition-colors flex-shrink-0"
-        >
-          Voorwaarden
-        </a>
+        <div className="flex items-center gap-3 text-xs text-slate-400 flex-shrink-0">
+          <a href="/privacy" className="hover:text-primary-600 transition-colors">
+            Privacy
+          </a>
+          <a href="/voorwaarden" className="hover:text-primary-600 transition-colors">
+            Voorwaarden
+          </a>
+        </div>
       </div>
     </header>
   )
@@ -111,6 +114,10 @@ function Footer() {
   return (
     <footer className="border-t border-slate-100 bg-white px-4 py-3 text-xs text-slate-400 text-center flex-shrink-0">
       © {new Date().getFullYear()} benikfinancieelonafhankelijk.nl — Indicatieve berekeningen, geen financieel advies
+      {' · '}
+      <a href="/privacy" className="hover:text-primary-600 underline">
+        Privacy
+      </a>
       {' · '}
       <a href="/voorwaarden" className="hover:text-primary-600 underline">
         Voorwaarden
@@ -187,6 +194,18 @@ export default function App() {
               <>
                 <main className="flex-1 overflow-y-auto p-4 md:p-6">
                   <Voorwaarden />
+                </main>
+                <Footer />
+              </>
+            }
+          />
+          {/* Privacy en gegevensgebruik — standaard scrollende pagina */}
+          <Route
+            path="/privacy"
+            element={
+              <>
+                <main className="flex-1 overflow-y-auto p-4 md:p-6">
+                  <Privacy />
                 </main>
                 <Footer />
               </>
