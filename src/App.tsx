@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import { BrowserRouter, Routes, Route, NavLink, useLocation } from 'react-router-dom'
+import { Analytics } from '@vercel/analytics/react'
 import { TrendingUp, CheckCircle, Calculator } from 'lucide-react'
 import { PensionPlanner } from './components/PensionPlanner'
 import { BrutoNettoCalculator } from './components/BrutoNetto'
@@ -135,6 +136,8 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      {/* Vercel Analytics: alleen paginabezoeken, geen cookies, geen persoonsgegevens */}
+      <Analytics />
       <div className="min-h-screen bg-slate-50 flex flex-col">
         {/* Sessie-gesloten banner */}
         {sessionClosed && (
