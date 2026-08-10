@@ -1,4 +1,6 @@
 ---
+import { InstallAppButton } from './InstallAppButton'
+
 // Navigatie zonder react-router — statische links + actieve-staat op basis van het pad.
 const path = Astro.url.pathname
 const nav = [
@@ -56,4 +58,9 @@ const isActive = (href: string, exact?: boolean) =>
       ))
     }
   </nav>
+
+  <InstallAppButton
+    client:load
+    className="ml-auto flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-primary-600 border border-primary-200 hover:bg-primary-50 rounded-lg transition-colors flex-shrink-0"
+  />
 </header>

@@ -65,6 +65,11 @@ const schemas = [organizationSchema(), websiteSchema(), ...jsonLd]
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="theme-color" content="#2563eb" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="BenIkFO" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <link rel="manifest" href="/manifest.webmanifest" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -75,28 +80,19 @@ const schemas = [organizationSchema(), websiteSchema(), ...jsonLd]
 
     {schemas.map((s) => <script type="application/ld+json" set:html={JSON.stringify(s)} />)}
 
-    <!-- Oude PWA/service worker opruimen (sunset van de vorige SPA-versie) -->
-    <script is:inline>
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function (rs) {
-          rs.forEach(function (r) {
-            r.unregister()
-          })
-        })
-        if (window.caches) {
-          caches.keys().then(function (ks) {
-            ks.forEach(function (k) {
-              caches.delete(k)
-            })
-          })
-        }
-      }
-    </script>
-
     <!-- Vercel Analytics: alleen paginabezoeken, geen cookies, geen persoonsgegevens -->
     <script>
       import { inject } from '@vercel/analytics'
       inject()
+    </script>
+
+    <!-- PWA-service worker registreren (gegenereerd door src/integrations/pwa.mjs) -->
+    <script is:inline>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js', { scope: '/' })
+        })
+      }
     </script>
   </head>
   <body class="min-h-screen bg-slate-50 text-slate-900 flex flex-col">
