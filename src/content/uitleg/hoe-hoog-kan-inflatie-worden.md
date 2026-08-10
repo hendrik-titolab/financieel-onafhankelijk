@@ -16,13 +16,13 @@ faq:
   - vraag: "Vanaf welk percentage spreek je van hyperinflatie?"
     antwoord: "Econoom Phillip Cagan trok in 1956 de grens bij een maandelijkse inflatie boven de 50%. Dat betekent dat prijzen in minder dan drie weken verdubbelen. Onder die grens heet het, hoe vervelend ook, gewoon hoge inflatie."
 bronnen:
-  - titel: "CBS — Inflatie 10 procent in 2022"
+  - titel: "CBS: Inflatie 10 procent in 2022"
     url: "https://www.cbs.nl/nl-nl/nieuws/2023/02/inflatie-10-procent-in-2022"
-  - titel: "CBS — Inflatie stijgt naar 14,5 procent in september (2022)"
+  - titel: "CBS: Inflatie stijgt naar 14,5 procent in september (2022)"
     url: "https://www.cbs.nl/nl-nl/nieuws/2022/40/inflatie-stijgt-naar-14-5-procent-in-september"
-  - titel: "CBS — Consumentenprijzen; prijsindex 1900=100"
+  - titel: "CBS: Consumentenprijzen; prijsindex 1900=100"
     url: "https://www.cbs.nl/nl-nl/cijfers/detail/71905ned"
-  - titel: "Hanke, S. & Krus, N. (2012) — World Hyperinflations, Cato Working Paper no. 8"
+  - titel: "Hanke, S. & Krus, N. (2012): World Hyperinflations, Cato Working Paper no. 8"
     url: "https://www.cato.org/sites/cato.org/files/pubs/pdf/hanke-krus-hyperinflation-table.pdf"
 ---
 

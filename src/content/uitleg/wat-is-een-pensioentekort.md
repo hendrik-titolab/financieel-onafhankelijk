@@ -14,9 +14,9 @@ faq:
   - vraag: "Kan ik een pensioentekort met belastingvoordeel aanvullen?"
     antwoord: "Ja. Als je een tekort hebt, mag je binnen je jaarruimte inleggen in een lijfrente. Die inleg trek je af in box 1, waardoor je nu minder belasting betaalt. Bij uitkering later betaal je er belasting over, vaak tegen een lager tarief."
 bronnen:
-  - titel: "Belastingdienst — lijfrente en jaarruimte"
+  - titel: "Belastingdienst: lijfrente en jaarruimte"
     url: "https://www.belastingdienst.nl"
-  - titel: "Mijnpensioenoverzicht.nl — je opgebouwde pensioen"
+  - titel: "Mijnpensioenoverzicht.nl: je opgebouwde pensioen"
     url: "https://www.mijnpensioenoverzicht.nl"
 ---
 

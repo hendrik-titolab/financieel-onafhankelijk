@@ -16,9 +16,9 @@ faq:
   - vraag: "Betaal ik ook nog belasting over mijn spaargeld?"
     antwoord: "In Nederland betaal je boven een vrijgesteld bedrag belasting over je vermogen in box 3, ook over spaargeld. Je kunt dus koopkracht verliezen aan inflatie én daar belasting over betalen. De exacte drempels en tarieven veranderen jaarlijks; controleer ze bij de Belastingdienst."
 bronnen:
-  - titel: "CBS — dashboard consumentenprijzen (inflatie)"
+  - titel: "CBS: dashboard consumentenprijzen (inflatie)"
     url: "https://www.cbs.nl/nl-nl/visualisaties/dashboard-consumentenprijzen"
-  - titel: "De Nederlandsche Bank — de Nederlandse depositogarantie (tot €100.000)"
+  - titel: "De Nederlandsche Bank: de Nederlandse depositogarantie (tot €100.000)"
     url: "https://www.dnb.nl/betrouwbare-financiele-sector/nederlandse-depositogarantie/"
 ---
 

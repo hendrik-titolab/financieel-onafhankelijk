@@ -14,9 +14,9 @@ faq:
   - vraag: "Ben ik financieel onafhankelijk als mijn huis is afbetaald?"
     antwoord: "Een afbetaald huis verlaagt je maandlasten flink, maar je hebt nog steeds geld nodig voor boodschappen, verzekeringen en andere kosten. Een afbetaald huis helpt dus, maar is meestal niet genoeg op zichzelf."
 bronnen:
-  - titel: "Nibud — inzicht in inkomsten en uitgaven"
+  - titel: "Nibud: inzicht in inkomsten en uitgaven"
     url: "https://www.nibud.nl"
-  - titel: "Mijnpensioenoverzicht.nl — je AOW en pensioen"
+  - titel: "Mijnpensioenoverzicht.nl: je AOW en pensioen"
     url: "https://www.mijnpensioenoverzicht.nl"
 ---
 

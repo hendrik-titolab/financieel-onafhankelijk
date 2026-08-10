@@ -14,9 +14,9 @@ faq:
   - vraag: "Waar zie ik hoeveel pensioen ik heb opgebouwd?"
     antwoord: "Op mijnpensioenoverzicht.nl zie je je AOW en het pensioen dat je via werkgevers hebt opgebouwd, bij elkaar. Dat is het beste startpunt om te zien of je genoeg hebt."
 bronnen:
-  - titel: "Mijnpensioenoverzicht.nl — je totale pensioen"
+  - titel: "Mijnpensioenoverzicht.nl: je totale pensioen"
     url: "https://www.mijnpensioenoverzicht.nl"
-  - titel: "Nibud — uitgaven na pensionering"
+  - titel: "Nibud: uitgaven na pensionering"
     url: "https://www.nibud.nl"
 ---
 

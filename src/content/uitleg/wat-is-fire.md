@@ -16,7 +16,7 @@ faq:
 bronnen:
   - titel: "FIRE movement, Wikipedia"
     url: "https://en.wikipedia.org/wiki/FIRE_movement"
-  - titel: "Mr. Money Mustache — The Shockingly Simple Math Behind Early Retirement"
+  - titel: "Mr. Money Mustache: The Shockingly Simple Math Behind Early Retirement"
     url: "https://www.mrmoneymustache.com/2012/01/13/the-shockingly-simple-math-behind-early-retirement/"
 ---
 

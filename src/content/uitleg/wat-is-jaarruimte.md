@@ -14,7 +14,7 @@ faq:
   - vraag: "Waarom is inleggen met jaarruimte aantrekkelijk?"
     antwoord: "Je inleg is aftrekbaar in box 1, dus je betaalt er nu geen belasting over. Je geld groeit belastingvrij tot de uitkering. Bij uitkering later betaal je belasting, vaak tegen een lager tarief dan tijdens je werkende jaren."
 bronnen:
-  - titel: "Belastingdienst — jaarruimte en lijfrentepremie"
+  - titel: "Belastingdienst: jaarruimte en lijfrentepremie"
     url: "https://www.belastingdienst.nl"
 ---
 

@@ -16,7 +16,7 @@ faq:
 bronnen:
   - titel: "Trinity-studie (herkomst van de 4%-regel), Wikipedia"
     url: "https://en.wikipedia.org/wiki/Trinity_study"
-  - titel: "Nibud — je jaarlijkse uitgaven in beeld"
+  - titel: "Nibud: je jaarlijkse uitgaven in beeld"
     url: "https://www.nibud.nl"
 ---
 

@@ -14,7 +14,7 @@ faq:
   - vraag: "Waarom bepaalt de spaarquote de snelheid en niet mijn inkomen?"
     antwoord: "Omdat een hogere spaarquote twee dingen tegelijk doet: je legt meer opzij én je leeft van minder, dus je hebt een kleiner doelvermogen nodig. Daarom komen mensen met heel verschillende inkomens maar dezelfde spaarquote ongeveer even snel uit."
 bronnen:
-  - titel: "Mr. Money Mustache — The Shockingly Simple Math Behind Early Retirement"
+  - titel: "Mr. Money Mustache: The Shockingly Simple Math Behind Early Retirement"
     url: "https://www.mrmoneymustache.com/2012/01/13/the-shockingly-simple-math-behind-early-retirement/"
   - titel: "Trinity-studie (4%-regel), Wikipedia"
     url: "https://en.wikipedia.org/wiki/Trinity_study"

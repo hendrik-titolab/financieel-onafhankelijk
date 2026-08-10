@@ -14,9 +14,9 @@ faq:
   - vraag: "Waarom krijgen samenwonenden minder AOW dan alleenstaanden?"
     antwoord: "Een alleenstaande krijgt een hoger bedrag (ongeveer 70% van het minimumloon) omdat die alle vaste lasten alleen draagt. Samenwonenden krijgen elk een lager bedrag (samen ongeveer 100% van het minimumloon), omdat ze kosten kunnen delen."
 bronnen:
-  - titel: "Sociale Verzekeringsbank (SVB) — AOW"
+  - titel: "Sociale Verzekeringsbank (SVB): AOW"
     url: "https://www.svb.nl"
-  - titel: "Mijnpensioenoverzicht.nl — je AOW-leeftijd en -bedrag"
+  - titel: "Mijnpensioenoverzicht.nl: je AOW-leeftijd en -bedrag"
     url: "https://www.mijnpensioenoverzicht.nl"
 ---
 

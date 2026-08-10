@@ -14,9 +14,9 @@ faq:
   - vraag: "Wat is het verschil tussen inflatie en koopkracht?"
     antwoord: "Inflatie is de stijging van de prijzen. Koopkracht is wat je met je geld kunt kopen. Als de inflatie hoger is dan de stijging van je inkomen of je rendement, daalt je koopkracht: je hebt evenveel of meer euro's, maar je kunt er minder voor kopen."
 bronnen:
-  - titel: "CBS — dashboard consumentenprijzen (inflatie)"
+  - titel: "CBS: dashboard consumentenprijzen (inflatie)"
     url: "https://www.cbs.nl/nl-nl/visualisaties/dashboard-consumentenprijzen"
-  - titel: "Europese Centrale Bank — prijsstabiliteit en het inflatiedoel"
+  - titel: "Europese Centrale Bank: prijsstabiliteit en het inflatiedoel"
     url: "https://www.ecb.europa.eu"
 ---
 
