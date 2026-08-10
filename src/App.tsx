@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { BrowserRouter, Routes, Route, NavLink, useLocation } from 'react-router-dom'
 import { TrendingUp, CheckCircle, Calculator } from 'lucide-react'
+import { Analytics } from '@vercel/analytics/react'
 import { PensionPlanner } from './components/PensionPlanner'
 import { BrutoNettoCalculator } from './components/BrutoNetto'
 
@@ -159,6 +160,7 @@ export default function App() {
           />
         </Routes>
       </div>
+      <Analytics />
     </BrowserRouter>
   )
 }
