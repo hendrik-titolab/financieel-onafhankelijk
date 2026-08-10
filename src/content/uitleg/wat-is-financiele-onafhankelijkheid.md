@@ -1,7 +1,7 @@
 ---
 titel: "Wat is financiële onafhankelijkheid?"
 beschrijving: "Financiële onafhankelijkheid betekent dat je van je vermogen en inkomsten kunt leven zonder te hoeven werken. Lees wat het is, hoe je weet of je het al bent, en hoeveel je nodig hebt."
-samenvatting: "Je bent financieel onafhankelijk als je genoeg vermogen of vast inkomen hebt om je uitgaven te betalen zonder dat je hoeft te werken. Je leeft dan van rendement, spaargeld, pensioen of een combinatie. Hoeveel je nodig hebt, hangt vooral af van je jaarlijkse uitgaven — niet van je salaris."
+samenvatting: "Je bent financieel onafhankelijk als je genoeg vermogen of vast inkomen hebt om je uitgaven te betalen zonder dat je hoeft te werken. Je leeft dan van rendement, spaargeld, pensioen of een combinatie. Hoeveel je nodig hebt, hangt vooral af van je jaarlijkse uitgaven, niet van je salaris."
 isPillar: true
 volgorde: 0
 bijgewerkt: "2026-07-20"

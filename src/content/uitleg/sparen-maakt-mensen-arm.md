@@ -1,6 +1,6 @@
 ---
 titel: "Sparen maakt mensen arm"
-beschrijving: "Spaargeld voelt veilig, maar door inflatie verlies je op de lange termijn koopkracht — vaak meer dan je denkt. Lees waarom, en wanneer sparen wél verstandig is."
+beschrijving: "Spaargeld voelt veilig, maar door inflatie verlies je op de lange termijn koopkracht, vaak meer dan je denkt. Lees waarom, en wanneer sparen wél verstandig is."
 samenvatting: "Wie spaart voelt zich veilig, maar op de lange termijn verlies je koopkracht: de inflatie is meestal hoger dan je spaarrente. Bij zo'n 3% inflatie is €100.000 na twintig jaar nog maar ongeveer €71.000 aan koopkracht waard, ondanks de rente die je ontvangt. Een spaarrekening is ideaal voor je buffer, maar geld dat je jaren kunt missen kun je beter aan het werk zetten."
 pillar: "wat-is-inflatie"
 volgorde: 1
@@ -10,7 +10,7 @@ tool:
   href: "/tools/inflatie"
 faq:
   - vraag: "Is sparen dan zinloos?"
-    antwoord: "Nee. Voor geld dat je binnen nu en drie jaar mogelijk nodig hebt — je buffer — is een spaarrekening precies goed: veilig, voorspelbaar en direct beschikbaar. Alleen voor geld dat je jaren kunt missen, is sparen op de lange termijn ongunstig, omdat je koopkracht dan elk jaar daalt."
+    antwoord: "Nee. Voor geld dat je binnen nu en drie jaar mogelijk nodig hebt (je buffer) is een spaarrekening precies goed: veilig, voorspelbaar en direct beschikbaar. Alleen voor geld dat je jaren kunt missen, is sparen op de lange termijn ongunstig, omdat je koopkracht dan elk jaar daalt."
   - vraag: "Hoeveel geld moet ik op mijn spaarrekening houden?"
     antwoord: "Een veelgebruikte vuistregel is: zet op je spaarrekening wat je de komende zes maanden tot drie jaar mogelijk nodig hebt. Dat is je buffer. Alles daarboven, geld dat je langere tijd kunt missen, verliest op een spaarrekening elk jaar aan waarde."
   - vraag: "Betaal ik ook nog belasting over mijn spaargeld?"

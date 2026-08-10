@@ -49,7 +49,7 @@ Deze getallen zijn vuistregels, geen belofte. Ze gaan uit van:
 - gelijkblijvende uitgaven;
 - geen rekening met AOW, pensioen of box 3-belasting.
 
-In Nederland verlagen je AOW en pensioen het benodigde eigen vermogen, vooral vanaf je AOW-leeftijd. Daardoor kan het in de praktijk sneller gaan dan de tabel laat zien — of anders lopen als je juist ver vóór je AOW wilt stoppen.
+In Nederland verlagen je AOW en pensioen het benodigde eigen vermogen, vooral vanaf je AOW-leeftijd. Daardoor kan het in de praktijk sneller gaan dan de tabel laat zien, of anders lopen als je juist ver vóór je AOW wilt stoppen.
 
 ## Reken jouw situatie door
 

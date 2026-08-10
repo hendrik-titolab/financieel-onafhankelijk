@@ -32,9 +32,9 @@ De regel is grof. Wie een afbetaald huis heeft en zuinig leeft, komt met minder 
 
 In Nederland bestaat pensioen meestal uit drie delen:
 
-1. **AOW** — het staatspensioen van de overheid, vanaf je AOW-leeftijd. Zie [hoeveel AOW krijg ik](/uitleg/hoeveel-aow-krijg-ik).
-2. **Werkgeverspensioen** — wat je via je baan(en) hebt opgebouwd.
-3. **Eigen aanvulling** — spaargeld, beleggingen of een lijfrente.
+1. **AOW**: het staatspensioen van de overheid, vanaf je AOW-leeftijd. Zie [hoeveel AOW krijg ik](/uitleg/hoeveel-aow-krijg-ik).
+2. **Werkgeverspensioen**: wat je via je baan(en) hebt opgebouwd.
+3. **Eigen aanvulling**: spaargeld, beleggingen of een lijfrente.
 
 De eerste twee zie je samen op mijnpensioenoverzicht.nl. Het derde deel regel je zelf.
 

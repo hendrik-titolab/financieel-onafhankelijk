@@ -24,7 +24,7 @@ FIRE is een Engelse afkorting: **F**inancial **I**ndependence, **R**etire **E**a
 
 ## Het kernidee
 
-Bij FIRE spaar en beleg je een groot deel van je inkomen — vaak 40% tot 70%. Dat doet twee dingen tegelijk: je bouwt sneller vermogen op, én je went aan lagere uitgaven, waardoor je minder nodig hebt. Zodra je vermogen ongeveer 25 keer je jaaruitgaven is, ben je financieel onafhankelijk (zie de [4%-regel](/uitleg/wat-is-de-4-procent-regel)).
+Bij FIRE spaar en beleg je een groot deel van je inkomen, vaak 40% tot 70%. Dat doet twee dingen tegelijk: je bouwt sneller vermogen op, én je went aan lagere uitgaven, waardoor je minder nodig hebt. Zodra je vermogen ongeveer 25 keer je jaaruitgaven is, ben je financieel onafhankelijk (zie de [4%-regel](/uitleg/wat-is-de-4-procent-regel)).
 
 Hoe hoog je spaarquote is, bepaalt hoe snel het gaat. In [hoeveel moet ik sparen](/uitleg/hoeveel-sparen-om-eerder-te-stoppen) staat een indicatieve tabel.
 
@@ -32,14 +32,14 @@ Hoe hoog je spaarquote is, bepaalt hoe snel het gaat. In [hoeveel moet ik sparen
 
 Niet iedereen wil hetzelfde. Daarom zijn er varianten:
 
-- **LeanFIRE** — onafhankelijk worden met lage uitgaven en een zuinige levensstijl.
-- **FatFIRE** — een ruimer budget, dus een groter doelvermogen.
-- **CoastFIRE** — je hebt al zo vroeg genoeg belegd dat je vermogen vanzelf naar je pensioen groeit; je hoeft alleen je lopende kosten nog te verdienen.
-- **BaristaFIRE** — deels onafhankelijk, aangevuld met een deeltijdbaan.
+- **LeanFIRE**: onafhankelijk worden met lage uitgaven en een zuinige levensstijl.
+- **FatFIRE**: een ruimer budget, dus een groter doelvermogen.
+- **CoastFIRE**: je hebt al zo vroeg genoeg belegd dat je vermogen vanzelf naar je pensioen groeit; je hoeft alleen je lopende kosten nog te verdienen.
+- **BaristaFIRE**: deels onafhankelijk, aangevuld met een deeltijdbaan.
 
 ## FIRE in Nederland
 
-De FIRE-gedachte komt uit de Verenigde Staten, maar werkt ook hier — met een paar Nederlandse aandachtspunten:
+De FIRE-gedachte komt uit de Verenigde Staten, maar werkt ook hier, met een paar Nederlandse aandachtspunten:
 
 - Je hebt een **vangnet**: vanaf je AOW-leeftijd krijg je AOW en meestal werkgeverspensioen. Voor de periode dáárvoor moet je zelf zorgen.
 - Over vermogen boven een vrijgesteld bedrag betaal je **box 3-belasting**.
@@ -47,4 +47,4 @@ De FIRE-gedachte komt uit de Verenigde Staten, maar werkt ook hier — met een p
 
 ## Kanttekeningen
 
-FIRE vraagt discipline en een lange adem, en de beurs is onzeker. Een streng bespaarplan is bovendien niet voor iedereen prettig. Zie het vooral als een manier om bewust met geld en tijd om te gaan — niet als een wedstrijd. Wil je weten wanneer jij zou kunnen stoppen, reken het dan door met de [planner](/ben-ik-financieel-onafhankelijk).
+FIRE vraagt discipline en een lange adem, en de beurs is onzeker. Een streng bespaarplan is bovendien niet voor iedereen prettig. Zie het vooral als een manier om bewust met geld en tijd om te gaan, niet als een wedstrijd. Wil je weten wanneer jij zou kunnen stoppen, reken het dan door met de [planner](/ben-ik-financieel-onafhankelijk).

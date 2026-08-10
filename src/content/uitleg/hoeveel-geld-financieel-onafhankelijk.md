@@ -44,7 +44,7 @@ Wil je vóór je AOW-leeftijd stoppen, dan moet je de jaren tot die leeftijd ove
 
 ## Houd rekening met belasting en inflatie
 
-Over vermogen boven een vrijgesteld bedrag betaal je in Nederland belasting in box 3. En door **inflatie** wordt geld elk jaar iets minder waard, dus je uitgaven stijgen mee. Reken daarom in koopkracht van vandaag — dat doet de planner automatisch.
+Over vermogen boven een vrijgesteld bedrag betaal je in Nederland belasting in box 3. En door **inflatie** wordt geld elk jaar iets minder waard, dus je uitgaven stijgen mee. Reken daarom in koopkracht van vandaag: dat doet de planner automatisch.
 
 ## Reken het uit voor jezelf
 

@@ -22,7 +22,7 @@ Jaarruimte is de fiscale ruimte om extra pensioen op te bouwen met belastingvoor
 
 ## Waarom bestaat jaarruimte?
 
-De overheid wil dat iedereen genoeg pensioen kan opbouwen. Wie via het werk te weinig opbouwt — zoals een [zzp'er of deeltijder met een tekort](/uitleg/wat-is-een-pensioentekort) — krijgt daarom ruimte om zelf aan te vullen, met hetzelfde belastingvoordeel als een gewoon pensioen.
+De overheid wil dat iedereen genoeg pensioen kan opbouwen. Wie via het werk te weinig opbouwt, zoals een [zzp'er of deeltijder met een tekort](/uitleg/wat-is-een-pensioentekort), krijgt daarom ruimte om zelf aan te vullen, met hetzelfde belastingvoordeel als een gewoon pensioen.
 
 ## Hoe wordt jaarruimte berekend?
 

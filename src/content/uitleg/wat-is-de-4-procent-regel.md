@@ -45,4 +45,4 @@ De regel is een richtlijn, geen garantie. Let op het volgende:
 
 ## Reken met kansen, niet met één getal
 
-Omdat de beurs onzeker is, is één vast percentage nooit het hele verhaal. De [planner](/ben-ik-financieel-onafhankelijk) rekent duizenden scenario's door en laat zien hoe groot de kans is dat jouw plan het volhoudt — een realistischer beeld dan een enkele vuistregel.
+Omdat de beurs onzeker is, is één vast percentage nooit het hele verhaal. De [planner](/ben-ik-financieel-onafhankelijk) rekent duizenden scenario's door en laat zien hoe groot de kans is dat jouw plan het volhoudt: een realistischer beeld dan een enkele vuistregel.

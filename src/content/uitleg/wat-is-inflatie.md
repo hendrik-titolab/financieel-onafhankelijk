@@ -1,7 +1,7 @@
 ---
 titel: "Wat is inflatie en wat doet het met je geld?"
 beschrijving: "Inflatie is de stijging van het algemene prijspeil: voor hetzelfde geld kun je elk jaar iets minder kopen. Lees wat inflatie is, waarom het je koopkracht en je spaargeld raakt, en wat je eraan kunt doen."
-samenvatting: "Inflatie is de stijging van het algemene prijspeil. Voor hetzelfde geld kun je elk jaar iets minder kopen — je koopkracht daalt. Op korte termijn merk je er weinig van, maar over tien of twintig jaar telt het flink aan. Het raakt vooral spaargeld: zolang de inflatie hoger is dan je spaarrente, verlies je koopkracht, ook al groeit je saldo op papier."
+samenvatting: "Inflatie is de stijging van het algemene prijspeil. Voor hetzelfde geld kun je elk jaar iets minder kopen: je koopkracht daalt. Op korte termijn merk je er weinig van, maar over tien of twintig jaar telt het flink aan. Het raakt vooral spaargeld: zolang de inflatie hoger is dan je spaarrente, verlies je koopkracht, ook al groeit je saldo op papier."
 isPillar: true
 volgorde: 2
 bijgewerkt: "2026-07-21"
@@ -36,7 +36,7 @@ Over één jaar merk je dat nauwelijks. Maar reken je tien of twintig jaar vooru
 
 ## Inflatie en je spaargeld
 
-Spaargeld voelt veilig, en dat is het op korte termijn ook. Maar juist spaargeld is gevoelig voor inflatie. Zolang de inflatie hoger is dan je spaarrente, daalt je koopkracht — ook al zie je je saldo op papier groeien. Waarom dat gebeurt en wat het over de jaren met een groot spaarsaldo doet, lees je in [sparen maakt mensen arm](/uitleg/sparen-maakt-mensen-arm).
+Spaargeld voelt veilig, en dat is het op korte termijn ook. Maar juist spaargeld is gevoelig voor inflatie. Zolang de inflatie hoger is dan je spaarrente, daalt je koopkracht, ook al zie je je saldo op papier groeien. Waarom dat gebeurt en wat het over de jaren met een groot spaarsaldo doet, lees je in [sparen maakt mensen arm](/uitleg/sparen-maakt-mensen-arm).
 
 Wil je het voor je eigen situatie zien? Met de [inflatierekentool](/tools/inflatie) vul je je startbedrag, de verwachte inflatie en je spaarrente in en zie je hoe je koopkracht zich over de jaren ontwikkelt.
 

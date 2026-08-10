@@ -26,10 +26,10 @@ Een pensioentekort betekent dat het pensioen dat je straks krijgt, niet genoeg i
 
 Niet iedereen bouwt evenveel pensioen op. Een tekort komt vaak voor bij:
 
-- **Zzp'ers en ondernemers** — zij bouwen meestal geen werkgeverspensioen op.
-- **Mensen die in deeltijd werken** — minder salaris betekent minder pensioenopbouw.
-- **Baanwisselaars** — bij een overstap kan er een gat in de opbouw ontstaan.
-- **Mensen zonder pensioenregeling** — niet elke werkgever biedt er een.
+- **Zzp'ers en ondernemers**: zij bouwen meestal geen werkgeverspensioen op.
+- **Mensen die in deeltijd werken**: minder salaris betekent minder pensioenopbouw.
+- **Baanwisselaars**: bij een overstap kan er een gat in de opbouw ontstaan.
+- **Mensen zonder pensioenregeling**: niet elke werkgever biedt er een.
 
 ## Hoe spoor je het op?
 
