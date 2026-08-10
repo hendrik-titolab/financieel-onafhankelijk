@@ -6,6 +6,7 @@ import { PensionPlanner } from './components/PensionPlanner'
 import { BrutoNettoCalculator } from './components/BrutoNetto'
 import { Voorwaarden } from './components/Voorwaarden'
 import { Privacy } from './components/Privacy'
+import { InstallAppButton } from './components/InstallAppButton'
 
 // ── Gedeelde header met navigatie ─────────────────────────────────────────────
 
@@ -93,6 +94,8 @@ function Header({ clientName, editingName, setEditingName, setClientName }: Head
             )}
           </div>
         )}
+
+        <InstallAppButton className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-primary-600 border border-primary-200 hover:bg-primary-50 rounded-lg transition-colors flex-shrink-0" />
 
         {/* Altijd bereikbaar, ook vanaf de fixed-height plannerpagina die geen Footer toont */}
         <div className="flex items-center gap-3 text-xs text-slate-400 flex-shrink-0">

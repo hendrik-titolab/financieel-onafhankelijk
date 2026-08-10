@@ -29,8 +29,10 @@ export function Privacy() {
         <p>
           Eén uitzondering: we houden lokaal in je browser (localStorage) een simpel getal bij,
           hoe vaak je een Excel- of PDF-bestand hebt gedownload. Daarmee beperken we het aantal
-          gratis downloads. Dat getal bevat geen persoonsgegevens, gaat niet naar een server en
-          verdwijnt als je je browsergegevens wist.
+          gratis downloads. We onthouden op dezelfde manier ook of je de tip over de
+          app-installatie hebt weggeklikt, zodat die niet blijft terugkomen. Beide bevatten geen
+          persoonsgegevens, gaan niet naar een server en verdwijnen als je je browsergegevens
+          wist.
         </p>
 
         <h2 className="text-lg font-semibold text-slate-900 pt-3">Cookies en meetgegevens</h2>

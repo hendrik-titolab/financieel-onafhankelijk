@@ -5,7 +5,11 @@ import { exportToExcel } from '../../utils/exportExcel'
 import { exportToPDF } from '../../utils/exportPDF'
 import { FEEDBACK_URL } from '../../config/site'
 import { FREE_DOWNLOAD_LIMIT, getDownloadCount, incrementDownloadCount } from '../../utils/downloadLimit'
+import { useInstallPrompt } from '../../hooks/useInstallPrompt'
+import { InstallAppButton } from '../InstallAppButton'
 import { useState } from 'react'
+
+const INSTALL_BANNER_DISMISSED_KEY = 'fp_install_banner_dismissed'
 
 interface Props {
   inputs: PensionInputs
@@ -96,6 +100,10 @@ export function ResultsPanel({ inputs, result, mc, isCalculating, onRunMonteCarl
   const [showIntro, setShowIntro] = useState(true)
   const [downloadCount, setDownloadCount] = useState(() => getDownloadCount())
   const limitReached = downloadCount >= FREE_DOWNLOAD_LIMIT
+  const [installBannerDismissed, setInstallBannerDismissed] = useState(
+    () => typeof window !== 'undefined' && window.localStorage.getItem(INSTALL_BANNER_DISMISSED_KEY) === 'true'
+  )
+  const { canInstall: canInstallApp } = useInstallPrompt()
   const surplus = result.projectedCapital - result.requiredCapital
   const isOnTrack = surplus >= 0
   const currentMonthlyPMT = inputs.contributionFrequency === 'maandelijks'
@@ -412,6 +420,29 @@ export function ResultsPanel({ inputs, result, mc, isCalculating, onRunMonteCarl
             value={mc.successRate}
             title="Kans op volledig inkomensdoel"
             subtitle="Volledig doelbedrag"
+          />
+        </div>
+      )}
+
+      {/* App-installatie: alleen tonen na een eerste berekening, en niet meer na wegklikken */}
+      {mc && canInstallApp && !installBannerDismissed && (
+        <div className="rounded-xl border border-primary-100 bg-primary-50 p-4 pr-10 relative flex items-center gap-3 flex-wrap">
+          <button
+            onClick={() => {
+              window.localStorage.setItem(INSTALL_BANNER_DISMISSED_KEY, 'true')
+              setInstallBannerDismissed(true)
+            }}
+            className="absolute top-2.5 right-2.5 text-primary-400 hover:text-primary-600 transition-colors"
+            title="Sluiten"
+          >
+            <X size={16} />
+          </button>
+          <p className="text-sm text-primary-800 leading-relaxed flex-1 min-w-[200px]">
+            Wist je dat je deze tool ook als app kunt installeren? Werkt ook offline.
+          </p>
+          <InstallAppButton
+            label="Installeer nu"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors flex-shrink-0"
           />
         </div>
       )}
