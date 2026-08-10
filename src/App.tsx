@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, NavLink, useLocation } from 'react-router
 import { TrendingUp, CheckCircle, Calculator } from 'lucide-react'
 import { PensionPlanner } from './components/PensionPlanner'
 import { BrutoNettoCalculator } from './components/BrutoNetto'
+import { Voorwaarden } from './components/Voorwaarden'
 
 // ── Gedeelde header met navigatie ─────────────────────────────────────────────
 
@@ -36,14 +37,19 @@ function Header({ clientName, editingName, setEditingName, setClientName }: Head
             to="/"
             end
             className={({ isActive }) =>
-              `px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+              `px-3 py-1 rounded-lg text-sm font-medium transition leading-tight ${
                 isActive
                   ? 'bg-primary-50 text-primary-600'
                   : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
               }`
             }
           >
-            Pensioenplanner
+            <span className="flex flex-col">
+              <span className="text-[10px] font-normal uppercase tracking-wide opacity-70">
+                Rekentool
+              </span>
+              <span>Financieel onafhankelijk?</span>
+            </span>
           </NavLink>
           <NavLink
             to="/bruto-netto"
@@ -61,29 +67,39 @@ function Header({ clientName, editingName, setEditingName, setClientName }: Head
         </nav>
       </div>
 
-      {/* Klantnaam — alleen zichtbaar op de pensioenplanner pagina */}
-      {isPensionPage && (
-        <div className="hidden sm:flex items-center gap-2 min-w-0">
-          <span className="text-xs text-slate-400 flex-shrink-0">Naam:</span>
-          {editingName ? (
-            <input
-              autoFocus
-              value={clientName}
-              onChange={e => setClientName(e.target.value)}
-              onBlur={() => setEditingName(false)}
-              onKeyDown={e => e.key === 'Enter' && setEditingName(false)}
-              className="input-field text-sm py-1 w-36 md:w-48"
-            />
-          ) : (
-            <button
-              onClick={() => setEditingName(true)}
-              className="text-sm font-medium text-slate-700 hover:text-primary-600 transition-colors border-b border-dashed border-slate-300 hover:border-primary-400 truncate max-w-[120px] md:max-w-none"
-            >
-              {clientName}
-            </button>
-          )}
-        </div>
-      )}
+      <div className="flex items-center gap-4 min-w-0">
+        {/* Klantnaam — alleen zichtbaar op de pensioenplanner pagina */}
+        {isPensionPage && (
+          <div className="hidden sm:flex items-center gap-2 min-w-0">
+            <span className="text-xs text-slate-400 flex-shrink-0">Naam:</span>
+            {editingName ? (
+              <input
+                autoFocus
+                value={clientName}
+                onChange={e => setClientName(e.target.value)}
+                onBlur={() => setEditingName(false)}
+                onKeyDown={e => e.key === 'Enter' && setEditingName(false)}
+                className="input-field text-sm py-1 w-36 md:w-48"
+              />
+            ) : (
+              <button
+                onClick={() => setEditingName(true)}
+                className="text-sm font-medium text-slate-700 hover:text-primary-600 transition-colors border-b border-dashed border-slate-300 hover:border-primary-400 truncate max-w-[120px] md:max-w-none"
+              >
+                {clientName}
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Altijd bereikbaar, ook vanaf de fixed-height plannerpagina die geen Footer toont */}
+        <a
+          href="/voorwaarden"
+          className="text-xs text-slate-400 hover:text-primary-600 transition-colors flex-shrink-0"
+        >
+          Voorwaarden
+        </a>
+      </div>
     </header>
   )
 }
@@ -94,6 +110,10 @@ function Footer() {
   return (
     <footer className="border-t border-slate-100 bg-white px-4 py-3 text-xs text-slate-400 text-center flex-shrink-0">
       © {new Date().getFullYear()} benikfinancieelonafhankelijk.nl — Indicatieve berekeningen, geen financieel advies
+      {' · '}
+      <a href="/voorwaarden" className="hover:text-primary-600 underline">
+        Voorwaarden
+      </a>
     </footer>
   )
 }
@@ -152,6 +172,18 @@ export default function App() {
               <>
                 <main className="flex-1 overflow-y-auto p-4 md:p-6">
                   <BrutoNettoCalculator />
+                </main>
+                <Footer />
+              </>
+            }
+          />
+          {/* Algemene voorwaarden — standaard scrollende pagina */}
+          <Route
+            path="/voorwaarden"
+            element={
+              <>
+                <main className="flex-1 overflow-y-auto p-4 md:p-6">
+                  <Voorwaarden />
                 </main>
                 <Footer />
               </>
