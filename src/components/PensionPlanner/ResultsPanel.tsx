@@ -4,6 +4,7 @@ import { WealthChart } from './WealthChart'
 import { exportToExcel } from '../../utils/exportExcel'
 import { exportToPDF } from '../../utils/exportPDF'
 import { FEEDBACK_URL } from '../../config/site'
+import { FREE_DOWNLOAD_LIMIT, getDownloadCount, incrementDownloadCount } from '../../utils/downloadLimit'
 import { useState } from 'react'
 
 interface Props {
@@ -93,6 +94,8 @@ export function ResultsPanel({ inputs, result, mc, isCalculating, onRunMonteCarl
   const [showInflationDetail, setShowInflationDetail] = useState(false)
   const [confirmingClose, setConfirmingClose] = useState(false)
   const [showIntro, setShowIntro] = useState(true)
+  const [downloadCount, setDownloadCount] = useState(() => getDownloadCount())
+  const limitReached = downloadCount >= FREE_DOWNLOAD_LIMIT
   const surplus = result.projectedCapital - result.requiredCapital
   const isOnTrack = surplus >= 0
   const currentMonthlyPMT = inputs.contributionFrequency === 'maandelijks'
@@ -101,16 +104,20 @@ export function ResultsPanel({ inputs, result, mc, isCalculating, onRunMonteCarl
   const needsMoreContribution = result.requiredMonthlyContribution > currentMonthlyPMT
 
   const handlePDF = async () => {
+    if (limitReached) return
     setIsExportingPdf(true)
     try {
       await exportToPDF(inputs, result, mc, clientName, 'wealth-chart')
+      setDownloadCount(incrementDownloadCount())
     } finally {
       setIsExportingPdf(false)
     }
   }
 
   const handleExcel = async () => {
+    if (limitReached) return
     await exportToExcel(inputs, result, mc ?? { successRate: 0, successRate75: 0, percentileData: [] }, clientName)
+    setDownloadCount(incrementDownloadCount())
   }
 
   // Wis alle invoer zonder iets op te slaan (na bevestiging)
@@ -137,7 +144,7 @@ export function ResultsPanel({ inputs, result, mc, isCalculating, onRunMonteCarl
             <span className="font-medium">Events</span>. Klik daarna op{' '}
             <span className="font-medium">Bereken</span> en je krijgt antwoord op de vraag:
             {' '}<span className="italic">"Ben ik financieel onafhankelijk?"</span>{' '}
-            Veel plezier met rekenen — en laat gerust een reactie achter als je feedback of
+            Veel plezier met rekenen, en laat gerust een reactie achter als je feedback of
             gedachten met ons wilt delen!
           </p>
         </div>
@@ -176,12 +183,12 @@ export function ResultsPanel({ inputs, result, mc, isCalculating, onRunMonteCarl
           <p className="text-xs text-slate-400">Alle bedragen in huidige koopkracht (reëel)</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button onClick={handleExcel}
-            className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-colors">
+          <button onClick={handleExcel} disabled={limitReached}
+            className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
             <Sheet size={14} />
             Download Excel
           </button>
-          <button onClick={handlePDF} disabled={isExportingPdf}
+          <button onClick={handlePDF} disabled={isExportingPdf || limitReached}
             className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium bg-primary-600 hover:bg-primary-700 text-white rounded-xl transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
             <FileText size={14} />
             {isExportingPdf ? 'Laden...' : 'Download PDF'}
@@ -203,6 +210,24 @@ export function ResultsPanel({ inputs, result, mc, isCalculating, onRunMonteCarl
           </button>
         </div>
       </div>
+
+      {limitReached ? (
+        <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+          Je hebt het maximum aan gratis downloads bereikt. Neem{' '}
+          {FEEDBACK_URL ? (
+            <a href={FEEDBACK_URL} target="_blank" rel="noopener noreferrer" className="underline font-medium hover:text-amber-900">
+              contact
+            </a>
+          ) : (
+            'contact'
+          )}
+          {' '}op als je meer berekeningen wil downloaden.
+        </p>
+      ) : (
+        <p className="text-xs text-slate-400">
+          Nog {FREE_DOWNLOAD_LIMIT - downloadCount} gratis download{FREE_DOWNLOAD_LIMIT - downloadCount === 1 ? '' : 's'} beschikbaar.
+        </p>
+      )}
 
       {/* Key metric cards */}
       <div className="grid grid-cols-2 gap-3">
@@ -303,7 +328,7 @@ export function ResultsPanel({ inputs, result, mc, isCalculating, onRunMonteCarl
           return (
             <div className="mt-3 rounded-xl bg-blue-50 border border-blue-100 p-3">
               <p className="text-xs font-semibold text-blue-700 mb-2">
-                Koopkrachtbehoud — nominale inkomensbedragen ({inputs.inflation}% inflatie)
+                Koopkrachtbehoud: nominale inkomensbedragen ({inputs.inflation}% inflatie)
               </p>
               <p className="text-xs text-blue-600 mb-3 leading-relaxed">
                 Het gewenste inkomen van {eur(result.desiredMonthlyNetto)}/mnd is in huidige koopkracht.
@@ -396,7 +421,7 @@ export function ResultsPanel({ inputs, result, mc, isCalculating, onRunMonteCarl
         We berekenen in 2.000 scenario's met verschillende toekomstige rendementen hoe groot de kans is dat je jouw doel haalt.
         Voor het gemiddelde rendement en de inflatie gaan we uit van wat er is ingevoerd.
         Dit is een indicatieve berekening en geen financieel advies.
-        Voor goed advies raden wij aan een financieel planner te raadplegen —
+        Voor goed advies raden wij aan een financieel planner te raadplegen:
         vind een geschikte specialist op{' '}
         <a href="https://www.ffp.nl" target="_blank" rel="noopener noreferrer"
           className="text-primary-500 hover:underline">ffp.nl</a>.

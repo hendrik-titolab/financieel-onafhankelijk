@@ -137,7 +137,7 @@ function ParametersTab({ inputs, onChange }: Props) {
           <NumberInput value={inputs.desiredRetirementIncome}
             onChange={v => onChange({ desiredRetirementIncome: v })}
             prefix="€" suffix="/mnd" step={100} />
-          <p className="text-xs text-slate-400">In koopkracht van vandaag — inflatie wordt automatisch verwerkt</p>
+          <p className="text-xs text-slate-400">In koopkracht van vandaag: inflatie wordt automatisch verwerkt</p>
         </div>
         <Field label="Inflatie">
           <NumberInput value={inputs.inflation}
@@ -183,7 +183,7 @@ function ParametersTab({ inputs, onChange }: Props) {
         </div>
         {inputs.retirementAge < Math.min(inputs.aowStartAge, inputs.employerPensionStartAge) && (
           <p className="text-xs text-amber-600 bg-amber-50 rounded-lg p-2 leading-relaxed">
-            ⚠ Overbruggingsperiode van {Math.min(inputs.aowStartAge, inputs.employerPensionStartAge) - inputs.retirementAge} jaar — eigen vermogen dekt het volledige inkomen.
+            ⚠ Overbruggingsperiode van {Math.min(inputs.aowStartAge, inputs.employerPensionStartAge) - inputs.retirementAge} jaar: eigen vermogen dekt het volledige inkomen.
           </p>
         )}
       </Section>

@@ -26,7 +26,7 @@ export default function PensionPlannerApp() {
       {sessionClosed && (
         <div className="fixed top-0 inset-x-0 z-50 bg-emerald-500 text-white text-sm font-medium text-center py-2.5 flex items-center justify-center gap-2 shadow-lg animate-pulse">
           <CheckCircle size={15} />
-          Sessie afgesloten — alle invoer gewist
+          Sessie afgesloten, alle invoer gewist
         </div>
       )}
 

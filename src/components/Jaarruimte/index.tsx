@@ -182,7 +182,7 @@ function ReserveringsruimteDirect({ rijen, onChange, baseYear }: ReserveringProp
   return (
     <div className="space-y-2">
       <p className="text-xs text-slate-400 leading-relaxed">
-        Vul per jaar het bedrag in dat je <em>niet</em> hebt ingelegd — te vinden in eerder gemaakte jaarruimteberekeningen of belastingaangiften. Vul een rij in, de volgende verschijnt vanzelf.
+        Vul per jaar het bedrag in dat je <em>niet</em> hebt ingelegd, te vinden in eerder gemaakte jaarruimteberekeningen of belastingaangiften. Vul een rij in, de volgende verschijnt vanzelf.
       </p>
       {/* Column headers */}
       <div className="flex gap-1.5 text-xs text-slate-400 font-medium px-0.5">
@@ -270,7 +270,7 @@ function ReserveringsruimteBerekenen({ onChange, baseYear }: ReserveringProps) {
   return (
     <div className="space-y-2">
       <p className="text-xs text-slate-400 leading-relaxed">
-        Voeg per vorig belastingjaar een kaartje toe. Vul inkomen en pensioensituatie in — de jaarruimte en het onbenutte bedrag worden automatisch berekend.
+        Voeg per vorig belastingjaar een kaartje toe. Vul inkomen en pensioensituatie in: de jaarruimte en het onbenutte bedrag worden automatisch berekend.
       </p>
 
       {kaarten.map((k, i) => {
@@ -621,7 +621,7 @@ export function JaarruimteTab() {
               ))}
             </div>
             {inputs.pensioenType === 'geen' && (
-              <p className="text-xs text-slate-400 mt-1.5">Geen werkgeverspensioen (bijv. ZZP) — aftrek is €0.</p>
+              <p className="text-xs text-slate-400 mt-1.5">Geen werkgeverspensioen (bijv. ZZP): aftrek is €0.</p>
             )}
             {inputs.pensioenType === 'db' && (
               <p className="text-xs text-slate-400 mt-1.5">
@@ -649,7 +649,7 @@ export function JaarruimteTab() {
                 />
               </div>
               <p className="text-xs text-slate-400 mt-1">
-                Bron: UPO {inputs.year - 1} (jaarlijks pensioenoverzicht), rubriek "pensioenaangroei" of "toename pensioenaanspraak" — in €/jaar.
+                Bron: UPO {inputs.year - 1} (jaarlijks pensioenoverzicht), rubriek "pensioenaangroei" of "toename pensioenaanspraak", in €/jaar.
               </p>
             </div>
           )}

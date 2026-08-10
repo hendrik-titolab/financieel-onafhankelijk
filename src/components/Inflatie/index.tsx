@@ -236,11 +236,11 @@ export function InflatieCalculator() {
           <p className="text-xl sm:text-2xl font-semibold text-slate-900 leading-snug">
             {daalt ? (
               <>Over {looptijd} jaar is je {eur(startbedrag)} in koopkracht nog maar{' '}
-                <span className="text-red-600">{eur(r.koopkrachtEind)}</span> waard — een verlies van{' '}
+                <span className="text-red-600">{eur(r.koopkrachtEind)}</span> waard, een verlies van{' '}
                 <span className="text-red-600">{eur(r.verliesEuro)} ({pct(r.verliesPct)})</span>.</>
             ) : stijgt ? (
               <>Over {looptijd} jaar is je {eur(startbedrag)} in koopkracht{' '}
-                <span className="text-emerald-600">{eur(r.koopkrachtEind)}</span> waard — een stijging van{' '}
+                <span className="text-emerald-600">{eur(r.koopkrachtEind)}</span> waard, een stijging van{' '}
                 <span className="text-emerald-600">{eur(-r.verliesEuro)} ({pct(-r.verliesPct)})</span>.</>
             ) : (
               <>Over {looptijd} jaar houdt je {eur(startbedrag)} vrijwel exact dezelfde koopkracht:{' '}
