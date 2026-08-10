@@ -4,6 +4,10 @@ node_modules/
 # Build output
 dist/
 
+# Astro build-cache (dit project gebruikt Vite, geen Astro; deze map dook per
+# ongeluk op na een verkeerd uitgevoerd commando, bewust uitgesloten)
+.astro/
+
 # Local dev
 .env
 .env.local
