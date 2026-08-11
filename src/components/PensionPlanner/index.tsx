@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react'
-import { RefreshCw } from 'lucide-react'
+import { useState, useCallback, useEffect, useRef } from 'react'
+import { RefreshCw, ChevronDown } from 'lucide-react'
 import type { PensionInputs, PensionResult, MonteCarloResult } from '../../types'
 import { calculatePension } from '../../utils/pensionCalc'
 import { runMonteCarlo } from '../../utils/monteCarlo'
@@ -48,6 +48,36 @@ export function PensionPlanner({ clientName, onCloseSession }: Props) {
   const [mcStale, setMcStale] = useState(false)
   const [isCalculating, setIsCalculating] = useState(false)
 
+  // Scroll-aanwijzing: na "Inflatie" was niet duidelijk dat er onder de
+  // zichtbare rand nog meer velden staan (Pensioenuitkeringen, Risicoprofiel).
+  // Het pijltje verschijnt zodra er meer te scrollen valt en verdwijnt zodra
+  // je de onderkant bereikt — meebewegend met tabwissels en het in-/uitklappen
+  // van velden (bijv. "Zelf rendement en volatiliteit invullen").
+  const scrollAreaRef = useRef<HTMLDivElement>(null)
+  const scrollContentRef = useRef<HTMLDivElement>(null)
+  const [showScrollHint, setShowScrollHint] = useState(false)
+
+  useEffect(() => {
+    const area = scrollAreaRef.current
+    const content = scrollContentRef.current
+    if (!area || !content) return
+
+    const checkScroll = () => {
+      const hasMore = area.scrollHeight - area.scrollTop - area.clientHeight > 8
+      setShowScrollHint(hasMore)
+    }
+
+    checkScroll()
+    area.addEventListener('scroll', checkScroll)
+    const ro = new ResizeObserver(checkScroll)
+    ro.observe(content)
+    ro.observe(area)
+    return () => {
+      area.removeEventListener('scroll', checkScroll)
+      ro.disconnect()
+    }
+  }, [])
+
   const handleChange = useCallback((updates: Partial<PensionInputs>) => {
     setInputs(prev => {
       const next = { ...prev, ...updates }
@@ -78,9 +108,20 @@ export function PensionPlanner({ clientName, onCloseSession }: Props) {
           op te zoeken na het invullen van een veld. */}
       <div className="w-full lg:w-80 lg:flex-shrink-0">
         <div className="card !p-0 flex flex-col max-h-[75vh] lg:max-h-[calc(100vh-140px)] overflow-hidden">
-          <div className="flex-1 min-h-0 overflow-y-auto visible-scrollbar p-4">
-            <h2 className="text-sm font-medium text-ink mb-4">Invoer</h2>
-            <InputPanel inputs={inputs} onChange={handleChange} />
+          <div ref={scrollAreaRef} className="relative flex-1 min-h-0 overflow-y-auto visible-scrollbar p-4">
+            <div ref={scrollContentRef}>
+              <h2 className="text-sm font-medium text-ink mb-4">Invoer</h2>
+              <InputPanel inputs={inputs} onChange={handleChange} />
+            </div>
+            {showScrollHint && (
+              // position:absolute (niet sticky) zodat het pijltje geen eigen
+              // scrollhoogte toevoegt — anders blijft hasMore altijd waar.
+              <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-12 flex items-end justify-center bg-gradient-to-t from-panel to-transparent">
+                <div className="mb-1.5 flex items-center justify-center w-7 h-7 rounded-full bg-panel border border-line animate-bounce">
+                  <ChevronDown size={15} className="text-data-700" />
+                </div>
+              </div>
+            )}
           </div>
           <div className="flex-shrink-0 border-t border-line-soft p-3 bg-panel">
             <button

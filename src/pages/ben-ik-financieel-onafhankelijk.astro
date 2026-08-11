@@ -15,8 +15,10 @@ const schemas = [
 ---
 
 <BaseLayout title={title} description={description} showFooter={false} jsonLd={schemas}>
-  <main class="flex-1 min-h-0 overflow-y-auto md:overflow-hidden p-4 md:p-6">
-    <h1 class="sr-only">Ben ik financieel onafhankelijk? Reken het uit met de planner</h1>
-    <PensionPlannerApp client:only="react" />
+  <main class="flex-1 min-h-0 overflow-y-auto md:overflow-hidden p-4 md:p-6 flex flex-col">
+    <h1 class="font-serif text-xl md:text-2xl text-ink mb-3 flex-shrink-0">Ben ik financieel onafhankelijk?</h1>
+    <div class="flex-1 min-h-0">
+      <PensionPlannerApp client:only="react" />
+    </div>
   </main>
 </BaseLayout>
