@@ -183,6 +183,17 @@ function ParametersTab({ inputs, onChange }: Props) {
       <div className="border-t border-line-soft" />
 
       <Section title="Pensioenuitkeringen">
+        {/* Referentie aan je eigen pensioenleeftijd: die staat in de sectie
+            "Leeftijd" hierboven, dus zonder deze regel zie je 'm niet meer
+            terwijl je AOW en werkgeverspensioen invult — precies waar het
+            mis kan gaan als die twee leeftijden bewust ver uit elkaar liggen
+            (bijv. stoppen op 50, pensioenen die pas op 65-70 ingaan). */}
+        <div className="rounded-[3px] bg-morning border border-line px-3 py-2">
+          <p className="text-xs text-ink">
+            Je stopt met werken op <span className="font-medium">{inputs.retirementAge} jaar</span>{' '}
+            (in te stellen bij "Leeftijd" hierboven). AOW en werkgeverspensioen mogen daar los van staan.
+          </p>
+        </div>
         <Field label="AOW netto per maand">
           <NumberInput value={inputs.aowMaandBedragNetto}
             onChange={v => onChange({ aowMaandBedragNetto: v })} prefix="€" step={50} />
