@@ -46,30 +46,30 @@ const schemas = [
   <main class="flex-1">
     <article class="max-w-2xl mx-auto px-4 md:px-6 py-8 md:py-10">
       <!-- Kruimelpad -->
-      <nav class="text-xs text-slate-400 mb-4 flex flex-wrap items-center gap-1.5" aria-label="Kruimelpad">
-        <a href="/" class="hover:text-primary-600">Home</a><span>/</span>
-        <a href="/uitleg" class="hover:text-primary-600">Uitleg</a>
+      <nav class="text-xs text-body mb-4 flex flex-wrap items-center gap-1.5" aria-label="Kruimelpad">
+        <a href="/" class="hover:text-ink">Home</a><span>/</span>
+        <a href="/uitleg" class="hover:text-ink">Uitleg</a>
         {pillarEntry && (
           <>
             <span>/</span>
-            <a href={`/uitleg/${pillarEntry.id}`} class="hover:text-primary-600">{pillarEntry.data.titel}</a>
+            <a href={`/uitleg/${pillarEntry.id}`} class="hover:text-ink">{pillarEntry.data.titel}</a>
           </>
         )}
       </nav>
 
-      <h1 class="text-3xl md:text-4xl font-bold text-slate-900 leading-tight">{d.titel}</h1>
+      <h1 class="font-serif text-3xl md:text-4xl text-ink leading-tight">{d.titel}</h1>
 
       <!-- Answer-first + tool-CTA (uit voor modulaire artikelen die met een intro openen) -->
       {d.toonSamenvatting && (
         <>
-          <div class="mt-5 rounded-xl bg-primary-50 border border-primary-100 p-5">
-            <p class="text-base text-slate-800 leading-relaxed">{d.samenvatting}</p>
+          <div class="mt-5 rounded-[3px] bg-morning border border-line p-5">
+            <p class="text-base text-ink leading-relaxed">{d.samenvatting}</p>
           </div>
 
           {d.tool && (
             <a
               href={d.tool.href}
-              class="mt-5 inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 transition"
+              class="mt-5 inline-flex items-center gap-2 px-4 py-2.5 rounded-[3px] bg-ink text-warmwhite text-sm hover:bg-[#1F2C23] transition"
             >
               {d.tool.label}
               <span aria-hidden="true">→</span>
@@ -79,22 +79,27 @@ const schemas = [
       )}
 
       <!-- Inhoud -->
-      <div class="prose prose-slate mt-8 max-w-none prose-headings:text-slate-900 prose-a:text-primary-600 prose-a:no-underline hover:prose-a:underline">
+      <div class="prose mt-8 max-w-none
+        prose-headings:font-serif prose-headings:font-normal prose-headings:text-ink
+        prose-p:text-body prose-li:text-body prose-strong:text-ink prose-strong:font-medium
+        prose-blockquote:text-body prose-blockquote:border-l-line
+        prose-a:text-data-700 prose-a:no-underline hover:prose-a:underline
+        prose-code:text-ink prose-hr:border-line">
         <Content />
       </div>
 
       <!-- Pillar: overzicht clusters -->
       {children.length > 0 && (
         <section class="mt-10">
-          <h2 class="text-xl font-semibold text-slate-900 mb-4">Verder lezen</h2>
+          <h2 class="font-serif text-xl text-ink mb-4">Verder lezen</h2>
           <div class="grid gap-3 sm:grid-cols-2">
             {children.map((c) => (
               <a
                 href={`/uitleg/${c.id}`}
-                class="block rounded-lg border border-slate-200 bg-white p-4 hover:border-primary-200 hover:shadow-sm transition"
+                class="block rounded-[3px] border border-line bg-panel p-4 hover:border-ink transition"
               >
-                <span class="font-medium text-slate-800">{c.data.titel}</span>
-                <span class="mt-1 block text-sm text-slate-500">{c.data.beschrijving}</span>
+                <span class="text-ink">{c.data.titel}</span>
+                <span class="mt-1 block text-sm text-body">{c.data.beschrijving}</span>
               </a>
             ))}
           </div>
@@ -104,12 +109,12 @@ const schemas = [
       <!-- FAQ -->
       {d.faq.length > 0 && (
         <section class="mt-10">
-          <h2 class="text-xl font-semibold text-slate-900 mb-4">Veelgestelde vragen</h2>
+          <h2 class="font-serif text-xl text-ink mb-4">Veelgestelde vragen</h2>
           <div class="space-y-3">
             {d.faq.map((f) => (
-              <details class="rounded-lg border border-slate-200 bg-white p-4">
-                <summary class="font-medium text-slate-800 cursor-pointer">{f.vraag}</summary>
-                <p class="mt-2 text-sm text-slate-600 leading-relaxed">{f.antwoord}</p>
+              <details class="rounded-[3px] border border-line bg-panel p-4">
+                <summary class="text-ink cursor-pointer">{f.vraag}</summary>
+                <p class="mt-2 text-sm text-body leading-relaxed">{f.antwoord}</p>
               </details>
             ))}
           </div>
@@ -118,19 +123,19 @@ const schemas = [
 
       <!-- Cluster: lees ook + terug naar pillar -->
       {(siblings.length > 0 || pillarEntry) && (
-        <section class="mt-10 border-t border-slate-100 pt-6">
-          <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Lees ook</h2>
+        <section class="mt-10 border-t border-line-soft pt-6">
+          <h2 class="label-mono mb-3">Lees ook</h2>
           <ul class="space-y-2 text-sm">
             {pillarEntry && (
               <li>
-                <a href={`/uitleg/${pillarEntry.id}`} class="text-primary-600 hover:underline">
+                <a href={`/uitleg/${pillarEntry.id}`} class="text-data-700 hover:underline">
                   {pillarEntry.data.titel}
                 </a>
               </li>
             )}
             {siblings.map((s) => (
               <li>
-                <a href={`/uitleg/${s.id}`} class="text-primary-600 hover:underline">{s.data.titel}</a>
+                <a href={`/uitleg/${s.id}`} class="text-data-700 hover:underline">{s.data.titel}</a>
               </li>
             ))}
           </ul>
@@ -139,19 +144,19 @@ const schemas = [
 
       <!-- Bronnen -->
       {d.bronnen.length > 0 && (
-        <section class="mt-10 border-t border-slate-100 pt-6">
-          <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Bronnen</h2>
-          <ul class="space-y-1.5 text-sm text-slate-500 list-disc pl-5">
+        <section class="mt-10 border-t border-line-soft pt-6">
+          <h2 class="label-mono mb-3">Bronnen</h2>
+          <ul class="space-y-1.5 text-sm text-body list-disc pl-5">
             {d.bronnen.map((b) => (
               <li>
-                <a href={b.url} rel="noopener nofollow" target="_blank" class="hover:text-primary-600">{b.titel}</a>
+                <a href={b.url} rel="noopener nofollow" target="_blank" class="hover:text-ink">{b.titel}</a>
               </li>
             ))}
           </ul>
         </section>
       )}
 
-      <p class="mt-8 text-xs text-slate-400">
+      <p class="mt-8 text-xs text-body">
         Laatst gecontroleerd: {bijgewerkt}. Deze uitleg is indicatief en educatief. Geen persoonlijk financieel advies.
       </p>
     </article>

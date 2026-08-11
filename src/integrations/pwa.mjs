@@ -9,8 +9,8 @@ const manifest = {
     'Onafhankelijke uitleg en gratis rekentools over financiële onafhankelijkheid, pensioen en vermogensopbouw.',
   start_url: '/',
   display: 'standalone',
-  background_color: '#f8fafc',
-  theme_color: '#2563eb',
+  background_color: '#E4E1DC',
+  theme_color: '#29392E',
   orientation: 'any',
   icons: [
     { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },

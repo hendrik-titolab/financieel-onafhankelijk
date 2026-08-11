@@ -46,13 +46,13 @@ const { naam, zin } = Astro.props
 
 <style>
   .factor {
-    border: 1px solid #e2e8f0;
-    border-radius: 0.75rem;
-    background: #fff;
+    border: 1px solid #dad5cd;
+    border-radius: 3px;
+    background: #f7f6f4;
     margin: 0.6rem 0;
   }
   .factor[open] {
-    border-color: #bfdbfe;
+    border-color: #29392e;
   }
   .factor-summary {
     display: flex;
@@ -72,17 +72,17 @@ const { naam, zin } = Astro.props
     gap: 0.15rem;
   }
   .factor-naam {
-    font-weight: 600;
-    color: #0f172a;
+    font-weight: 500;
+    color: #29392e;
     line-height: 1.35;
   }
   .factor-zin {
-    color: #64748b;
+    color: #4c5a50;
     font-size: 0.95rem;
     line-height: 1.5;
   }
   .factor-chevron {
-    color: #94a3b8;
+    color: #6e7f72;
     flex-shrink: 0;
     margin-top: 0.15rem;
     transition: transform 0.2s ease;
@@ -92,7 +92,7 @@ const { naam, zin } = Astro.props
   }
   .factor-body {
     padding: 0.25rem 1.25rem 1.15rem;
-    color: #475569;
+    color: #4c5a50;
   }
   /* Marges van het eerste/laatste slot-element trimmen (slot-inhoud staat buiten
      de scope, dus via :global). */

@@ -18,9 +18,9 @@ const schemas = [
 <BaseLayout title={title} description={description} jsonLd={schemas}>
   <main class="flex-1">
     <article class="max-w-2xl mx-auto px-4 md:px-6 py-10">
-      <h1 class="text-3xl font-bold text-slate-900 mb-6">Over deze site</h1>
+      <h1 class="font-serif text-3xl text-ink mb-6">Over deze site</h1>
 
-      <div class="text-slate-600 leading-relaxed space-y-4">
+      <div class="text-body leading-relaxed space-y-4">
         <p>
           <strong>{SITE.name}</strong> verzamelt begrijpelijke uitleg en gratis rekentools over
           vermogensopbouw, pensioen en financiële onafhankelijkheid. Het doel is simpel: iedereen
@@ -28,14 +28,14 @@ const schemas = [
           account.
         </p>
 
-        <h2 class="text-xl font-semibold text-slate-900 pt-4">Onafhankelijk en gratis</h2>
+        <h2 class="font-serif text-xl text-ink pt-4">Onafhankelijk en gratis</h2>
         <p>
           De tools rekenen met openbare, controleerbare cijfers (zoals de belastingschijven en
           heffingskortingen van de Belastingdienst). We verkopen geen financiële producten en geven
           geen persoonlijk advies. De uitkomsten zijn indicatief en bedoeld om inzicht te geven.
         </p>
 
-        <h2 id="waarom-deze-rekentool" class="text-xl font-semibold text-slate-900 pt-4">
+        <h2 id="waarom-deze-rekentool" class="font-serif text-xl text-ink pt-4">
           Waarom deze rekentool er is
         </h2>
         <p>
@@ -55,14 +55,14 @@ const schemas = [
           uitkomst", maar "dit is de bandbreedte, en dit is hoe waarschijnlijk elk scenario is".
         </p>
 
-        <h2 class="text-xl font-semibold text-slate-900 pt-4">Geen financieel advies</h2>
+        <h2 class="font-serif text-xl text-ink pt-4">Geen financieel advies</h2>
         <p>
           De berekeningen op deze site zijn een hulpmiddel, geen persoonlijk financieel advies. Voor
           een besluit over je pensioen, beleggingen of lijfrente kun je het beste een erkend
           adviseur raadplegen die je hele situatie kent.
         </p>
 
-        <h2 class="text-xl font-semibold text-slate-900 pt-4">Uitgever</h2>
+        <h2 class="font-serif text-xl text-ink pt-4">Uitgever</h2>
         <p>
           Deze site is een uitgave van {SITE.publisher}. Vragen, fouten gevonden of een tool die je
           mist?{' '}
@@ -70,7 +70,7 @@ const schemas = [
             FEEDBACK_URL && (
               <>
                 Laat het weten via het{' '}
-                <a href={FEEDBACK_URL} class="text-primary-600 hover:text-primary-700 underline" rel="noopener" target="_blank">
+                <a href={FEEDBACK_URL} class="text-data-700 hover:underline" rel="noopener" target="_blank">
                   feedbackformulier
                 </a>
                 .

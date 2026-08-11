@@ -21,11 +21,12 @@ export async function exportToExcel(
   // sleept de build fs/stream-polyfills mee.
   const ExcelJS = (await import('exceljs/dist/exceljs.js')).default
   const wb = new ExcelJS.Workbook()
+  const naam = clientName.trim() || 'Naamloze berekening'
 
   // --- Sheet 1: Invoer ---
   const inputRows = [
     ['FINANCIËLE PLANNING - INVOER', ''],
-    ['Klant', clientName],
+    ['Berekening', naam],
     ['Datum', new Date().toLocaleDateString('nl-NL')],
     ['', ''],
     ['LEEFTIJD', ''],
@@ -137,7 +138,7 @@ export async function exportToExcel(
   ws4.addRows([mcHeaders, ...mcRows])
   setColumnWidths(ws4, Array(6).fill(18))
 
-  const filename = `financiele-planning_${clientName.replace(/\s/g, '_')}_${new Date().toISOString().slice(0, 10)}.xlsx`
+  const filename = `financiele-planning_${naam.replace(/\s/g, '_')}_${new Date().toISOString().slice(0, 10)}.xlsx`
 
   // Expliciete blob-download i.p.v. een auto-triggerde download — browsers blokkeren
   // de laatste soms als "automatische download". Deze aanpak telt als door de

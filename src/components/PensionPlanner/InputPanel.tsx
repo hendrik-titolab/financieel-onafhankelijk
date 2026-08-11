@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
-import type { PensionInputs, IncomeType, ContributionFrequency, LifeEvent, Storting, RiskProfile } from '../../types'
+import type { PensionInputs, IncomeType, ContributionFrequency, LifeEvent, RiskProfile } from '../../types'
 import { RISICOPROFIELEN, PROFIEL_VOLGORDE } from '../../config/risicoprofielen'
 
 const MAX_ROWS = 20
@@ -17,7 +17,7 @@ function Toggle({ value, onChange, options }: {
   options: { value: string; label: string }[]
 }) {
   return (
-    <div className="inline-flex bg-slate-100 rounded-lg p-0.5 gap-0.5">
+    <div className="inline-flex bg-canvas rounded-[3px] p-0.5 gap-0.5">
       {options.map(opt => (
         <button key={opt.value} onClick={() => onChange(opt.value)}
           className={`toggle-btn ${value === opt.value ? 'toggle-btn-active' : 'toggle-btn-inactive'}`}>
@@ -31,7 +31,7 @@ function Toggle({ value, onChange, options }: {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="space-y-3">
-      <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-widest pt-1">{title}</h3>
+      <h3 className="label-mono pt-1">{title}</h3>
       {children}
     </div>
   )
@@ -46,18 +46,42 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 
+// Bedragvelden houden de ruwe tekst lokaal bij, zodat een leeg veld leeg mag
+// blijven terwijl je typt. Alleen bij het verlaten van het veld valt een lege
+// of ongeldige invoer terug op 0 — niet meer bij elke toetsaanslag.
 function NumberInput({ value, onChange, prefix, suffix, step = 1, min = 0, max }: {
   value: number; onChange: (v: number) => void
   prefix?: string; suffix?: string; step?: number; min?: number; max?: number
 }) {
+  const [text, setText] = useState(String(value))
+
+  useEffect(() => {
+    // Alleen synchroniseren als de waarde van buitenaf wijzigt (bijv. profielwissel),
+    // niet bij elke render, anders overschrijft dit het typen.
+    if (Number(text) !== value) setText(String(value))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value])
+
+  const commit = (raw: string) => {
+    const parsed = parseFloat(raw.replace(',', '.'))
+    const next = isNaN(parsed) ? 0 : parsed
+    setText(String(next))
+    onChange(next)
+  }
+
   return (
     <div className="relative flex items-center">
-      {prefix && <span className="absolute left-3 text-slate-400 text-sm">{prefix}</span>}
-      <input type="number" value={value} min={min} max={max} step={step}
-        onChange={e => onChange(parseFloat(e.target.value) || 0)}
+      {prefix && <span className="absolute left-3 text-body text-sm">{prefix}</span>}
+      <input type="number" value={text} min={min} max={max} step={step}
+        onChange={e => {
+          setText(e.target.value)
+          const parsed = parseFloat(e.target.value.replace(',', '.'))
+          if (!isNaN(parsed)) onChange(parsed)
+        }}
+        onBlur={e => commit(e.target.value)}
         onFocus={e => e.target.select()}
         className={`input-field ${prefix ? 'pl-7' : ''} ${suffix ? 'pr-8' : ''}`} />
-      {suffix && <span className="absolute right-3 text-slate-400 text-sm">{suffix}</span>}
+      {suffix && <span className="absolute right-3 text-body text-sm">{suffix}</span>}
     </div>
   )
 }
@@ -65,15 +89,17 @@ function NumberInput({ value, onChange, prefix, suffix, step = 1, min = 0, max }
 function AgeSliderRow({ label, value, min, max, onChange }: {
   label: string; value: number; min: number; max: number; onChange: (v: number) => void
 }) {
+  const fillPct = ((value - min) / (max - min)) * 100
   return (
     <div className="space-y-1">
       <div className="flex justify-between items-center">
         <label className="label mb-0">{label}</label>
-        <span className="text-sm font-semibold text-primary-600">{value} jaar</span>
+        <span className="font-numeric tabular text-sm text-data-700">{value} jaar</span>
       </div>
       <input type="range" min={min} max={max} value={value}
+        style={{ '--range-fill': `${fillPct}%` } as React.CSSProperties}
         onChange={e => onChange(parseInt(e.target.value))} />
-      <div className="flex justify-between text-xs text-slate-400">
+      <div className="flex justify-between text-xs text-body">
         <span>{min}</span><span>{max}</span>
       </div>
     </div>
@@ -95,7 +121,7 @@ function ParametersTab({ inputs, onChange }: Props) {
           onChange={v => onChange({ lifeExpectancy: v })} />
       </Section>
 
-      <div className="border-t border-slate-100" />
+      <div className="border-t border-line-soft" />
 
       <Section title="Vermogen & Inleg">
         <Field label="Huidig vermogen">
@@ -114,7 +140,7 @@ function ParametersTab({ inputs, onChange }: Props) {
         </div>
       </Section>
 
-      <div className="border-t border-slate-100" />
+      <div className="border-t border-line-soft" />
 
       <Section title="Inkomen">
         <div className="space-y-1">
@@ -137,25 +163,25 @@ function ParametersTab({ inputs, onChange }: Props) {
           <NumberInput value={inputs.desiredRetirementIncome}
             onChange={v => onChange({ desiredRetirementIncome: v })}
             prefix="€" suffix="/mnd" step={100} />
-          <p className="text-xs text-slate-400">In koopkracht van vandaag: inflatie wordt automatisch verwerkt</p>
+          <p className="text-xs text-body">In koopkracht van vandaag: inflatie wordt automatisch verwerkt</p>
         </div>
         <Field label="Inflatie">
           <NumberInput value={inputs.inflation}
             onChange={v => onChange({ inflation: v })} suffix="%" step={0.1} min={0} max={10} />
-          <p className="text-xs text-slate-400 mt-1">Waarmee we je koopkracht corrigeren (langjarig gemiddelde ~2%).</p>
+          <p className="text-xs text-body mt-1">Waarmee we je koopkracht corrigeren (langjarig gemiddelde ~2%).</p>
         </Field>
       </Section>
 
-      <div className="border-t border-slate-100" />
+      <div className="border-t border-line-soft" />
 
       <Section title="Pensioenuitkeringen">
         <Field label="AOW netto per maand">
           <NumberInput value={inputs.aowMaandBedragNetto}
             onChange={v => onChange({ aowMaandBedragNetto: v })} prefix="€" step={50} />
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-body mt-1">
             Te vinden op{' '}
             <a href="https://www.mijnpensioenoverzicht.nl" target="_blank" rel="noopener noreferrer"
-              className="text-primary-500 hover:underline">mijnpensioenoverzicht.nl</a>.
+              className="text-data-700 hover:underline">mijnpensioenoverzicht.nl</a>.
             {' '}Alleenstaand ~€1.558/mnd, samenwonend ~€1.068/mnd (2026, met heffingskorting).
           </p>
         </Field>
@@ -163,7 +189,7 @@ function ParametersTab({ inputs, onChange }: Props) {
           <NumberInput value={inputs.aowStartAge} onChange={v => onChange({ aowStartAge: v })}
             suffix="jr" step={1} min={60} max={75} />
         </Field>
-        <div className="border-t border-slate-100 pt-3">
+        <div className="border-t border-line-soft pt-3">
           <Field label="Werkgeverspensioen (bruto/mnd)">
             <NumberInput value={inputs.employerPension}
               onChange={v => onChange({ employerPension: v })} prefix="€" step={50} />
@@ -174,21 +200,21 @@ function ParametersTab({ inputs, onChange }: Props) {
                 onChange={v => onChange({ employerPensionStartAge: v })}
                 suffix="jr" step={1} min={55} max={75} />
             </Field>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-body mt-1">
               Controleer op de UPO of via{' '}
               <a href="https://www.mijnpensioenoverzicht.nl" target="_blank" rel="noopener noreferrer"
-                className="text-primary-500 hover:underline">mijnpensioenoverzicht.nl</a>.
+                className="text-data-700 hover:underline">mijnpensioenoverzicht.nl</a>.
             </p>
           </div>
         </div>
         {inputs.retirementAge < Math.min(inputs.aowStartAge, inputs.employerPensionStartAge) && (
-          <p className="text-xs text-amber-600 bg-amber-50 rounded-lg p-2 leading-relaxed">
+          <p className="text-xs text-signal bg-panel border border-signal rounded-[3px] p-2 leading-relaxed">
             ⚠ Overbruggingsperiode van {Math.min(inputs.aowStartAge, inputs.employerPensionStartAge) - inputs.retirementAge} jaar: eigen vermogen dekt het volledige inkomen.
           </p>
         )}
       </Section>
 
-      <div className="border-t border-slate-100" />
+      <div className="border-t border-line-soft" />
 
       <RisicoprofielSection inputs={inputs} onChange={onChange} />
     </div>
@@ -218,23 +244,24 @@ function RisicoprofielSection({ inputs, onChange }: Props) {
         <div className="space-y-2">
           <div className="flex justify-between items-center">
             <label className="label mb-0">Beleggingsprofiel</label>
-            <span className="text-sm font-semibold text-primary-600">{profiel.label}</span>
+            <span className="text-sm font-medium text-data-700">{profiel.label}</span>
           </div>
           <input type="range" min={0} max={PROFIEL_VOLGORDE.length - 1} step={1} value={index}
+            style={{ '--range-fill': `${(index / (PROFIEL_VOLGORDE.length - 1)) * 100}%` } as React.CSSProperties}
             onChange={e => kiesProfiel(parseInt(e.target.value))} />
-          <div className="flex justify-between text-xs text-slate-400">
+          <div className="flex justify-between text-xs text-body">
             <span>Defensiever</span><span>Offensiever</span>
           </div>
-          <div className="rounded-lg bg-slate-50 border border-slate-100 p-3 space-y-1.5">
+          <div className="rounded-[3px] bg-canvas border border-line-soft p-3 space-y-1.5">
             <div className="flex justify-between text-xs">
-              <span className="text-slate-500">Verwacht rendement</span>
-              <span className="font-medium text-slate-700">{profiel.rendementVoor}% vóór · {profiel.rendementNa}% ná pensioen</span>
+              <span className="text-body">Verwacht rendement</span>
+              <span className="font-medium text-ink">{profiel.rendementVoor}% vóór · {profiel.rendementNa}% ná pensioen</span>
             </div>
             <div className="flex justify-between text-xs">
-              <span className="text-slate-500">Schommeling (volatiliteit)</span>
-              <span className="font-medium text-slate-700">{profiel.volatiliteitVoor}% / {profiel.volatiliteitNa}%</span>
+              <span className="text-body">Schommeling (volatiliteit)</span>
+              <span className="font-medium text-ink">{profiel.volatiliteitVoor}% / {profiel.volatiliteitNa}%</span>
             </div>
-            <p className="text-xs text-slate-400 leading-relaxed pt-1">{profiel.uitleg}</p>
+            <p className="text-xs text-body leading-relaxed pt-1">{profiel.uitleg}</p>
           </div>
         </div>
       )}
@@ -256,8 +283,8 @@ function RisicoprofielSection({ inputs, onChange }: Props) {
               onChange({ useCustomReturns: true })
             }
           }}
-          className="rounded" />
-        <span className="text-xs text-slate-600">Zelf rendement en volatiliteit invullen</span>
+          className="rounded accent-ink" />
+        <span className="text-xs text-body">Zelf rendement en volatiliteit invullen</span>
       </label>
 
       {inputs.useCustomReturns && (
@@ -278,7 +305,7 @@ function RisicoprofielSection({ inputs, onChange }: Props) {
             <NumberInput value={inputs.volatilityPost}
               onChange={v => onChange({ volatilityPost: v })} suffix="%" step={1} min={0} max={30} />
           </Field>
-          <p className="text-xs text-slate-400 leading-relaxed">
+          <p className="text-xs text-body leading-relaxed">
             Monte Carlo rekent met 2.000 scenario's rond dit gemiddelde rendement.
           </p>
         </div>
@@ -287,16 +314,21 @@ function RisicoprofielSection({ inputs, onChange }: Props) {
   )
 }
 
-// ---- Events tab ----
-
-// Progressive row for life events (name + amount + year)
-function LifeEventsSection({ inputs, onChange }: Props) {
+// ---- Eenmalige bedragen tab ----
+//
+// Life events en stortingen rekenden altijd al identiek (pensionCalc.ts voegt
+// ze samen tot allEvents), maar stonden in twee bijna-gedupliceerde secties
+// met een onderscheid dat voor een gebruiker niet te raden was. Eén lijst,
+// alles naar inputs.lifeEvents. Het stortingen-veld blijft in de types en in
+// pensionCalc bestaan (voor bestaande code-paden), maar deze UI vult het niet
+// meer — zie DESIGN_SYSTEM.md-aanvulling / handoff voor de toelichting.
+function EenmaligeBedragenSection({ inputs, onChange }: Props) {
   const currentYear = new Date().getFullYear()
   type DraftEvent = { name: string; amount: string; year: string }
 
   const [rows, setRows] = useState<DraftEvent[]>(() => {
-    const saved = (inputs.lifeEvents ?? []).map(e => ({
-      name: e.name, amount: String(e.amount), year: String(e.year),
+    const saved = [...(inputs.lifeEvents ?? []), ...(inputs.stortingen ?? [])].map(e => ({
+      name: e.name ?? '', amount: String(e.amount), year: String(e.year),
     }))
     return [...saved, { name: '', amount: '', year: String(currentYear) }]
   })
@@ -305,7 +337,7 @@ function LifeEventsSection({ inputs, onChange }: Props) {
     const valid: LifeEvent[] = rows
       .filter(r => r.amount && r.year && !isNaN(Number(r.amount)) && Number(r.amount) !== 0 && !isNaN(Number(r.year)))
       .map(r => ({ name: r.name.trim() || '—', amount: Number(r.amount), year: Number(r.year) }))
-    onChange({ lifeEvents: valid })
+    onChange({ lifeEvents: valid, stortingen: [] })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rows])
 
@@ -318,6 +350,11 @@ function LifeEventsSection({ inputs, onChange }: Props) {
     setRows(newRows)
   }
 
+  const handleAddRow = () => {
+    if (rows.length >= MAX_ROWS) return
+    setRows([...rows, { name: '', amount: '', year: String(currentYear) }])
+  }
+
   const handleDelete = (i: number) => {
     const newRows = rows.filter((_, idx) => idx !== i)
     if (newRows.length === 0 || isFilled(newRows[newRows.length - 1]))
@@ -326,11 +363,14 @@ function LifeEventsSection({ inputs, onChange }: Props) {
   }
 
   const validCount = (inputs.lifeEvents ?? []).length
+  const totaalBij = rows.filter(r => isFilled(r) && Number(r.amount) > 0).reduce((s, r) => s + Number(r.amount), 0)
+  const totaalAf = rows.filter(r => isFilled(r) && Number(r.amount) < 0).reduce((s, r) => s + Math.abs(Number(r.amount)), 0)
 
   return (
-    <Section title={`Life events${validCount > 0 ? ` (${validCount})` : ''}`}>
-      <p className="text-xs text-slate-400 -mt-1 leading-relaxed">
-        Éénmalige financiële gevolgen van een levensgebeurtenis. Positief = inkomst, negatief = uitgave.
+    <Section title={`Eenmalige bedragen${validCount > 0 ? ` (${validCount})` : ''}`}>
+      <p className="text-xs text-body -mt-1 leading-relaxed">
+        Een erfenis, verbouwing, extra inleg of opname: eenmalige bedragen die je vermogen op
+        een bepaald jaar raken. Positief is een bijschrijving, negatief een afschrijving.
       </p>
       <div className="space-y-3">
         {rows.map((row, i) => {
@@ -344,11 +384,11 @@ function LifeEventsSection({ inputs, onChange }: Props) {
                 className="input-field text-sm" />
               <div className="flex gap-1.5 items-center">
                 <div className="flex-[2] relative flex items-center">
-                  <span className="absolute left-3 text-slate-400 text-sm">€</span>
+                  <span className="absolute left-3 text-body text-sm">€</span>
                   <input type="number" value={row.amount} step={500}
-                    placeholder="Bedrag (− = uitgave)"
+                    placeholder="Bedrag (− = afschrijving)"
                     onChange={e => handleChange(i, 'amount', e.target.value)}
-                    className={`input-field pl-7 text-sm ${isExpense ? 'text-red-600' : (!isDraft && row.amount ? 'text-emerald-600' : '')}`} />
+                    className={`input-field pl-7 text-sm ${isExpense ? 'text-signal' : (!isDraft && row.amount ? 'text-ink' : '')}`} />
                 </div>
                 <div className="w-20 flex-shrink-0">
                   <input type="number" value={row.year} min={currentYear - 10} max={currentYear + 60}
@@ -357,99 +397,26 @@ function LifeEventsSection({ inputs, onChange }: Props) {
                     className="input-field text-center text-sm" />
                 </div>
                 {!isDraft
-                  ? <button onClick={() => handleDelete(i)} className="flex-shrink-0 p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"><X size={13} /></button>
+                  ? <button onClick={() => handleDelete(i)} className="flex-shrink-0 p-1.5 text-body hover:text-signal hover:bg-canvas rounded-[3px] transition-colors"><X size={13} /></button>
                   : <div className="w-7 flex-shrink-0" />}
               </div>
             </div>
           )
         })}
       </div>
-    </Section>
-  )
-}
 
-// Progressive rows for stortingen/onttrekkingen (just amount + year, no name)
-function StoringenSection({ inputs, onChange }: Props) {
-  const currentYear = new Date().getFullYear()
-  type DraftStorting = { name: string; amount: string; year: string }
-
-  const [rows, setRows] = useState<DraftStorting[]>(() => {
-    const saved = (inputs.stortingen ?? []).map(s => ({
-      name: s.name ?? '', amount: String(s.amount), year: String(s.year),
-    }))
-    return [...saved, { name: '', amount: '', year: String(currentYear) }]
-  })
-
-  useEffect(() => {
-    const valid: Storting[] = rows
-      .filter(r => r.amount && r.year && !isNaN(Number(r.amount)) && Number(r.amount) !== 0 && !isNaN(Number(r.year)))
-      .map(r => ({ name: r.name.trim() || undefined, amount: Number(r.amount), year: Number(r.year) }))
-    onChange({ stortingen: valid })
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rows])
-
-  const isFilled = (r: DraftStorting) => r.amount !== '' && Number(r.amount) !== 0
-
-  const handleChange = (i: number, field: keyof DraftStorting, value: string) => {
-    const newRows = rows.map((r, idx) => idx === i ? { ...r, [field]: value } : r)
-    if (i === newRows.length - 1 && isFilled(newRows[i]) && newRows.length < MAX_ROWS)
-      newRows.push({ name: '', amount: '', year: String(currentYear) })
-    setRows(newRows)
-  }
-
-  const handleDelete = (i: number) => {
-    const newRows = rows.filter((_, idx) => idx !== i)
-    if (newRows.length === 0 || isFilled(newRows[newRows.length - 1]))
-      newRows.push({ name: '', amount: '', year: String(currentYear) })
-    setRows(newRows)
-  }
-
-  const all = inputs.stortingen ?? []
-  const totaalPos = all.filter(s => s.amount > 0).reduce((s, e) => s + e.amount, 0)
-  const totaalNeg = all.filter(s => s.amount < 0).reduce((s, e) => s + Math.abs(e.amount), 0)
-
-  return (
-    <Section title={`Stortingen & onttrekkingen${all.length > 0 ? ` (${all.length})` : ''}`}>
-      <p className="text-xs text-slate-400 -mt-1 leading-relaxed">
-        Geplande extra inleg (positief) of opname (negatief) uit je portefeuille.
-      </p>
-      <div className="space-y-3">
-        {rows.map((row, i) => {
-          const isLast = i === rows.length - 1
-          const isDraft = isLast && !isFilled(row)
-          const isWithdrawal = Number(row.amount) < 0
-          return (
-            <div key={i} className={`space-y-1 ${isDraft ? 'opacity-50' : ''}`}>
-              <input type="text" value={row.name} placeholder="Omschrijving (optioneel)"
-                onChange={e => handleChange(i, 'name', e.target.value)}
-                className="input-field text-sm" />
-              <div className="flex gap-1.5 items-center">
-                <div className="flex-[2] relative flex items-center">
-                  <span className="absolute left-3 text-slate-400 text-sm">€</span>
-                  <input type="number" value={row.amount} step={500}
-                    placeholder="Bedrag (− = opname)"
-                    onChange={e => handleChange(i, 'amount', e.target.value)}
-                    className={`input-field pl-7 text-sm ${isWithdrawal ? 'text-red-600' : (!isDraft && row.amount ? 'text-emerald-600' : '')}`} />
-                </div>
-                <div className="w-20 flex-shrink-0">
-                  <input type="number" value={row.year} min={currentYear - 10} max={currentYear + 60}
-                    step={1} placeholder="Jaar"
-                    onChange={e => handleChange(i, 'year', e.target.value)}
-                    className="input-field text-center text-sm" />
-                </div>
-                {!isDraft
-                  ? <button onClick={() => handleDelete(i)} className="flex-shrink-0 p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"><X size={13} /></button>
-                  : <div className="w-7 flex-shrink-0" />}
-              </div>
-            </div>
-          )
-        })}
-      </div>
-      {all.length > 0 && (
+      {(totaalBij > 0 || totaalAf > 0) && (
         <div className="space-y-0.5 pt-1">
-          {totaalPos > 0 && <p className="text-xs text-emerald-600 font-medium">+ €{totaalPos.toLocaleString('nl-NL')} extra inleg</p>}
-          {totaalNeg > 0 && <p className="text-xs text-red-500 font-medium">− €{totaalNeg.toLocaleString('nl-NL')} opnames</p>}
+          {totaalBij > 0 && <p className="text-xs text-ink font-medium">+ €{totaalBij.toLocaleString('nl-NL')} bij</p>}
+          {totaalAf > 0 && <p className="text-xs text-signal font-medium">− €{totaalAf.toLocaleString('nl-NL')} af</p>}
         </div>
+      )}
+
+      {rows.length < MAX_ROWS && (
+        <button onClick={handleAddRow}
+          className="w-full flex items-center justify-center gap-1.5 py-2 text-xs text-data-700 hover:text-ink border border-dashed border-line hover:border-ink rounded-[3px] transition-colors">
+          + Regel toevoegen
+        </button>
       )}
     </Section>
   )
@@ -458,9 +425,7 @@ function StoringenSection({ inputs, onChange }: Props) {
 function EventsTab({ inputs, onChange }: Props) {
   return (
     <div className="space-y-5 pb-4">
-      <LifeEventsSection inputs={inputs} onChange={onChange} />
-      <div className="border-t border-slate-100" />
-      <StoringenSection inputs={inputs} onChange={onChange} />
+      <EenmaligeBedragenSection inputs={inputs} onChange={onChange} />
     </div>
   )
 }
@@ -476,21 +441,17 @@ export function InputPanel({ inputs, onChange }: Props) {
 
   return (
     <div>
-      {/* Tab switcher */}
-      <div className="flex mb-4 border-b border-slate-100">
+      {/* Tab switcher — onderlijn-tabs, geen pill-groep in een grijze track */}
+      <div className="flex mb-4 border-b border-line-soft">
         {([
-          { id: 'parameters', label: 'Parameters' },
-          { id: 'events', label: `Events${eventCount > 0 ? ` (${eventCount})` : ''}` },
+          { id: 'parameters', label: 'Uitgangspunten' },
+          { id: 'events', label: `Eenmalige bedragen${eventCount > 0 ? ` (${eventCount})` : ''}` },
         ] as const).map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
-            className={`px-3 py-2 text-xs font-semibold border-b-2 transition-colors -mb-px ${
-              t.id === 'events'
-                ? tab === 'events'
-                  ? 'border-amber-400 text-amber-600'
-                  : 'border-transparent text-amber-500 hover:text-amber-600'
-                : tab === 'parameters'
-                  ? 'border-primary-500 text-primary-600'
-                  : 'border-transparent text-slate-400 hover:text-slate-600'
+            className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors -mb-px ${
+              tab === t.id
+                ? 'border-ink text-ink'
+                : 'border-transparent text-body hover:text-ink'
             }`}>
             {t.label}
           </button>

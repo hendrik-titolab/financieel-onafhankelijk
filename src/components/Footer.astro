@@ -3,36 +3,36 @@ import { SITE } from '../config/site'
 const jaar = new Date().getFullYear()
 ---
 
-<footer class="border-t border-slate-100 bg-white mt-auto flex-shrink-0">
+<footer class="border-t border-line bg-panel mt-auto flex-shrink-0">
   <div class="max-w-5xl mx-auto px-4 md:px-6 py-8">
     <div class="grid gap-6 sm:grid-cols-3 text-sm">
       <div>
-        <p class="font-semibold text-slate-800 mb-1">Ben ik financieel onafhankelijk?</p>
-        <p class="text-slate-500 leading-relaxed">
+        <p class="font-medium text-ink mb-1">Ben ik financieel onafhankelijk?</p>
+        <p class="text-body leading-relaxed">
           Onafhankelijke uitleg en gratis rekentools over vermogensopbouw, pensioen en
           financiële onafhankelijkheid.
         </p>
       </div>
       <div>
-        <p class="font-semibold text-slate-800 mb-2"><a href="/tools" class="hover:text-primary-600">Rekentools</a></p>
-        <ul class="space-y-1.5 text-slate-500">
-          <li><a href="/ben-ik-financieel-onafhankelijk" class="hover:text-primary-600">Rekentool financieel onafhankelijk?</a></li>
-          <li><a href="/bruto-netto" class="hover:text-primary-600">Bruto-netto berekenen</a></li>
-          <li><a href="/tools/jaarruimte" class="hover:text-primary-600">Jaarruimte berekenen</a></li>
-          <li><a href="/tools/inflatie" class="hover:text-primary-600">Inflatie &amp; spaargeld</a></li>
+        <p class="font-medium text-ink mb-2"><a href="/tools" class="hover:text-ink">Rekentools</a></p>
+        <ul class="space-y-1.5 text-body">
+          <li><a href="/ben-ik-financieel-onafhankelijk" class="hover:text-ink">Rekentool financieel onafhankelijk?</a></li>
+          <li><a href="/bruto-netto" class="hover:text-ink">Bruto-netto berekenen</a></li>
+          <li><a href="/tools/jaarruimte" class="hover:text-ink">Jaarruimte berekenen</a></li>
+          <li><a href="/tools/inflatie" class="hover:text-ink">Inflatie &amp; spaargeld</a></li>
         </ul>
       </div>
       <div>
-        <p class="font-semibold text-slate-800 mb-2">Over</p>
-        <ul class="space-y-1.5 text-slate-500">
-          <li><a href="/uitleg" class="hover:text-primary-600">Uitleg</a></li>
-          <li><a href="/over" class="hover:text-primary-600">Over deze site</a></li>
-          <li><a href="/privacy" class="hover:text-primary-600">Privacy</a></li>
-          <li><a href="/voorwaarden" class="hover:text-primary-600">Voorwaarden</a></li>
+        <p class="font-medium text-ink mb-2">Over</p>
+        <ul class="space-y-1.5 text-body">
+          <li><a href="/uitleg" class="hover:text-ink">Uitleg</a></li>
+          <li><a href="/over" class="hover:text-ink">Over deze site</a></li>
+          <li><a href="/privacy" class="hover:text-ink">Privacy</a></li>
+          <li><a href="/voorwaarden" class="hover:text-ink">Voorwaarden</a></li>
         </ul>
       </div>
     </div>
-    <div class="border-t border-slate-100 mt-6 pt-4 text-xs text-slate-400 flex flex-col sm:flex-row gap-1 sm:justify-between">
+    <div class="border-t border-line-soft mt-6 pt-4 text-xs text-body flex flex-col sm:flex-row gap-1 sm:justify-between">
       <span>© {jaar} {SITE.url.replace('https://', '')}, een uitgave van {SITE.publisher}</span>
       <span>Indicatieve berekeningen, geen financieel advies.</span>
     </div>

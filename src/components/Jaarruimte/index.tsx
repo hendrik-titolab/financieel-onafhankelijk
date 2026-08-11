@@ -25,18 +25,18 @@ function eur(v: number): string {
 
 function InfoBox({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex gap-2 p-3 bg-primary-50 border border-primary-100 rounded-lg">
-      <Info size={14} className="text-primary-500 flex-shrink-0 mt-0.5" />
-      <p className="text-xs text-primary-700 leading-relaxed">{children}</p>
+    <div className="flex gap-2 p-3 bg-morning border border-line rounded-[3px]">
+      <Info size={14} className="text-data-700 flex-shrink-0 mt-0.5" />
+      <p className="text-xs text-ink leading-relaxed">{children}</p>
     </div>
   )
 }
 
 function WarningBox({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex gap-2 p-3 bg-amber-50 border border-amber-100 rounded-lg">
-      <AlertTriangle size={14} className="text-amber-500 flex-shrink-0 mt-0.5" />
-      <p className="text-xs text-amber-700 leading-relaxed">{children}</p>
+    <div className="flex gap-2 p-3 bg-panel border border-signal rounded-[3px]">
+      <AlertTriangle size={14} className="text-signal flex-shrink-0 mt-0.5" />
+      <p className="text-xs text-ink leading-relaxed">{children}</p>
     </div>
   )
 }
@@ -45,12 +45,12 @@ function ResultRow({ label, value, highlight, sub }: {
   label: string; value: string; highlight?: boolean; sub?: string
 }) {
   return (
-    <div className={`flex justify-between items-center py-2.5 px-3 rounded-lg ${highlight ? 'bg-primary-50' : 'bg-slate-50'}`}>
+    <div className={`flex justify-between items-center py-2.5 px-3 rounded-[3px] ${highlight ? 'bg-morning' : 'bg-canvas'}`}>
       <div>
-        <span className={`text-sm ${highlight ? 'font-semibold text-primary-700' : 'text-slate-600'}`}>{label}</span>
-        {sub && <p className="text-xs text-slate-400 mt-0.5">{sub}</p>}
+        <span className={`text-sm ${highlight ? 'font-medium text-ink' : 'text-body'}`}>{label}</span>
+        {sub && <p className="text-xs text-body mt-0.5">{sub}</p>}
       </div>
-      <span className={`font-bold ${highlight ? 'text-primary-600 text-lg' : 'text-slate-800'}`}>{value}</span>
+      <span className={`font-numeric tabular ${highlight ? 'text-data-700 text-lg' : 'text-ink'}`}>{value}</span>
     </div>
   )
 }
@@ -62,17 +62,17 @@ function TrackingBar({ alIngelegd, totaalBeschikbaar }: { alIngelegd: number; to
   const isOver = alIngelegd > totaalBeschikbaar
   return (
     <div className="space-y-1.5">
-      <div className="flex justify-between text-xs text-slate-500">
+      <div className="flex justify-between text-xs text-body">
         <span>Al ingelegd: {eur(alIngelegd)}</span>
         <span>Ruimte: {eur(totaalBeschikbaar)}</span>
       </div>
-      <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+      <div className="h-2 bg-canvas rounded-full overflow-hidden">
         <div
-          className={`h-full rounded-full transition-all ${isOver ? 'bg-red-400' : pct > 80 ? 'bg-emerald-400' : 'bg-primary-400'}`}
+          className={`h-full rounded-full transition-all ${isOver ? 'bg-signal' : pct > 80 ? 'bg-ink' : 'bg-data-500'}`}
           style={{ width: `${pct}%` }}
         />
       </div>
-      <p className={`text-xs font-medium ${isOver ? 'text-red-600' : 'text-emerald-600'}`}>
+      <p className={`text-xs font-medium ${isOver ? 'text-signal' : 'text-ink'}`}>
         {isOver
           ? `⚠ €${(alIngelegd - totaalBeschikbaar).toLocaleString('nl-NL')} boven de ruimte`
           : `Nog ${eur(Math.max(0, totaalBeschikbaar - alIngelegd))} beschikbaar (${100 - pct}%)`}
@@ -91,38 +91,38 @@ function SavedCard({ item, onDelete, onLoad }: SavedCardProps) {
   const [expanded, setExpanded] = useState(false)
   const r = item.result
   return (
-    <div className="border border-slate-200 rounded-xl overflow-hidden">
+    <div className="border border-line rounded-[3px] overflow-hidden">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between p-4 hover:bg-slate-50 transition-colors text-left"
+        className="w-full flex items-center justify-between p-4 hover:bg-canvas transition-colors text-left"
       >
         <div>
-          <p className="font-medium text-slate-800 text-sm">{item.clientName}</p>
-          <p className="text-xs text-slate-400">{item.date} · Jaarruimte {item.year}: {eur(r.jaarruimte)}</p>
+          <p className="font-medium text-ink text-sm">{item.clientName}</p>
+          <p className="text-xs text-body">{item.date} · Jaarruimte {item.year}: {eur(r.jaarruimte)}</p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-primary-600 bg-primary-50 px-2 py-0.5 rounded-full">
+          <span className="text-xs font-numeric tabular text-data-700 bg-morning px-2 py-0.5 rounded-[3px]">
             Nog {eur(r.nogTeDoen)}
           </span>
-          {expanded ? <ChevronUp size={14} className="text-slate-400" /> : <ChevronDown size={14} className="text-slate-400" />}
+          {expanded ? <ChevronUp size={14} className="text-body" /> : <ChevronDown size={14} className="text-body" />}
         </div>
       </button>
       {expanded && (
-        <div className="border-t border-slate-100 p-4 space-y-3 bg-slate-50">
+        <div className="border-t border-line-soft p-4 space-y-3 bg-canvas">
           <div className="grid grid-cols-2 gap-2 text-sm">
-            <div><span className="text-slate-400">Inkomen:</span> <span className="font-medium">{eur(item.inputs.income)}</span></div>
-            <div><span className="text-slate-400">Factor A:</span> <span className="font-medium">{eur(item.inputs.factorA)}</span></div>
-            <div><span className="text-slate-400">Jaarruimte:</span> <span className="font-medium">{eur(r.jaarruimte)}</span></div>
-            <div><span className="text-slate-400">Reserveringsruimte:</span> <span className="font-medium">{eur(r.beschikbareReserveringsruimte)}</span></div>
-            <div><span className="text-slate-400">Al ingelegd:</span> <span className="font-medium">{eur(r.alIngelegd)}</span></div>
-            <div><span className="text-slate-400">Belastingvoordeel:</span> <span className="font-medium text-emerald-600">{eur(r.belastingVoordeel)}</span></div>
+            <div><span className="text-body">Inkomen:</span> <span className="font-medium">{eur(item.inputs.income)}</span></div>
+            <div><span className="text-body">Factor A:</span> <span className="font-medium">{eur(item.inputs.factorA)}</span></div>
+            <div><span className="text-body">Jaarruimte:</span> <span className="font-medium">{eur(r.jaarruimte)}</span></div>
+            <div><span className="text-body">Reserveringsruimte:</span> <span className="font-medium">{eur(r.beschikbareReserveringsruimte)}</span></div>
+            <div><span className="text-body">Al ingelegd:</span> <span className="font-medium">{eur(r.alIngelegd)}</span></div>
+            <div><span className="text-body">Belastingvoordeel:</span> <span className="font-medium text-ink">{eur(r.belastingVoordeel)}</span></div>
           </div>
           {item.notities && (
-            <p className="text-xs text-slate-500 italic border-l-2 border-slate-200 pl-2">{item.notities}</p>
+            <p className="text-xs text-body italic border-l-2 border-line pl-2">{item.notities}</p>
           )}
           <div className="flex gap-2 pt-1">
             <button onClick={() => onLoad(item)} className="btn-secondary text-xs py-1">Laden</button>
-            <button onClick={() => onDelete(item.id)} className="flex items-center gap-1 px-3 py-1 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors">
+            <button onClick={() => onDelete(item.id)} className="flex items-center gap-1 px-3 py-1 text-xs text-body hover:text-signal hover:bg-canvas rounded-[3px] transition-colors">
               <Trash2 size={12} /> Verwijderen
             </button>
           </div>
@@ -181,11 +181,11 @@ function ReserveringsruimteDirect({ rijen, onChange, baseYear }: ReserveringProp
 
   return (
     <div className="space-y-2">
-      <p className="text-xs text-slate-400 leading-relaxed">
+      <p className="text-xs text-body leading-relaxed">
         Vul per jaar het bedrag in dat je <em>niet</em> hebt ingelegd, te vinden in eerder gemaakte jaarruimteberekeningen of belastingaangiften. Vul een rij in, de volgende verschijnt vanzelf.
       </p>
       {/* Column headers */}
-      <div className="flex gap-1.5 text-xs text-slate-400 font-medium px-0.5">
+      <div className="flex gap-1.5 text-xs text-body font-medium px-0.5">
         <span className="flex-1">Jaar</span>
         <span className="flex-[2] pl-1">Onbenut bedrag</span>
         <span className="w-7" />
@@ -201,13 +201,13 @@ function ReserveringsruimteDirect({ rijen, onChange, baseYear }: ReserveringProp
                 className="input-field text-center text-sm" />
             </div>
             <div className="flex-[2] relative flex items-center">
-              <span className="absolute left-3 text-slate-400 text-sm">€</span>
+              <span className="absolute left-3 text-body text-sm">€</span>
               <input type="number" value={row.bedrag} min={0} max={200000} step={100}
                 placeholder="Bijv. 3.000" onChange={e => handleChange(i, 'bedrag', e.target.value)}
                 className="input-field pl-7 text-sm" />
             </div>
             {!isDraft
-              ? <button onClick={() => handleDelete(i)} className="flex-shrink-0 p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"><X size={13} /></button>
+              ? <button onClick={() => handleDelete(i)} className="flex-shrink-0 p-1.5 text-body hover:text-signal hover:bg-canvas rounded-[3px] transition-colors"><X size={13} /></button>
               : <div className="w-7 flex-shrink-0" />}
           </div>
         )
@@ -269,7 +269,7 @@ function ReserveringsruimteBerekenen({ onChange, baseYear }: ReserveringProps) {
 
   return (
     <div className="space-y-2">
-      <p className="text-xs text-slate-400 leading-relaxed">
+      <p className="text-xs text-body leading-relaxed">
         Voeg per vorig belastingjaar een kaartje toe. Vul inkomen en pensioensituatie in: de jaarruimte en het onbenutte bedrag worden automatisch berekend.
       </p>
 
@@ -278,41 +278,41 @@ function ReserveringsruimteBerekenen({ onChange, baseYear }: ReserveringProps) {
         const heeftResultaat = jaarruimte !== null
 
         return (
-          <div key={i} className="border border-slate-200 rounded-xl overflow-hidden">
+          <div key={i} className="border border-line rounded-[3px] overflow-hidden">
             {/* Koptekst — altijd zichtbaar, klikbaar om uit/in te klappen */}
             <button
               onClick={() => update(i, { open: !k.open })}
-              className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-slate-50 transition-colors text-left"
+              className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-canvas transition-colors text-left"
             >
               <div className="flex items-center gap-2">
-                <span className="text-sm font-semibold text-slate-700">{k.jaar}</span>
+                <span className="text-sm font-medium text-body">{k.jaar}</span>
                 {heeftResultaat && (
-                  <span className="text-xs text-slate-400">
+                  <span className="text-xs text-body">
                     Jaarruimte: {eur(jaarruimte!)} · Onbenut:{' '}
-                    <span className={onbenut! > 0 ? 'text-emerald-600 font-semibold' : 'text-slate-400'}>
+                    <span className={onbenut! > 0 ? 'text-ink font-medium' : 'text-body'}>
                       {eur(onbenut!)}
                     </span>
                   </span>
                 )}
-                {!heeftResultaat && <span className="text-xs text-slate-400 italic">Nog niet ingevuld</span>}
+                {!heeftResultaat && <span className="text-xs text-body italic">Nog niet ingevuld</span>}
               </div>
               <div className="flex items-center gap-1.5">
                 {kaarten.length > 1 && (
                   <span
                     onClick={e => { e.stopPropagation(); verwijder(i) }}
-                    className="p-1 text-slate-300 hover:text-red-400 rounded transition-colors"
+                    className="p-1 text-muted hover:text-signal rounded transition-colors"
                     role="button"
                   >
                     <X size={12} />
                   </span>
                 )}
-                {k.open ? <ChevronUp size={14} className="text-slate-400" /> : <ChevronDown size={14} className="text-slate-400" />}
+                {k.open ? <ChevronUp size={14} className="text-body" /> : <ChevronDown size={14} className="text-body" />}
               </div>
             </button>
 
             {/* Uitklapbaar inhoud */}
             {k.open && (
-              <div className="border-t border-slate-100 px-3 pb-3 pt-2.5 space-y-2.5 bg-slate-50">
+              <div className="border-t border-line-soft px-3 pb-3 pt-2.5 space-y-2.5 bg-canvas">
                 {/* Jaar aanpassen */}
                 <div>
                   <label className="label text-xs">Belastingjaar</label>
@@ -325,12 +325,12 @@ function ReserveringsruimteBerekenen({ onChange, baseYear }: ReserveringProps) {
                 <div>
                   <label className="label text-xs">Bruto jaarinkomen {k.jaar - 1}</label>
                   <div className="relative flex items-center">
-                    <span className="absolute left-3 text-slate-400 text-sm">€</span>
+                    <span className="absolute left-3 text-body text-sm">€</span>
                     <input type="number" value={k.inkomen} min={0} step={500} placeholder="Bijv. 65.000"
                       onChange={e => update(i, { inkomen: e.target.value })}
                       className="input-field pl-7 text-sm" />
                   </div>
-                  <p className="text-xs text-slate-400 mt-0.5">Bron: jaaropgave of aangifte {k.jaar - 1}</p>
+                  <p className="text-xs text-body mt-0.5">Bron: jaaropgave of aangifte {k.jaar - 1}</p>
                 </div>
 
                 {/* Pensioentype */}
@@ -339,10 +339,10 @@ function ReserveringsruimteBerekenen({ onChange, baseYear }: ReserveringProps) {
                   <div className="flex gap-1">
                     {(['geen', 'db', 'wtp'] as PensioenType[]).map(pt => (
                       <button key={pt} onClick={() => update(i, { pensioenType: pt })}
-                        className={`flex-1 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+                        className={`flex-1 py-1.5 text-xs font-medium rounded-[3px] border transition-colors ${
                           k.pensioenType === pt
-                            ? 'bg-primary-600 text-white border-primary-600'
-                            : 'bg-white text-slate-500 border-slate-200 hover:border-primary-300'
+                            ? 'bg-ink text-warmwhite border-ink'
+                            : 'bg-field text-body border-line hover:border-ink'
                         }`}>
                         {pt === 'geen' ? 'Geen' : pt === 'db' ? 'DB' : 'Wtp'}
                       </button>
@@ -355,7 +355,7 @@ function ReserveringsruimteBerekenen({ onChange, baseYear }: ReserveringProps) {
                   <div>
                     <label className="label text-xs">Factor A {k.jaar - 1} (van UPO)</label>
                     <div className="relative flex items-center">
-                      <span className="absolute left-3 text-slate-400 text-sm">€</span>
+                      <span className="absolute left-3 text-body text-sm">€</span>
                       <input type="number" value={k.factorA} min={0} step={50} placeholder="0"
                         onChange={e => update(i, { factorA: e.target.value })}
                         className="input-field pl-7 text-sm" />
@@ -368,7 +368,7 @@ function ReserveringsruimteBerekenen({ onChange, baseYear }: ReserveringProps) {
                   <div>
                     <label className="label text-xs">Werkgeverspremie {k.jaar - 1}</label>
                     <div className="relative flex items-center">
-                      <span className="absolute left-3 text-slate-400 text-sm">€</span>
+                      <span className="absolute left-3 text-body text-sm">€</span>
                       <input type="number" value={k.werkgeverspremie} min={0} step={100} placeholder="0"
                         onChange={e => update(i, { werkgeverspremie: e.target.value })}
                         className="input-field pl-7 text-sm" />
@@ -378,9 +378,9 @@ function ReserveringsruimteBerekenen({ onChange, baseYear }: ReserveringProps) {
 
                 {/* Berekende jaarruimte — read-only */}
                 {heeftResultaat && (
-                  <div className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-slate-100">
-                    <span className="text-xs text-slate-500">Jaarruimte {k.jaar}</span>
-                    <span className="text-sm font-semibold text-primary-600">{eur(jaarruimte!)}</span>
+                  <div className="flex items-center justify-between bg-field rounded-[3px] px-3 py-2 border border-line-soft">
+                    <span className="text-xs text-body">Jaarruimte {k.jaar}</span>
+                    <span className="text-sm font-medium text-data-700">{eur(jaarruimte!)}</span>
                   </div>
                 )}
 
@@ -388,7 +388,7 @@ function ReserveringsruimteBerekenen({ onChange, baseYear }: ReserveringProps) {
                 <div>
                   <label className="label text-xs">Ingelegd in {k.jaar} (lijfrente)</label>
                   <div className="relative flex items-center">
-                    <span className="absolute left-3 text-slate-400 text-sm">€</span>
+                    <span className="absolute left-3 text-body text-sm">€</span>
                     <input type="number" value={k.ingelegd} min={0} step={100} placeholder="0"
                       onChange={e => update(i, { ingelegd: e.target.value })}
                       className="input-field pl-7 text-sm" />
@@ -397,11 +397,11 @@ function ReserveringsruimteBerekenen({ onChange, baseYear }: ReserveringProps) {
 
                 {/* Onbenut resultaat */}
                 {heeftResultaat && (
-                  <div className={`flex items-center justify-between rounded-lg px-3 py-2 border ${
-                    onbenut! > 0 ? 'bg-emerald-50 border-emerald-100' : 'bg-slate-50 border-slate-100'
+                  <div className={`flex items-center justify-between rounded-[3px] px-3 py-2 border ${
+                    onbenut! > 0 ? 'bg-morning border-line' : 'bg-canvas border-line-soft'
                   }`}>
-                    <span className="text-xs text-slate-500">Onbenut {k.jaar}</span>
-                    <span className={`text-sm font-bold ${onbenut! > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>
+                    <span className="text-xs text-body">Onbenut {k.jaar}</span>
+                    <span className={`text-sm font-medium ${onbenut! > 0 ? 'text-ink' : 'text-body'}`}>
                       {eur(onbenut!)}
                     </span>
                   </div>
@@ -415,7 +415,7 @@ function ReserveringsruimteBerekenen({ onChange, baseYear }: ReserveringProps) {
       {/* Voeg jaar toe knop */}
       {kaarten.length < MAX_RESERVERING_RIJEN && (
         <button onClick={voegJaarToe}
-          className="w-full flex items-center justify-center gap-1.5 py-2 text-xs text-primary-600 hover:text-primary-700 border border-dashed border-primary-200 hover:border-primary-400 rounded-xl transition-colors">
+          className="w-full flex items-center justify-center gap-1.5 py-2 text-xs text-data-700 hover:text-ink border border-dashed border-line hover:border-ink rounded-[3px] transition-colors">
           <Plus size={12} /> Voeg vorig jaar toe
         </button>
       )}
@@ -438,12 +438,12 @@ function ReserveringsruimteSectie({ rijen, onChange, baseYear }: ReserveringProp
           { value: 'berekenen', label: 'Bereken voor mij',    sub: 'Ik vul jaarruimte + ingelegd in' },
         ] as { value: Reserveringsmodus; label: string; sub: string }[]).map(opt => (
           <button key={opt.value} onClick={() => setModus(opt.value)}
-            className={`flex flex-col items-start px-3 py-2 rounded-xl border text-left transition-colors ${
+            className={`flex flex-col items-start px-3 py-2 rounded-[3px] border text-left transition-colors ${
               modus === opt.value
-                ? 'bg-primary-50 border-primary-300 text-primary-700'
-                : 'bg-white border-slate-200 text-slate-500 hover:border-primary-200'
+                ? 'bg-morning border-ink text-ink'
+                : 'bg-field border-line text-body hover:border-ink'
             }`}>
-            <span className="text-xs font-semibold">{opt.label}</span>
+            <span className="text-xs font-medium">{opt.label}</span>
             <span className="text-xs opacity-70 mt-0.5">{opt.sub}</span>
           </button>
         ))}
@@ -536,7 +536,7 @@ export function JaarruimteTab() {
       {/* Left: Form — full width on mobile, fixed sidebar on desktop */}
       <div className="w-full lg:w-80 lg:flex-shrink-0">
         <div className="card space-y-4">
-          <h2 className="text-sm font-semibold text-slate-800">Jaarruimteberekening</h2>
+          <h2 className="text-sm font-medium text-ink">Jaarruimteberekening</h2>
 
           <div>
             <label className="label">Belastingjaar</label>
@@ -550,7 +550,7 @@ export function JaarruimteTab() {
               ))}
             </select>
             {is2026 && (
-              <p className="text-xs text-amber-600 mt-1">
+              <p className="text-xs text-signal mt-1">
                 2026 parameters zijn geschat. Controleer belastingdienst.nl.
               </p>
             )}
@@ -579,12 +579,12 @@ export function JaarruimteTab() {
           </div>
 
           {/* Inkomen — label toont het juiste bronjaar */}
-          <div className="border-t border-slate-100 pt-3">
+          <div className="border-t border-line-soft pt-3">
             <label className="label">
               Bruto jaarinkomen {inputs.year - 1}
             </label>
             <div className="relative flex items-center">
-              <span className="absolute left-3 text-slate-400 text-sm">€</span>
+              <span className="absolute left-3 text-body text-sm">€</span>
               <input
                 type="number"
                 value={inputs.income}
@@ -593,7 +593,7 @@ export function JaarruimteTab() {
                 className="input-field pl-7"
               />
             </div>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-body mt-1">
               Bron: jaaropgave werkgever {inputs.year - 1} of aangifte inkomstenbelasting {inputs.year - 1} (box 1, loon)
             </p>
           </div>
@@ -610,10 +610,10 @@ export function JaarruimteTab() {
                 <button
                   key={opt.value}
                   onClick={() => set('pensioenType', opt.value)}
-                  className={`px-2 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+                  className={`px-2 py-1.5 text-xs font-medium rounded-[3px] border transition-colors ${
                     inputs.pensioenType === opt.value
-                      ? 'bg-primary-600 text-white border-primary-600'
-                      : 'bg-white text-slate-600 border-slate-200 hover:border-primary-300'
+                      ? 'bg-ink text-warmwhite border-ink'
+                      : 'bg-field text-body border-line hover:border-ink'
                   }`}
                 >
                   {opt.label}
@@ -621,16 +621,16 @@ export function JaarruimteTab() {
               ))}
             </div>
             {inputs.pensioenType === 'geen' && (
-              <p className="text-xs text-slate-400 mt-1.5">Geen werkgeverspensioen (bijv. ZZP): aftrek is €0.</p>
+              <p className="text-xs text-body mt-1.5">Geen werkgeverspensioen (bijv. ZZP): aftrek is €0.</p>
             )}
             {inputs.pensioenType === 'db' && (
-              <p className="text-xs text-slate-400 mt-1.5">
+              <p className="text-xs text-body mt-1.5">
                 Traditioneel pensioen (eindloon / middelloon / CDC).
                 {isPreWtp(inputs.year) ? ' Formule: 13,3% × grondslag − 7,44 × factor A.' : ' Formule: 30% × grondslag − 6,27 × factor A.'}
               </p>
             )}
             {inputs.pensioenType === 'wtp' && (
-              <p className="text-xs text-slate-400 mt-1.5">Wtp beschikbare-premieregeling. Formule: 30% × grondslag − werkgeverspremie.</p>
+              <p className="text-xs text-body mt-1.5">Wtp beschikbare-premieregeling. Formule: 30% × grondslag − werkgeverspremie.</p>
             )}
           </div>
 
@@ -639,7 +639,7 @@ export function JaarruimteTab() {
             <div>
               <label className="label">Factor A (pensioenaangroei {inputs.year - 1})</label>
               <div className="relative flex items-center">
-                <span className="absolute left-3 text-slate-400 text-sm">€</span>
+                <span className="absolute left-3 text-body text-sm">€</span>
                 <input
                   type="number"
                   value={inputs.factorA}
@@ -648,7 +648,7 @@ export function JaarruimteTab() {
                   className="input-field pl-7"
                 />
               </div>
-              <p className="text-xs text-slate-400 mt-1">
+              <p className="text-xs text-body mt-1">
                 Bron: UPO {inputs.year - 1} (jaarlijks pensioenoverzicht), rubriek "pensioenaangroei" of "toename pensioenaanspraak", in €/jaar.
               </p>
             </div>
@@ -659,7 +659,7 @@ export function JaarruimteTab() {
             <div>
               <label className="label">Werkgeverspremie ingelegde {inputs.year - 1}</label>
               <div className="relative flex items-center">
-                <span className="absolute left-3 text-slate-400 text-sm">€</span>
+                <span className="absolute left-3 text-body text-sm">€</span>
                 <input
                   type="number"
                   value={inputs.werkgeverspremie}
@@ -668,17 +668,17 @@ export function JaarruimteTab() {
                   className="input-field pl-7"
                 />
               </div>
-              <p className="text-xs text-slate-400 mt-1">
+              <p className="text-xs text-body mt-1">
                 Bron: jaaroverzicht pensioenuitvoerder {inputs.year - 1}, totale premie ingelegde door werkgever.
               </p>
             </div>
           )}
 
           {/* Al ingelegd dit jaar */}
-          <div className="border-t border-slate-100 pt-3">
+          <div className="border-t border-line-soft pt-3">
             <label className="label">Al ingelegd dit jaar (lijfrente)</label>
             <div className="relative flex items-center">
-              <span className="absolute left-3 text-slate-400 text-sm">€</span>
+              <span className="absolute left-3 text-body text-sm">€</span>
               <input
                 type="number"
                 value={inputs.alIngelegd}
@@ -687,13 +687,13 @@ export function JaarruimteTab() {
                 className="input-field pl-7"
               />
             </div>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-body mt-1">
               Bedrag dat je klant dit jaar al heeft ingelegd bij de verzekeraar.
             </p>
           </div>
 
           {/* Reserveringsruimte — met modus-keuze */}
-          <div className="border-t border-slate-100 pt-3 space-y-2">
+          <div className="border-t border-line-soft pt-3 space-y-2">
             <label className="label">Reserveringsruimte (onbenutte jaarruimte voorgaande jaren)</label>
             <ReserveringsruimteSectie
               rijen={inputs.reserveringsruimteRijen}
@@ -724,7 +724,7 @@ export function JaarruimteTab() {
       <div className="flex-1 space-y-5">
         {/* Results */}
         <div className="card space-y-3">
-          <h3 className="text-sm font-semibold text-slate-800">Resultaat {inputs.year}</h3>
+          <h3 className="text-sm font-medium text-ink">Resultaat {inputs.year}</h3>
 
           <ResultRow
             label="Jaarruimte"
@@ -745,7 +745,7 @@ export function JaarruimteTab() {
             highlight
           />
 
-          <div className="border-t border-slate-100 pt-2 space-y-2">
+          <div className="border-t border-line-soft pt-2 space-y-2">
             <TrackingBar alIngelegd={result.alIngelegd} totaalBeschikbaar={result.totaalBeschikbaar} />
             <ResultRow
               label="Nog in te leggen"
@@ -767,12 +767,12 @@ export function JaarruimteTab() {
 
         {/* Saved calculations */}
         <div className="card space-y-3">
-          <h3 className="text-sm font-semibold text-slate-800">
+          <h3 className="text-sm font-medium text-ink">
             Opgeslagen berekeningen
-            <span className="ml-2 text-xs font-normal text-slate-400">({saved.length})</span>
+            <span className="ml-2 text-xs font-normal text-body">({saved.length})</span>
           </h3>
           {saved.length === 0 ? (
-            <div className="text-center py-8 text-slate-400">
+            <div className="text-center py-8 text-body">
               <p className="text-sm">Nog geen opgeslagen berekeningen</p>
               <p className="text-xs mt-1">Vul het formulier in en klik op "Berekening opslaan"</p>
             </div>

@@ -1,43 +1,43 @@
 <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
   <!-- Achtergrond -->
-  <rect width="1200" height="630" fill="#ffffff"/>
-  <circle cx="1180" cy="30" r="360" fill="#eff6ff"/>
-  <circle cx="1120" cy="560" r="180" fill="#f1f5f9"/>
+  <rect width="1200" height="630" fill="#E4E1DC"/>
+  <circle cx="1180" cy="30" r="360" fill="#DDE6EE"/>
+  <circle cx="1120" cy="560" r="180" fill="#F7F6F4"/>
 
   <!-- Subtiele stijgende lijn (vermogensgroei) -->
   <polyline points="740,470 830,430 900,450 980,360 1060,300 1140,210"
-            fill="none" stroke="#bfdbfe" stroke-width="8"
+            fill="none" stroke="#B6C8D8" stroke-width="8"
             stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="1140" cy="210" r="12" fill="#2563eb"/>
+  <circle cx="1140" cy="210" r="12" fill="#29392E"/>
 
   <!-- Logo -->
-  <rect x="72" y="72" width="56" height="56" rx="14" fill="#2563eb"/>
+  <rect x="72" y="72" width="56" height="56" rx="14" fill="#29392E"/>
   <polyline points="113.33,93.33 102,104.67 95.33,98 86.67,106.67"
-            fill="none" stroke="#ffffff" stroke-width="3"
+            fill="none" stroke="#EBE9E6" stroke-width="3"
             stroke-linecap="round" stroke-linejoin="round"/>
   <polyline points="105.33,93.33 113.33,93.33 113.33,101.33"
-            fill="none" stroke="#ffffff" stroke-width="3"
+            fill="none" stroke="#EBE9E6" stroke-width="3"
             stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="146" y="110" font-family="Inter, Arial, Helvetica, sans-serif"
-        font-size="27" font-weight="600" fill="#64748b">benikfinancieelonafhankelijk.nl</text>
+  <text x="146" y="110" font-family="DM Sans, Arial, Helvetica, sans-serif"
+        font-size="27" font-weight="500" fill="#4C5A50">benikfinancieelonafhankelijk.nl</text>
 
   <!-- Kop -->
-  <text x="72" y="300" font-family="Inter, Arial, Helvetica, sans-serif"
-        font-size="80" font-weight="800" fill="#0f172a">Ben ik financieel</text>
-  <text x="72" y="392" font-family="Inter, Arial, Helvetica, sans-serif"
-        font-size="80" font-weight="800" fill="#0f172a">onafhankelijk?</text>
+  <text x="72" y="300" font-family="Instrument Serif, Georgia, serif"
+        font-size="84" font-weight="400" fill="#29392E">Ben ik financieel</text>
+  <text x="72" y="392" font-family="Instrument Serif, Georgia, serif"
+        font-size="84" font-weight="400" fill="#29392E">onafhankelijk?</text>
 
   <!-- Subkop -->
-  <text x="74" y="458" font-family="Inter, Arial, Helvetica, sans-serif"
-        font-size="33" font-weight="400" fill="#475569">Gratis uitleg en rekentools over pensioen en vermogensopbouw.</text>
+  <text x="74" y="458" font-family="DM Sans, Arial, Helvetica, sans-serif"
+        font-size="33" font-weight="400" fill="#4C5A50">Gratis uitleg en rekentools over pensioen en vermogensopbouw.</text>
 
   <!-- Pills -->
-  <g font-family="Inter, Arial, Helvetica, sans-serif" font-size="26" font-weight="600" fill="#2563eb">
-    <rect x="72"  y="520" width="252" height="58" rx="29" fill="#eff6ff"/>
+  <g font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="26" font-weight="500" fill="#29392E">
+    <rect x="72"  y="520" width="252" height="58" rx="3" fill="#F7F6F4" stroke="#DAD5CD"/>
     <text x="98"  y="557">Pensioenplanner</text>
-    <rect x="344" y="520" width="196" height="58" rx="29" fill="#eff6ff"/>
+    <rect x="344" y="520" width="196" height="58" rx="3" fill="#F7F6F4" stroke="#DAD5CD"/>
     <text x="370" y="557">Bruto-netto</text>
-    <rect x="560" y="520" width="182" height="58" rx="29" fill="#eff6ff"/>
+    <rect x="560" y="520" width="182" height="58" rx="3" fill="#F7F6F4" stroke="#DAD5CD"/>
     <text x="586" y="557">Jaarruimte</text>
   </g>
 </svg>

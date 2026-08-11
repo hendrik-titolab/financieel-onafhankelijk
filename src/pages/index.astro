@@ -60,10 +60,10 @@ const schemas = [faqSchema(faq)]
   <main class="flex-1">
     <!-- Hero -->
     <section class="max-w-3xl mx-auto px-4 md:px-6 pt-12 pb-8 text-center">
-      <h1 class="text-3xl md:text-4xl font-bold text-slate-900 leading-tight">
+      <h1 class="font-serif text-3xl md:text-4xl text-ink leading-tight">
         Ben ik financieel onafhankelijk?
       </h1>
-      <p class="mt-4 text-lg text-slate-600 leading-relaxed">
+      <p class="mt-4 text-lg text-body leading-relaxed">
         Begrijpelijke uitleg en gratis rekentools over vermogensopbouw, pensioen en financiële
         onafhankelijkheid. Geen verkooppraat, geen kleine lettertjes. Gewoon zelf uitrekenen. Op
         je eigen computer, onder jouw aannames en met de mogelijkheid je berekeningen te
@@ -72,13 +72,13 @@ const schemas = [faqSchema(faq)]
       <div class="mt-6 flex flex-wrap gap-3 justify-center">
         <a
           href={hoofdtool.href}
-          class="px-5 py-2.5 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 transition"
+          class="px-5 py-2.5 rounded-[3px] bg-ink text-warmwhite text-sm hover:bg-[#1F2C23] transition"
         >
           Start de tool
         </a>
         <a
           href="/uitleg"
-          class="px-5 py-2.5 rounded-lg bg-white text-slate-700 text-sm font-medium border border-slate-200 hover:bg-slate-50 transition"
+          class="px-5 py-2.5 rounded-[3px] bg-transparent text-ink text-sm border border-sand hover:bg-warmwhite transition"
         >
           Lees de uitleg
         </a>
@@ -88,29 +88,29 @@ const schemas = [faqSchema(faq)]
     <!-- Tools -->
     <section id="tools" class="max-w-5xl mx-auto px-4 md:px-6 py-8">
       <div class="flex items-baseline justify-between mb-5">
-        <h2 class="text-xl font-semibold text-slate-900">Rekentools</h2>
-        <a href="/tools" class="text-sm font-medium text-primary-600 hover:underline">Alle rekentools →</a>
+        <h2 class="font-serif text-xl text-ink">Rekentools</h2>
+        <a href="/tools" class="text-sm text-data-700 hover:underline">Alle rekentools →</a>
       </div>
 
       <a
         href={hoofdtool.href}
-        class="block rounded-2xl bg-primary-600 hover:bg-primary-700 transition text-white p-6 md:p-8 group"
+        class="block rounded-[3px] bg-ink hover:bg-[#1F2C23] transition text-warmwhite p-6 md:p-8 group"
       >
         <div class="md:flex md:items-center md:gap-8">
           <div class="md:flex-1 min-w-0">
-            <span class="text-xs font-semibold uppercase tracking-wide text-primary-100">
+            <span class="font-mono text-[11px] uppercase tracking-[0.06em] text-on-dark">
               Hoofdtool
             </span>
-            <span class="mt-2 block text-2xl md:text-3xl font-bold">
+            <span class="mt-2 block text-2xl md:text-3xl">
               {hoofdtool.naam}
             </span>
-            <span class="mt-2 block text-primary-50 leading-relaxed max-w-2xl">
+            <span class="mt-2 block text-warmwhite leading-relaxed max-w-2xl">
               {hoofdtool.tekst}
             </span>
-            <span class="mt-2 block text-primary-100 text-xs leading-relaxed max-w-2xl">
+            <span class="mt-2 block text-on-dark text-xs leading-relaxed max-w-2xl">
               {hoofdtool.onderschrift}
             </span>
-            <span class="mt-4 inline-flex items-center gap-1.5 text-sm font-medium bg-white text-primary-700 rounded-lg px-3 py-1.5 group-hover:bg-primary-50 transition">
+            <span class="mt-4 inline-flex items-center gap-1.5 text-sm bg-warmwhite text-ink rounded-[3px] px-3 py-1.5 group-hover:bg-white transition">
               Start de tool →
             </span>
           </div>
@@ -118,7 +118,7 @@ const schemas = [faqSchema(faq)]
             <Image
               src={hoofdtoolPreview}
               alt="Voorbeeld van de rekentool: vermogensontwikkeling en de kans op je inkomensdoel"
-              class="w-full h-auto rounded-lg shadow-lg ring-1 ring-white/20"
+              class="w-full h-auto rounded-[3px] ring-1 ring-warmwhite/20"
               widths={[400, 800]}
               sizes="(min-width: 768px) 320px, 90vw"
               loading="eager"
@@ -127,24 +127,18 @@ const schemas = [faqSchema(faq)]
         </div>
       </a>
 
-      <p class="mt-8 mb-4 text-sm font-semibold text-slate-500 uppercase tracking-wide">
-        Meer rekentools
-      </p>
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <p class="label-mono mt-8 mb-4">Meer rekentools</p>
+      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {
           tools.map((t) => (
             <a
               href={t.href}
-              class="card hover:shadow-md hover:border-primary-100 transition group flex flex-col"
+              class="card hover:border-ink transition group flex flex-col"
             >
-              <span class="text-xs font-medium text-primary-600 uppercase tracking-wide">
-                {t.label}
-              </span>
-              <span class="mt-1 text-lg font-semibold text-slate-900 group-hover:text-primary-600 transition">
-                {t.naam}
-              </span>
-              <span class="mt-2 text-sm text-slate-500 leading-relaxed">{t.tekst}</span>
-              <span class="mt-4 text-sm font-medium text-primary-600">Naar de tool →</span>
+              <span class="label-mono">{t.label}</span>
+              <span class="mt-1 text-lg text-ink transition">{t.naam}</span>
+              <span class="mt-2 text-sm text-body leading-relaxed">{t.tekst}</span>
+              <span class="mt-4 text-sm text-data-700">Naar de tool →</span>
             </a>
           ))
         }
@@ -153,10 +147,10 @@ const schemas = [faqSchema(faq)]
 
     <!-- Wat is FO -->
     <section class="max-w-3xl mx-auto px-4 md:px-6 py-8">
-      <h2 class="text-xl font-semibold text-slate-900 mb-3">
+      <h2 class="font-serif text-xl text-ink mb-3">
         Wat betekent financieel onafhankelijk?
       </h2>
-      <div class="prose-sm text-slate-600 leading-relaxed space-y-3">
+      <div class="text-sm text-body leading-relaxed space-y-3">
         <p>
           Je bent <strong>financieel onafhankelijk</strong> als je je vaste lasten kunt betalen
           zonder dat je hoeft te werken. Je inkomen komt dan uit vermogen, rendement, pensioen of
@@ -171,7 +165,7 @@ const schemas = [faqSchema(faq)]
         <p>
           <a
             href="/uitleg/wat-is-financiele-onafhankelijkheid"
-            class="text-primary-600 font-medium hover:underline"
+            class="text-data-700 hover:underline"
           >Lees de uitleg: wat is financiële onafhankelijkheid? →</a>
         </p>
       </div>
@@ -179,17 +173,17 @@ const schemas = [faqSchema(faq)]
 
     <!-- Voor wie -->
     <section class="max-w-5xl mx-auto px-4 md:px-6 py-8">
-      <div class="grid gap-4 sm:grid-cols-2">
+      <div class="grid gap-3 sm:grid-cols-2">
         <div class="card">
-          <h3 class="text-base font-semibold text-slate-900 mb-1">Voor iedereen</h3>
-          <p class="text-sm text-slate-500 leading-relaxed">
+          <h3 class="text-base text-ink mb-1">Voor iedereen</h3>
+          <p class="text-sm text-body leading-relaxed">
             Of je nu net begint met sparen of al een vermogen hebt opgebouwd: de uitleg is in
             gewone taal en de tools zijn gratis en zonder account te gebruiken.
           </p>
         </div>
         <div class="card">
-          <h3 class="text-base font-semibold text-slate-900 mb-1">Voor adviseurs</h3>
-          <p class="text-sm text-slate-500 leading-relaxed">
+          <h3 class="text-base text-ink mb-1">Voor adviseurs</h3>
+          <p class="text-sm text-body leading-relaxed">
             Pensioen- en financieel adviseurs gebruiken de planner ook in klantgesprekken, met een
             klantnaam per sessie en export naar Excel en PDF.
           </p>

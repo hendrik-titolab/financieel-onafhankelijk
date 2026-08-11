@@ -77,7 +77,7 @@ function Field({ label, htmlFor, help, children }: {
     <div>
       <label htmlFor={htmlFor} className="label">{label}</label>
       {children}
-      {help && <p className="text-xs text-slate-400 mt-1">{help}</p>}
+      {help && <p className="text-xs text-body mt-1">{help}</p>}
     </div>
   )
 }
@@ -86,14 +86,14 @@ function ResultRow({ label, value, highlight, tone }: {
   label: string; value: string; highlight?: boolean; tone?: 'negatief' | 'positief'
 }) {
   const valueColor = tone === 'negatief'
-    ? 'text-red-600'
+    ? 'text-signal'
     : tone === 'positief'
-      ? 'text-emerald-600'
-      : highlight ? 'text-primary-600' : 'text-slate-800'
+      ? 'text-ink'
+      : highlight ? 'text-data-700' : 'text-ink'
   return (
-    <div className={`flex justify-between items-center py-2.5 px-3 rounded-lg ${highlight ? 'bg-primary-50' : 'bg-slate-50'}`}>
-      <span className={`text-sm ${highlight ? 'font-semibold text-primary-700' : 'text-slate-600'}`}>{label}</span>
-      <span className={`font-bold ${highlight ? 'text-lg' : ''} ${valueColor}`}>{value}</span>
+    <div className={`flex justify-between items-center py-2.5 px-3 rounded-[3px] ${highlight ? 'bg-morning' : 'bg-canvas'}`}>
+      <span className={`text-sm ${highlight ? 'font-medium text-ink' : 'text-body'}`}>{label}</span>
+      <span className={`font-numeric tabular ${highlight ? 'text-lg' : ''} ${valueColor}`}>{value}</span>
     </div>
   )
 }
@@ -105,19 +105,19 @@ const CustomTooltip = ({ active, payload, label }: {
   const nominaal = payload.find(p => p.dataKey === 'nominaal')?.value ?? 0
   const koopkracht = payload.find(p => p.dataKey === 'koopkracht')?.value ?? 0
   return (
-    <div className="bg-white border border-slate-200 rounded-xl shadow-lg p-3 text-xs">
-      <p className="font-semibold text-slate-700 mb-2">Na {label} jaar</p>
+    <div className="bg-panel border border-line rounded-[3px] p-3 text-xs">
+      <p className="font-medium text-ink mb-2">Na {label} jaar</p>
       <div className="flex items-center justify-between gap-4 py-0.5">
-        <span className="font-medium text-primary-600">Nominaal saldo</span>
-        <span className="text-slate-700 font-mono">{eur(nominaal)}</span>
+        <span className="font-medium text-ink">Nominaal saldo</span>
+        <span className="text-body font-mono">{eur(nominaal)}</span>
       </div>
       <div className="flex items-center justify-between gap-4 py-0.5">
-        <span className="font-medium text-amber-600">Koopkracht (nu)</span>
-        <span className="text-slate-700 font-mono">{eur(koopkracht)}</span>
+        <span className="font-medium text-data-700">Koopkracht (nu)</span>
+        <span className="text-body font-mono">{eur(koopkracht)}</span>
       </div>
-      <div className="flex items-center justify-between gap-4 py-0.5 border-t border-slate-100 mt-1 pt-1">
-        <span className="font-medium text-red-500">Koopkrachtverlies</span>
-        <span className="text-slate-700 font-mono">{eur(Math.max(0, nominaal - koopkracht))}</span>
+      <div className="flex items-center justify-between gap-4 py-0.5 border-t border-line-soft mt-1 pt-1">
+        <span className="font-medium text-signal">Koopkrachtverlies</span>
+        <span className="text-body font-mono">{eur(Math.max(0, nominaal - koopkracht))}</span>
       </div>
     </div>
   )
@@ -149,7 +149,7 @@ export function InflatieCalculator() {
           help="Het bedrag dat je nu op je spaarrekening hebt staan."
         >
           <div className="relative flex items-center">
-            <span className="absolute left-3 text-slate-400 text-sm">€</span>
+            <span className="absolute left-3 text-body text-sm">€</span>
             <input
               id="startbedrag"
               type="number"
@@ -181,7 +181,7 @@ export function InflatieCalculator() {
                 onFocus={e => e.target.select()}
                 className="input-field pr-8"
               />
-              <span className="absolute right-3 text-slate-400 text-sm">%</span>
+              <span className="absolute right-3 text-body text-sm">%</span>
             </div>
           </Field>
 
@@ -202,7 +202,7 @@ export function InflatieCalculator() {
                 onFocus={e => e.target.select()}
                 className="input-field pr-8"
               />
-              <span className="absolute right-3 text-slate-400 text-sm">%</span>
+              <span className="absolute right-3 text-body text-sm">%</span>
             </div>
           </Field>
         </div>
@@ -210,7 +210,7 @@ export function InflatieCalculator() {
         <div className="space-y-1">
           <div className="flex justify-between items-center">
             <label htmlFor="looptijd" className="label mb-0">Looptijd</label>
-            <span className="text-sm font-semibold text-primary-600">{looptijd} jaar</span>
+            <span className="text-sm font-medium text-data-700">{looptijd} jaar</span>
           </div>
           <input
             id="looptijd"
@@ -221,30 +221,30 @@ export function InflatieCalculator() {
             aria-label="Looptijd in jaren"
             onChange={e => setLooptijd(parseInt(e.target.value))}
           />
-          <div className="flex justify-between text-xs text-slate-400">
+          <div className="flex justify-between text-xs text-body">
             <span>1 jaar</span><span>30 jaar</span>
           </div>
         </div>
       </div>
 
       {/* Kop-uitkomst */}
-      <div className={`card border-l-4 ${daalt ? 'border-l-red-400' : stijgt ? 'border-l-emerald-400' : 'border-l-slate-300'}`}>
+      <div className={`card border-l-4 ${daalt ? 'border-l-signal' : stijgt ? 'border-l-ink' : 'border-l-line'}`}>
         <div className="flex items-start gap-3">
           {daalt
-            ? <TrendingDown className="w-6 h-6 text-red-500 shrink-0 mt-1" />
-            : <TrendingUp className="w-6 h-6 text-emerald-500 shrink-0 mt-1" />}
-          <p className="text-xl sm:text-2xl font-semibold text-slate-900 leading-snug">
+            ? <TrendingDown className="w-6 h-6 text-signal shrink-0 mt-1" />
+            : <TrendingUp className="w-6 h-6 text-ink shrink-0 mt-1" />}
+          <p className="text-xl sm:text-2xl font-medium text-ink leading-snug">
             {daalt ? (
               <>Over {looptijd} jaar is je {eur(startbedrag)} in koopkracht nog maar{' '}
-                <span className="text-red-600">{eur(r.koopkrachtEind)}</span> waard, een verlies van{' '}
-                <span className="text-red-600">{eur(r.verliesEuro)} ({pct(r.verliesPct)})</span>.</>
+                <span className="font-numeric text-signal">{eur(r.koopkrachtEind)}</span> waard, een verlies van{' '}
+                <span className="font-numeric text-signal">{eur(r.verliesEuro)} ({pct(r.verliesPct)})</span>.</>
             ) : stijgt ? (
               <>Over {looptijd} jaar is je {eur(startbedrag)} in koopkracht{' '}
-                <span className="text-emerald-600">{eur(r.koopkrachtEind)}</span> waard, een stijging van{' '}
-                <span className="text-emerald-600">{eur(-r.verliesEuro)} ({pct(-r.verliesPct)})</span>.</>
+                <span className="font-numeric text-ink">{eur(r.koopkrachtEind)}</span> waard, een stijging van{' '}
+                <span className="font-numeric text-ink">{eur(-r.verliesEuro)} ({pct(-r.verliesPct)})</span>.</>
             ) : (
               <>Over {looptijd} jaar houdt je {eur(startbedrag)} vrijwel exact dezelfde koopkracht:{' '}
-                <span className="text-slate-700">{eur(r.koopkrachtEind)}</span>.</>
+                <span className="font-numeric text-body">{eur(r.koopkrachtEind)}</span>.</>
             )}
           </p>
         </div>
@@ -252,68 +252,68 @@ export function InflatieCalculator() {
 
       {/* Grafiek */}
       <div className="card">
-        <h2 className="text-sm font-semibold text-slate-700 mb-1">Nominaal saldo vs. koopkracht</h2>
-        <p className="text-xs text-slate-400 mb-4">
+        <h2 className="text-sm font-medium text-body mb-1">Nominaal saldo vs. koopkracht</h2>
+        <p className="text-xs text-body mb-4">
           Het rode vlak tussen de lijnen is het deel van je saldo dat door inflatie aan waarde inboet.
         </p>
         <ResponsiveContainer width="100%" height={280}>
           <ComposedChart data={r.jaren} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
             <defs>
               <linearGradient id="gradKoopkracht" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.25} />
-                <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.03} />
+                <stop offset="5%" stopColor="#527898" stopOpacity={0.25} />
+                <stop offset="95%" stopColor="#527898" stopOpacity={0.03} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+            <CartesianGrid strokeDasharray="3 3" stroke="#E4E1DC" />
             <XAxis
               dataKey="jaar"
-              tick={{ fontSize: 11, fill: '#94a3b8' }}
+              tick={{ fontSize: 11, fill: '#4C5A50' }}
               tickLine={false}
               axisLine={false}
-              label={{ value: 'Jaren', position: 'insideBottom', offset: -2, fontSize: 11, fill: '#94a3b8' }}
+              label={{ value: 'Jaren', position: 'insideBottom', offset: -2, fontSize: 11, fill: '#4C5A50' }}
             />
             <YAxis
               tickFormatter={eurKort}
-              tick={{ fontSize: 11, fill: '#94a3b8' }}
+              tick={{ fontSize: 11, fill: '#4C5A50' }}
               tickLine={false}
               axisLine={false}
               width={55}
             />
             <Tooltip content={<CustomTooltip />} />
 
-            {/* Onderste band = behouden koopkracht (amber). */}
+            {/* Onderste band = behouden koopkracht. */}
             <Area
               dataKey="koopkracht"
               stackId="saldo"
-              stroke="#f59e0b"
+              stroke="#527898"
               strokeWidth={2}
               fill="url(#gradKoopkracht)"
               name="Koopkracht (euro's van nu)"
               dot={false}
-              activeDot={{ r: 4, fill: '#f59e0b' }}
+              activeDot={{ r: 4, fill: '#527898' }}
             />
             {/* Bovenste band = koopkrachtverlies, stapelt tot het nominale saldo. */}
             <Area
               dataKey="verlies"
               stackId="saldo"
               stroke="none"
-              fill="#fca5a5"
-              fillOpacity={0.55}
+              fill="#A85A3C"
+              fillOpacity={0.35}
               name="Koopkrachtverlies"
               dot={false}
             />
             {/* Lijn op het nominale saldo (bovenrand van de stapel). */}
             <Line
               dataKey="nominaal"
-              stroke="#2563eb"
+              stroke="#29392E"
               strokeWidth={2.5}
               dot={false}
               name="Nominaal saldo"
-              activeDot={{ r: 4, fill: '#2563eb' }}
+              activeDot={{ r: 4, fill: '#29392E' }}
             />
             <Legend
-              wrapperStyle={{ fontSize: 11, color: '#64748b', paddingTop: 8 }}
-              formatter={(value) => <span style={{ color: '#64748b' }}>{value}</span>}
+              wrapperStyle={{ fontSize: 11, color: '#4C5A50', paddingTop: 8 }}
+              formatter={(value) => <span style={{ color: '#4C5A50' }}>{value}</span>}
             />
           </ComposedChart>
         </ResponsiveContainer>
@@ -321,7 +321,7 @@ export function InflatieCalculator() {
 
       {/* Kerncijfers */}
       <div className="card space-y-2">
-        <h2 className="text-sm font-semibold text-slate-700 mb-1">Kerncijfers</h2>
+        <h2 className="text-sm font-medium text-body mb-1">Kerncijfers</h2>
         <ResultRow label="Startbedrag (nu)" value={eur(startbedrag)} />
         <ResultRow label={`Nominaal saldo na ${looptijd} jaar`} value={eur(r.nominaalEind)} />
         <ResultRow
@@ -339,16 +339,16 @@ export function InflatieCalculator() {
           value={`${r.reeelRendement >= 0 ? '+' : '−'}${pct(Math.abs(r.reeelRendement))} p.j.`}
           tone={r.reeelRendement < 0 ? 'negatief' : r.reeelRendement > 0 ? 'positief' : undefined}
         />
-        <p className="text-xs text-slate-400 pt-1">
+        <p className="text-xs text-body pt-1">
           Netto reëel rendement = (1 + spaarrente) ÷ (1 + inflatie) − 1. Zolang je spaarrente lager is
           dan de inflatie, daalt je koopkracht ondanks een groeiend saldo.
         </p>
       </div>
 
       {/* Verplichte box 3-noot */}
-      <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
-        <Info className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-        <p className="text-sm text-amber-900 leading-relaxed">
+      <div className="flex items-start gap-2 bg-panel border border-signal rounded-[3px] px-4 py-3">
+        <Info className="w-5 h-5 text-signal shrink-0 mt-0.5" />
+        <p className="text-sm text-ink leading-relaxed">
           Deze tool houdt bewust <strong>géén</strong> rekening met de vermogensrendementsheffing
           (box 3). Dat zou de berekening te complex maken vanwege verschillende vermogensmixen,
           vrijstellingen en jaarlijkse wijzigingen. De uitkomst is een indicatie, geen persoonlijk advies.

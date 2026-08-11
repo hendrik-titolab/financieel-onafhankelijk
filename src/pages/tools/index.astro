@@ -53,35 +53,35 @@ const schemas = [
 <BaseLayout title={title} description={description} canonical="/tools/" jsonLd={schemas}>
   <main class="flex-1">
     <div class="max-w-5xl mx-auto px-4 md:px-6 py-10">
-      <nav class="text-xs text-slate-400 mb-4 flex flex-wrap items-center gap-1.5" aria-label="Kruimelpad">
-        <a href="/" class="hover:text-primary-600">Home</a><span>/</span>
-        <span class="text-slate-500">Rekentools</span>
+      <nav class="text-xs text-body mb-4 flex flex-wrap items-center gap-1.5" aria-label="Kruimelpad">
+        <a href="/" class="hover:text-ink">Home</a><span>/</span>
+        <span class="text-ink">Rekentools</span>
       </nav>
 
-      <h1 class="text-3xl md:text-4xl font-bold text-slate-900">Rekentools</h1>
-      <p class="mt-3 text-lg text-slate-600 leading-relaxed max-w-2xl">
+      <h1 class="font-serif text-3xl md:text-4xl text-ink">Rekentools</h1>
+      <p class="mt-3 text-lg text-body leading-relaxed max-w-2xl">
         Gratis en zonder account. Reken zelf uit hoe je ervoor staat, in plaats van te gokken.
       </p>
 
       <a
         href={hoofdtool.href}
-        class="mt-8 block rounded-2xl bg-primary-600 hover:bg-primary-700 transition text-white p-6 md:p-8 group"
+        class="mt-8 block rounded-[3px] bg-ink hover:bg-[#1F2C23] transition text-warmwhite p-6 md:p-8 group"
       >
         <div class="md:flex md:items-center md:gap-8">
           <div class="md:flex-1 min-w-0">
-            <span class="text-xs font-semibold uppercase tracking-wide text-primary-100">
+            <span class="font-mono text-[11px] uppercase tracking-[0.06em] text-on-dark">
               Hoofdtool
             </span>
-            <span class="mt-2 block text-2xl md:text-3xl font-bold">
+            <span class="mt-2 block text-2xl md:text-3xl">
               {hoofdtool.naam}
             </span>
-            <span class="mt-2 block text-primary-50 leading-relaxed max-w-2xl">
+            <span class="mt-2 block text-warmwhite leading-relaxed max-w-2xl">
               {hoofdtool.tekst}
             </span>
-            <span class="mt-2 block text-primary-100 text-xs leading-relaxed max-w-2xl">
+            <span class="mt-2 block text-on-dark text-xs leading-relaxed max-w-2xl">
               {hoofdtool.onderschrift}
             </span>
-            <span class="mt-4 inline-flex items-center gap-1.5 text-sm font-medium bg-white text-primary-700 rounded-lg px-3 py-1.5 group-hover:bg-primary-50 transition">
+            <span class="mt-4 inline-flex items-center gap-1.5 text-sm bg-warmwhite text-ink rounded-[3px] px-3 py-1.5 group-hover:bg-white transition">
               Start de tool →
             </span>
           </div>
@@ -89,7 +89,7 @@ const schemas = [
             <Image
               src={hoofdtoolPreview}
               alt="Voorbeeld van de rekentool: vermogensontwikkeling en de kans op je inkomensdoel"
-              class="w-full h-auto rounded-lg shadow-lg ring-1 ring-white/20"
+              class="w-full h-auto rounded-[3px] ring-1 ring-warmwhite/20"
               widths={[400, 800]}
               sizes="(min-width: 768px) 320px, 90vw"
               loading="eager"
@@ -98,32 +98,26 @@ const schemas = [
         </div>
       </a>
 
-      <p class="mt-10 text-sm font-semibold text-slate-500 uppercase tracking-wide">
-        Meer rekentools
-      </p>
-      <div class="mt-3 grid gap-4 sm:grid-cols-2">
+      <p class="label-mono mt-10">Meer rekentools</p>
+      <div class="mt-3 grid gap-3 sm:grid-cols-2">
         {
           tools.map((t) => (
             <a
               href={t.href}
-              class="card hover:shadow-md hover:border-primary-100 transition group flex flex-col"
+              class="card hover:border-ink transition group flex flex-col"
             >
-              <span class="text-xs font-medium text-primary-600 uppercase tracking-wide">
-                {t.label}
-              </span>
-              <span class="mt-1 text-lg font-semibold text-slate-900 group-hover:text-primary-600 transition">
-                {t.naam}
-              </span>
-              <span class="mt-2 text-sm text-slate-500 leading-relaxed">{t.tekst}</span>
-              <span class="mt-4 text-sm font-medium text-primary-600">Naar de tool →</span>
+              <span class="label-mono">{t.label}</span>
+              <span class="mt-1 text-lg text-ink transition">{t.naam}</span>
+              <span class="mt-2 text-sm text-body leading-relaxed">{t.tekst}</span>
+              <span class="mt-4 text-sm text-data-700">Naar de tool →</span>
             </a>
           ))
         }
       </div>
 
-      <p class="mt-8 text-sm text-slate-500">
+      <p class="mt-8 text-sm text-body">
         Op zoek naar uitleg in plaats van een rekentool?{' '}
-        <a href="/uitleg" class="text-primary-600 font-medium hover:underline">Lees de uitleg →</a>
+        <a href="/uitleg" class="text-data-700 hover:underline">Lees de uitleg →</a>
       </p>
     </div>
   </main>

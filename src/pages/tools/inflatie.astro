@@ -38,10 +38,10 @@ const schemas = [
 <BaseLayout title={title} description={description} jsonLd={schemas}>
   <main class="flex-1 p-4 md:p-6">
     <div class="max-w-2xl mx-auto">
-      <h1 class="text-2xl font-semibold text-slate-900 mb-1">
+      <h1 class="font-serif text-2xl text-ink mb-1">
         Hoe snel eet inflatie jouw spaargeld op?
       </h1>
-      <p class="text-sm text-slate-500 mb-5">
+      <p class="text-sm text-body mb-5">
         Je spaargeld groeit met rente, maar door inflatie kun je er elk jaar iets minder voor kopen.
         Vul je startbedrag, de verwachte inflatie en je spaarrente in en zie hoe je koopkracht zich
         ontwikkelt.
@@ -49,16 +49,16 @@ const schemas = [
       <InflatieCalculator client:load />
 
       <!-- Lees ook: koppeling terug naar de uitleg -->
-      <section class="mt-8 border-t border-slate-100 pt-6">
-        <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Lees ook</h2>
+      <section class="mt-8 border-t border-line-soft pt-6">
+        <h2 class="label-mono mb-3">Lees ook</h2>
         <ul class="space-y-2 text-sm">
           <li>
-            <a href="/uitleg/sparen-maakt-mensen-arm" class="text-primary-600 hover:underline">
+            <a href="/uitleg/sparen-maakt-mensen-arm" class="text-data-700 hover:underline">
               Sparen maakt mensen arm: waarom je spaargeld elk jaar minder waard wordt
             </a>
           </li>
           <li>
-            <a href="/uitleg/wat-is-inflatie" class="text-primary-600 hover:underline">
+            <a href="/uitleg/wat-is-inflatie" class="text-data-700 hover:underline">
               Wat is inflatie en wat doet het met je geld?
             </a>
           </li>

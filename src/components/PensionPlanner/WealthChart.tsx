@@ -22,12 +22,12 @@ function formatEur(v: number): string {
 const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: { name: string; value: number; color: string }[]; label?: number }) => {
   if (!active || !payload?.length) return null
   return (
-    <div className="bg-white border border-slate-200 rounded-xl shadow-lg p-3 text-xs">
-      <p className="font-semibold text-slate-700 mb-2">Leeftijd {label}</p>
+    <div className="bg-panel border border-line rounded-[3px] p-3 text-xs">
+      <p className="font-medium text-ink mb-2">Leeftijd {label}</p>
       {payload.map((p, i) => (
         <div key={i} className="flex items-center justify-between gap-4 py-0.5">
           <span style={{ color: p.color }} className="font-medium">{p.name}</span>
-          <span className="text-slate-700 font-mono">{formatEur(p.value)}</span>
+          <span className="font-numeric tabular text-ink">{formatEur(p.value)}</span>
         </div>
       ))}
     </div>
@@ -66,23 +66,17 @@ export function WealthChart({ result, mc, retirementAge, showMonteCarlo, lifeEve
   return (
     <ResponsiveContainer width="100%" height={300}>
       <ComposedChart data={data} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
-        <defs>
-          <linearGradient id="gradVermogen" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#2563eb" stopOpacity={0.15} />
-            <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
-          </linearGradient>
-        </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+        <CartesianGrid strokeDasharray="3 3" stroke="#E4E1DC" />
         <XAxis
           dataKey="age"
-          tick={{ fontSize: 11, fill: '#94a3b8' }}
+          tick={{ fontSize: 11, fill: '#4C5A50' }}
           tickLine={false}
           axisLine={false}
-          label={{ value: 'Leeftijd', position: 'insideBottom', offset: -2, fontSize: 11, fill: '#94a3b8' }}
+          label={{ value: 'Leeftijd', position: 'insideBottom', offset: -2, fontSize: 11, fill: '#4C5A50' }}
         />
         <YAxis
           tickFormatter={formatEur}
-          tick={{ fontSize: 11, fill: '#94a3b8' }}
+          tick={{ fontSize: 11, fill: '#4C5A50' }}
           tickLine={false}
           axisLine={false}
           domain={[0, Math.ceil(maxVal * 1.05)]}
@@ -90,54 +84,58 @@ export function WealthChart({ result, mc, retirementAge, showMonteCarlo, lifeEve
         />
         <Tooltip content={<CustomTooltip />} />
 
+        {/* Banden symmetrisch rond de mediaan: buitenste (P10–P25, P75–P90)
+            lichter, binnenste (P25–P50, P50–P75) donkerder — even ver van de
+            mediaan is even waarschijnlijk, dus dezelfde kleurdiepte. */}
         {showMonteCarlo && (
           <>
             <Area dataKey="p10" stackId="mc" fill="transparent" stroke="none" name="P10" />
-            <Area dataKey="band1" stackId="mc" fill="#bfdbfe" stroke="none" fillOpacity={0.6} name="P10–P25" />
-            <Area dataKey="band2" stackId="mc" fill="#93c5fd" stroke="none" fillOpacity={0.5} name="P25–P50" />
-            <Area dataKey="band3" stackId="mc" fill="#60a5fa" stroke="none" fillOpacity={0.4} name="P50–P75" />
-            <Area dataKey="band4" stackId="mc" fill="#3b82f6" stroke="none" fillOpacity={0.3} name="P75–P90" />
+            <Area dataKey="band1" stackId="mc" fill="#B6C8D8" stroke="none" fillOpacity={0.7} name="P10–P25" />
+            <Area dataKey="band2" stackId="mc" fill="#83A0B9" stroke="none" fillOpacity={0.6} name="P25–P50" />
+            <Area dataKey="band3" stackId="mc" fill="#83A0B9" stroke="none" fillOpacity={0.6} name="P50–P75" />
+            <Area dataKey="band4" stackId="mc" fill="#B6C8D8" stroke="none" fillOpacity={0.7} name="P75–P90" />
           </>
         )}
 
         <Area
           dataKey="vermogen"
-          stroke="#2563eb"
+          stroke="#29392E"
           strokeWidth={2.5}
-          fill="url(#gradVermogen)"
+          fill="#29392E"
+          fillOpacity={0.06}
           dot={false}
           name="Prognose"
-          activeDot={{ r: 4, fill: '#2563eb' }}
+          activeDot={{ r: 4, fill: '#29392E' }}
         />
 
         <ReferenceLine
           x={retirementAge}
-          stroke="#64748b"
+          stroke="#6E7F72"
           strokeDasharray="5 4"
           strokeWidth={1.5}
-          label={{ value: 'Pensioendatum', position: 'top', fontSize: 10, fill: '#64748b' }}
+          label={{ value: 'Pensioendatum', position: 'top', fontSize: 10, fill: '#6E7F72' }}
         />
 
-        {/* Life event markers: green for income, red for expenses */}
+        {/* Life event markers: data-500 voor inkomsten, signal voor uitgaven */}
         {eventMarkers.map(e => (
           <ReferenceLine
             key={`${e.year}-${e.name}`}
             x={e.age}
-            stroke={e.isExpense ? '#ef4444' : '#10b981'}
+            stroke={e.isExpense ? '#A85A3C' : '#527898'}
             strokeDasharray="3 3"
             strokeWidth={1.5}
             label={{
               value: `${e.isExpense ? '−' : '+'}€${(Math.abs(e.amount) / 1000).toFixed(0)}k`,
               position: 'top',
               fontSize: 9,
-              fill: e.isExpense ? '#dc2626' : '#059669',
+              fill: e.isExpense ? '#A85A3C' : '#3B5972',
             }}
           />
         ))}
 
         <Legend
-          wrapperStyle={{ fontSize: 11, color: '#64748b', paddingTop: 8 }}
-          formatter={(value) => <span style={{ color: '#64748b' }}>{value}</span>}
+          wrapperStyle={{ fontSize: 11, color: '#4C5A50', paddingTop: 8 }}
+          formatter={(value) => <span style={{ color: '#4C5A50' }}>{value}</span>}
         />
       </ComposedChart>
     </ResponsiveContainer>

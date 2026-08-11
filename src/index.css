@@ -7,76 +7,111 @@
     box-sizing: border-box;
   }
   body {
-    @apply bg-slate-50 text-slate-900 font-sans antialiased;
+    @apply bg-canvas text-ink font-sans antialiased;
   }
 }
 
 @layer components {
+  /* Invoervlak: het lichtste van de drie vlakniveaus */
   .input-field {
-    @apply w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white
-           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-           transition-colors placeholder:text-slate-400;
+    @apply w-full px-[9px] py-[7px] text-[13px] text-ink border border-line rounded-[2px] bg-field
+           focus:outline-none focus:border-ink
+           transition-colors placeholder:text-muted;
   }
+  /* Veldlabel: sentence case, geen kapitalen. Kapitalen zijn voorbehouden
+     aan .label-mono, waar het om enkele korte woorden gaat. */
   .label {
-    @apply block text-xs font-medium text-slate-500 mb-1 uppercase tracking-wide;
+    @apply block text-[12px] text-body mb-1;
   }
+  /* Micro-label: alleen voor KPI-cellen en sectiekoppen */
+  .label-mono {
+    @apply block font-mono text-[11px] uppercase text-body;
+    letter-spacing: 0.06em;
+  }
+  /* Paneel: springt naar voren t.o.v. de canvas. Diepte vervangt elevatie. */
   .card {
-    @apply bg-white rounded-2xl border border-slate-100 shadow-sm p-6;
+    @apply bg-panel rounded-[3px] border border-line p-4;
   }
   .btn-primary {
-    @apply flex items-center gap-2 px-4 py-2 bg-primary-600 text-white text-sm font-medium
-           rounded-lg hover:bg-primary-700 transition-colors;
+    @apply inline-flex items-center gap-2 px-4 py-2 bg-ink text-warmwhite text-sm
+           rounded-[3px] hover:bg-[#1F2C23] transition-colors;
   }
   .btn-secondary {
-    @apply flex items-center gap-2 px-4 py-2 bg-white text-slate-700 text-sm font-medium
-           rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors;
+    @apply inline-flex items-center gap-2 px-4 py-2 bg-transparent text-ink text-sm
+           rounded-[3px] border border-sand hover:bg-warmwhite transition-colors;
+  }
+  .btn-tertiary {
+    @apply inline-flex items-center gap-2 px-2 py-2 text-muted text-sm
+           rounded-[3px] hover:text-ink transition-colors;
   }
   .toggle-btn {
-    @apply px-3 py-1 text-xs font-medium rounded-md transition-colors cursor-pointer;
+    @apply px-3 py-1 text-xs rounded-[2px] transition-colors cursor-pointer;
   }
   .toggle-btn-active {
-    @apply bg-primary-600 text-white;
+    @apply bg-ink text-warmwhite;
   }
   .toggle-btn-inactive {
-    @apply text-slate-500 hover:text-slate-700;
+    @apply text-body hover:text-ink;
   }
 }
 
+@layer utilities {
+  /* Gelijke cijferbreedte: voorkomt dat bedragen springen tijdens het slepen */
+  .tabular {
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+}
+
+/* Zichtbare focus voor toetsenbordgebruik. Geen blauwe ring, wel een
+   indicator: zonder is de site niet met het toetsenbord te bedienen. */
+:focus-visible {
+  outline: 2px solid #29392e;
+  outline-offset: 2px;
+}
+
+/* Schuif: platte track met inktgroene vulling.
+   --range-fill wordt per slider gezet als percentage. */
 input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
-  height: 6px;      /* slightly taller track for easier touch */
-  background: #e2e8f0;
-  border-radius: 3px;
+  height: 3px;
+  border-radius: 0;
+  background: linear-gradient(
+    to right,
+    #29392e 0%,
+    #29392e var(--range-fill, 0%),
+    #dde6ee var(--range-fill, 0%),
+    #dde6ee 100%
+  );
   outline: none;
   cursor: pointer;
 }
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 24px;      /* larger thumb for touch */
-  height: 24px;
-  background: #2563eb;
+  width: 11px;
+  height: 11px;
+  background: #f7f6f4;
   border-radius: 50%;
   cursor: pointer;
-  border: 2px solid white;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  border: 2px solid #29392e;
+  box-sizing: border-box;
 }
 input[type="range"]::-moz-range-thumb {
-  width: 24px;
-  height: 24px;
-  background: #2563eb;
+  width: 11px;
+  height: 11px;
+  background: #f7f6f4;
   border-radius: 50%;
   cursor: pointer;
-  border: 2px solid white;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  border: 2px solid #29392e;
   box-sizing: border-box;
 }
 
-/* Larger tap targets for buttons on touch devices */
+/* Grotere raakvlakken op touch. Een schuifknop van 11px is met een vinger
+   niet te bedienen, dus daar wijken we bewust af van de 11px uit §4. */
 @media (pointer: coarse) {
-  .btn-primary, .btn-secondary {
+  .btn-primary, .btn-secondary, .btn-tertiary {
     @apply py-3 px-5;
   }
   .input-field {
@@ -85,10 +120,21 @@ input[type="range"]::-moz-range-thumb {
   .toggle-btn {
     @apply px-4 py-2;
   }
+  input[type="range"] {
+    height: 6px;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    width: 22px;
+    height: 22px;
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+  }
 }
 
 .print-area {
-  background: white;
+  background: #f7f6f4;
 }
 
 /* Brede tabellen in artikelen (prose) mogen op smalle schermen horizontaal
@@ -104,20 +150,20 @@ input[type="range"]::-moz-range-thumb {
 .visible-scrollbar {
   scrollbar-gutter: stable;
   scrollbar-width: thin;               /* Firefox */
-  scrollbar-color: #94a3b8 #e2e8f0;    /* thumb / track — Firefox */
+  scrollbar-color: #95a1a6 #e4e1dc;    /* thumb / track — Firefox */
 }
 .visible-scrollbar::-webkit-scrollbar {
   width: 10px;
 }
 .visible-scrollbar::-webkit-scrollbar-track {
-  background: #e2e8f0;
-  border-radius: 8px;
+  background: #e4e1dc;
+  border-radius: 0;
 }
 .visible-scrollbar::-webkit-scrollbar-thumb {
-  background: #94a3b8;
-  border-radius: 8px;
-  border: 2px solid #e2e8f0;
+  background: #95a1a6;
+  border-radius: 0;
+  border: 2px solid #e4e1dc;
 }
 .visible-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #64748b;
+  background: #6e7f72;
 }

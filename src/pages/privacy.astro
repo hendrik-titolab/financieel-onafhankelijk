@@ -23,16 +23,16 @@ const bijgewerkt = new Date('2026-08-10').toLocaleDateString('nl-NL', {
 <BaseLayout title={title} description={description} jsonLd={schemas}>
   <main class="flex-1">
     <article class="max-w-2xl mx-auto px-4 md:px-6 py-10">
-      <h1 class="text-3xl font-bold text-slate-900 mb-6">Privacy en gegevensgebruik</h1>
+      <h1 class="font-serif text-3xl text-ink mb-6">Privacy en gegevensgebruik</h1>
 
-      <div class="text-slate-600 leading-relaxed space-y-4">
+      <div class="text-body leading-relaxed space-y-4">
         <p>
           Kort samengevat: je hoeft geen account aan te maken, we zetten geen trackingcookies,
           en we verkopen je gegevens niet. We tellen wel, cookieloos, hoeveel bezoekers de site
           en de tools gebruiken. Hieronder staat precies wat er wel gebeurt.
         </p>
 
-        <h2 class="text-xl font-semibold text-slate-900 pt-4">Rekentools</h2>
+        <h2 class="font-serif text-xl text-ink pt-4">Rekentools</h2>
         <p>
           De bedragen die je invult in de rekentools worden alleen in je eigen browser
           verwerkt, om de berekening te tonen. Ze gaan niet naar een server en worden nergens
@@ -57,7 +57,7 @@ const bijgewerkt = new Date('2026-08-10').toLocaleDateString('nl-NL', {
           steeds terugkomt. Ook dat blijft alleen op jouw apparaat.
         </p>
 
-        <h2 class="text-xl font-semibold text-slate-900 pt-4">Cookies en meetgegevens</h2>
+        <h2 class="font-serif text-xl text-ink pt-4">Cookies en meetgegevens</h2>
         <p>
           Deze site zet geen trackingcookies. We gebruiken wel Vercel Web Analytics om te
           zien hoeveel mensen de site en de rekentools bezoeken. Die meting werkt zonder
@@ -70,12 +70,12 @@ const bijgewerkt = new Date('2026-08-10').toLocaleDateString('nl-NL', {
           serverlogs. Dat gebeurt buiten onze directe controle om, op infrastructuurniveau.
         </p>
 
-        <h2 class="text-xl font-semibold text-slate-900 pt-4">Feedbackformulier</h2>
+        <h2 class="font-serif text-xl text-ink pt-4">Feedbackformulier</h2>
         <p>
           Laat je feedback achter via het{' '}
           {
             FEEDBACK_URL && (
-              <a href={FEEDBACK_URL} class="text-primary-600 hover:text-primary-700 underline" rel="noopener" target="_blank">
+              <a href={FEEDBACK_URL} class="text-data-700 hover:underline" rel="noopener" target="_blank">
                 feedbackformulier
               </a>
             )
@@ -85,20 +85,20 @@ const bijgewerkt = new Date('2026-08-10').toLocaleDateString('nl-NL', {
           verbeteren.
         </p>
 
-        <h2 class="text-xl font-semibold text-slate-900 pt-4">Vragen</h2>
+        <h2 class="font-serif text-xl text-ink pt-4">Vragen</h2>
         <p>
           Vraag over deze pagina, of denk je dat er iets niet klopt? Laat het weten via
           hetzelfde{' '}
           {
             FEEDBACK_URL && (
-              <a href={FEEDBACK_URL} class="text-primary-600 hover:text-primary-700 underline" rel="noopener" target="_blank">
+              <a href={FEEDBACK_URL} class="text-data-700 hover:underline" rel="noopener" target="_blank">
                 feedbackformulier
               </a>
             )
           }.
         </p>
 
-        <p class="text-sm text-slate-400 pt-4">Laatst bijgewerkt: {bijgewerkt}.</p>
+        <p class="text-sm text-body pt-4">Laatst bijgewerkt: {bijgewerkt}.</p>
       </div>
     </article>
   </main>

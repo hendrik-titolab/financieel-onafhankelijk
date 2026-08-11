@@ -129,17 +129,17 @@ export function BrutoNettoCalculator() {
 
   return (
     <div className="max-w-xl mx-auto">
-      <h1 className="text-2xl font-semibold text-slate-900 mb-1">
+      <h1 className="font-serif text-2xl text-ink mb-1">
         Bruto-netto calculator {P.jaar}
       </h1>
-      <p className="text-sm text-slate-500 mb-4">
+      <p className="text-sm text-body mb-4">
         Werknemer onder AOW-leeftijd, met loonheffingskorting, exclusief vakantiegeld en pensioenpremie.
       </p>
 
       {/* Toeslagen-disclaimer */}
-      <div className="flex items-start gap-2 bg-amber-50 border border-amber-300 rounded-lg px-4 py-3 mb-5">
-        <Info className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-        <p className="text-sm text-amber-900">
+      <div className="flex items-start gap-2 bg-panel border border-signal rounded-[3px] px-4 py-3 mb-5">
+        <Info className="w-5 h-5 text-signal shrink-0 mt-0.5" />
+        <p className="text-sm text-ink">
           <strong>Toeslagen blijven buiten beschouwing.</strong> Huurtoeslag, zorgtoeslag,
           kinderopvangtoeslag en kindgebonden budget zitten níét in deze berekening. Je
           werkelijke besteedbare inkomen kan daardoor afwijken.
@@ -151,20 +151,20 @@ export function BrutoNettoCalculator() {
         <div className="flex gap-2 mb-4">
           <button
             onClick={() => setRichting('brutoNetto')}
-            className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${
+            className={`flex-1 py-2 rounded-[3px] text-sm font-medium transition ${
               richting === 'brutoNetto'
-                ? 'bg-primary-600 text-white'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                ? 'bg-ink text-warmwhite'
+                : 'bg-canvas text-body hover:bg-line'
             }`}
           >
             Bruto → netto
           </button>
           <button
             onClick={() => setRichting('nettoBruto')}
-            className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${
+            className={`flex-1 py-2 rounded-[3px] text-sm font-medium transition ${
               richting === 'nettoBruto'
-                ? 'bg-primary-600 text-white'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                ? 'bg-ink text-warmwhite'
+                : 'bg-canvas text-body hover:bg-line'
             }`}
           >
             Netto → bruto
@@ -176,7 +176,7 @@ export function BrutoNettoCalculator() {
         </label>
         <div className="flex gap-2">
           <div className="relative flex-1">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">€</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-body pointer-events-none">€</span>
             <input
               type="text"
               inputMode="decimal"
@@ -201,46 +201,46 @@ export function BrutoNettoCalculator() {
       {r && (
         <div className="card">
           <div className="flex items-baseline justify-between mb-1">
-            <span className="text-sm text-slate-500">{uitkomstLabel} per maand</span>
-            <span className="text-3xl font-semibold text-slate-900">{eur(uitkomstJaar / 12)}</span>
+            <span className="text-sm text-body">{uitkomstLabel} per maand</span>
+            <span className="text-3xl font-numeric text-ink tabular">{eur(uitkomstJaar / 12)}</span>
           </div>
-          <div className="flex items-baseline justify-between text-sm text-slate-500 mb-4">
+          <div className="flex items-baseline justify-between text-sm text-body mb-4">
             <span>{uitkomstLabel} per jaar</span>
             <span>{eur(uitkomstJaar)}</span>
           </div>
 
-          <div className="grid grid-cols-3 gap-2 text-center text-sm border-t border-slate-100 pt-4">
+          <div className="grid grid-cols-3 gap-2 text-center text-sm border-t border-line-soft pt-4">
             <div>
-              <div className="text-slate-400 text-xs mb-0.5">Bruto / jaar</div>
-              <div className="font-medium text-slate-800">{eur(r.brutoJaar)}</div>
+              <div className="text-body text-xs mb-0.5">Bruto / jaar</div>
+              <div className="font-numeric text-ink tabular">{eur(r.brutoJaar)}</div>
             </div>
             <div>
-              <div className="text-slate-400 text-xs mb-0.5">Belasting / jaar</div>
-              <div className="font-medium text-slate-800">{eur(r.teBetalen)}</div>
+              <div className="text-body text-xs mb-0.5">Belasting / jaar</div>
+              <div className="font-numeric text-ink tabular">{eur(r.teBetalen)}</div>
             </div>
             <div>
-              <div className="text-slate-400 text-xs mb-0.5">Belastingdruk</div>
-              <div className="font-medium text-slate-800">{pct(r.druk, 1)}</div>
+              <div className="text-body text-xs mb-0.5">Belastingdruk</div>
+              <div className="font-numeric text-ink tabular">{pct(r.druk, 1)}</div>
             </div>
           </div>
 
           {/* Uitklapdetail */}
           <button
             onClick={() => setOpen(!open)}
-            className="mt-4 w-full flex items-center justify-center gap-1 text-sm font-medium text-primary-600 hover:text-primary-700 py-2 border-t border-slate-100"
+            className="mt-4 w-full flex items-center justify-center gap-1 text-sm font-medium text-data-700 hover:text-ink py-2 border-t border-line-soft"
           >
             {open ? 'Verberg uitgebreide berekening' : 'Toon uitgebreide berekening'}
             {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
 
           {open && (
-            <div className="text-sm text-slate-700 space-y-5 pt-3">
+            <div className="text-sm text-body space-y-5 pt-3">
               {/* Stap 1: schijven */}
               <div>
-                <h3 className="font-semibold text-slate-900 mb-2">1. Belasting per schijf (box 1)</h3>
+                <h3 className="font-medium text-ink mb-2">1. Belasting per schijf (box 1)</h3>
                 <table className="w-full text-xs">
                   <thead>
-                    <tr className="text-slate-400 text-left">
+                    <tr className="text-body text-left">
                       <th className="py-1 font-normal">Schijf</th>
                       <th className="py-1 font-normal text-right">Grondslag</th>
                       <th className="py-1 font-normal text-right">Tarief</th>
@@ -249,14 +249,14 @@ export function BrutoNettoCalculator() {
                   </thead>
                   <tbody>
                     {r.schijfDetail.map((s, i) => (
-                      <tr key={i} className="border-t border-slate-100">
+                      <tr key={i} className="border-t border-line-soft">
                         <td className="py-1.5">{eur(s.van)} – {s.tot === Infinity ? '∞' : eur(s.tot)}</td>
                         <td className="py-1.5 text-right">{eur(s.grondslag)}</td>
                         <td className="py-1.5 text-right">{pct(s.tarief)}</td>
                         <td className="py-1.5 text-right">{eur(s.bedrag, 2)}</td>
                       </tr>
                     ))}
-                    <tr className="border-t border-slate-200 font-medium">
+                    <tr className="border-t border-line font-medium">
                       <td className="py-1.5" colSpan={3}>Belasting vóór kortingen</td>
                       <td className="py-1.5 text-right">{eur(r.belastingBruto, 2)}</td>
                     </tr>
@@ -266,7 +266,7 @@ export function BrutoNettoCalculator() {
 
               {/* Stap 2: kortingen */}
               <div>
-                <h3 className="font-semibold text-slate-900 mb-2">2. Heffingskortingen</h3>
+                <h3 className="font-medium text-ink mb-2">2. Heffingskortingen</h3>
                 <div className="space-y-1.5 text-xs">
                   <div className="flex justify-between">
                     <span>Algemene heffingskorting</span>
@@ -276,12 +276,12 @@ export function BrutoNettoCalculator() {
                     <span>Arbeidskorting</span>
                     <span>{eur(r.ak, 2)}</span>
                   </div>
-                  <div className="flex justify-between font-medium border-t border-slate-200 pt-1.5">
+                  <div className="flex justify-between font-medium border-t border-line pt-1.5">
                     <span>Totaal benutte kortingen</span>
                     <span>− {eur(r.kortingenBenut, 2)}</span>
                   </div>
                   {r.kortingenBenut < r.ahk + r.ak && (
-                    <p className="text-slate-400 pt-1">
+                    <p className="text-body pt-1">
                       Kortingen zijn afgetopt op de verschuldigde belasting; het restant is niet verzilverbaar.
                     </p>
                   )}
@@ -290,7 +290,7 @@ export function BrutoNettoCalculator() {
 
               {/* Stap 3: resultaat */}
               <div>
-                <h3 className="font-semibold text-slate-900 mb-2">3. Resultaat</h3>
+                <h3 className="font-medium text-ink mb-2">3. Resultaat</h3>
                 <div className="space-y-1.5 text-xs">
                   <div className="flex justify-between">
                     <span>Bruto jaarsalaris</span>
@@ -300,29 +300,29 @@ export function BrutoNettoCalculator() {
                     <span>Te betalen belasting</span>
                     <span>− {eur(r.teBetalen, 2)}</span>
                   </div>
-                  <div className="flex justify-between font-medium border-t border-slate-200 pt-1.5">
+                  <div className="flex justify-between font-medium border-t border-line pt-1.5">
                     <span>Netto jaarsalaris</span>
                     <span>{eur(r.nettoJaar, 2)}</span>
                   </div>
-                  <div className="flex justify-between text-slate-400">
+                  <div className="flex justify-between text-body">
                     <span>Netto per maand</span>
                     <span>{eur(r.nettoJaar / 12, 2)}</span>
                   </div>
                 </div>
                 {richting === 'nettoBruto' && (
-                  <p className="text-slate-400 text-xs mt-2">
+                  <p className="text-body text-xs mt-2">
                     Het brutobedrag is numeriek benaderd (binair zoeken) tot op de cent.
                   </p>
                 )}
               </div>
 
               {/* Gebruikte fiscale cijfers */}
-              <div className="bg-slate-50 rounded-lg p-3">
-                <h3 className="font-semibold text-slate-900 mb-2">Gebruikte fiscale cijfers {P.jaar}</h3>
+              <div className="bg-canvas rounded-[3px] p-3">
+                <h3 className="font-medium text-ink mb-2">Gebruikte fiscale cijfers {P.jaar}</h3>
                 <div className="text-xs space-y-3">
                   <div>
                     <div className="font-medium mb-1">Box 1-tarieven (jonger dan AOW-leeftijd)</div>
-                    <ul className="space-y-0.5 text-slate-600">
+                    <ul className="space-y-0.5 text-body">
                       <li>Schijf 1: 35,75% tot {eur(38_883)}</li>
                       <li>Schijf 2: 37,56% van {eur(38_883)} tot {eur(78_426)}</li>
                       <li>Schijf 3: 49,50% boven {eur(78_426)}</li>
@@ -330,7 +330,7 @@ export function BrutoNettoCalculator() {
                   </div>
                   <div>
                     <div className="font-medium mb-1">Algemene heffingskorting</div>
-                    <ul className="space-y-0.5 text-slate-600">
+                    <ul className="space-y-0.5 text-body">
                       <li>Maximum: {eur(3_115)}</li>
                       <li>Afbouw: 6,398% vanaf {eur(29_736)}</li>
                       <li>Nihil vanaf {eur(78_426)}</li>
@@ -338,14 +338,14 @@ export function BrutoNettoCalculator() {
                   </div>
                   <div>
                     <div className="font-medium mb-1">Arbeidskorting</div>
-                    <ul className="space-y-0.5 text-slate-600">
+                    <ul className="space-y-0.5 text-body">
                       <li>Opbouw 8,324% tot {eur(11_965)}</li>
                       <li>Opbouw 31,009% tot {eur(25_845)}</li>
                       <li>Opbouw 1,95% tot {eur(45_592)} (maximum {eur(5_685)})</li>
                       <li>Afbouw 6,510% vanaf {eur(45_593)}, nihil vanaf ± {eur(132_290)}</li>
                     </ul>
                   </div>
-                  <div className="text-slate-400 pt-1 border-t border-slate-200">
+                  <div className="text-body pt-1 border-t border-line">
                     Bron: Belastingdienst (Nieuwsbrief Loonheffingen {P.jaar}) en Belastingplan {P.jaar}.
                     Peildatum: juni {P.jaar}. Vereenvoudigde berekening: geen pensioenpremie,
                     vakantiegeld, bijzondere beloningen, aftrekposten of toeslagen. Aan deze
