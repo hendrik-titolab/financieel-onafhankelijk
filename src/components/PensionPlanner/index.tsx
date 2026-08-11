@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react'
-import { RefreshCw } from 'lucide-react'
+import { useState, useCallback, useEffect, useRef } from 'react'
+import { RefreshCw, ChevronDown } from 'lucide-react'
 import type { PensionInputs, PensionResult, MonteCarloResult } from '../../types'
 import { calculatePension } from '../../utils/pensionCalc'
 import { runMonteCarlo } from '../../utils/monteCarlo'
@@ -48,6 +48,36 @@ export function PensionPlanner({ clientName, onCloseSession }: Props) {
   const [mcStale, setMcStale] = useState(false)
   const [isCalculating, setIsCalculating] = useState(false)
 
+  // Scroll-aanwijzing: hangt vast aan de onderkant van het zichtbare vlak
+  // (niet aan een vaste plek in de inhoud) zodat hij op elke schermhoogte
+  // meteen zichtbaar is bij het laden — een pijltje verderop in de inhoud
+  // bleek op een groot scherm met minder browserchrome-ruimte al buiten
+  // beeld te vallen, waardoor je 'm nooit zag zonder al gescrold te hebben.
+  // Verdwijnt zodra je zelf ook maar iets scrolt, zodat hij niet aanvoelt
+  // als een vastzittend element dat je scrollen negeert.
+  const scrollAreaRef = useRef<HTMLDivElement>(null)
+  const [showScrollHint, setShowScrollHint] = useState(false)
+
+  useEffect(() => {
+    const area = scrollAreaRef.current
+    if (!area) return
+
+    const checkScroll = () => {
+      const hasOverflow = area.scrollHeight - area.clientHeight > 8
+      setShowScrollHint(hasOverflow && area.scrollTop <= 4)
+    }
+
+    checkScroll()
+    area.addEventListener('scroll', checkScroll)
+    const ro = new ResizeObserver(checkScroll)
+    ro.observe(area)
+    if (area.firstElementChild) ro.observe(area.firstElementChild)
+    return () => {
+      area.removeEventListener('scroll', checkScroll)
+      ro.disconnect()
+    }
+  }, [])
+
   const handleChange = useCallback((updates: Partial<PensionInputs>) => {
     setInputs(prev => {
       const next = { ...prev, ...updates }
@@ -87,9 +117,19 @@ export function PensionPlanner({ clientName, onCloseSession }: Props) {
           op te zoeken na het invullen van een veld. */}
       <div className="w-full lg:w-80 lg:flex-shrink-0">
         <div className="card !p-0 flex flex-col max-h-[75vh] lg:max-h-[calc(100vh-140px)] overflow-hidden">
-          <div className="flex-1 min-h-0 overflow-y-auto visible-scrollbar p-4">
+          <div ref={scrollAreaRef} className="relative flex-1 min-h-0 overflow-y-auto visible-scrollbar p-4">
             <h2 className="text-sm font-medium text-ink mb-4">Invoer</h2>
             <InputPanel inputs={inputs} onChange={handleChange} />
+            {showScrollHint && (
+              // position:absolute (niet in de content-flow) zodat de plek
+              // waar dit landt niet afhangt van de zichtbare paneelhoogte —
+              // altijd onderin het zichtbare vlak, op elk scherm.
+              <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-12 flex items-end justify-center bg-gradient-to-t from-panel to-transparent">
+                <div className="mb-1.5 flex items-center justify-center w-7 h-7 rounded-full bg-panel border border-line animate-bounce">
+                  <ChevronDown size={15} className="text-data-700" />
+                </div>
+              </div>
+            )}
           </div>
           <div className="flex-shrink-0 border-t border-line-soft p-3 bg-panel">
             <button
