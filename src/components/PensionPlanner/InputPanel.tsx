@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { X } from 'lucide-react'
+import { X, ChevronDown } from 'lucide-react'
 import type { PensionInputs, IncomeType, ContributionFrequency, LifeEvent, RiskProfile } from '../../types'
 import { RISICOPROFIELEN, PROFIEL_VOLGORDE } from '../../config/risicoprofielen'
 
@@ -171,6 +171,14 @@ function ParametersTab({ inputs, onChange }: Props) {
           <p className="text-xs text-body mt-1">Waarmee we je koopkracht corrigeren (langjarig gemiddelde ~2%).</p>
         </Field>
       </Section>
+
+      {/* Scroll-aanwijzing: schuift gewoon mee met de rest van de inhoud
+          (geen fixed overlay) — precies op de plek waar de meeste mensen
+          denken dat de invoer stopt, terwijl Pensioenuitkeringen en
+          Risicoprofiel er nog onder staan. */}
+      <div className="flex justify-center -my-1" aria-hidden="true">
+        <ChevronDown size={16} className="text-muted animate-bounce" />
+      </div>
 
       <div className="border-t border-line-soft" />
 
