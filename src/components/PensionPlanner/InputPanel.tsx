@@ -168,7 +168,7 @@ function ParametersTab({ inputs, onChange }: Props) {
         <Field label="Inflatie">
           <NumberInput value={inputs.inflation}
             onChange={v => onChange({ inflation: v })} suffix="%" step={0.1} min={0} max={10} />
-          <p className="text-xs text-body mt-1">Waarmee we je koopkracht corrigeren (langjarig gemiddelde ~2%).</p>
+          <p className="text-xs text-body mt-1">Waarmee we je koopkracht corrigeren (Nederlands langjarig gemiddelde: circa 3,5%, CBS 1960-2025).</p>
         </Field>
       </Section>
 

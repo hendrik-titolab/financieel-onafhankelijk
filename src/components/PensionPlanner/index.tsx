@@ -67,6 +67,15 @@ export function PensionPlanner({ clientName, onCloseSession }: Props) {
       setMc(mcResult)
       setMcStale(false)
       setIsCalculating(false)
+      // Op mobiel staat de invoerkolom boven de resultaten (gestapelde layout
+      // onder het lg:-breakpoint), dus na Bereken zie je zonder zelf te
+      // scrollen niet dat er iets is gebeurd. Vanaf lg: staan ze al naast
+      // elkaar zichtbaar, dus dan niet scrollen.
+      if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+        requestAnimationFrame(() => {
+          document.getElementById('wealth-chart')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        })
+      }
     }, 50)
   }, [inputs])
 
