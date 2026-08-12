@@ -4,7 +4,7 @@ beschrijving: "De FO-planner rekent met een reëel rendement, een fasegevoelige 
 samenvatting: "De planner geeft geen vast antwoord maar een slagingskans, berekend over 2.000 simulaties met wisselend rendement. Alle bedragen staan in koopkracht van vandaag: het nominale rendement wordt eerst gecorrigeerd voor inflatie. Belasting wordt fasegevoelig berekend, met een ander tarief voor en na je AOW-leeftijd. Elke aanname is aan te passen; niets ligt vast."
 pillar: "wat-is-financiele-onafhankelijkheid"
 volgorde: 6
-bijgewerkt: "2026-08-04"
+bijgewerkt: "2026-08-12"
 tool:
   label: "Bekijk je eigen uitkomst in de planner"
   href: "/ben-ik-financieel-onafhankelijk"
@@ -15,6 +15,8 @@ faq:
     antwoord: "Dan gebruik je een van de vijf standaard risicoprofielen (van defensief tot offensief). Die zijn vooraf ingevuld met een redelijk rendement en bijbehorende schommeling. Zelf invullen kan altijd via het vinkje bij risicoprofiel."
   - vraag: "Rekent de planner ook met box 3 (vermogensbelasting)?"
     antwoord: "Nee. Box 3 hangt sterk af van je vermogensmix, vrijstellingen en jaarlijkse regelwijzigingen, en zou de uitkomst minder betrouwbaar maken dan nu geen rekening ermee houden. Houd er zelf rekening mee dat je netto rendement op spaargeld en beleggingen hierdoor iets lager uitvalt."
+  - vraag: "Klopt de uitkomst ook als mijn geld in een lijfrente of op een bankspaarrekening staat?"
+    antwoord: "Niet zonder meer. De planner gaat uit van vrij belegd vermogen in box 3 en haalt het gewenste inkomen netto uit je vermogen. Uit een lijfrente, bankspaarrekening of pensioenbeleggingsrekening is elke uitkering belast als inkomen in box 1. Er moet dan bruto meer uit om hetzelfde netto over te houden, waardoor je vermogen sneller opraakt dan de planner laat zien. Vul in dat geval alleen je vrij belegde vermogen in."
 bronnen:
   - titel: "Belastingdienst: tarieven box 1"
     url: "https://www.belastingdienst.nl/wps/wcm/connect/nl/werk-en-inkomen/content/hoeveel-inkomstenbelasting-betalen"
@@ -92,6 +94,13 @@ uitkomst rekent meteen opnieuw.
 ## Wat de planner bewust niet doet
 
 Geen rekening met box 3, met specifieke beleggingsproducten of met kosten daarvan. Dat
-zou de uitkomst niet preciezer maken, alleen ingewikkelder om uit te leggen. Verander één
+zou de uitkomst niet preciezer maken, alleen ingewikkelder om uit te leggen.
+
+De planner gaat er ook van uit dat je vermogen vrij belegd is, in box 3. Staat een deel op
+een lijfrenterekening, een bankspaarrekening of een pensioenbeleggingsrekening, dan klopt de
+uitkomst niet zonder meer. Zulk kapitaal is fiscaal beklemd: je mag het niet vrij opnemen, en
+elke uitkering telt mee als inkomen in box 1. Om hetzelfde bedrag netto over te houden moet er
+bruto meer uit, en dat betekent dat je vermogen sneller opraakt dan de grafiek laat zien. Vul in
+dat geval alleen je vrij belegde vermogen in. Verander één
 aanname in de planner, en de slagingskans verschuift meteen mee. Dat is het hele punt:
 niet één vast antwoord, maar zicht op wat je uitkomst kwetsbaar maakt.

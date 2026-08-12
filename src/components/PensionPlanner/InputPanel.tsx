@@ -127,6 +127,11 @@ function ParametersTab({ inputs, onChange }: Props) {
         <Field label="Huidig vermogen">
           <NumberInput value={inputs.currentCapital} onChange={v => onChange({ currentCapital: v })}
             prefix="€" step={1000} />
+          <p className="text-xs text-body leading-relaxed mt-1">
+            Vul hier je vrij belegde vermogen in (box 3). Lijfrente, banksparen en pensioenbeleggen
+            kun je beter niet meetellen: opnames daaruit zijn belast als inkomen in box 1, en daar
+            rekent deze tool niet mee.
+          </p>
         </Field>
         <div className="space-y-1">
           <div className="flex justify-between items-center">

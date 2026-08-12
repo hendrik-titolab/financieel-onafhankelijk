@@ -179,8 +179,10 @@ behandelen als de skill zelf moet worden aangepast (staat buiten de projectmap).
 
 ## Drie beslisgroepen
 
-### Groep 1 — mechanisch, ik kan dit gewoon fixen (tenzij je bezwaar hebt)
-Hendriks eigen classificatie (12 aug) plus een paar vergelijkbare items uit deze sessie:
+### Groep 1 — ✅ uitgevoerd, commit `284194b` op `audit-2026-08`
+Hendriks eigen classificatie (12 aug) plus een paar vergelijkbare items uit deze sessie. B3 is op
+Hendriks verzoek anders gedaan dan hieronder oorspronkelijk voorgesteld: de hele zin verwijderd
+i.p.v. herformuleren. `npm run test`/`build`/`check` groen, live gecontroleerd.
 
 | ID | Fix |
 |---|---|
