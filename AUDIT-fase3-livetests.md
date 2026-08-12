@@ -78,3 +78,78 @@ A5/A8/A9 (HTML `min`/`max` wordt nergens in `onChange`/`commit` afgedwongen).
 
 **Status:** nieuwe bevinding, live gereproduceerd.
 
+---
+
+### E4 — bevestigd live: twee tools op de site geven een verschillend netto voor hetzelfde bruto
+**Reproductie:**
+1. `/bruto-netto`, bruto salaris €30.000 per jaar → **netto € 2.313/maand** (€27.754/jaar,
+   belastingdruk 7,5%). Deze tool gebruikt `brutoNaarNetto()`
+   (`BrutoNetto/index.tsx:74-91`), met volledige algemene heffingskorting én arbeidskorting.
+2. `/ben-ik-financieel-onafhankelijk`, Uitgangspunten: pensioenleeftijd 60, werkgeverspensioen
+   €2.500 bruto/mnd (= €30.000/jaar, exact hetzelfde bedrag), ingang leeftijd 60, AOW-ingang
+   ongewijzigd op 67 (dus een periode 60-67 met uitsluitend eigen vermogen + werkgeverspensioen,
+   zonder AOW erdoorheen). "Inkomen per fase", leeftijd 60-67: **Werkgeverspensioen € 1.606/mnd**.
+   Deze tool gebruikt `brutoToNetto()` (`pensionCalc.ts:11-17`), **uitsluitend de kale
+   box 1-schijventarieven, zonder enige heffingskorting**.
+
+**Verschil voor exact hetzelfde brutobedrag: € 2.313 − € 1.606 = € 707/maand (€ 8.484/jaar).**
+
+Ter bevestiging dat dit precies de heffingskorting-component is: € 1.606/mnd × 12 = € 19.272/jaar,
+wat overeenkomt met de kale schijf-1-berekening (30.000 × (1 − 35,75%) = € 19.275, afrondingsverschil
+door de tabel/maandconversie). De volledige € 8.483 (27.754 − 19.271) is dus vrijwel precies het
+bedrag aan algemene heffingskorting + arbeidskorting dat de Bruto-netto-tool wél toepast en de
+FO-planner niet.
+
+**Extra, niet expliciet gevraagd maar tijdens dezelfde meting zichtbaar:** in de fase ná AOW-leeftijd
+(67-90) toont dezelfde € 2.500 bruto werkgeverspensioen € 2.054/mnd netto — hoger dan de € 1.606 vóór
+AOW-leeftijd, omdat `brutoToNetto()` daar het lagere post-AOW-schijf-1-tarief gebruikt (17,85%
+i.p.v. 35,75%, precies het AOW-premiedeel). Dat mechanisme zelf klopt intern (bevestigt de
+fase-afhankelijke tariefwissel uit A1/`getMonthlyWithdrawal`); het ontbreken van heffingskortingen
+geldt echter voor beide fases.
+
+**Status:** bevestigd (live, met exacte bedragen).
+
+---
+
+### D1 / D2 — downloadlimiet, live bevestigd (Hendriks expliciete vraag)
+**Reproductie:** `fp_download_count` gewist, drie downloads gedaan (Excel, PDF, Excel), localStorage
+na elke download afgelezen.
+
+| Download | Type | `fp_download_count` na afloop | UI-tekst |
+|---|---|---|---|
+| 1 | Excel | 1 | "Nog 2 gratis downloads beschikbaar." |
+| 2 | PDF | 2 | "Nog 1 gratis download beschikbaar." (enkelvoud correct) |
+| 3 | Excel | 3 | "Je hebt het maximum aan gratis downloads bereikt. Neem contact op als je meer berekeningen wil downloaden." |
+
+Na de derde download: beide knoppen (`Download Excel`, `Download PDF`) hebben het HTML-attribuut
+`disabled` (rechtstreeks in de DOM bevestigd), en het woord "contact" is een echte, klikbare link
+(`href` naar het Google Forms-feedbackformulier, hetzelfde adres als elders op de site) — dus D2's
+vraag "biedt het scherm bij de vierde poging daadwerkelijk een contactroute?" is bevestigend
+beantwoord: ja.
+
+**Antwoord op Hendriks oorspronkelijke vraag** (device/IP/hoe gemeten — al beantwoord in Fase 1,
+hier live bevestigd): device/browser-gebonden via `localStorage`-key `fp_download_count`, geen
+IP-detectie of fingerprinting (technisch ook niet mogelijk, geen server). Het getal telt PDF en
+Excel gecombineerd, precies zoals live waargenomen (1 Excel + 1 PDF + 1 Excel = teller op 3).
+
+**Microcopy-check (D2):** de tekst suggereert nergens dat de limiet persoonsgebonden is ("gratis
+downloads" i.p.v. bijvoorbeeld "jouw downloads"), en het woord "gratis" wordt nergens gekoppeld aan
+een concrete betaalde vervolgstap — er is geen upsell-tekst, alleen de contactoproep. Geen
+misleidende suggestie gevonden.
+
+**PDF-export, visuele inspectie:** een automatisch gedownload PDF-bestand van déze sessie kon ik zelf
+niet terugvinden (de downloadmap van de browserautomatisering is niet dezelfde als de Windows
+Downloads-map die ik met Bash kan lezen). Wel gevonden en volledig geopend: een PDF-export van
+Hendrik zelf van 11 augustus 2026 (`financiele-planning_Naamloze_berekening_2026-08-11 (1).pdf`),
+gegenereerd door dezelfde exportcode. Bevindingen: header, drie KPI-boxen, twee
+slagingskans-boxen (met de terracotta signaalkleur bij lage percentages), de fase-tabel, de
+vermogensgrafiek (correct als afbeelding ingevoegd, assen en legenda leesbaar), de
+aannames-paragraaf en de disclaimer-footer renderen allemaal zonder zichtbare opmaakfouten. Geen
+`Math.abs()`-probleem zichtbaar in dit specifieke exemplaar (het "Restkapitaal"-bedrag stond met een
+correct minteken: "€ -302.530" — consistent met de Fase 1-bevinding dat `exportPDF.ts` een eigen,
+wél tekenbewuste `eur()` gebruikt, dus dit exemplaar bevestigt dat de PDF-export zelf niet aan A3
+lijdt).
+
+**Status:** D1 en D2 bevestigd (live). PDF-inspectie gedaan op een bestaand exemplaar, niet op een
+bestand van déze sessie zelf — reden hierboven vermeld.
+
