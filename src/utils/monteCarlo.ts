@@ -55,7 +55,6 @@ export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number
   const aowMonthlyNetto = aowMaandBedragNetto
 
   const currentYear = opts?.currentYear ?? new Date().getFullYear()
-  const retirementYear = currentYear + Math.max(0, retirementAge - currentAge)
   // Eén kaart over de hele looptijd, opbouw- én uitkeringsfase. Was tot augustus
   // 2026 gefilterd op year < retirementYear, waardoor een eenmalig bedrag ná de
   // pensioendatum de slagingskans en de bandbreedte niet raakte terwijl het de
