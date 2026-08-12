@@ -87,6 +87,14 @@ export function getAvailableYears(): number[] {
   return [2020, 2021, 2022, 2023, 2024, 2025, 2026]
 }
 
+// Oudste jaar waarvoor er werkelijk fiscale parameters zijn. getParams() valt voor
+// een onbekend jaar stil terug op 2026, wat in het Wft-domein het vervelendste
+// soort fout is: geen melding, wel een verkeerd bedrag. Deze grens sluit het pad
+// naar die terugval af aan de invoerkant.
+export function getOudsteParameterJaar(): number {
+  return Math.min(...Object.keys(JAARRUIMTE_PARAMS).map(Number))
+}
+
 export function isPreWtp(year: number): boolean {
   return year < 2023
 }

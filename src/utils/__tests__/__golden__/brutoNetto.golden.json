@@ -1,0 +1,167 @@
+{
+  "bruto_0": {
+    "brutoJaar": 0,
+    "belastingBruto": 0,
+    "ahk": 3115,
+    "ak": 0,
+    "kortingenBenut": 0,
+    "teBetalen": 0,
+    "nettoJaar": 0,
+    "drukPct": 0,
+    "aantalSchijven": 0
+  },
+  "bruto_11965": {
+    "brutoJaar": 11965,
+    "belastingBruto": 4277.49,
+    "ahk": 3115,
+    "ak": 995.97,
+    "kortingenBenut": 4110.97,
+    "teBetalen": 166.52,
+    "nettoJaar": 11798.48,
+    "drukPct": 1.392,
+    "aantalSchijven": 1
+  },
+  "bruto_25000": {
+    "brutoJaar": 25000,
+    "belastingBruto": 8937.5,
+    "ahk": 3115,
+    "ak": 5037.99,
+    "kortingenBenut": 8152.99,
+    "teBetalen": 784.51,
+    "nettoJaar": 24215.49,
+    "drukPct": 3.138,
+    "aantalSchijven": 1
+  },
+  "bruto_25845": {
+    "brutoJaar": 25845,
+    "belastingBruto": 9239.59,
+    "ahk": 3115,
+    "ak": 5300.02,
+    "kortingenBenut": 8415.02,
+    "teBetalen": 824.57,
+    "nettoJaar": 25020.43,
+    "drukPct": 3.19,
+    "aantalSchijven": 1
+  },
+  "bruto_29736": {
+    "brutoJaar": 29736,
+    "belastingBruto": 10630.62,
+    "ahk": 3115,
+    "ak": 5375.89,
+    "kortingenBenut": 8490.89,
+    "teBetalen": 2139.73,
+    "nettoJaar": 27596.27,
+    "drukPct": 7.196,
+    "aantalSchijven": 1
+  },
+  "bruto_38883": {
+    "brutoJaar": 38883,
+    "belastingBruto": 13900.67,
+    "ahk": 2529.77,
+    "ak": 5554.26,
+    "kortingenBenut": 8084.03,
+    "teBetalen": 5816.64,
+    "nettoJaar": 33066.36,
+    "drukPct": 14.959,
+    "aantalSchijven": 1
+  },
+  "bruto_45592": {
+    "brutoJaar": 45592,
+    "belastingBruto": 16420.57,
+    "ahk": 2100.53,
+    "ak": 5685,
+    "kortingenBenut": 7785.53,
+    "teBetalen": 8635.04,
+    "nettoJaar": 36956.96,
+    "drukPct": 18.94,
+    "aantalSchijven": 2
+  },
+  "bruto_45593": {
+    "brutoJaar": 45593,
+    "belastingBruto": 16420.95,
+    "ahk": 2100.47,
+    "ak": 5685,
+    "kortingenBenut": 7785.47,
+    "teBetalen": 8635.48,
+    "nettoJaar": 36957.52,
+    "drukPct": 18.94,
+    "aantalSchijven": 2
+  },
+  "bruto_50000": {
+    "brutoJaar": 50000,
+    "belastingBruto": 18076.22,
+    "ahk": 1818.51,
+    "ak": 5398.1,
+    "kortingenBenut": 7216.61,
+    "teBetalen": 10859.6,
+    "nettoJaar": 39140.4,
+    "drukPct": 21.719,
+    "aantalSchijven": 2
+  },
+  "bruto_78426": {
+    "brutoJaar": 78426,
+    "belastingBruto": 28753.02,
+    "ahk": 0,
+    "ak": 3547.57,
+    "kortingenBenut": 3547.57,
+    "teBetalen": 25205.45,
+    "nettoJaar": 53220.55,
+    "drukPct": 32.139,
+    "aantalSchijven": 2
+  },
+  "bruto_132920": {
+    "brutoJaar": 132920,
+    "belastingBruto": 55727.55,
+    "ahk": 0,
+    "ak": 0.01,
+    "kortingenBenut": 0.01,
+    "teBetalen": 55727.54,
+    "nettoJaar": 77192.46,
+    "drukPct": 41.926,
+    "aantalSchijven": 3
+  },
+  "bruto_140000": {
+    "brutoJaar": 140000,
+    "belastingBruto": 59232.15,
+    "ahk": 0,
+    "ak": 0,
+    "kortingenBenut": 0,
+    "teBetalen": 59232.15,
+    "nettoJaar": 80767.85,
+    "drukPct": 42.309,
+    "aantalSchijven": 3
+  },
+  "netto_20000": {
+    "brutoJaar": 20574.71,
+    "belastingBruto": 7355.46,
+    "ahk": 3115,
+    "ak": 3665.75,
+    "kortingenBenut": 6780.75,
+    "teBetalen": 574.71,
+    "nettoJaar": 20000,
+    "drukPct": 2.793,
+    "aantalSchijven": 1
+  },
+  "netto_35000": {
+    "brutoJaar": 42217.32,
+    "belastingBruto": 15153.04,
+    "ahk": 2316.44,
+    "ak": 5619.28,
+    "kortingenBenut": 7935.72,
+    "teBetalen": 7217.32,
+    "nettoJaar": 35000,
+    "drukPct": 17.096,
+    "aantalSchijven": 2
+  },
+  "netto_60000": {
+    "brutoJaar": 93837.35,
+    "belastingBruto": 36381.64,
+    "ahk": 0,
+    "ak": 2544.29,
+    "kortingenBenut": 2544.29,
+    "teBetalen": 33837.35,
+    "nettoJaar": 60000,
+    "drukPct": 36.06,
+    "aantalSchijven": 3
+  }
+}

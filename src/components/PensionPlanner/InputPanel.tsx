@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { X } from 'lucide-react'
 import type { PensionInputs, IncomeType, ContributionFrequency, LifeEvent, RiskProfile } from '../../types'
 import { RISICOPROFIELEN, PROFIEL_VOLGORDE } from '../../config/risicoprofielen'
@@ -62,11 +62,17 @@ function NumberInput({ value, onChange, prefix, suffix, step = 1, min = 0, max }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value])
 
+  // Bij het verlaten van het veld wordt de waarde binnen min/max getrokken. Die
+  // twee stonden er wel op het element, maar niets dwong ze af: een rendement van
+  // 99% werd geaccepteerd en leverde een eindvermogen van biljoenen op, zonder
+  // enige melding (bevinding A5). Tijdens het typen gebeurt dit bewust niet, want
+  // dan springt een half ingetypt getal onder je handen weg.
   const commit = (raw: string) => {
     const parsed = parseFloat(raw.replace(',', '.'))
     const next = isNaN(parsed) ? 0 : parsed
-    setText(String(next))
-    onChange(next)
+    const begrensd = Math.min(max ?? Infinity, Math.max(min ?? -Infinity, next))
+    setText(String(begrensd))
+    onChange(begrensd)
   }
 
   return (
@@ -340,47 +346,73 @@ function RisicoprofielSection({ inputs, onChange }: Props) {
 // meer waarlangs het gevuld kon raken.
 function EenmaligeBedragenSection({ inputs, onChange }: Props) {
   const currentYear = new Date().getFullYear()
-  type DraftEvent = { name: string; amount: string; year: string }
+  // Elke rij krijgt een eigen id. React kreeg eerder de index als key, waardoor
+  // het bij het verwijderen van een middelste rij de DOM-nodes hergebruikte in
+  // plaats van ze te verplaatsen: de data bleef correct, maar focus en cursor
+  // bleven achter op de rij die dat nummer daarna kreeg (bevinding A18).
+  const nextRowId = useRef(0)
+  type DraftEvent = { id: number; name: string; amount: string; year: string }
+
+  const legeRij = (): DraftEvent => ({
+    id: nextRowId.current++, name: '', amount: '', year: String(currentYear),
+  })
 
   const [rows, setRows] = useState<DraftEvent[]>(() => {
     const saved = (inputs.lifeEvents ?? []).map(e => ({
+      id: nextRowId.current++,
       name: e.name ?? '', amount: String(e.amount), year: String(e.year),
     }))
-    return [...saved, { name: '', amount: '', year: String(currentYear) }]
+    return [...saved, legeRij()]
   })
+
+  // Beide rekenmotoren verwerken een eenmalig bedrag alleen als het jaar binnen
+  // de looptijd van de simulatie valt: vanaf dit jaar tot en met het jaar vóór
+  // het jaar waarin de levensverwachting bereikt wordt. Zie pensionCalc.ts
+  // (accEventMap/retEventMap) en monteCarlo.ts (eventMap). Viel een jaar daar
+  // buiten, dan verdween het bedrag zonder melding uit de berekening terwijl het
+  // in de lijst en in de optelling bleef staan (bevinding A22).
+  const laatsteJaar = currentYear + Math.max(0, inputs.lifeExpectancy - inputs.currentAge) - 1
+
+  const isFilled = (r: DraftEvent) => r.amount !== '' && Number(r.amount) !== 0
+
+  const buitenLooptijd = (r: DraftEvent) =>
+    isFilled(r) && r.year !== '' && !isNaN(Number(r.year)) &&
+    (Number(r.year) < currentYear || Number(r.year) > laatsteJaar)
 
   useEffect(() => {
     const valid: LifeEvent[] = rows
       .filter(r => r.amount && r.year && !isNaN(Number(r.amount)) && Number(r.amount) !== 0 && !isNaN(Number(r.year)))
+      .filter(r => !buitenLooptijd(r))
       .map(r => ({ name: r.name.trim() || '—', amount: Number(r.amount), year: Number(r.year) }))
     onChange({ lifeEvents: valid })
+  // laatsteJaar hangt af van leeftijd en levensverwachting: verandert de gebruiker
+  // die, dan moet opnieuw bepaald worden welke regels binnen de looptijd vallen.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rows])
-
-  const isFilled = (r: DraftEvent) => r.amount !== '' && Number(r.amount) !== 0
+  }, [rows, inputs.currentAge, inputs.lifeExpectancy])
 
   const handleChange = (i: number, field: keyof DraftEvent, value: string) => {
     const newRows = rows.map((r, idx) => idx === i ? { ...r, [field]: value } : r)
     if (i === newRows.length - 1 && isFilled(newRows[i]) && newRows.length < MAX_ROWS)
-      newRows.push({ name: '', amount: '', year: String(currentYear) })
+      newRows.push(legeRij())
     setRows(newRows)
   }
 
   const handleAddRow = () => {
     if (rows.length >= MAX_ROWS) return
-    setRows([...rows, { name: '', amount: '', year: String(currentYear) }])
+    setRows([...rows, legeRij()])
   }
 
   const handleDelete = (i: number) => {
     const newRows = rows.filter((_, idx) => idx !== i)
     if (newRows.length === 0 || isFilled(newRows[newRows.length - 1]))
-      newRows.push({ name: '', amount: '', year: String(currentYear) })
+      newRows.push(legeRij())
     setRows(newRows)
   }
 
   const validCount = (inputs.lifeEvents ?? []).length
-  const totaalBij = rows.filter(r => isFilled(r) && Number(r.amount) > 0).reduce((s, r) => s + Number(r.amount), 0)
-  const totaalAf = rows.filter(r => isFilled(r) && Number(r.amount) < 0).reduce((s, r) => s + Math.abs(Number(r.amount)), 0)
+  const teltMee = (r: DraftEvent) => isFilled(r) && !buitenLooptijd(r)
+  const totaalBij = rows.filter(r => teltMee(r) && Number(r.amount) > 0).reduce((s, r) => s + Number(r.amount), 0)
+  const totaalAf = rows.filter(r => teltMee(r) && Number(r.amount) < 0).reduce((s, r) => s + Math.abs(Number(r.amount)), 0)
 
   return (
     <Section title={`Eenmalige bedragen${validCount > 0 ? ` (${validCount})` : ''}`}>
@@ -394,7 +426,7 @@ function EenmaligeBedragenSection({ inputs, onChange }: Props) {
           const isDraft = isLast && !isFilled(row)
           const isExpense = Number(row.amount) < 0
           return (
-            <div key={i} className={`space-y-1 ${isDraft ? 'opacity-50' : ''}`}>
+            <div key={row.id} className={`space-y-1 ${isDraft ? 'opacity-50' : ''}`}>
               <input type="text" value={row.name} placeholder="Omschrijving (optioneel)"
                 onChange={e => handleChange(i, 'name', e.target.value)}
                 className="input-field text-sm" />
@@ -407,15 +439,21 @@ function EenmaligeBedragenSection({ inputs, onChange }: Props) {
                     className={`input-field pl-7 text-sm ${isExpense ? 'text-signal' : (!isDraft && row.amount ? 'text-ink' : '')}`} />
                 </div>
                 <div className="w-20 flex-shrink-0">
-                  <input type="number" value={row.year} min={currentYear - 10} max={currentYear + 60}
+                  <input type="number" value={row.year} min={currentYear} max={laatsteJaar}
                     step={1} placeholder="Jaar"
                     onChange={e => handleChange(i, 'year', e.target.value)}
-                    className="input-field text-center text-sm" />
+                    className={`input-field text-center text-sm ${buitenLooptijd(row) ? 'border-signal text-signal' : ''}`} />
                 </div>
                 {!isDraft
                   ? <button onClick={() => handleDelete(i)} className="flex-shrink-0 p-1.5 text-body hover:text-signal hover:bg-canvas rounded-[3px] transition-colors"><X size={13} /></button>
                   : <div className="w-7 flex-shrink-0" />}
               </div>
+              {buitenLooptijd(row) && (
+                <p className="text-xs text-signal leading-relaxed">
+                  Dit jaar valt buiten de looptijd van de berekening ({currentYear} tot en met {laatsteJaar}).
+                  Dit bedrag telt niet mee.
+                </p>
+              )}
             </div>
           )
         })}
