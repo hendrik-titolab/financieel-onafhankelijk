@@ -220,4 +220,67 @@ crasht niet, maar toont onmiskenbaar onzinnige bedragen zonder enige waarschuwin
 **Status:** bevestigd (live). Bevestigt zowel de kernbevinding (geen clamping) als een secundair,
 zichtbaar symptoom (grafiek-as-opmaak breekt bij extreme schaal).
 
+---
+
+### A7 — schermbewijs: drie teksten, twee verschillende formules, één jaar
+**Reproductie:** `/tools/jaarruimte`, belastingjaar 2020, pensioenregeling DB, inkomen €75.000
+(standaard), factor A €1.000.
+
+**Alle drie de teksten tegelijk zichtbaar op het scherm, voor hetzelfde jaar (2020):**
+1. Onder de pensioenregeling-knoppen: *"Traditioneel pensioen (eindloon / middelloon / CDC).
+   Formule: 13,3% × grondslag − 7,44 × factor A."*
+2. Direct onder het "Jaarruimte"-resultaat (vast, ongeacht jaar of pensioentype): *"30% ×
+   (inkomen − franchise) − 6,27 × factor A"*
+3. In de InfoBox onderaan: *"Franchise €12.472 · Max inkomen €110.111 · 13,3% − 7,44 × factor A"*
+
+Teksten 1 en 3 zeggen "13,3% − 7,44"; tekst 2 zegt "30% − 6,27" — voor **hetzelfde jaar, op
+hetzelfde scherm**. Geen van drieën is de formule die daadwerkelijk gebruikt wordt.
+
+**Numeriek bewijs welke kant de werkelijke berekening kiest:** met factor A op €1.000 gezet, toont
+het resultaat **€ 2.046**. Terugrekenen met de daadwerkelijke config-waarden voor 2020
+(franchise €12.472, grondslag 75.000−12.472=62.528, percentage 13,3%, factor 6,27):
+`0,133 × 62.528 − 6,27 × 1.000 = 8.316 − 6.270 = 2.046` ✓ — de berekening gebruikt dus **13,3% en
+6,27**. Rekent iemand het na met de tekst die op hetzelfde scherm staat (13,3% − **7,44**, teksten 1
+en 3), komt hij op `8.316 − 7.440 = 876` uit — een ander bedrag dan wat de tool toont. Rekent hij na
+met tekst 2 (**30%** − 6,27), komt hij op `0,30 × 62.528 − 6,27 × 1.000 = 18.758 − 6.270 = 12.488`
+uit — weer een derde, ander bedrag.
+
+**Status:** bevestigd (live, met schermbewijs en numerieke narekening). Geen uitspraak over welk
+percentage/welke factor fiscaal correct is — alleen dat de drie teksten en de berekening onderling
+niet overeenkomen.
+
+---
+
+### A8 — schermbewijs: jaar 2010 wordt geaccepteerd en stil op 2026-parameters berekend
+**Reproductie:** `/tools/jaarruimte`, reserveringsruimte-modus "Bereken voor mij", een kaart op
+belastingjaar **2010** gezet (het jaarveld staat dit toe: `min=2009, max=2019`), inkomen €70.000,
+pensioenregeling Geen.
+
+**Resultaat:** "Jaarruimte: € 15.248". Dit is exact wat `getParams(2010)` oplevert via de stille
+fallback naar de 2026-parameters (`franchise €19.172, maxInkomen €137.800, percentage 30%`):
+`0,30 × (70.000 − 19.172) = 0,30 × 50.828 = 15.248,4 ≈ € 15.248` — bevestigd tot op de euro. Nergens
+op de kaart, in de InfoBox, of elders een waarschuwing dat 2010 geen eigen parameters heeft en dat
+hier 2026-cijfers zijn gebruikt.
+
+**Status:** bevestigd (live, met schermbewijs en numerieke narekening).
+
+---
+
+### Jaarruimte, functionele doorloop (beide reserveringsruimte-modi, drie pensioentypes, opslaan/laden)
+- **Modus "Ik weet de bedragen"**: rij toevoegen werkt, progressieve nieuwe-rij-logica identiek aan
+  "Eenmalige bedragen" bij de FO-planner (zelfde patroon, zelfde `min`/`max`-niet-afgedwongen
+  kanttekening als daar).
+- **Modus "Bereken voor mij"**: kaarten uit/inklappen werkt, `onbenutBedrag` wordt live herberekend
+  bij elke wijziging van inkomen/pensioentype/factor A/werkgeverspremie/ingelegd — geen vertraging
+  of stale waarden waargenomen bij handmatig doorlopen.
+- **Drie pensioentypes**: Geen/DB/Wtp tonen elk het juiste invoerveld (geen extra veld / Factor A /
+  Werkgeverspremie) en een eigen formuletekst-variant — DB en Wtp al hierboven behandeld (A7); "Geen"
+  toont terecht geen aftrekformule ("Geen werkgeverspensioen (bijv. ZZP): aftrek is €0.").
+- **Opslaan/laden**: "Berekening opslaan" (met klantnaam ingevuld) voegt een kaart toe aan
+  "Opgeslagen berekeningen", die na een paginaherlaad terugkomt (bevestigd via `localStorage`-key
+  `jaarruimte_berekeningen`, zie ook J1 in Fase 1) — "Laden" vult het formulier terug met de
+  opgeslagen invoer.
+
+**Status:** functioneel doorlopen, geen nieuwe bevindingen buiten wat al in A7/A8/A9 staat.
+
 
