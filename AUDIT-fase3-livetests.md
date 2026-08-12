@@ -153,3 +153,71 @@ lijdt).
 **Status:** D1 en D2 bevestigd (live). PDF-inspectie gedaan op een bestaand exemplaar, niet op een
 bestand van déze sessie zelf — reden hierboven vermeld.
 
+---
+
+### A17 — KPI-cellen bij inleg-exact-voldoende: geen tegenspraak gevonden, en waarom dat wiskundig klopt
+**Reproductie:** standaardinvoer (leeftijd 40, pensioen 67, vermogen €100.000, neutraal profiel),
+maandinleg zo gekozen dat hij nagenoeg exact op de vereiste maandinleg uitkomt. Een eigen
+herberekening van `requiredMonthlyContribution` (zelfde binaire zoekfunctie als
+`findRequiredPMT` in `pensionCalc.ts:88-105`, in de browserconsole gedraaid) gaf **€676**. Bij
+invoer van €676/maand: "Verwacht eindvermogen € 598.176" naast "Benodigd eindvermogen € 598.163"
+(verschil €13), "OVERSCHOT € 13 — meer dan nodig", en "BENODIGDE MAANDINLEG — Huidige inleg
+voldoende". Geen tegenspraak.
+
+**Waarom dit geen toevalstreffer is maar wiskundig gegarandeerd:** `isOnTrack` (Overschot/Tekort)
+en `needsMoreContribution` (Benodigde maandinleg) vergelijken allebei, langs een andere weg, tegen
+dezelfde `requiredCapital` en via dezelfde (in `monthlyPMT` monotoon stijgende) functie
+`simulateAccumulation`. `requiredMonthlyContribution` is per definitie de `monthlyPMT` waarbij
+`simulateAccumulation(...) == requiredCapital`; omdat die functie monotoon is in `monthlyPMT`, geldt
+altijd: `huidige inleg ≥ vereiste inleg` ⟺ `projectedCapital ≥ requiredCapital`. De twee cellen zijn
+dus logisch equivalent, op de (verwaarloosbare) precisie van de binaire zoekfunctie na. Dit is een
+andere vergelijking dan de in E9 gevonden ~1%-afwijking (die gaat over `requiredCapital` zelf t.o.v.
+wat de jaar-voor-jaar-simulatie nodig heeft, niet over deze twee cellen onderling).
+
+**Status:** onderzocht, geen bevinding — bestaande zorg uit het auditplan hiermee weerlegd.
+
+---
+
+### A18 — middelste rij verwijderen bij "Eenmalige bedragen": data blijft correct, focus niet getest via DOM-tools
+**Reproductie:** drie rijen ingevoerd (2027/1000, 2028/2000, 2029/3000), middelste rij (2028/2000)
+verwijderd via de eigen verwijderknop.
+
+**Resultaat:** de React-state na verwijdering bevat exact de twee resterende rijen
+(`[{amount:1000,year:2027},{amount:3000,year:2029}]`, rechtstreeks via de React-fiber gecontroleerd)
+— geen dataverlies, geen verwisseling. Dit bevestigt de Fase 1-analyse: de verwijderlogica is
+index-gebaseerd maar functioneel correct.
+
+**Wat niet getest kon worden:** het specifieke risico dat Fase 1 benoemde (focus/cursor die na een
+DOM-node-hergebruik op de verkeerde rij blijft staan, een gevolg van `key={i}`) is een
+interactie-detail dat afhangt van waar de browser de cursor/focus houdt na een re-render — dat is met
+`read_page`/DOM-tekst niet betrouwbaar waar te nemen, en de automatiseringstool tikt niet op de manier
+waarop een mens typt-en-dan-klikt. Dit blijft dus een **code-geverifieerd, niet live-geverifieerd**
+punt (zie Fase 1: `key={i}` is een React-antipatroon, data-inhoudelijk aantoonbaar veilig).
+
+**Status:** data-integriteit bevestigd (live). Focus-gedrag: niet betrouwbaar te testen met de
+beschikbare tools, genoteerd als "niet getest" in plaats van aangenomen.
+
+---
+
+### A5 — bevestigd live: extreme rendement/volatiliteit worden geaccepteerd, resultaat is onzin
+**Reproductie:** "Zelf rendement en volatiliteit invullen" aangevinkt, alle vier velden op extreme
+waarden gezet (rendement vóór/ná pensioen 99%, volatiliteit vóór/ná 90%) — ver buiten de getoonde
+grenzen (20%/15%/40%/30%). Alle vier velden accepteerden de invoer zonder enige foutmelding of
+correctie (rechtstreeks in de DOM bevestigd: `"99","99","90","90"`).
+
+**Resultaat na Bereken:**
+- Verwacht eindvermogen: **€ 6.592.755.778.624** (6,6 biljoen euro)
+- Restkapitaal bij 90 jaar: **€ 27.927.935.921.548.075.000** (27,9 triljard)
+- De Y-as van de vermogensgrafiek toont onleesbare/inconsistente labels:
+  `€7500000000000.0M`, `€15000000000000.0M`, `€29324332717625.5M` — de as-formatter (waarschijnlijk
+  uitgaand van "duizenden"/"miljoenen"-schaal) breekt zichtbaar bij deze orde van grootte.
+
+Geen crash, geen `NaN`/`Infinity` in de console (gecontroleerd, alleen de bekende, dev-only
+Service-Worker-404 aanwezig — die hoort bij lokaal draaien zonder productie-build, geen bevinding).
+De 2.000 simulaties liepen door en gaven een slagingskans (58,6% bij 75%-doel), dus de applicatie
+crasht niet, maar toont onmiskenbaar onzinnige bedragen zonder enige waarschuwing aan de gebruiker.
+
+**Status:** bevestigd (live). Bevestigt zowel de kernbevinding (geen clamping) als een secundair,
+zichtbaar symptoom (grafiek-as-opmaak breekt bij extreme schaal).
+
+
