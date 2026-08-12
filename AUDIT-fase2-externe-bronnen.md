@@ -68,10 +68,53 @@ betrouwbaar gebleken.
    bijvoorbeeld 2016-2022 (F1's vraag of het toen 7 jaar was) kon ik niet apart bevestigen — de
    bron-tabellen noemen dit getal niet expliciet per jaar.
 
-### Nog niet gecheckt binnen deze sessie
-2017, 2018, 2019, 2023, 2024, 2025 (URL's niet snel genoeg gevonden), de exacte terugkijktermijn
-per historisch jaar, en de precieze leeftijdsgrens-formule van de reserveringsruimte-tiers (lijkt
-gekoppeld aan de destijds geldende AOW-leeftijd, niet aan een vast getal als "56").
+### Update — 2017-2019 en 2023-2025 alsnog gevonden en gelezen
+Op Hendriks verzoek alsnog gecheckt, zelfde bronsoort (fiscaalleven.eu, gehost op
+belastingdienst.nl voor 2026, dus nog steeds 🟡 voor de jaren vóór 2026). Compleet beeld nu voor
+alle elf jaren 2016-2026:
+
+| Jaar | % site | % bron | Factor A site | Factor A bron | Reserveringsruimte site | Reserveringsruimte bron |
+|---|---|---|---|---|---|---|
+| 2016 | 13,3% | **13,8%** ⚠️ | 6,50 | 6,5 ✓ | 28.000 flat | leeftijdsafh. €7.088 / €13.997 ⚠️ |
+| 2017 | 13,8% | 13,8% ✓ | 6,50 | 6,5 ✓ | 28.000 flat | leeftijdsafh. €7.110 / €14.039 ⚠️ |
+| 2018 | 13,3% | 13,3% ✓ | 6,50 | **6,27** ⚠️ | 28.000 flat | leeftijdsafh. €7.167 / €14.152 ⚠️ |
+| 2019 | 13,3% | 13,3% ✓ | 6,27 | 6,27 ✓ | 28.000 flat | leeftijdsafh. €7.254 / €14.322 ⚠️ |
+| 2020 | 13,3% | 13,3% ✓ | 6,27 | 6,27 ✓ | 28.000 flat | leeftijdsafh. €7.371 / €14.552 ⚠️ |
+| 2021 | 13,3% | 13,3% ✓ | 6,27 | 6,27 ✓ | 28.000 flat | leeftijdsafh. €7.489 / €14.785 ⚠️ |
+| 2022 | 13,3% | 13,3% ✓ | 7,44 | **6,27** ⚠️ | 28.000 flat | leeftijdsafh. €7.587 / €14.978 ⚠️ |
+| 2023 | 30% | 30% ✓ | 6,27 | 6,27 ✓ | 32.000 | **38.000** ⚠️ |
+| 2024 | 30% | 30% ✓ | 6,27 | 6,27 ✓ | 38.000 | **41.608** ⚠️ |
+| 2025 | 30% | 30% ✓ | 6,27 | 6,27 ✓ | 38.000 | **42.108** ⚠️ |
+| 2026 | 30% | 30% ✓ | 6,27 | 6,27 ✓ | 42.753 | 42.753 ✅ |
+
+**Franchise en aftoppingsgrens/maxInkomen kwamen voor alle elf jaren tot op de euro overeen** —
+dat deel van de config lijkt dus volledig betrouwbaar.
+
+**Herziene conclusie, preciezer dan de eerdere hypothese:**
+- **Niet een 2016/2017-verwisseling — 2016 staat gewoon fout.** 2017 is intern al correct (13,8%,
+  bevestigd). 2016 zou ook 13,8% moeten zijn, staat nu op 13,3%. Het percentage zakte pas van
+  13,8% naar 13,3% tussen 2017 en 2018, niet tussen 2016 en 2017 zoals de eerste hypothese
+  suggereerde.
+- **Factor A heeft twee foute jaren, niet één.** 2018 staat op 6,50, moet volgens de bron 6,27
+  zijn (de overstap van 6,50 naar 6,27 gebeurde dus bij 2018, niet bij 2019). En het al bekende
+  2022 (staat op 7,44, moet 6,27 zijn).
+- **Reserveringsruimte is fout in alle elf jaren behalve 2026.** Voor 2016-2022: het hele
+  leeftijdsafhankelijke systeem ontbreekt (zie hierboven). Voor 2023-2025: geen
+  leeftijdsprobleem meer (dat verdween met de Wtp-hervorming), maar de bedragen zelf kloppen
+  niet — opvallend patroon: de site-waarde voor 2024 (€38.000) is exact de bron-waarde van 2023,
+  en 2025 herhaalt gewoon 2024's (foute) site-waarde. Dit oogt als een reeks die één keer is
+  vastgelopen op een voorlopig cijfer en daarna is doorgekopieerd, tot 2026 apart en correct is
+  bijgewerkt.
+- **Sluit aan bij Hendriks eigen vuistregel** dat de jaarruimte vanaf 2023 fors ruimer werd door de
+  Wtp-wetswijziging: het percentage gaat van 13,3-13,8% naar 30% en de franchise/aftoppingsgrens
+  stijgen ook, consistent met "voor 2023 honderdjes tot enkele duizenden, vanaf 2023 veel meer
+  voor de meeste mensen".
+
+### Nog niet gecheckt
+De exacte terugkijktermijn per historisch jaar (of die altijd 10 jaar was), en de precieze
+leeftijdsgrens-formule van de reserveringsruimte-tiers (patroon lijkt "AOW-leeftijd van dat jaar
+min 10 jaar", consistent in alle zeven gecontroleerde pre-2023-jaren, maar niet expliciet zo
+benoemd in de bron zelf).
 
 ---
 
@@ -154,10 +197,13 @@ sneller voor jou te doen dan voor mij op een manier die aan de bronregels van di
   opgepakt — laag risico, zoals het auditplan zelf al aangaf, bewust niet apart geverifieerd.
 
 ## Belangrijkste bevinding van deze fase
-**F1 is voor een belangrijk deel opgelost, in het nadeel van de site:** het 2022-factor-A-cijfer
-(7,44) is hoogstwaarschijnlijk fout (moet 6,27 zijn), 2016/2017 se jaarruimtepercentages lijken
-verwisseld, en de hele reserveringsruimte-structuur vóór 2023 mist een leeftijdsafhankelijkheid die
-in de bron wél bestaat. A10 is opgelost (config klopt, alleen de UI-tekst niet). B4 en de
-CBS-claim in B2 zijn bevestigd correct. Niets hiervan is doorgevoerd in code — dat is aan jou om te
-beoordelen en pas daarna te laten fixen.
+**F1 is nu voor alle elf jaren (2016-2026) in kaart gebracht, en valt overwegend in het nadeel van
+de site uit:** franchise en aftoppingsgrens kloppen voor alle elf jaren, maar het jaarruimte-
+percentage is fout voor 2016, de factor-A-vermenigvuldiger is fout voor 2018 én 2022, en de
+reserveringsruimte is fout voor **alle** jaren behalve 2026 — vóór 2023 ontbreekt een
+leeftijdsafhankelijkheid die in de bron wél bestaat, ná 2023 kloppen de bedragen zelf niet. A10 is
+opgelost en al doorgevoerd (config klopt, alleen de UI-tekst was fout — zie de commit). B4 en de
+CBS-claim in B2 zijn bevestigd correct. Niets van de jaarruimte-bevindingen is doorgevoerd in
+code — dat is aan Hendrik om te beoordelen en pas daarna te laten fixen, zie `FISCALE-BRONNEN.md`
+voor het volledige overzicht per parameter.
 

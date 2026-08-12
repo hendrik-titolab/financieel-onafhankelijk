@@ -100,29 +100,36 @@ kalenderjaar (en een tussentijdse update per 1 juli).
 ## 5. Jaarruimteparameters per jaar (`JAARRUIMTE_PARAMS`)
 
 Bronnen: zie `AUDIT-fase2-externe-bronnen.md` §1 voor de volledige toelichting en URL's per jaar.
-2026 rechtstreeks van belastingdienst.nl (✅). 2016/2020/2021/2022 van een derde-partijbron gehost
-op belastingdienst.nl, wetsartikel per regel (🟡, **behandel als voorlopig**). 2017-2019 en
-2023-2025: niet gecheckt deze sessie (⬜).
+2026 rechtstreeks van belastingdienst.nl (✅). Alle overige jaren (2016-2025) van een
+derde-partijbron gehost op belastingdienst.nl, wetsartikel per regel (🟡, **behandel als
+voorlopig, wel compleet voor alle elf jaren**).
 
-| Jaar | Franchise (site) | Max inkomen (site) | % (site) | % (bron) | Factor A (site) | Factor A (bron) | Reserveringsruimte (site) | Reserveringsruimte (bron) |
-|---|---|---|---|---|---|---|---|---|
-| 2016 | €11.996 🟡 | €101.519 🟡 | 13,3% | **13,8%** ⚠️ | 6,50 🟡 | 6,5 🟡 | €28.000 flat | **leeftijdsafhankelijk: €7.088 / €13.997** ⚠️ |
-| 2017 | €12.032 ⬜ | €103.317 ⬜ | 13,8% | niet gecheckt — **verdacht**, zie hieronder | 6,50 ⬜ | niet gecheckt | €28.000 flat | niet gecheckt |
-| 2018 | €12.129 ⬜ | €105.075 ⬜ | 13,3% ⬜ | niet gecheckt | 6,50 ⬜ | niet gecheckt | €28.000 flat | niet gecheckt |
-| 2019 | €12.275 ⬜ | €107.593 ⬜ | 13,3% ⬜ | niet gecheckt | 6,27 ⬜ | niet gecheckt | €28.000 flat | niet gecheckt |
-| 2020 | €12.472 🟡 | €110.111 🟡 | 13,3% | 13,3% ✓ 🟡 | 6,27 | 6,27 ✓ 🟡 | €28.000 flat | **leeftijdsafhankelijk: €7.371 / €14.552** ⚠️ |
-| 2021 | €12.672 🟡 | €112.189 🟡 | 13,3% | 13,3% ✓ 🟡 | 6,27 | 6,27 ✓ 🟡 | €28.000 flat | **leeftijdsafhankelijk: €7.489 / €14.785** ⚠️ |
-| 2022 | €12.837 🟡 | €114.866 🟡 | 13,3% | 13,3% ✓ 🟡 | 7,44 | **6,27** ⚠️ | €28.000 flat | **leeftijdsafhankelijk: €7.587 / €14.978** ⚠️ |
-| 2023 | €13.646 ⬜ | €128.810 ⬜ | 30% ⬜ | niet gecheckt | 6,27 ⬜ | niet gecheckt | €32.000 flat ⬜ | niet gecheckt |
-| 2024 | €17.545 ⬜ | €137.800 ⬜ | 30% ⬜ | niet gecheckt | 6,27 ⬜ | niet gecheckt | €38.000 ⬜ | niet gecheckt |
-| 2025 | €18.475 ⬜ | €137.800 ⬜ | 30% ⬜ | niet gecheckt | 6,27 ⬜ | niet gecheckt | €38.000 ⬜ | niet gecheckt |
-| 2026 | €19.172 | €137.800 | 30% | 30% ✅ | 6,27 | 6,27 ✅ | €42.753 | €42.753 ✅ |
+| Jaar | Franchise | Max inkomen | % (site → bron) | Factor A (site → bron) | Reserveringsruimte (site → bron) |
+|---|---|---|---|---|---|
+| 2016 | €11.996 🟡 | €101.519 🟡 | 13,3% → **13,8%** ⚠️ | 6,50 → 6,5 ✓ | €28.000 flat → **leeftijdsafh. €7.088/€13.997** ⚠️ |
+| 2017 | €12.032 🟡 | €103.317 🟡 | 13,8% → 13,8% ✓ | 6,50 → 6,5 ✓ | €28.000 flat → **leeftijdsafh. €7.110/€14.039** ⚠️ |
+| 2018 | €12.129 🟡 | €105.075 🟡 | 13,3% → 13,3% ✓ | 6,50 → **6,27** ⚠️ | €28.000 flat → **leeftijdsafh. €7.167/€14.152** ⚠️ |
+| 2019 | €12.275 🟡 | €107.593 🟡 | 13,3% → 13,3% ✓ | 6,27 → 6,27 ✓ | €28.000 flat → **leeftijdsafh. €7.254/€14.322** ⚠️ |
+| 2020 | €12.472 🟡 | €110.111 🟡 | 13,3% → 13,3% ✓ | 6,27 → 6,27 ✓ | €28.000 flat → **leeftijdsafh. €7.371/€14.552** ⚠️ |
+| 2021 | €12.672 🟡 | €112.189 🟡 | 13,3% → 13,3% ✓ | 6,27 → 6,27 ✓ | €28.000 flat → **leeftijdsafh. €7.489/€14.785** ⚠️ |
+| 2022 | €12.837 🟡 | €114.866 🟡 | 13,3% → 13,3% ✓ | 7,44 → **6,27** ⚠️ | €28.000 flat → **leeftijdsafh. €7.587/€14.978** ⚠️ |
+| 2023 | €13.646 🟡 | €128.810 🟡 | 30% → 30% ✓ | 6,27 → 6,27 ✓ | €32.000 → **€38.000** ⚠️ |
+| 2024 | €17.545 🟡 | €137.800 🟡 | 30% → 30% ✓ | 6,27 → 6,27 ✓ | €38.000 → **€41.608** ⚠️ |
+| 2025 | €18.475 🟡 | €137.800 🟡 | 30% → 30% ✓ | 6,27 → 6,27 ✓ | €38.000 → **€42.108** ⚠️ |
+| 2026 | €19.172 ✅ | €137.800 ✅ | 30% → 30% ✅ | 6,27 → 6,27 ✅ | €42.753 → €42.753 ✅ |
 
-**2016/2017-vermoeden, expliciet zo geformuleerd om het niet als vaststaand te lezen:** de bron
-voor 2016 zegt 13,8%, terwijl de site dat percentage bij 2017 heeft staan. Dat kán betekenen dat de
-twee jaren verwisseld zijn, maar dat is nog niet bevestigd doordat 2017 zelf niet apart is
-opgehaald — het zou ook een andere fout kunnen zijn. **Pas hier niets aan zonder 2017 zelf te
-hebben gezien.**
+**Franchise en max inkomen kwamen voor alle elf jaren tot op de euro overeen — dat deel van de
+config is betrouwbaar gebleken, ook al staat het door de bronstatus nog op 🟡.**
+
+**Wat er precies mis lijkt, samengevat:**
+- **Percentage**: alleen 2016 fout (moet 13,8% zijn, niet 13,3% — de daling naar 13,3% ging pas in
+  bij 2018, niet bij 2017 zoals eerder vermoed).
+- **Factor A**: twee jaren fout, niet één — 2018 (moet 6,27 zijn, niet 6,50: de overstap gebeurde
+  dus een jaar eerder dan de config aangeeft) én 2022 (moet 6,27 zijn, niet 7,44).
+- **Reserveringsruimte**: fout in **alle** jaren behalve 2026. Vóór 2023 ontbreekt het hele
+  leeftijdsafhankelijke systeem (zie §5b). Ná 2023 is het geen leeftijdskwestie meer, maar kloppen
+  de bedragen zelf niet — de site lijkt één jaar achter te lopen (2024's site-cijfer is exact
+  2023's echte cijfer) en 2025 herhaalt gewoon 2024's foute cijfer.
 
 **Reserveringsruimte vóór 2023 — dit is geen bijwerk-taak maar een ontwerpvraag.** In alle vier
 gecontroleerde jaren was het geen vast bedrag maar twee leeftijdstarieven, met als omslagpunt
@@ -174,6 +181,10 @@ geraadpleegd 12 augustus 2026. ✅
    directe belastingdienst.nl-bron tegenkomt, en verander dan het teken naar ✅.
 
 ## Open voor een volgende check
-2017, 2018, 2019, 2023, 2024, 2025 (jaarruimte), algemene heffingskorting 2026 (URL al bekend),
-box 1-tarieven apart bevestigen, ouderenkorting-bedrag, terugkijktermijn/leeftijdsgrens-formule
-voor jaren vóór 2020.
+Jaarruimte 2016-2025 van 🟡 (voorlopig) naar ✅ (primair bevestigd) krijgen — zoek een directe
+belastingdienst.nl-pagina of wetten.overheid.nl art. 3.127 per jaar, in plaats van de
+derde-partijbron. Verder: algemene heffingskorting 2026 (URL al bekend, inhoud nog niet
+opgehaald), box 1-tarieven apart bevestigen, ouderenkorting-bedrag, en de exacte
+terugkijktermijn/leeftijdsgrens-formule voor jaren vóór 2020 (patroon "AOW-leeftijd min 10 jaar"
+is consistent in alle zeven gecontroleerde pre-2023-jaren, maar niet expliciet zo benoemd in de
+bron).
