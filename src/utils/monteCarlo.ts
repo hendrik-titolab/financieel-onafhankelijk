@@ -1,7 +1,7 @@
 import type { PensionInputs, MonteCarloResult, PercentilePoint } from '../types'
 import { brutoToNetto, getMonthlyWithdrawal } from './pensionCalc'
 
-const N_SIMULATIONS = 2000
+export const N_SIMULATIONS = 2000
 
 function sampleNormal(mean: number, std: number, rng: () => number): number {
   const u1 = rng()
@@ -31,7 +31,6 @@ export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number
     aowMaandBedragNetto, aowStartAge,
     employerPension, employerPensionStartAge,
     lifeEvents = [],
-    stortingen = [],
     volatilityPre, volatilityPost,
   } = inputs
 
@@ -39,10 +38,9 @@ export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number
 
   const currentYear = opts?.currentYear ?? new Date().getFullYear()
   const retirementYear = currentYear + Math.max(0, retirementAge - currentAge)
-  // Build accumulation-phase event map (life events + stortingen up to retirement)
-  const allEvents = [...lifeEvents, ...stortingen]
+  // Build accumulation-phase event map (life events up to retirement)
   const lumpSumMap = new Map<number, number>()
-  for (const e of allEvents) {
+  for (const e of lifeEvents) {
     if (e.year >= currentYear && e.year < retirementYear && e.amount !== 0) {
       lumpSumMap.set(e.year, (lumpSumMap.get(e.year) ?? 0) + e.amount)
     }
@@ -58,7 +56,6 @@ export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number
     : monthlyContribution
 
   const totalYears = Math.max(0, lifeExpectancy - currentAge)
-  const yearsToRetirement = Math.max(0, retirementAge - currentAge)
 
   const capitalByAge: number[][] = Array.from(
     { length: totalYears + 1 },
@@ -110,17 +107,14 @@ export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number
   const percentileData: PercentilePoint[] = []
   for (let yr = 0; yr <= totalYears; yr++) {
     const age = currentAge + yr
-    // Only show accumulation + retirement, skip pre-retirement for the MC bands
-    if (age >= retirementAge - yearsToRetirement) {
-      percentileData.push({
-        age,
-        p10: Math.max(0, percentile(capitalByAge[yr], 10)),
-        p25: Math.max(0, percentile(capitalByAge[yr], 25)),
-        p50: Math.max(0, percentile(capitalByAge[yr], 50)),
-        p75: Math.max(0, percentile(capitalByAge[yr], 75)),
-        p90: Math.max(0, percentile(capitalByAge[yr], 90)),
-      })
-    }
+    percentileData.push({
+      age,
+      p10: Math.max(0, percentile(capitalByAge[yr], 10)),
+      p25: Math.max(0, percentile(capitalByAge[yr], 25)),
+      p50: Math.max(0, percentile(capitalByAge[yr], 50)),
+      p75: Math.max(0, percentile(capitalByAge[yr], 75)),
+      p90: Math.max(0, percentile(capitalByAge[yr], 90)),
+    })
   }
 
   return {

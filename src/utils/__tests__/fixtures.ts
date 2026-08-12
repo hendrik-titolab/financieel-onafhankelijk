@@ -26,7 +26,6 @@ export function baseInputs(overrides: Partial<PensionInputs> = {}): PensionInput
     employerPension: 0,
     employerPensionStartAge: 67,
     lifeEvents: [],
-    stortingen: [],
     volatilityPre: 12,
     volatilityPost: 8,
     riskProfile: 'neutraal',

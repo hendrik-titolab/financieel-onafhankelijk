@@ -1,8 +1,8 @@
 # Hand-off — herstijling naar het moodboard-palet
 
 Overdracht: 11 augustus 2026. Sessie gestart vanuit `Downloads/DESIGN_SYSTEM.md` (Hendriks
-grafisch ontwerper) plus het Claude Design-moodboard. Werk staat volledig op branch
-**`herstijling-2026`**, afgesplitst van `astro-migratie`. **Niet gemerged, niet gepusht.**
+grafisch ontwerper) plus het Claude Design-moodboard. Werk is gemerged naar `astro-migratie` op
+11 augustus 2026 (commit `4ec2405`) en staat live.
 
 ---
 

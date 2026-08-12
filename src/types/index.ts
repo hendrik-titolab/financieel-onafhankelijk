@@ -10,13 +10,6 @@ export interface LifeEvent {
   year: number    // calendar year
 }
 
-// A planned extra deposit or withdrawal
-export interface Storting {
-  name?: string   // optionele omschrijving
-  amount: number  // positive = storting, negative = onttrekking
-  year: number
-}
-
 export interface PensionInputs {
   currentAge: number
   retirementAge: number
@@ -41,7 +34,6 @@ export interface PensionInputs {
   employerPensionStartAge: number  // age at which employer pension kicks in (default 67, see UPO)
 
   lifeEvents: LifeEvent[]  // named events: schenking, woningaankoop, erfenis…
-  stortingen: Storting[]  // extra deposits (positive) or withdrawals (negative) by year
 
   volatilityPre: number       // std dev annual % for Monte Carlo
   volatilityPost: number

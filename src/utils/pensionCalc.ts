@@ -1,4 +1,4 @@
-import type { PensionInputs, PensionResult, YearData, IncomePhase, LifeEvent, Storting } from '../types'
+import type { PensionInputs, PensionResult, YearData, IncomePhase, LifeEvent } from '../types'
 import { BOX1_PRE_AOW, BOX1_POST_AOW, AOW_NETTO_MAAND } from '../config/fiscaleParameters'
 
 // AOW netto maandbedragen — uit centrale config (fiscaleParameters.ts)
@@ -50,7 +50,7 @@ export function getMonthlyWithdrawal(
 }
 
 function buildEventMap(
-  events: (LifeEvent | Storting)[],
+  events: LifeEvent[],
   startYear: number,
   endYear: number
 ): Map<number, number> {
@@ -113,10 +113,7 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
     aowMaandBedragNetto, aowStartAge,
     employerPension, employerPensionStartAge,
     lifeEvents = [],
-    stortingen = [],
   } = inputs
-
-  const allEvents = [...lifeEvents, ...stortingen]
 
   const realPre = realAnnualReturn(returnBeforeRetirement, inflation)
   const realPost = realAnnualReturn(returnAfterRetirement, inflation)
@@ -131,9 +128,9 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
   const currentYear = opts?.currentYear ?? new Date().getFullYear()
   const retirementYear = currentYear + yearsToRetirement
 
-  // Split all events (life events + stortingen) into accumulation and retirement phase
-  const accEventMap = buildEventMap(allEvents, currentYear, retirementYear)
-  const retEventMap = buildEventMap(allEvents, retirementYear, retirementYear + yearsInRetirement + 1)
+  // Split life events into accumulation and retirement phase
+  const accEventMap = buildEventMap(lifeEvents, currentYear, retirementYear)
+  const retEventMap = buildEventMap(lifeEvents, retirementYear, retirementYear + yearsInRetirement + 1)
 
   // Projected capital at retirement (year-by-year with life events)
   const projectedCapital = simulateAccumulation(

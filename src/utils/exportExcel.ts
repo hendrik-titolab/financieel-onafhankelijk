@@ -1,4 +1,5 @@
 import type { PensionInputs, PensionResult, MonteCarloResult } from '../types'
+import { N_SIMULATIONS } from './monteCarlo'
 
 function eur(v: number) {
   return `€ ${Math.round(v).toLocaleString('nl-NL')}`
@@ -95,7 +96,7 @@ export async function exportToExcel(
     ['', ''],
     ['MONTE CARLO ANALYSE', ''],
     ['Slagingskans', `${mc.successRate.toFixed(1)}%`],
-    ['Aantal simulaties', '2000'],
+    ['Aantal simulaties', String(N_SIMULATIONS)],
     ['', ''],
     ['Alle bedragen in huidig koopkracht (reëel rendement)'],
   ]

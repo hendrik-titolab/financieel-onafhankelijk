@@ -3,6 +3,14 @@
  * Elk profiel stelt het verwachte (nominale) rendement en de volatiliteit in,
  * zowel vóór als ná de pensioendatum.
  *
+ * Basis: eigen huisvisie, geen externe bron zoals bij fiscaleParameters.ts.
+ * De percentages zijn bedoeld als verwachte meetkundige (samengestelde)
+ * jaarrendementen, conform wat gangbaar is in Nederlandse consumentenrekentools
+ * — besluit Hendrik, 12 augustus 2026 (zie AUDIT-2026-08-bevindingen.md, A12/E8).
+ * Gevolg: monteCarlo.ts moet zijn trekkingen hierop afstemmen (de mediaan van
+ * de simulatie ligt nu structureel onder deze percentages, zie E8) — dat is
+ * een aparte rekenkernwijziging, nog niet doorgevoerd.
+ *
  * Pas hier gerust de getallen aan naar de eigen huisvisie.
  */
 

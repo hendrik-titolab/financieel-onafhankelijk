@@ -3,8 +3,8 @@
 Richting: **tech helderheid als platform, warmte als vertrouwen.** Weg van het klassieke
 fintech-blauw (Tailwind `blue-600`), naar een warm, rustig palet met één duidelijke hiërarchie.
 
-**Status:** geïmplementeerd op branch `herstijling-2026` (11 augustus 2026). Nog niet gemerged
-naar `astro-migratie`. Zie `HANDOFF-herstijling-2026.md` voor de volledige sessiestatus.
+**Status:** live op `astro-migratie` sinds 11 augustus 2026 (commit `4ec2405`). Zie
+`HANDOFF-herstijling-2026.md` voor de volledige sessiestatus.
 
 ---
 
@@ -33,6 +33,9 @@ naar `astro-migratie`. Zie `HANDOFF-herstijling-2026.md` voor de volledige sessi
 | Tekst tertiair | `#6E7F72` | **Alleen grote/decoratieve tekst en iconen** — haalt op geen enkel vlak 4,5:1, dus nooit op leestekst ≤16px. Zie §5. |
 | Label op donker | `#C0CBC3` | Klein label op `#29392E` (7,31:1) |
 | Signaal | `#A85A3C` | **Enige** signaalkleur: tekort/waarschuwing (4,64:1 op paneel) |
+| Inkt hover | `#1F2C23` | Hover-state op donkere knoppen (handmatig verdonkerde `#29392E`, 8 plekken) |
+| Signaal hover | `#8F4B30` | Hover-state op de signaalknop ("Ja, wis alles", handmatig verdonkerde `#A85A3C`) |
+| Rand header | `#D2CDC5` | Onderrand van de header, vergelijkbaar met maar niet gelijk aan Rand (`#DAD5CD`) |
 
 ### Datatokens — aanvulling 11 augustus 2026
 

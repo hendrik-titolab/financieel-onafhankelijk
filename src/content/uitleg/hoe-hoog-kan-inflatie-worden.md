@@ -62,7 +62,7 @@ Boven een maandelijkse inflatie van 50% spreken economen van hyperinflatie: de g
 
 **Argentinië, 1989.** Veel milder dan de andere twee, maar nog altijd extreem: een product dat aan het begin van de maand 100 peso kostte, kostte aan het eind bijna 300. President Alfonsín trad af voordat zijn termijn erop zat, mede door de onrust die dit veroorzaakte.
 
-**Zimbabwe, 2008.** De ernstigste hyperinflatie ooit gemeten. Op het hoogtepunt had het land een bankbiljet van 100 biljoen (dat is een 1 met twaalf nullen erachter, oftewel 1.000 miljard) Zimbabwaanse dollar in omloop, en dat was niet eens genoeg voor een buskaartje.
+**Zimbabwe, 2008.** De ernstigste hyperinflatie ooit gemeten. Op het hoogtepunt had het land een bankbiljet van 100 biljoen (dat is een 1 met veertien nullen erachter, oftewel 100.000 miljard) Zimbabwaanse dollar in omloop, en dat was niet eens genoeg voor een buskaartje.
 
 Achter alle drie zit dezelfde oorzaak: een overheid die de geldpers aanzet omdat lenen niet meer lukt, en die daarmee de waarde van haar eigen munt ondermijnt.
 
