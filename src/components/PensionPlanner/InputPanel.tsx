@@ -359,15 +359,30 @@ function EenmaligeBedragenSection({ inputs, onChange }: Props) {
     return [...saved, legeRij()]
   })
 
+  // Beide rekenmotoren verwerken een eenmalig bedrag alleen als het jaar binnen
+  // de looptijd van de simulatie valt: vanaf dit jaar tot en met het jaar vóór
+  // het jaar waarin de levensverwachting bereikt wordt. Zie pensionCalc.ts
+  // (accEventMap/retEventMap) en monteCarlo.ts (eventMap). Viel een jaar daar
+  // buiten, dan verdween het bedrag zonder melding uit de berekening terwijl het
+  // in de lijst en in de optelling bleef staan (bevinding A22).
+  const laatsteJaar = currentYear + Math.max(0, inputs.lifeExpectancy - inputs.currentAge) - 1
+
+  const isFilled = (r: DraftEvent) => r.amount !== '' && Number(r.amount) !== 0
+
+  const buitenLooptijd = (r: DraftEvent) =>
+    isFilled(r) && r.year !== '' && !isNaN(Number(r.year)) &&
+    (Number(r.year) < currentYear || Number(r.year) > laatsteJaar)
+
   useEffect(() => {
     const valid: LifeEvent[] = rows
       .filter(r => r.amount && r.year && !isNaN(Number(r.amount)) && Number(r.amount) !== 0 && !isNaN(Number(r.year)))
+      .filter(r => !buitenLooptijd(r))
       .map(r => ({ name: r.name.trim() || '—', amount: Number(r.amount), year: Number(r.year) }))
     onChange({ lifeEvents: valid })
+  // laatsteJaar hangt af van leeftijd en levensverwachting: verandert de gebruiker
+  // die, dan moet opnieuw bepaald worden welke regels binnen de looptijd vallen.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rows])
-
-  const isFilled = (r: DraftEvent) => r.amount !== '' && Number(r.amount) !== 0
+  }, [rows, inputs.currentAge, inputs.lifeExpectancy])
 
   const handleChange = (i: number, field: keyof DraftEvent, value: string) => {
     const newRows = rows.map((r, idx) => idx === i ? { ...r, [field]: value } : r)
@@ -389,8 +404,9 @@ function EenmaligeBedragenSection({ inputs, onChange }: Props) {
   }
 
   const validCount = (inputs.lifeEvents ?? []).length
-  const totaalBij = rows.filter(r => isFilled(r) && Number(r.amount) > 0).reduce((s, r) => s + Number(r.amount), 0)
-  const totaalAf = rows.filter(r => isFilled(r) && Number(r.amount) < 0).reduce((s, r) => s + Math.abs(Number(r.amount)), 0)
+  const teltMee = (r: DraftEvent) => isFilled(r) && !buitenLooptijd(r)
+  const totaalBij = rows.filter(r => teltMee(r) && Number(r.amount) > 0).reduce((s, r) => s + Number(r.amount), 0)
+  const totaalAf = rows.filter(r => teltMee(r) && Number(r.amount) < 0).reduce((s, r) => s + Math.abs(Number(r.amount)), 0)
 
   return (
     <Section title={`Eenmalige bedragen${validCount > 0 ? ` (${validCount})` : ''}`}>
@@ -417,15 +433,21 @@ function EenmaligeBedragenSection({ inputs, onChange }: Props) {
                     className={`input-field pl-7 text-sm ${isExpense ? 'text-signal' : (!isDraft && row.amount ? 'text-ink' : '')}`} />
                 </div>
                 <div className="w-20 flex-shrink-0">
-                  <input type="number" value={row.year} min={currentYear - 10} max={currentYear + 60}
+                  <input type="number" value={row.year} min={currentYear} max={laatsteJaar}
                     step={1} placeholder="Jaar"
                     onChange={e => handleChange(i, 'year', e.target.value)}
-                    className="input-field text-center text-sm" />
+                    className={`input-field text-center text-sm ${buitenLooptijd(row) ? 'border-signal text-signal' : ''}`} />
                 </div>
                 {!isDraft
                   ? <button onClick={() => handleDelete(i)} className="flex-shrink-0 p-1.5 text-body hover:text-signal hover:bg-canvas rounded-[3px] transition-colors"><X size={13} /></button>
                   : <div className="w-7 flex-shrink-0" />}
               </div>
+              {buitenLooptijd(row) && (
+                <p className="text-xs text-signal leading-relaxed">
+                  Dit jaar valt buiten de looptijd van de berekening ({currentYear} tot en met {laatsteJaar}).
+                  Dit bedrag telt niet mee.
+                </p>
+              )}
             </div>
           )
         })}
