@@ -9,6 +9,24 @@ function sampleNormal(mean: number, std: number, rng: () => number): number {
   return mean + std * Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2)
 }
 
+// De rendementen in risicoprofielen.ts zijn verwachte MEETKUNDIGE (samengestelde)
+// jaarrendementen, niet rekenkundige gemiddelden (besluit 12 augustus 2026).
+// Trek daarom lognormaal: de mediaan van het samengestelde pad is dan exact
+// (1+g)^n, in plaats van er structureel onder te liggen (E8).
+// Twee bijvangsten: een trekking kan niet meer onder −100% rendement uitkomen (het
+// mechanisme achter E6), en een pad kan het vermogen niet negatief maken door
+// rendement alleen.
+function sampleAnnualReturn(geoMeanPct: number, volPct: number, rng: () => number): number {
+  const g = geoMeanPct / 100
+  const s = volPct / 100  // volatiliteit staat in hele procentpunten
+  // Randgeval: een reëel rendement van −100% of lager (absurde inflatie-invoer)
+  // laat zich niet lognormaal modelleren. Val dan terug op een vast verlies.
+  if (g <= -1) return -1
+  const mu = Math.log(1 + g)
+  const sigma = Math.sqrt(Math.log(1 + (s * s) / ((1 + g) * (1 + g))))
+  return Math.exp(sampleNormal(mu, sigma, rng)) - 1
+}
+
 function percentile(arr: number[], p: number): number {
   const sorted = [...arr].sort((a, b) => a - b)
   const idx = (p / 100) * (sorted.length - 1)
@@ -88,11 +106,11 @@ export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number
       capitalByAge[yr][sim] = Math.max(0, capital)
 
       if (age < retirementAge) {
-        const r = sampleNormal(realPre, volatilityPre, rng) / 100
+        const r = sampleAnnualReturn(realPre, volatilityPre, rng)
         capital   = (capital   + event) * (1 + r) + monthlyPMT * 12
         capital75 = (capital75 + event) * (1 + r) + monthlyPMT * 12
       } else {
-        const r = sampleNormal(realPost, volatilityPost, rng) / 100
+        const r = sampleAnnualReturn(realPost, volatilityPost, rng)
         // Full income scenario
         const withdrawal = getMonthlyWithdrawal(
           age, desiredNetto, aowMonthlyNetto, aowStartAge,

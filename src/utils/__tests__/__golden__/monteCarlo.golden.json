@@ -1,7 +1,7 @@
 {
   "1_basis": {
-    "successRate": 5.05,
-    "successRate75": 21.9,
+    "successRate": 8.8,
+    "successRate75": 31.15,
     "percentileDataLength": 46,
     "percentileFirst": {
       "age": 45,
@@ -13,11 +13,11 @@
     },
     "percentileMiddle": {
       "age": 68,
-      "p10": 175668,
-      "p25": 236077,
-      "p50": 327606,
-      "p75": 462034,
-      "p90": 627435
+      "p10": 202841,
+      "p25": 270591,
+      "p50": 375894,
+      "p75": 525051,
+      "p90": 707766
     },
     "percentileLast": {
       "age": 90,
@@ -29,8 +29,8 @@
     }
   },
   "4_negatief_bedrag_na_pensioendatum": {
-    "successRate": 3.1,
-    "successRate75": 14.65,
+    "successRate": 5.95,
+    "successRate75": 21.6,
     "percentileDataLength": 46,
     "percentileFirst": {
       "age": 45,
@@ -42,11 +42,11 @@
     },
     "percentileMiddle": {
       "age": 68,
-      "p10": 175668,
-      "p25": 236077,
-      "p50": 327606,
-      "p75": 462034,
-      "p90": 627435
+      "p10": 202841,
+      "p25": 270591,
+      "p50": 375894,
+      "p75": 525051,
+      "p90": 707766
     },
     "percentileLast": {
       "age": 90,
