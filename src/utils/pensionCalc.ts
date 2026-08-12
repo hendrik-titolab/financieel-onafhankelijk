@@ -173,6 +173,10 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
 
   // Required capital = PV of all future withdrawals at retirement.
   // Employer pension tax rate is age-dependent (36.97% pre-AOW, 19.07% post-AOW).
+  // Discontering met exponent yr + 1: dezelfde eind-jaar-conventie als de
+  // jaar-voor-jaar-simulatie verderop (eerst een vol jaar rendement, dan de
+  // onttrekking). Anders ligt dit doelbedrag ~1% boven wat de simulatie werkelijk
+  // nodig heeft en spreken het KPI-oordeel en de jaartabel elkaar tegen (E9).
   const rPostAnnual = 1 + realPost / 100
   let requiredCapital = 0
   for (let yr = 0; yr < yearsInRetirement; yr++) {
@@ -181,7 +185,7 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
       age, desiredMonthlyNetto, aowMonthlyNetto, aowStartAge,
       employerPension, employerPensionStartAge
     ) * 12
-    requiredCapital += annualWithdrawal / Math.pow(rPostAnnual, yr + 0.5)
+    requiredCapital += annualWithdrawal / Math.pow(rPostAnnual, yr + 1)
   }
 
   // Required monthly contribution (binary search, accounts for life events)

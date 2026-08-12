@@ -1,9 +1,9 @@
 {
   "1_basis": {
     "projectedCapital": 401402,
-    "requiredCapital": 807562,
+    "requiredCapital": 801717,
     "desiredMonthlyNetto": 5000,
-    "requiredMonthlyContribution": 1557,
+    "requiredMonthlyContribution": 1542,
     "surplusAtEnd": -559139,
     "yearDataLength": 46,
     "yearDataFirst": {
@@ -57,9 +57,9 @@
   },
   "3_negatief_bedrag_opbouwfase": {
     "projectedCapital": 35381,
-    "requiredCapital": 807562,
+    "requiredCapital": 801717,
     "desiredMonthlyNetto": 5000,
-    "requiredMonthlyContribution": 2510,
+    "requiredMonthlyContribution": 2495,
     "surplusAtEnd": -1070378,
     "yearDataLength": 46,
     "yearDataFirst": {
@@ -85,9 +85,9 @@
   },
   "4_negatief_bedrag_na_pensioendatum": {
     "projectedCapital": 401402,
-    "requiredCapital": 807562,
+    "requiredCapital": 801717,
     "desiredMonthlyNetto": 5000,
-    "requiredMonthlyContribution": 1557,
+    "requiredMonthlyContribution": 1542,
     "surplusAtEnd": -683488,
     "yearDataLength": 46,
     "yearDataFirst": {
@@ -113,9 +113,9 @@
   },
   "5_randgeval_leeg": {
     "projectedCapital": 0,
-    "requiredCapital": 807562,
+    "requiredCapital": 801717,
     "desiredMonthlyNetto": 5000,
-    "requiredMonthlyContribution": 2102,
+    "requiredMonthlyContribution": 2087,
     "surplusAtEnd": -1119796,
     "yearDataLength": 46,
     "yearDataFirst": {
@@ -141,7 +141,7 @@
   },
   "6_al_gepensioneerd": {
     "projectedCapital": 100000,
-    "requiredCapital": 807562,
+    "requiredCapital": 801717,
     "desiredMonthlyNetto": 5000,
     "requiredMonthlyContribution": 0,
     "surplusAtEnd": -980121,
@@ -169,9 +169,9 @@
   },
   "7_extreem_18_100": {
     "projectedCapital": 1253105,
-    "requiredCapital": 1082798,
+    "requiredCapital": 1074961,
     "desiredMonthlyNetto": 5000,
-    "requiredMonthlyContribution": 384,
+    "requiredMonthlyContribution": 379,
     "surplusAtEnd": 287730,
     "yearDataLength": 83,
     "yearDataFirst": {
@@ -197,9 +197,9 @@
   },
   "8_bruto_gewenst_inkomen": {
     "projectedCapital": 401402,
-    "requiredCapital": 598163,
+    "requiredCapital": 593834,
     "desiredMonthlyNetto": 4108,
-    "requiredMonthlyContribution": 1012,
+    "requiredMonthlyContribution": 1001,
     "surplusAtEnd": -268779,
     "yearDataLength": 46,
     "yearDataFirst": {
