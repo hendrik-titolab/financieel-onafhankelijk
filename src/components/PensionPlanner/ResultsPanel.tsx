@@ -22,7 +22,21 @@ interface Props {
   onCloseSession: () => void
 }
 
+// Bedragen worden standaard mét teken getoond. Een negatief eindvermogen is een
+// tekort en moet ook als tekort te lezen zijn: de oude versie deed altijd
+// Math.abs(), waardoor een grótere tegenvaller als een hóger eindvermogen op het
+// scherm kwam (bevinding A3).
+//
+// Gebruik eurAbs() alleen daar waar het label of de toon het teken al draagt,
+// zoals de KPI die zelf wisselt tussen "Overschot" en "Tekort". Anders staat er
+// twee keer een min.
 function eur(v: number): string {
+  const rounded = Math.round(v)
+  const teken = rounded < 0 ? '−' : ''
+  return `${teken}€ ${Math.abs(rounded).toLocaleString('nl-NL')}`
+}
+
+function eurAbs(v: number): string {
   return `€ ${Math.abs(Math.round(v)).toLocaleString('nl-NL')}`
 }
 
@@ -257,13 +271,13 @@ export function ResultsPanel({ inputs, result, mc, mcStale, isCalculating, onRun
         />
         <MetricCell
           label={isOnTrack ? 'Overschot' : 'Tekort'}
-          value={eur(surplus)}
+          value={eurAbs(surplus)}
           sub={isOnTrack ? 'meer dan nodig' : 'extra nodig'}
           tone={isOnTrack ? undefined : 'tekort'}
         />
         <MetricCell
           label="Benodigde maandinleg"
-          value={needsMoreContribution ? eur(result.requiredMonthlyContribution) : '—'}
+          value={needsMoreContribution ? eur(Math.max(0, result.requiredMonthlyContribution)) : '—'}
           sub={needsMoreContribution ? `huidig: ${eur(currentMonthlyPMT)}/mnd` : 'Huidige inleg voldoende'}
           tone="nadruk"
         />
@@ -314,7 +328,7 @@ export function ResultsPanel({ inputs, result, mc, mcStale, isCalculating, onRun
         <p className="text-xs text-body mt-3">
           Restkapitaal bij {inputs.lifeExpectancy} jaar:{' '}
           <span className={`font-numeric tabular font-medium ${result.surplusAtEnd >= 0 ? 'text-ink' : 'text-signal'}`}>
-            {result.surplusAtEnd >= 0 ? eur(result.surplusAtEnd) : `−${eur(Math.abs(result.surplusAtEnd))}`}
+            {eur(result.surplusAtEnd)}
           </span>
         </p>
 
