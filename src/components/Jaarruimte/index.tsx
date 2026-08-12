@@ -1,9 +1,15 @@
 import { useState, useEffect } from 'react'
 import { Trash2, Plus, ChevronDown, ChevronUp, Info, AlertTriangle } from 'lucide-react'
 import type { JaarruimteInputs, JaarruimteResult, SavedJaarruimte, ReserveringsruimteRij, PensioenType } from '../../types'
-import { calculateJaarruimte, getAvailableYears, getJaarruimteParamsNote, isPreWtp, berekenJaarruimteEenvoudig } from '../../utils/jaarruimte'
+import { calculateJaarruimte, getAvailableYears, getJaarruimteParamsNote, isPreWtp, berekenJaarruimteEenvoudig, getOudsteParameterJaar } from '../../utils/jaarruimte'
 
 const STORAGE_KEY = 'jaarruimte_berekeningen'
+
+// De reserveringsruimte kijkt maximaal tien jaar terug: voor belastingjaar X zijn
+// dat de jaren X−10 tot en met X−1. Deze constante bepaalt daarom zowel het
+// aantal regels als de ondergrens van het jaarveld. Die twee liepen uiteen: het
+// jaarveld stond op X−11, waardoor er een jaar te kiezen was dat niet meetelt en
+// waarvoor bovendien geen fiscale parameters bestaan.
 const MAX_RESERVERING_RIJEN = 10
 
 const DEFAULT_INPUTS: JaarruimteInputs = {
@@ -196,7 +202,7 @@ function ReserveringsruimteDirect({ rijen, onChange, baseYear }: ReserveringProp
         return (
           <div key={i} className={`flex gap-1.5 items-center ${isDraft ? 'opacity-50' : ''}`}>
             <div className="flex-1">
-              <input type="number" value={row.jaar} min={baseYear - 11} max={baseYear - 1} step={1}
+              <input type="number" value={row.jaar} min={Math.max(baseYear - MAX_RESERVERING_RIJEN, getOudsteParameterJaar())} max={baseYear - 1} step={1}
                 placeholder="Jaar" onChange={e => handleChange(i, 'jaar', e.target.value)}
                 className="input-field text-center text-sm" />
             </div>
@@ -316,7 +322,7 @@ function ReserveringsruimteBerekenen({ onChange, baseYear }: ReserveringProps) {
                 {/* Jaar aanpassen */}
                 <div>
                   <label className="label text-xs">Belastingjaar</label>
-                  <input type="number" value={k.jaar} min={baseYear - 11} max={baseYear - 1} step={1}
+                  <input type="number" value={k.jaar} min={Math.max(baseYear - MAX_RESERVERING_RIJEN, getOudsteParameterJaar())} max={baseYear - 1} step={1}
                     onChange={e => update(i, { jaar: parseInt(e.target.value) || k.jaar })}
                     className="input-field text-sm w-24" />
                 </div>
