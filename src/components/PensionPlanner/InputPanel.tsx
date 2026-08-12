@@ -62,11 +62,17 @@ function NumberInput({ value, onChange, prefix, suffix, step = 1, min = 0, max }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value])
 
+  // Bij het verlaten van het veld wordt de waarde binnen min/max getrokken. Die
+  // twee stonden er wel op het element, maar niets dwong ze af: een rendement van
+  // 99% werd geaccepteerd en leverde een eindvermogen van biljoenen op, zonder
+  // enige melding (bevinding A5). Tijdens het typen gebeurt dit bewust niet, want
+  // dan springt een half ingetypt getal onder je handen weg.
   const commit = (raw: string) => {
     const parsed = parseFloat(raw.replace(',', '.'))
     const next = isNaN(parsed) ? 0 : parsed
-    setText(String(next))
-    onChange(next)
+    const begrensd = Math.min(max ?? Infinity, Math.max(min ?? -Infinity, next))
+    setText(String(begrensd))
+    onChange(begrensd)
   }
 
   return (
