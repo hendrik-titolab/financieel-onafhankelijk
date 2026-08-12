@@ -3,9 +3,9 @@ import { brutoToNetto, getMonthlyWithdrawal } from './pensionCalc'
 
 const N_SIMULATIONS = 2000
 
-function sampleNormal(mean: number, std: number): number {
-  const u1 = Math.random()
-  const u2 = Math.random()
+function sampleNormal(mean: number, std: number, rng: () => number): number {
+  const u1 = rng()
+  const u2 = rng()
   return mean + std * Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2)
 }
 
@@ -21,7 +21,8 @@ function realReturn(nominal: number, inflation: number): number {
   return ((1 + nominal / 100) / (1 + inflation / 100) - 1) * 100
 }
 
-export function runMonteCarlo(inputs: PensionInputs): MonteCarloResult {
+export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number }): MonteCarloResult {
+  const rng = opts?.rng ?? Math.random
   const {
     currentAge, retirementAge, lifeExpectancy,
     currentCapital, monthlyContribution, contributionFrequency,
@@ -78,13 +79,13 @@ export function runMonteCarlo(inputs: PensionInputs): MonteCarloResult {
       capitalByAge[yr][sim] = Math.max(0, capital)
 
       if (age < retirementAge) {
-        const r = sampleNormal(realPre, volatilityPre) / 100
+        const r = sampleNormal(realPre, volatilityPre, rng) / 100
         const calYear = currentYear + yr
         const lumpSum = lumpSumMap.get(calYear) ?? 0
         capital   = (capital   + lumpSum) * (1 + r) + monthlyPMT * 12
         capital75 = (capital75 + lumpSum) * (1 + r) + monthlyPMT * 12
       } else {
-        const r = sampleNormal(realPost, volatilityPost) / 100
+        const r = sampleNormal(realPost, volatilityPost, rng) / 100
         // Full income scenario
         const withdrawal = getMonthlyWithdrawal(
           age, desiredNetto, aowMonthlyNetto, aowStartAge,
