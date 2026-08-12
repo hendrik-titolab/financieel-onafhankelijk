@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { X } from 'lucide-react'
 import type { PensionInputs, IncomeType, ContributionFrequency, LifeEvent, RiskProfile } from '../../types'
 import { RISICOPROFIELEN, PROFIEL_VOLGORDE } from '../../config/risicoprofielen'
@@ -340,13 +340,23 @@ function RisicoprofielSection({ inputs, onChange }: Props) {
 // meer waarlangs het gevuld kon raken.
 function EenmaligeBedragenSection({ inputs, onChange }: Props) {
   const currentYear = new Date().getFullYear()
-  type DraftEvent = { name: string; amount: string; year: string }
+  // Elke rij krijgt een eigen id. React kreeg eerder de index als key, waardoor
+  // het bij het verwijderen van een middelste rij de DOM-nodes hergebruikte in
+  // plaats van ze te verplaatsen: de data bleef correct, maar focus en cursor
+  // bleven achter op de rij die dat nummer daarna kreeg (bevinding A18).
+  const nextRowId = useRef(0)
+  type DraftEvent = { id: number; name: string; amount: string; year: string }
+
+  const legeRij = (): DraftEvent => ({
+    id: nextRowId.current++, name: '', amount: '', year: String(currentYear),
+  })
 
   const [rows, setRows] = useState<DraftEvent[]>(() => {
     const saved = (inputs.lifeEvents ?? []).map(e => ({
+      id: nextRowId.current++,
       name: e.name ?? '', amount: String(e.amount), year: String(e.year),
     }))
-    return [...saved, { name: '', amount: '', year: String(currentYear) }]
+    return [...saved, legeRij()]
   })
 
   useEffect(() => {
@@ -362,19 +372,19 @@ function EenmaligeBedragenSection({ inputs, onChange }: Props) {
   const handleChange = (i: number, field: keyof DraftEvent, value: string) => {
     const newRows = rows.map((r, idx) => idx === i ? { ...r, [field]: value } : r)
     if (i === newRows.length - 1 && isFilled(newRows[i]) && newRows.length < MAX_ROWS)
-      newRows.push({ name: '', amount: '', year: String(currentYear) })
+      newRows.push(legeRij())
     setRows(newRows)
   }
 
   const handleAddRow = () => {
     if (rows.length >= MAX_ROWS) return
-    setRows([...rows, { name: '', amount: '', year: String(currentYear) }])
+    setRows([...rows, legeRij()])
   }
 
   const handleDelete = (i: number) => {
     const newRows = rows.filter((_, idx) => idx !== i)
     if (newRows.length === 0 || isFilled(newRows[newRows.length - 1]))
-      newRows.push({ name: '', amount: '', year: String(currentYear) })
+      newRows.push(legeRij())
     setRows(newRows)
   }
 
@@ -394,7 +404,7 @@ function EenmaligeBedragenSection({ inputs, onChange }: Props) {
           const isDraft = isLast && !isFilled(row)
           const isExpense = Number(row.amount) < 0
           return (
-            <div key={i} className={`space-y-1 ${isDraft ? 'opacity-50' : ''}`}>
+            <div key={row.id} className={`space-y-1 ${isDraft ? 'opacity-50' : ''}`}>
               <input type="text" value={row.name} placeholder="Omschrijving (optioneel)"
                 onChange={e => handleChange(i, 'name', e.target.value)}
                 className="input-field text-sm" />
