@@ -368,4 +368,45 @@ opnieuw geladen.
 **Status:** mobiele viewport bevestigd (geen problemen). C3 zelf: ontkracht, niet bevestigd — de
 documentatie is hier achterhaald, niet de code fout.
 
+---
+
+### E8 — bevestigd live: "verwacht eindvermogen" ligt duidelijk boven de mediaan van de simulatie
+**Reproductie:** profiel offensief (7,5%/5% rendement, 16%/10% volatiliteit), leeftijd 40, pensioen
+67 (27 jaar tot pensioen), vermogen €100.000, geen inleg, geen life events.
+
+- **Deterministisch "Verwacht eindvermogen" in de UI: € 361.813.**
+- **Mediaan (P50) van de simulatie op hetzelfde leeftijdspunt (pensionering): € 270.891** — berekend
+  met een eigen, seeded herimplementatie van `runMonteCarlo` (`makeRng(12345)`, dezelfde
+  `sampleNormal`/Box-Muller-logica) in de browserconsole, dus onafhankelijk van de React-app zelf.
+
+**Verschil: € 361.813 / € 270.891 ≈ 1,34** — het deterministische KPI-getal ligt ongeveer **34%
+boven** de mediaan van de eigen simulatie, bij dezelfde invoer. Dit is dezelfde orde van grootte als
+de theoretische voorspelling uit `HANDOFF-bugfix-audit-2026-08.md` (E8: `exp(½σ²·n)` ≈ 1,41 bij
+σ=16%, n=27 jaar) — het kleine verschil (1,34 vs 1,41 theoretisch) is verklaarbaar doordat de
+theoretische formule uitgaat van constante volatiliteit over de hele periode, terwijl hier alleen de
+opbouwfase (volatilityPre) meetelt tot het pensioenmoment.
+
+**Status:** bevestigd (live, met een onafhankelijke seeded herberekening). Bevestigt dat het "Verwacht
+eindvermogen"-getal en de mediaan-lijn in dezelfde grafiek structureel uiteenlopen, zonder dat de UI
+dit verschil toelicht.
+
+---
+
+### E7 — niet opnieuw live getest, al sluitend bewezen via de golden-master-tests (G1)
+`monteCarlo.golden.test.ts` bevat een expliciete test die aantoont dat scenario 4 (−€100.000 op
+leeftijd 75) en scenario 1 (zonder dat bedrag) **exact dezelfde** `successRate` en `percentileData`
+opleveren — reproduceerbaar met een vaste seed, zie de commit "G1: golden-master testharnas". Dat is
+sterker bewijs dan een eenmalige live-waarneming (deterministisch, geen meetruis), dus hier niet
+nogmaals handmatig herhaald. Live wél bevestigd via A3/A22 dat het invoeren van een leeftijd-75-
+gebeurtenis op zich correct door de UI heen komt (het bedrag verschijnt correct in de rij) — het is
+dus aantoonbaar `monteCarlo.ts` zelf dat het bedrag negeert, niet een invoerprobleem.
+
+### E6 — niet live getest
+Geen tijd meer over binnen deze sessie voor een gericht scenario (kapitaal dat halverwege de
+uitkeringsfase opraakt en weer herstelt). De onderliggende bevinding staat als **code-geverifieerd**
+in `HANDOFF-bugfix-audit-2026-08.md` (E6: `if (capital >= 0) successCount++` telt alleen het
+eindjaar, niet of het kapitaal onderweg ooit negatief is geweest) — dat is een ondubbelzinnige
+eigenschap van de code zelf, maar een concreet live-cijfer ("hoeveel als-geslaagd-getelde paden
+doken onderweg negatief") ontbreekt. Genoteerd als "niet getest", niet aangenomen.
+
 
