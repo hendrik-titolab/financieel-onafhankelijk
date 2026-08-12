@@ -104,7 +104,7 @@ function findRequiredPMT(
   return hi
 }
 
-export function calculatePension(inputs: PensionInputs): PensionResult {
+export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: number }): PensionResult {
   const {
     currentAge, retirementAge, lifeExpectancy,
     currentCapital, monthlyContribution, contributionFrequency,
@@ -128,7 +128,7 @@ export function calculatePension(inputs: PensionInputs): PensionResult {
     ? monthlyContribution / 12
     : monthlyContribution
 
-  const currentYear = new Date().getFullYear()
+  const currentYear = opts?.currentYear ?? new Date().getFullYear()
   const retirementYear = currentYear + yearsToRetirement
 
   // Split all events (life events + stortingen) into accumulation and retirement phase

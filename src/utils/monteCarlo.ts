@@ -21,7 +21,7 @@ function realReturn(nominal: number, inflation: number): number {
   return ((1 + nominal / 100) / (1 + inflation / 100) - 1) * 100
 }
 
-export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number }): MonteCarloResult {
+export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number; currentYear?: number }): MonteCarloResult {
   const rng = opts?.rng ?? Math.random
   const {
     currentAge, retirementAge, lifeExpectancy,
@@ -37,7 +37,7 @@ export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number
 
   const aowMonthlyNetto = aowMaandBedragNetto
 
-  const currentYear = new Date().getFullYear()
+  const currentYear = opts?.currentYear ?? new Date().getFullYear()
   const retirementYear = currentYear + Math.max(0, retirementAge - currentAge)
   // Build accumulation-phase event map (life events + stortingen up to retirement)
   const allEvents = [...lifeEvents, ...stortingen]
