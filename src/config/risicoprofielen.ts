@@ -7,9 +7,9 @@
  * De percentages zijn bedoeld als verwachte meetkundige (samengestelde)
  * jaarrendementen, conform wat gangbaar is in Nederlandse consumentenrekentools
  * — besluit Hendrik, 12 augustus 2026 (zie AUDIT-2026-08-bevindingen.md, A12/E8).
- * Gevolg: monteCarlo.ts moet zijn trekkingen hierop afstemmen (de mediaan van
- * de simulatie ligt nu structureel onder deze percentages, zie E8) — dat is
- * een aparte rekenkernwijziging, nog niet doorgevoerd.
+ * monteCarlo.ts stemt zijn trekkingen hierop af: sampleAnnualReturn() trekt
+ * lognormaal, zodat de mediaan van het samengestelde pad op deze percentages
+ * uitkomt (doorgevoerd 12 augustus 2026, bevinding E8).
  *
  * Pas hier gerust de getallen aan naar de eigen huisvisie.
  */

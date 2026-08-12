@@ -201,17 +201,20 @@ i.p.v. herformuleren. `npm run test`/`build`/`check` groen, live gecontroleerd.
 ### Groep 2 — jouw besluit nodig
 
 **Grote ontwerpkeuzes (Wft-gewicht, elk met A/B-opties hierboven):**
-1. E1 — disclosure (A) of apart lijfrente/banksparen-veld (B)?
+1. E1 — ✅ besloten: **optie A** (disclosure), uitgevoerd 12 augustus. Optie B (het veld "waarvan
+   fiscaal beklemd") is Hendriks eigen voorstel en blijft op tafel, maar pas ná E4.
 2. E2 — box 3 modelleren, en hoe uitgebreid?
 3. E3 — kostenveld, of alleen microcopy?
 4. E5 — indexatieveld, of alleen FAQ?
 
-**Rekenkernwijzigingen — stel ik voor als één blok op te pakken, ná onderlinge afhankelijkheid
-(A1 eerst), met golden-master-tests als vangnet (G1 staat al klaar):**
-5. A1 (dedupliceren) → E4 (heffingskortingen toevoegen, incl. POST_AOW-tegenhanger in
-   `fiscaleParameters.ts`) → E5 → E9 (disconteringsconventies gelijktrekken) → E6 (slagingskans op
-   piek i.p.v. eindstand) → E7 (life events ook in Monte Carlo-uitkeringsfase) → E8/A12
-   (lognormaal/½σ²-implementatiekeuze). Akkoord om dit zo te clusteren?
+**Rekenkernwijzigingen — ✅ deels uitgevoerd, 12 augustus 2026.** A1, E9, E6, E7 en E8 zijn gefixt op
+`audit-2026-08` (commits `e896e4d`, `c2f79e5`, `c01b549`, `962aff3`, `5fc543b`), E1 is met optie A
+afgehandeld (`78550b6`). Zie `HANDOFF-audit-2026-08-rekenlogica.md` voor de uitkomsten, de twee
+onderweg genomen besluiten en wat er bewust is blijven liggen.
+
+5. Nog open uit dit blok: **E4** (heffingskortingen toevoegen, incl. POST_AOW-tegenhanger in
+   `fiscaleParameters.ts`) en **E5**. E4 is de eerste stap van de her-ijkingssessie, want E1-optie-B
+   en E2/E3 leunen er allemaal op.
 
 **Fase 2, externe verificatie — het auditplan schrijft voor dat jij zelf elke bron controleert:**
 6. Wil je dat ik in een volgende sessie kandidaat-cijfers + primaire bron-URL's verzamel voor F1,

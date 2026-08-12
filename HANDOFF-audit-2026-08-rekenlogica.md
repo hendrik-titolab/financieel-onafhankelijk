@@ -1,123 +1,131 @@
-# Hand-off — audit 2026-08, vervolg: rekenlogica-fixes
+# Hand-off — audit 2026-08, rekenlogica-cluster: afgerond
 
-> Overdracht: 12 augustus 2026. Vorige sessie liep tegen de context-limiet aan. Branch
-> `audit-2026-08`, niet gemerged naar `astro-migratie`, niet gepusht. Werkende map:
+> Bijgewerkt 12 augustus 2026, aan het eind van de rekenlogica-sessie. Branch `audit-2026-08`,
+> **niet gemerged naar `astro-migratie`, niet gepusht**. Werkende map:
 > `C:\Users\schak\financiele-planning`.
 
-## Wat er al ligt (lees dit niet allemaal opnieuw, alleen ter oriëntatie)
+## Status: alle zes de punten uitgevoerd
 
-Vier documenten in de projectroot, chronologisch:
-1. `AUDIT-fase0-1-feiten.md` — codeverificatie met citaten
-2. `AUDIT-fase3-livetests.md` — live tests, met schermbewijs en herberekeningen
-3. `AUDIT-2026-08-bevindingen.md` — synthese: scan-tabel, detailkaarten, drie beslisgroepen
-4. `AUDIT-fase2-externe-bronnen.md` en `FISCALE-BRONNEN.md` — externe fiscale bronverificatie;
-   `FISCALE-BRONNEN.md` is het **doorlopende naslagdocument** dat Hendrik minimaal 2x/jaar zelf
-   bijwerkt, niet alleen een auditverslag
+Zes commits, in deze volgorde. Elke commit is op zichzelf groen (`npm run test`, `npm run build`,
+`npm run check` met alleen de bekende `exportExcel.ts`-fout uit de Fase 0-baseline).
 
-**Al gecommit op `audit-2026-08`:**
-- Elf mechanische fixes (groep 1: A4, A11, A16, A14, B1, B3, C1, C2, C3, A12) — commit `284194b`
-- A10 (Bruto-netto-toelichting verwijst nu naar de config i.p.v. losse literals) — commit `9c990e0`
-- G1: golden-master-testharnas (vitest, 33 tests, `npm run test`) — commit `4c01400`, plus drie
-  losse testnaad-commits (`f3fdc71`, `9dcb64e`, `12157f1`): injecteerbare RNG (`src/utils/rng.ts`,
-  `makeRng(seed)`) en injecteerbaar basisjaar (`opts?.currentYear`) in zowel `calculatePension` als
-  `runMonteCarlo`. **Gebruik deze bij elke test die je aan de golden-master-fixtures toevoegt.**
-- Volledige externe verificatie van de jaarruimteparameters 2016-2026 (zie `FISCALE-BRONNEN.md` §5)
+| Commit | Wat |
+|---|---|
+| `78550b6` | E1-optie-A: disclosure dat het model uitgaat van vrij belegd vermogen (box 3) |
+| `e896e4d` | A1: één functie voor de inkomensverdeling, twee inline kopieën weg |
+| `c2f79e5` | E9: `requiredCapital` rekent met dezelfde eind-jaar-conventie als de simulatie |
+| `c01b549` | E6: slagingskans kijkt of het kapitaal ooit negatief werd |
+| `962aff3` | E7: Monte Carlo past eenmalige bedragen ná de pensioendatum nu wel toe |
+| `5fc543b` | E8: lognormale rendementstrekking |
 
-**E1 is besloten: optie A.** Voeg een disclosure toe (UI + FAQ) dat het model uitgaat van vrij
-belegd vermogen (box 3), niet van lijfrente/bankspaarproduct. Dit staat nog open (niet gedaan in
-de vorige sessie door tijdgebrek) — pak dit als eerste stap.
+De commit messages bevatten per punt de narekening en de motivatie. Lees die bij twijfel, ze zijn
+uitvoeriger dan dit overzicht.
 
-## Wat je in déze sessie doet: de rekenlogica-cluster
+### Wat er inhoudelijk is veranderd aan de uitkomsten
 
-Hendrik: "nu de logica-bugs, de rest (E2/E3/E4/E5/E1-B) hoort bij een aparte her-ijkingssessie
-over bruto-netto pensioeninkomen." **Blijf dus strikt binnen onderstaande vijf punten.** Ze zijn
-code-/rekenlogicafouten, los van welke fiscale behandeling later gekozen wordt.
+- **E9**: "Benodigd eindvermogen" en "Benodigde maandinleg" dalen met factor 1/√r_post, circa 0,5
+  tot 1%. Live: € 598.163 → € 593.834 en € 676 → € 668. Een pot ter grootte van het getoonde
+  doelbedrag loopt nu precies leeg in de simulatie (restant 0), voorheen bleef er een positief
+  restant over.
+- **E8**: de hele Monte Carlo-verdeling schuift omhoog. De mediaan lag 34% onder het
+  deterministische "Verwacht eindvermogen", nu ligt hij er vlak omheen (verhouding 0,977 bij het
+  ijkpunt uit `AUDIT-fase3-livetests.md`, gemiddeld 0,991 over tien seeds). Slagingskansen stijgen
+  navenant: golden scenario 1 van 5,05% naar 8,80%.
+- **E7**: een eenmalig bedrag ná de pensioendatum verlaagt nu ook de slagingskans en de bandbreedte,
+  niet alleen de deterministische lijn. Golden scenario 4: 3,10% i.p.v. 5,05% (en na E8 5,95%).
+- **E6**: geen zichtbaar effect op de cijfers, gemeten en gerapporteerd. Zie hieronder.
+- **A1**: geen numeriek effect, alle fixtures ongewijzigd. Dat was de zuiverheidstoets.
 
-Volgorde (afhankelijkheid: A1 eerst, de rest kan daarna in willekeurige volgorde, maar doe ze
-apart met een eigen commit per punt):
+### Twee besluiten die in deze sessie zijn genomen
 
-### 0. E1-optie-A (klein, doe dit eerst)
-Voeg in `src/components/PensionPlanner/ResultsPanel.tsx` en/of de FAQ-content een duidelijke regel
-toe: dit model gaat uit van vrij belegd vermogen (box 3), niet van lijfrente- of
-bankspaarproduct-opnames (die zijn belast als box 1-inkomen). Kort, geen nieuwe berekening.
+1. **A1, het klem-gedrag blijft lokaal.** `actualFromCapital = capital > 0 ? fromCapital : 0` raakt
+   alleen de weergegeven `incomeFromCapital`/`totalIncome` en gaat niet de gedeelde functie in. De
+   kapitaalmutatie gebruikt bewust de ónbeperkte waarde, anders gaat het gemeten tekort stilzwijgend
+   iets anders betekenen. Uitgeschreven in commit `e896e4d`.
+2. **E8, lognormaal trekken (optie a).** Gekozen boven optie b (½σ² bij het gemiddelde optellen),
+   omdat de mediaan dan exact klopt in plaats van benaderd, en omdat het trekkingen onder −100%
+   rendement onmogelijk maakt. Dat laatste was het mechanisme achter E6.
 
-### 1. A1 — drievoudige duplicatie opheffen
-**Bestand:** `src/utils/pensionCalc.ts`. Drie bijna-identieke blokken: `getMonthlyWithdrawal()`
-(losse functie), een inline kopie in de retirement-phase yearData-lus, en een inline kopie in
-`buildIncomePhases()`. **Subtiel verschil dat je moet behouden of bewust opheffen:** alleen de
-yearData-lus-kopie klemt het weergegeven bedrag op 0 zodra `capital <= 0`
-(`actualFromCapital = capital > 0 ? fromCapital : 0`); de andere twee doen dat niet.
-Consolideer naar één functie-aanroep. **Beslispunt om zelf te beargumenteren (geen vaststaand
-antwoord vanuit de vorige sessie):** moet dat klem-gedrag overal gaan gelden, of blijft het
-specifiek voor de yearData-weergave? Leg je keuze vast in de commit message.
+### Correctie op het vorige hand-off-document
 
-### 2. E6 — slagingskans op het verkeerde moment gemeten
-**Bestand:** `src/utils/monteCarlo.ts`. Nu: `if (capital >= 0) successCount++` kijkt alleen naar
-het laatste jaar. Een pad dat halverwege de uitkeringsfase onder nul duikt en daarna (door het
-perverse effect van negatief kapitaal × rendement) weer "herstelt", telt nu ten onrechte als
-geslaagd. Fix: houd per simulatie bij of het kapitaal ooit negatief is geweest (in de
-uitkeringsfase; de opbouwfase kan in de praktijk niet negatief worden onder normale invoer), en
-gebruik dat i.p.v. alleen de eindstand.
+Dat schreef bij E9 voor: "verwijder de `+ 0.5`". Dat is fout. Exponent `yr` is een
+begin-jaar-annuïteit en wijkt een half jaar de ándere kant op. Correct is `yr + 1`. Narekening met
+het voorbeeld uit `AUDIT-fase0-1-feiten.md` (25 jaar, 2% reëel, €12.000/jaar):
 
-### 3. E7 — Monte Carlo negeert eenmalige bedragen ná de pensioendatum
-**Bestand:** `src/utils/monteCarlo.ts`. De accumulatiefase gebruikt `lumpSumMap` (gefilterd op
-`year < retirementYear`), maar de uitkeringsfase-lus past helemaal geen life events toe.
-`pensionCalc.ts` doet dit wel (`retEventMap`, regel ~224-225) — bouw hetzelfde patroon na in
-`runMonteCarlo`. **Let op:** `monteCarlo.golden.test.ts` bevat een test die *bevestigt* dat dit nu
-niets doet ("bevestigt E7: een eenmalig bedrag na pensioendatum verandert de simulatie niet",
-met `toEqual`). Die test moet na deze fix juist gaan **falen** op de oude aanname — pas 'm aan
-naar een test die bevestigt dat het resultaat nu wél verschilt, en werk de bijbehorende
-`__golden__/monteCarlo.golden.json`-fixture bij met de nieuwe, inhoudelijk gecontroleerde waarden.
+```
+oud (yr + 0.5)     € 236.612,7
+nieuw (yr + 1)     € 234.281,5   = gesloten formule W × (1 − 1,02^−25) / 0,02
+yr (begin-jaar)    € 238.967,1   <- wat het hand-off-document voorstelde
+```
 
-### 4. E9 — disconteringsconventies gelijktrekken
-**Bestand:** `src/utils/pensionCalc.ts`. `requiredCapital` (regel ~150-161) disconteert met
-`Math.pow(rPostAnnual, yr + 0.5)` (halfjaar-conventie). De daadwerkelijke jaar-voor-jaar-simulatie
-(regel ~223-225) rekent met volledig-jaar-rendement, dan pas de onttrekking (eind-jaar-conventie).
-Verschil ordegrootte 1% (zie het uitgewerkte rekenvoorbeeld in `AUDIT-fase0-1-feiten.md`, E9).
-**Aanbeveling, geen vaststaand besluit:** pas `requiredCapital` aan naar de eind-jaar-conventie
-(verwijder de `+ 0.5`), zodat de *doel*-berekening exact aansluit bij wat de simulatie *echt* doet
-— dat lijkt kleiner en veiliger dan andersom de simulatie ombouwen. `findRequiredPMT` targeting
-`requiredCapital` blijft vanzelf consistent. Bespreek/motiveer deze keuze expliciet in de commit,
-en overweeg ook de spiegelbeeldige opbouwkant (`monthlyPMT * 12` na i.p.v. tijdens het jaar
-bijgeschreven) — dat hoeft niet per se in dezelfde commit, maar noem het als je het bewust laat
-liggen.
+---
 
-### 5. E8/A12 — uitvoering van het al genomen besluit
-**Besluit staat al vast** (12 augustus, herbevestigd in `src/config/risicoprofielen.ts`'s
-brontekst): de rendementen in `risicoprofielen.ts` zijn meetkundig (samengesteld) bedoeld.
-`monteCarlo.ts` trekt nu rond het rekenkundige gemiddelde en compoundt dat, waardoor de mediaan van
-de simulatie structureel onder het ingevulde percentage uitkomt (live gemeten: ~34% lager bij het
-offensieve profiel, zie `AUDIT-fase3-livetests.md`, E8). Twee technische opties, allebei genoemd in
-het auditplan:
-- **Optie a**: `sampleNormal` vervangen door een lognormale trekking.
-- **Optie b**: het gemiddelde dat aan `sampleNormal` wordt doorgegeven ophogen met `½σ²` vóór het
-  trekken (kleinere wijziging, blijft de bestaande Box-Muller-aanpak gebruiken). Let bij het
-  omrekenen op eenheden: `volatilityPre`/`volatilityPost` staan in hele procentpunten, niet als
-  decimale fractie.
+## Wat bewust is blijven liggen
 
-Geen van beide is hier voorgeschreven — kies er één, beargumenteer waarom in de commit, en toets of
-de mediaan van de simulatie na de fix inderdaad rond het ingevulde percentage uitkomt (zelfde
-soort seeded herberekening als in `AUDIT-fase3-livetests.md`, E8, is een goede manier om dat te
-bevestigen vóór je commit). Werk `monteCarlo.golden.test.ts`'s fixtures bij — de
-`successRate`/`percentileData`-waarden veranderen door deze fix.
+### 1. E1-optie-B: het veld "waarvan fiscaal beklemd" (lijfrente, banksparen, pensioenbeleggen)
 
-## Wat je niet aanraakt in deze sessie
-E2 (box 3), E3 (kosten), E4 (bruto-netto-inconsistentie), E5 (indexatie), E1-optie-B (apart
-lijfrente/bankspaar-veld) — allemaal voor de aparte her-ijkingssessie. Ook niet: F1/A7's definitieve
-fix (welke kant van de jaarruimte-formule correct is — de externe bronnen zijn nog 🟡, geen
-vaststaande bron), de jaarruimte-configfixes uit `FISCALE-BRONNEN.md` §5, en de B-serie
-content-fixes (B2/B4/B5). Die wachten op Hendriks eigen beoordeling van de 🟡-bronnen.
+Hendriks idee, besproken aan het begin van deze sessie, **uitgesteld naar de her-ijkingssessie**.
+Drie redenen, in volgorde van gewicht:
 
-## Werkwijze
-- Laat Hendrik elke voorgestelde wijziging **eerst zien** (precies zoals bij groep 1 en A10 in de
-  vorige sessie: concreet voorstel, dan pas toepassen na akkoord) — dit zijn rekenkernwijzigingen,
-  het auditplan zelf is daar expliciet voorzichtig mee.
-- Vóór elke commit: `npm run build`, `npm run test`, `npm run check` groen (of exact dezelfde
-  vooraf bestaande afwijkingen als de Fase 0-baseline: 1 bekende `astro check`-fout in
-  `exportExcel.ts`, verder niets nieuws).
-- Live controleren in de browser (preview-tools, niet Bash) waar een wijziging zichtbaar is.
-- Elke fix in een eigen commit, Nederlandse commit message, zelfde stijl als de bestaande commits
-  op deze branch (`git log --oneline` voor voorbeelden).
-- Nog steeds: niet pushen naar `astro-migratie`, dat is de live productiebranch.
-- Werk dit hand-off-document (of een nieuw slotbericht) aan het eind bij met wat er wel/niet is
-  gelukt, zodat een volgende sessie niet in het duister tast.
+1. **Het hangt vast aan E4.** `brutoToNetto`/`nettoToBruto` kennen geen heffingskortingen en rekenen
+   vanaf schijf 1, terwijl een lijfrente-uitkering marginaal bovenop AOW en werkgeverspensioen
+   belast wordt. Bruteren met de huidige motor levert een nieuwe, subtielere rekenfout op: minder
+   zichtbaar dan de fout die je ermee repareert. **E4 dus eerst.**
+2. **Een lijfrentepot is geen pot waar je vrij uit onttrekt.** Bij expiratie moet het kapitaal worden
+   omgezet in periodieke uitkeringen (art. 3.125 Wet IB 2001). Modelleer je het als vermogen waar de
+   tool naar behoefte uit put, dan modelleer je iets wat wettelijk niet mag.
+3. **Aanbevolen ontwerp als het zover is:** invoerveld onder vermogen (dat is wat de gebruiker op
+   zijn overzicht ziet), maar intern omgezet naar een bruto periodieke uitkering vanaf de
+   pensioendatum en behandeld als derde inkomensbron naast AOW en werkgeverspensioen. Het bedrag
+   moet dan uit `currentCapital` gehaald worden vóór de vrije-onttrekkingslogica én vóór de Monte
+   Carlo, anders telt het dubbel. `nettoToBruto` (nu dode code, bevinding A20) wordt daarmee alsnog
+   nuttig.
+
+**Nog op te zoeken vóór de bouw:** het maximum jaarbedrag voor een tijdelijke oudedagslijfrente in
+2026, plus de minimumlooptijd. Hoort in `FISCALE-BRONNEN.md` met bron. Niet uit het hoofd invullen.
+
+### 2. De inlegconventie in `simulateAccumulation`
+
+`monthlyPMT * 12` wordt pas ná de jaarlijkse rendementsfactor bijgeschreven, terwijl de inleg
+feitelijk maandelijks is: geen rendement over de eigen inleg in het jaar zelf. Bewust laten liggen
+bij E9, omdat `monteCarlo.ts` het identiek doet en de twee dus onderling consistent blijven. Het is
+een conventievraag over het inlegmoment, geen aansluitfout tussen doel en simulatie. Los het op in
+de her-ijkingssessie, in beide bestanden tegelijk.
+
+### 3. E6 heeft geen meetbaar effect, en dat is genoteerd, niet weggemoffeld
+
+Gemeten met een seeded herberekening (oud en nieuw criterium op exact dezelfde paden): nul verschil
+bij vermogens van €400k tot €2 mln en bij volatiliteiten tot 25%. Pas bij een onrealistische 40%
+volatiliteit na pensionering kantelen 2 van de 2.000 paden. Na E8 kan het helemaal niet meer
+voorkomen. De KPI meet nu wat zijn label belooft; de getoonde percentages veranderen er niet door.
+
+### 4. De rest van de audit, ongewijzigd buiten scope
+
+E2 (box 3), E3 (kosten), E4 (bruto-netto zonder heffingskortingen), E5 (indexatie), F1/A7 (welke
+kant van de jaarruimte-formule correct is, wacht op Hendriks beoordeling van de 🟡-bronnen), de
+jaarruimte-configfixes uit `FISCALE-BRONNEN.md` §5, en de B-serie content-fixes (B2/B4/B5).
+
+---
+
+## Volgende stap
+
+De her-ijkingssessie over bruto-netto pensioeninkomen. Volgorde die ik zou aanhouden:
+
+1. **E4 eerst**: één functie die het totale bruto box 1-inkomen belast, inclusief heffingskortingen,
+   met AOW, werkgeverspensioen en straks lijfrente als stapelende bronnen. Dit is de motor waar al
+   het andere op leunt. Live gemeten verschil nu: € 707/maand op € 30.000 bruto.
+2. Daarna E1-optie-B (het beklemd-veld), dat bovenop die motor gebouwd wordt.
+3. Daarna E2 (box 3), E3 (kosten) en E5 (indexatie), elk met een eigen besluit over wel/niet
+   modelleren.
+4. De inlegconventie uit punt 2 hierboven, in `pensionCalc.ts` en `monteCarlo.ts` tegelijk.
+
+## Werkwijze die is aangehouden (en die zich bewees)
+
+- Elke wijziging eerst voorleggen, dan pas toepassen.
+- Vóór elke commit: `npm run build`, `npm run test`, `npm run check`.
+- Elke rekenwijziging onafhankelijk narekenen vóór het bijwerken van een golden-fixture, niet
+  andersom. Bij E9 haalde dat een fout in het vorige hand-off-document boven water; bij E6 liet het
+  zien dat de fix geen numeriek effect heeft. Beide waren onzichtbaar geweest als de fixtures
+  klakkeloos waren geregenereerd.
+- Live controleren in de browser via de preview-tools, niet via Bash.
+- Nog steeds: **niet pushen naar `astro-migratie`**, dat is de live productiebranch.
