@@ -28,18 +28,28 @@ auditverslag maar als iets om steeds opnieuw te openen bij een update.
 
 ## 1. Box 1-tarieven (`BOX1_PRE_AOW`, `BOX1_POST_AOW`)
 
+**Bron:** [Voorlopige aanslag 2026: gebruikte tarieven en heffingskortingen | Belastingdienst](https://www.belastingdienst.nl/wps/wcm/connect/nl/voorlopige-aanslag/content/voorlopige-aanslag-tarieven-en-heffingskortingen),
+geraadpleegd 13 augustus 2026.
+
 | Parameter | Waarde in de site (2026) | Status | Bron |
 |---|---|---|---|
-| Schijf 1-grens | €38.883 | 🟡 | Niet apart dit jaar herbevestigd, wel intern consistent met alle geverifieerde jaren |
-| Schijf 2-grens | €78.426 | 🟡 | idem |
-| Schijf 1-tarief, jonger dan AOW | 35,75% | 🟡 | idem |
-| Schijf 1-tarief, AOW-leeftijd | 17,85% | 🟡 | idem |
-| Schijf 2-tarief (beide) | 37,56% | 🟡 | idem |
-| Schijf 3-tarief (beide) | 49,50% | 🟡 | idem |
+| Schijf 1-grens | €38.883 | ✅ | rechtstreeks bevestigd |
+| Schijf 2-grens | €78.426 | ✅ | rechtstreeks bevestigd |
+| Schijf 1-tarief, jonger dan AOW | 35,75% | ✅ | rechtstreeks bevestigd |
+| Schijf 1-tarief, AOW-leeftijd | 17,85% | ✅ | rechtstreeks bevestigd |
+| Schijf 2-tarief (beide) | 37,56% | ✅ | rechtstreeks bevestigd |
+| Schijf 3-tarief (beide) | 49,50% | ✅ | rechtstreeks bevestigd |
 
-Niet apart extern herbevestigd deze sessie (buiten de arbeidskorting/AHK-tabel om, die deze
-grenzen impliciet bevestigen — zie hieronder). Update-URL voor een volgend jaar: zoek op
-belastingdienst.nl naar "tarieven box 1" voor het betreffende jaar.
+Alle zes waarden komen exact overeen met de bron. Dit blok is daarmee van 🟡 naar ✅ gegaan.
+
+**Eén cohort dat de site niet kent.** Wie geboren is vóór 1 januari 1946 heeft een ruimere eerste
+schijf: tot en met €41.123 in plaats van €38.883, tegen hetzelfde tarief van 17,85%. De config kent
+maar één post-AOW-tabel. Het gaat om mensen die in 2026 tachtig of ouder zijn, dus voor een
+planningstool met een opbouwfase is de kans klein dat het uitmaakt. Genoteerd als bekend gat, niet
+als bevinding.
+
+Update-URL voor een volgend jaar: dezelfde pagina, of zoek op belastingdienst.nl naar "tarieven
+box 1" voor het betreffende jaar.
 
 ---
 
@@ -52,10 +62,10 @@ specifiek, wel al intern consistent bevonden).
 
 | Parameter | Waarde in de site | Status |
 |---|---|---|
-| Algemene heffingskorting, maximum | €3.115 | ⬜ (URL bekend, niet opgehaald) |
-| Algemene heffingskorting, afbouw vanaf | €29.736 | ⬜ |
-| Algemene heffingskorting, afbouwpercentage | 6,398% | ⬜ |
-| Algemene heffingskorting, nihil bij | €78.426 | ⬜ |
+| Algemene heffingskorting, maximum | €3.115 | ✅ (tabel opgehaald 13 augustus 2026) |
+| Algemene heffingskorting, afbouw vanaf | €29.736 | ✅ — de tabel zegt "afbouw vanaf €29.737", de formule rekent met `verzamelinkomen − €29.736`. De config gebruikt de formulewaarde en is dus juist. |
+| Algemene heffingskorting, afbouwpercentage | 6,398% | ✅ |
+| Algemene heffingskorting, nihil bij | €78.426 | ✅ — de tabel zegt "nihil vanaf €78.427". Bij €78.426 komt de formule op €0,19 uit, afgerond nul. Verschil in definitie, niet in uitkomst. |
 | Arbeidskorting, opbouw 1 | 8,324% tot €11.965 | ✅ |
 | Arbeidskorting, opbouw 2 | 31,009% tot €25.845 | ✅ |
 | Arbeidskorting, opbouw 3 | 1,95% tot €45.592 | ✅ |
@@ -73,15 +83,45 @@ de kortingen van vóór de AOW-leeftijd (of, bij de FO-planner, helemaal geen ko
 `AUDIT-2026-08-bevindingen.md`). Cijfers hieronder zijn al wel gevonden, klaar om een keer als
 config-object te worden toegevoegd:
 
+**Bronnen, geraadpleegd 13 augustus 2026:**
+[Heffingskortingen voor AOW-gerechtigden | Belastingdienst](https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/belastingdienst/prive/inkomstenbelasting/heffingskortingen_boxen_tarieven/heffingskortingen/heffingskortingen_voor_aow_gerechtigden)
+en [Tabel algemene heffingskorting 2026 | Belastingdienst](https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/belastingdienst/prive/inkomstenbelasting/heffingskortingen_boxen_tarieven/heffingskortingen/algemene_heffingskorting/tabel-algemene-heffingskorting-2026).
+
 | Parameter | Waarde (2026) | Status |
 |---|---|---|
+| Algemene heffingskorting AOW, maximum | €1.556 | ✅ |
+| Algemene heffingskorting AOW, afbouw vanaf | €29.737 (formule rekent vanaf €29.736) | ✅ |
+| Algemene heffingskorting AOW, afbouwpercentage | 3,195% | ✅ |
+| Algemene heffingskorting AOW, nihil vanaf | €78.427 | ✅ |
+| Ouderenkorting, maximum | €2.067 | ✅ |
+| Ouderenkorting, afbouw vanaf | €46.002 | ✅ |
+| Ouderenkorting, afbouwpercentage | 15% | ✅ |
+| Ouderenkorting, nihil vanaf | €59.783 | ✅ |
+| Alleenstaandeouderenkorting | €540 (niet-inkomensafhankelijk) | ✅ |
 | Arbeidskorting AOW, opbouw 1 | 4,156% tot €11.965 | ✅ |
 | Arbeidskorting AOW, opbouw 2 | 15,483% tot €25.845 | ✅ |
 | Arbeidskorting AOW, opbouw 3 | 0,974% tot €45.592 | ✅ |
 | Arbeidskorting AOW, maximum | €2.840 | ✅ |
 | Arbeidskorting AOW, afbouw | 3,250% vanaf €45.593 | ✅ |
-| Ouderenkorting | (bedrag niet gevonden deze sessie) | ⬜ |
-| Alleenstaande ouderenkorting | €540 (niet-inkomensafhankelijk) | 🟡 — gevonden via zoeken, niet rechtstreeks op een belastingdienst.nl-pagina bevestigd |
+
+**Twee interne controles, allebei kloppend.** De afbouw van de algemene
+heffingskorting eindigt precies op nul: `1.556 − 3,195% × (78.426 − 29.736) =
+1.556 − 1.555,65 = 0,35`, dus afgerond nul bij €78.426 en nihil vanaf €78.427.
+Bij de ouderenkorting: `2.067 / 15% = 13.780`, en `46.002 + 13.780 = 59.782`, dus
+nihil vanaf €59.783. Beide sluiten aan op wat de pagina zelf noemt.
+
+**Waard om te weten bij E4.** De algemene heffingskorting na de AOW-leeftijd is
+vrijwel exact de helft van die ervoor (€1.556 tegen €3.115, 3,195% tegen 6,398%).
+Dat is geen toeval: het AOW-premiedeel valt weg. Het effectieve marginale tarief
+op aanvullend pensioen loopt door de gestapelde afbouw van de algemene
+heffingskorting (3,195%) en de ouderenkorting (15%) fors op boven het
+schijventarief. Tussen €46.002 en €59.783 komt daar bovenop het schijftarief
+37,56% plus 15% plus 3,195%, dus ruim boven de 50%. Dat is precies het effect dat
+de FO-planner nu helemaal niet kent.
+
+**De arbeidskorting is voor de FO-planner niet relevant**, want een
+werkgeverspensioen is geen arbeidsinkomen. Voor de Bruto-netto-tool wel, als
+iemand doorwerkt na de AOW-leeftijd.
 
 ---
 
