@@ -1,0 +1,226 @@
+{
+  "1_basis": {
+    "projectedCapital": 401402,
+    "requiredCapital": 807562,
+    "desiredMonthlyNetto": 5000,
+    "requiredMonthlyContribution": 1557,
+    "surplusAtEnd": -559139,
+    "yearDataLength": 46,
+    "yearDataFirst": {
+      "age": 45,
+      "year": 2026,
+      "phase": "opbouw",
+      "capital": 100000,
+      "incomeFromCapital": 0,
+      "aowIncome": 0,
+      "employerIncome": 0,
+      "totalIncome": 0
+    },
+    "yearDataLast": {
+      "age": 90,
+      "year": 2071,
+      "phase": "uitkering",
+      "capital": 0,
+      "incomeFromCapital": 0,
+      "aowIncome": 1558,
+      "employerIncome": 0,
+      "totalIncome": 1558
+    }
+  },
+  "2_werkgeverspensioen_voor_aow": {
+    "projectedCapital": 401402,
+    "requiredCapital": 0,
+    "desiredMonthlyNetto": 5000,
+    "requiredMonthlyContribution": -545,
+    "surplusAtEnd": 560657,
+    "yearDataLength": 46,
+    "yearDataFirst": {
+      "age": 45,
+      "year": 2026,
+      "phase": "opbouw",
+      "capital": 100000,
+      "incomeFromCapital": 0,
+      "aowIncome": 0,
+      "employerIncome": 0,
+      "totalIncome": 0
+    },
+    "yearDataLast": {
+      "age": 90,
+      "year": 2071,
+      "phase": "uitkering",
+      "capital": 560657,
+      "incomeFromCapital": 0,
+      "aowIncome": 1558,
+      "employerIncome": 12323,
+      "totalIncome": 13881
+    }
+  },
+  "3_negatief_bedrag_opbouwfase": {
+    "projectedCapital": 35381,
+    "requiredCapital": 807562,
+    "desiredMonthlyNetto": 5000,
+    "requiredMonthlyContribution": 2510,
+    "surplusAtEnd": -1070378,
+    "yearDataLength": 46,
+    "yearDataFirst": {
+      "age": 45,
+      "year": 2026,
+      "phase": "opbouw",
+      "capital": 100000,
+      "incomeFromCapital": 0,
+      "aowIncome": 0,
+      "employerIncome": 0,
+      "totalIncome": 0
+    },
+    "yearDataLast": {
+      "age": 90,
+      "year": 2071,
+      "phase": "uitkering",
+      "capital": 0,
+      "incomeFromCapital": 0,
+      "aowIncome": 1558,
+      "employerIncome": 0,
+      "totalIncome": 1558
+    }
+  },
+  "4_negatief_bedrag_na_pensioendatum": {
+    "projectedCapital": 401402,
+    "requiredCapital": 807562,
+    "desiredMonthlyNetto": 5000,
+    "requiredMonthlyContribution": 1557,
+    "surplusAtEnd": -683488,
+    "yearDataLength": 46,
+    "yearDataFirst": {
+      "age": 45,
+      "year": 2026,
+      "phase": "opbouw",
+      "capital": 100000,
+      "incomeFromCapital": 0,
+      "aowIncome": 0,
+      "employerIncome": 0,
+      "totalIncome": 0
+    },
+    "yearDataLast": {
+      "age": 90,
+      "year": 2071,
+      "phase": "uitkering",
+      "capital": 0,
+      "incomeFromCapital": 0,
+      "aowIncome": 1558,
+      "employerIncome": 0,
+      "totalIncome": 1558
+    }
+  },
+  "5_randgeval_leeg": {
+    "projectedCapital": 0,
+    "requiredCapital": 807562,
+    "desiredMonthlyNetto": 5000,
+    "requiredMonthlyContribution": 2102,
+    "surplusAtEnd": -1119796,
+    "yearDataLength": 46,
+    "yearDataFirst": {
+      "age": 45,
+      "year": 2026,
+      "phase": "opbouw",
+      "capital": 0,
+      "incomeFromCapital": 0,
+      "aowIncome": 0,
+      "employerIncome": 0,
+      "totalIncome": 0
+    },
+    "yearDataLast": {
+      "age": 90,
+      "year": 2071,
+      "phase": "uitkering",
+      "capital": 0,
+      "incomeFromCapital": 0,
+      "aowIncome": 1558,
+      "employerIncome": 0,
+      "totalIncome": 1558
+    }
+  },
+  "6_al_gepensioneerd": {
+    "projectedCapital": 100000,
+    "requiredCapital": 807562,
+    "desiredMonthlyNetto": 5000,
+    "requiredMonthlyContribution": 0,
+    "surplusAtEnd": -980121,
+    "yearDataLength": 24,
+    "yearDataFirst": {
+      "age": 67,
+      "year": 2026,
+      "phase": "uitkering",
+      "capital": 100000,
+      "incomeFromCapital": 3442,
+      "aowIncome": 1558,
+      "employerIncome": 0,
+      "totalIncome": 5000
+    },
+    "yearDataLast": {
+      "age": 90,
+      "year": 2049,
+      "phase": "uitkering",
+      "capital": 0,
+      "incomeFromCapital": 0,
+      "aowIncome": 1558,
+      "employerIncome": 0,
+      "totalIncome": 1558
+    }
+  },
+  "7_extreem_18_100": {
+    "projectedCapital": 1253105,
+    "requiredCapital": 1082798,
+    "desiredMonthlyNetto": 5000,
+    "requiredMonthlyContribution": 384,
+    "surplusAtEnd": 287730,
+    "yearDataLength": 83,
+    "yearDataFirst": {
+      "age": 18,
+      "year": 2026,
+      "phase": "opbouw",
+      "capital": 100000,
+      "incomeFromCapital": 0,
+      "aowIncome": 0,
+      "employerIncome": 0,
+      "totalIncome": 0
+    },
+    "yearDataLast": {
+      "age": 100,
+      "year": 2108,
+      "phase": "uitkering",
+      "capital": 287730,
+      "incomeFromCapital": 3442,
+      "aowIncome": 1558,
+      "employerIncome": 0,
+      "totalIncome": 5000
+    }
+  },
+  "8_bruto_gewenst_inkomen": {
+    "projectedCapital": 401402,
+    "requiredCapital": 598163,
+    "desiredMonthlyNetto": 4108,
+    "requiredMonthlyContribution": 1012,
+    "surplusAtEnd": -268779,
+    "yearDataLength": 46,
+    "yearDataFirst": {
+      "age": 45,
+      "year": 2026,
+      "phase": "opbouw",
+      "capital": 100000,
+      "incomeFromCapital": 0,
+      "aowIncome": 0,
+      "employerIncome": 0,
+      "totalIncome": 0
+    },
+    "yearDataLast": {
+      "age": 90,
+      "year": 2071,
+      "phase": "uitkering",
+      "capital": 0,
+      "incomeFromCapital": 0,
+      "aowIncome": 1558,
+      "employerIncome": 0,
+      "totalIncome": 1558
+    }
+  }
+}

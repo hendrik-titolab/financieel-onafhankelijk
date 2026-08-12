@@ -339,4 +339,13 @@ arbeidskorting = 0  wanneer:  max − afbouwPct × (inkomen − afbouwVanaf) = 0
 
 **Status:** bevestigd (code, interne navrekening).
 
+---
+
+### A21 (nieuw) — Bruto-netto-berekening niet testbaar zonder extractie
+**Bestand:** `src/components/BrutoNetto/index.tsx:43-101` (`belastingSchijven`, `algemeneHeffingskorting`, `arbeidskorting`, `brutoNaarNetto`, `nettoNaarBruto`)
+
+De volledige rekenlogica van de Bruto-netto-tool staat als losse, niet-geëxporteerde functies binnen het componentbestand zelf — geen apart `src/utils/brutoNetto.ts` zoals bij de andere drie tools. Daardoor is deze berekening niet los te importeren in een testbestand zonder het component te renderen. Extractie naar een eigen utility-module is een refactor en valt buiten de grenzen van deze sessie ("geen refactors 'omdat het netter kan'"); daarom is er **geen** `brutoNetto.golden.test.ts` — A10's navrekening (hierboven) dekt de belangrijkste cijfers wel, maar niet als geautomatiseerde regressietest.
+
+**Status:** nieuwe bevinding, geen actie ondernomen. Genoteerd voor een eventuele latere sessie: als G1-achtige testdekking voor deze tool gewenst is, is extractie van de vier functies naar `src/utils/brutoNetto.ts` de eerste stap.
+
 
