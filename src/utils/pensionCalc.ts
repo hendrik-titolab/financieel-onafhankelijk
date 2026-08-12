@@ -1,4 +1,4 @@
-import type { PensionInputs, PensionResult, YearData, IncomePhase, LifeEvent, Storting } from '../types'
+import type { PensionInputs, PensionResult, YearData, IncomePhase, LifeEvent } from '../types'
 import { BOX1_PRE_AOW, BOX1_POST_AOW, AOW_NETTO_MAAND } from '../config/fiscaleParameters'
 
 // AOW netto maandbedragen — uit centrale config (fiscaleParameters.ts)
@@ -30,6 +30,37 @@ function realAnnualReturn(nominal: number, inflation: number): number {
   return ((1 + nominal / 100) / (1 + inflation / 100) - 1) * 100
 }
 
+// Netto maandinkomen op een gegeven leeftijd, uitgesplitst naar bron.
+// Enige plek waar deze opsplitsing wordt gemaakt: de jaartabel, de fasenlijst en
+// monteCarlo.ts leunen alle drie hierop (was tot augustus 2026 drie keer los
+// uitgeschreven, bevinding A1).
+export interface MaandInkomenVerdeling {
+  aow: number
+  employerPension: number  // netto, fase-afhankelijk belast
+  fromCapital: number      // wat er nog uit eigen vermogen moet komen
+}
+
+export function getIncomeBreakdown(
+  age: number,
+  desiredNetto: number,
+  aowNetto: number,
+  aowStartAge: number,
+  employerPensionBruto: number,
+  employerPensionStartAge: number
+): MaandInkomenVerdeling {
+  const pastAow = age >= aowStartAge
+  const aow = pastAow ? aowNetto : 0
+  // Tax rate changes at AOW age: 36.97% → 19.07%
+  const employerPension = age >= employerPensionStartAge
+    ? brutoToNetto(employerPensionBruto, pastAow)
+    : 0
+  return {
+    aow,
+    employerPension,
+    fromCapital: Math.max(0, desiredNetto - aow - employerPension),
+  }
+}
+
 // Monthly withdrawal needed from own capital, given age (phase-aware).
 // Employer pension is taxed at different rates before vs after AOW age.
 export function getMonthlyWithdrawal(
@@ -40,17 +71,13 @@ export function getMonthlyWithdrawal(
   employerPensionBruto: number,
   employerPensionStartAge: number
 ): number {
-  const pastAow = age >= aowStartAge
-  const aow = pastAow ? aowNetto : 0
-  // Tax rate changes at AOW age: 36.97% → 19.07%
-  const emp = age >= employerPensionStartAge
-    ? brutoToNetto(employerPensionBruto, pastAow)
-    : 0
-  return Math.max(0, desiredNetto - aow - emp)
+  return getIncomeBreakdown(
+    age, desiredNetto, aowNetto, aowStartAge, employerPensionBruto, employerPensionStartAge
+  ).fromCapital
 }
 
 function buildEventMap(
-  events: (LifeEvent | Storting)[],
+  events: LifeEvent[],
   startYear: number,
   endYear: number
 ): Map<number, number> {
@@ -104,7 +131,7 @@ function findRequiredPMT(
   return hi
 }
 
-export function calculatePension(inputs: PensionInputs): PensionResult {
+export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: number }): PensionResult {
   const {
     currentAge, retirementAge, lifeExpectancy,
     currentCapital, monthlyContribution, contributionFrequency,
@@ -113,10 +140,7 @@ export function calculatePension(inputs: PensionInputs): PensionResult {
     aowMaandBedragNetto, aowStartAge,
     employerPension, employerPensionStartAge,
     lifeEvents = [],
-    stortingen = [],
   } = inputs
-
-  const allEvents = [...lifeEvents, ...stortingen]
 
   const realPre = realAnnualReturn(returnBeforeRetirement, inflation)
   const realPost = realAnnualReturn(returnAfterRetirement, inflation)
@@ -128,12 +152,12 @@ export function calculatePension(inputs: PensionInputs): PensionResult {
     ? monthlyContribution / 12
     : monthlyContribution
 
-  const currentYear = new Date().getFullYear()
+  const currentYear = opts?.currentYear ?? new Date().getFullYear()
   const retirementYear = currentYear + yearsToRetirement
 
-  // Split all events (life events + stortingen) into accumulation and retirement phase
-  const accEventMap = buildEventMap(allEvents, currentYear, retirementYear)
-  const retEventMap = buildEventMap(allEvents, retirementYear, retirementYear + yearsInRetirement + 1)
+  // Split life events into accumulation and retirement phase
+  const accEventMap = buildEventMap(lifeEvents, currentYear, retirementYear)
+  const retEventMap = buildEventMap(lifeEvents, retirementYear, retirementYear + yearsInRetirement + 1)
 
   // Projected capital at retirement (year-by-year with life events)
   const projectedCapital = simulateAccumulation(
@@ -149,6 +173,10 @@ export function calculatePension(inputs: PensionInputs): PensionResult {
 
   // Required capital = PV of all future withdrawals at retirement.
   // Employer pension tax rate is age-dependent (36.97% pre-AOW, 19.07% post-AOW).
+  // Discontering met exponent yr + 1: dezelfde eind-jaar-conventie als de
+  // jaar-voor-jaar-simulatie verderop (eerst een vol jaar rendement, dan de
+  // onttrekking). Anders ligt dit doelbedrag ~1% boven wat de simulatie werkelijk
+  // nodig heeft en spreken het KPI-oordeel en de jaartabel elkaar tegen (E9).
   const rPostAnnual = 1 + realPost / 100
   let requiredCapital = 0
   for (let yr = 0; yr < yearsInRetirement; yr++) {
@@ -157,7 +185,7 @@ export function calculatePension(inputs: PensionInputs): PensionResult {
       age, desiredMonthlyNetto, aowMonthlyNetto, aowStartAge,
       employerPension, employerPensionStartAge
     ) * 12
-    requiredCapital += annualWithdrawal / Math.pow(rPostAnnual, yr + 0.5)
+    requiredCapital += annualWithdrawal / Math.pow(rPostAnnual, yr + 1)
   }
 
   // Required monthly contribution (binary search, accounts for life events)
@@ -194,14 +222,15 @@ export function calculatePension(inputs: PensionInputs): PensionResult {
   for (let yr = 0; yr <= yearsInRetirement; yr++) {
     const age = retirementAge + yr
     const calYear = retirementYear + yr
-    const pastAow = age >= aowStartAge
 
-    const aow = pastAow ? aowMonthlyNetto : 0
-    // Phase-aware tax: employer pension taxed at 36.97% before AOW age, 19.07% after
-    const emp = age >= employerPensionStartAge
-      ? brutoToNetto(employerPension, pastAow)
-      : 0
-    const fromCapital = Math.max(0, desiredMonthlyNetto - aow - emp)
+    const { aow, employerPension: emp, fromCapital } = getIncomeBreakdown(
+      age, desiredMonthlyNetto, aowMonthlyNetto, aowStartAge,
+      employerPension, employerPensionStartAge
+    )
+    // Alleen voor de weergave: is het vermogen op, dan krijgt iemand feitelijk nog
+    // alleen AOW en werkgeverspensioen. De kapitaalmutatie hieronder gebruikt bewust
+    // de ónbeperkte fromCapital, anders stopt de onttrekking zodra de pot leeg is en
+    // meet het getoonde tekort iets anders dan het tekort werkelijk is (A1).
     const actualFromCapital = capital > 0 ? fromCapital : 0
 
     yearData.push({
@@ -262,13 +291,9 @@ function buildIncomePhases(
 
   for (let i = 0; i < sorted.length - 1; i++) {
     const fromAge = sorted[i]
-    const pastAow = fromAge >= aowStartAge
-    const aow = pastAow ? aowNetto : 0
-    // Phase-aware tax rate for employer pension
-    const emp = fromAge >= empStartAge
-      ? brutoToNetto(employerPensionBruto, pastAow)
-      : 0
-    const fromCapital = Math.max(0, desiredNetto - aow - emp)
+    const { aow, employerPension: emp, fromCapital } = getIncomeBreakdown(
+      fromAge, desiredNetto, aowNetto, aowStartAge, employerPensionBruto, empStartAge
+    )
 
     phases.push({
       label: `Leeftijd ${sorted[i]}–${sorted[i + 1]}`,

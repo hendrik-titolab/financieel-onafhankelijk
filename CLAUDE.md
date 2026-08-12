@@ -200,7 +200,9 @@ src/
   hoeveel mensen op "Bereken" drukken of waar ze afhaken.
 - `currentIncome`-veld in de FO-planner wordt ingevuld maar nergens in de berekening gebruikt,
   alleen in de Excel-export.
-- H1 op de FO-planner-pagina is `sr-only` (aanwezig voor SEO/screenreaders, maar niet zichtbaar
-  boven de tool voor gewone bezoekers).
 - De vijf datatokens uit de herstijling (`data-100/300/500/700`, `sand-deep`, zie
   `DESIGN_SYSTEM.md`) zijn zelf afgeleid en nog niet beoordeeld door Hendriks grafisch ontwerper.
+
+(Audit 2026-08 heeft nagelopen of de H1 op de FO-planner-pagina nog `sr-only` was, zoals hier
+eerder stond — dat bleek niet meer zo: de H1 is zichtbaar. Dit punt is daarom verwijderd, zie
+`AUDIT-2026-08-bevindingen.md`, C3.)

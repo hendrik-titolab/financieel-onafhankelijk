@@ -127,6 +127,11 @@ function ParametersTab({ inputs, onChange }: Props) {
         <Field label="Huidig vermogen">
           <NumberInput value={inputs.currentCapital} onChange={v => onChange({ currentCapital: v })}
             prefix="€" step={1000} />
+          <p className="text-xs text-body leading-relaxed mt-1">
+            Vul hier je vrij belegde vermogen in (box 3). Lijfrente, banksparen en pensioenbeleggen
+            kun je beter niet meetellen: opnames daaruit zijn belast als inkomen in box 1, en daar
+            rekent deze tool niet mee.
+          </p>
         </Field>
         <div className="space-y-1">
           <div className="flex justify-between items-center">
@@ -327,18 +332,18 @@ function RisicoprofielSection({ inputs, onChange }: Props) {
 
 // ---- Eenmalige bedragen tab ----
 //
-// Life events en stortingen rekenden altijd al identiek (pensionCalc.ts voegt
-// ze samen tot allEvents), maar stonden in twee bijna-gedupliceerde secties
-// met een onderscheid dat voor een gebruiker niet te raden was. Eén lijst,
-// alles naar inputs.lifeEvents. Het stortingen-veld blijft in de types en in
-// pensionCalc bestaan (voor bestaande code-paden), maar deze UI vult het niet
-// meer — zie DESIGN_SYSTEM.md-aanvulling / handoff voor de toelichting.
+// Life events en stortingen rekenden altijd al identiek, maar stonden in twee
+// bijna-gedupliceerde secties met een onderscheid dat voor een gebruiker niet
+// te raden was. Sinds de herstijling van 11 augustus 2026 is er nog maar één
+// lijst (inputs.lifeEvents); het losse stortingen-veld is inmiddels ook uit
+// de types en de berekening verwijderd (audit 2026-08, A14) — er was geen pad
+// meer waarlangs het gevuld kon raken.
 function EenmaligeBedragenSection({ inputs, onChange }: Props) {
   const currentYear = new Date().getFullYear()
   type DraftEvent = { name: string; amount: string; year: string }
 
   const [rows, setRows] = useState<DraftEvent[]>(() => {
-    const saved = [...(inputs.lifeEvents ?? []), ...(inputs.stortingen ?? [])].map(e => ({
+    const saved = (inputs.lifeEvents ?? []).map(e => ({
       name: e.name ?? '', amount: String(e.amount), year: String(e.year),
     }))
     return [...saved, { name: '', amount: '', year: String(currentYear) }]
@@ -348,7 +353,7 @@ function EenmaligeBedragenSection({ inputs, onChange }: Props) {
     const valid: LifeEvent[] = rows
       .filter(r => r.amount && r.year && !isNaN(Number(r.amount)) && Number(r.amount) !== 0 && !isNaN(Number(r.year)))
       .map(r => ({ name: r.name.trim() || '—', amount: Number(r.amount), year: Number(r.year) }))
-    onChange({ lifeEvents: valid, stortingen: [] })
+    onChange({ lifeEvents: valid })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rows])
 
@@ -448,7 +453,7 @@ type PanelTab = 'parameters' | 'events'
 export function InputPanel({ inputs, onChange }: Props) {
   const [tab, setTab] = useState<PanelTab>('parameters')
 
-  const eventCount = (inputs.lifeEvents?.length ?? 0) + (inputs.stortingen?.length ?? 0)
+  const eventCount = inputs.lifeEvents?.length ?? 0
 
   return (
     <div>

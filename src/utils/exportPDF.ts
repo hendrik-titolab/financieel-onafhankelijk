@@ -1,4 +1,5 @@
 import type { PensionResult, MonteCarloResult, PensionInputs } from '../types'
+import { N_SIMULATIONS } from './monteCarlo'
 
 function eur(v: number): string {
   return `€ ${Math.round(v).toLocaleString('nl-NL')}`
@@ -172,7 +173,7 @@ export async function exportToPDF(
     `Leeftijd: ${inputs.currentAge} jr | Pensioen: ${inputs.retirementAge} jr | AOW: ${inputs.aowStartAge} jr | Werkgeverspensioen: ${inputs.employerPensionStartAge} jr | Levensverwachting: ${inputs.lifeExpectancy} jr`,
     `Rendement voor pensioen: ${pct(inputs.returnBeforeRetirement)} nominaal | Na pensioen: ${pct(inputs.returnAfterRetirement)} | Inflatie: ${pct(inputs.inflation)}`,
     `Maandelijkse inleg: ${eur(inputs.monthlyContribution)} | Huidig vermogen: ${eur(inputs.currentCapital)}`,
-    `Alle bedragen in huidig koopkracht (reëel rendement). Monte Carlo: 2.000 simulaties.`,
+    `Alle bedragen in huidig koopkracht (reëel rendement). Monte Carlo: ${N_SIMULATIONS.toLocaleString('nl-NL')} simulaties.`,
   ]
 
   pdf.setFont('helvetica', 'normal')

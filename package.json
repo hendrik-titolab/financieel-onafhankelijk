@@ -6,7 +6,10 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "astro check"
   },
   "engines": {
     "node": ">=18.20.8"
@@ -26,6 +29,7 @@
     "recharts": "^2.12.7"
   },
   "devDependencies": {
+    "@astrojs/check": "^0.9.10",
     "@tailwindcss/typography": "^0.5.20",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
@@ -33,6 +37,7 @@
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.13",
     "typescript": "^5.5.3",
+    "vitest": "^4.1.10",
     "workbox-build": "^7.4.1"
   }
 }

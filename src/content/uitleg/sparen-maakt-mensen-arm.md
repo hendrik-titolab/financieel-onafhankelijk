@@ -49,7 +49,7 @@ Inflatie en spaarrentes worden uitgedrukt in percentages. Heb je €1.000 spaarg
 | 15 jaar | €120.483 | €89.521 | €77.333 | €66.900 |
 | 20 jaar | €128.204 | €86.277 | €70.983 | €58.511 |
 
-Lees de tabel van links naar rechts en de paradox staat er in cijfers. Op papier groeit je €100.000 in twintig jaar naar ruim €128.000. Maar bij 3% inflatie kun je daar nog maar €70.983 mee kopen, en bij 4% zelfs maar €58.511. Je saldo stijgt, je koopkracht daalt. Bij 3% inflatie ben je die 10% uit het begin na zeven jaar kwijt. Met zekerheid, alleen langzaam genoeg om het niet te voelen.
+Lees de tabel van links naar rechts en de paradox staat er in cijfers. Op papier groeit je €100.000 in twintig jaar naar ruim €128.000. Maar bij 3% inflatie kun je daar nog maar €70.983 mee kopen, en bij 4% zelfs maar €58.511. Je saldo stijgt, je koopkracht daalt. Met zekerheid, alleen langzaam genoeg om het niet te voelen.
 
 *NB: de belasting op spaargeld is in deze tabel nog niet meegerekend. In Nederland betaal je boven een bepaald bedrag belasting over je spaargeld, ook als het door inflatie eigenlijk minder waard wordt. Je verliest dus koopkracht én betaalt daar belasting overheen. Wie veel spaart, houdt in werkelijkheid dus nog minder over dan hier staat.*
 

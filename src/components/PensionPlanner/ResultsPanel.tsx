@@ -462,6 +462,9 @@ export function ResultsPanel({ inputs, result, mc, mcStale, isCalculating, onRun
 
       {/* Assumptions note */}
       <p className="text-xs text-body leading-relaxed px-1">
+        Deze berekening gaat uit van vrij belegd vermogen in box 3. Staat een deel van je geld in een
+        lijfrente, op een bankspaarrekening of in pensioenbeleggen, dan is de opname daaruit belast in
+        box 1 en houd je netto minder over dan hier staat.
         We berekenen in 2.000 scenario's met verschillende toekomstige rendementen hoe groot de kans is dat je jouw doel haalt.
         Voor het gemiddelde rendement en de inflatie gaan we uit van wat er is ingevoerd.
         Dit is een indicatieve berekening en geen financieel advies.

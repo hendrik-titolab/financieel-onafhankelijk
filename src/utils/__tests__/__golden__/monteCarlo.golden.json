@@ -1,0 +1,61 @@
+{
+  "1_basis": {
+    "successRate": 8.8,
+    "successRate75": 31.15,
+    "percentileDataLength": 46,
+    "percentileFirst": {
+      "age": 45,
+      "p10": 100000,
+      "p25": 100000,
+      "p50": 100000,
+      "p75": 100000,
+      "p90": 100000
+    },
+    "percentileMiddle": {
+      "age": 68,
+      "p10": 202841,
+      "p25": 270591,
+      "p50": 375894,
+      "p75": 525051,
+      "p90": 707766
+    },
+    "percentileLast": {
+      "age": 90,
+      "p10": 0,
+      "p25": 0,
+      "p50": 0,
+      "p75": 0,
+      "p90": 0
+    }
+  },
+  "4_negatief_bedrag_na_pensioendatum": {
+    "successRate": 5.95,
+    "successRate75": 21.6,
+    "percentileDataLength": 46,
+    "percentileFirst": {
+      "age": 45,
+      "p10": 100000,
+      "p25": 100000,
+      "p50": 100000,
+      "p75": 100000,
+      "p90": 100000
+    },
+    "percentileMiddle": {
+      "age": 68,
+      "p10": 202841,
+      "p25": 270591,
+      "p50": 375894,
+      "p75": 525051,
+      "p90": 707766
+    },
+    "percentileLast": {
+      "age": 90,
+      "p10": 0,
+      "p25": 0,
+      "p50": 0,
+      "p75": 0,
+      "p90": 0
+    }
+  },
+  "determinisme_identiek": true
+}

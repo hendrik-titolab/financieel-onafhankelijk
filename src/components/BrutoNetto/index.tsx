@@ -323,26 +323,26 @@ export function BrutoNettoCalculator() {
                   <div>
                     <div className="font-medium mb-1">Box 1-tarieven (jonger dan AOW-leeftijd)</div>
                     <ul className="space-y-0.5 text-body">
-                      <li>Schijf 1: 35,75% tot {eur(38_883)}</li>
-                      <li>Schijf 2: 37,56% van {eur(38_883)} tot {eur(78_426)}</li>
-                      <li>Schijf 3: 49,50% boven {eur(78_426)}</li>
+                      <li>Schijf 1: {pct(P.schijven[0].tarief)} tot {eur(P.schijven[0].tot)}</li>
+                      <li>Schijf 2: {pct(P.schijven[1].tarief)} van {eur(P.schijven[0].tot)} tot {eur(P.schijven[1].tot)}</li>
+                      <li>Schijf 3: {pct(P.schijven[2].tarief)} boven {eur(P.schijven[1].tot)}</li>
                     </ul>
                   </div>
                   <div>
                     <div className="font-medium mb-1">Algemene heffingskorting</div>
                     <ul className="space-y-0.5 text-body">
-                      <li>Maximum: {eur(3_115)}</li>
-                      <li>Afbouw: 6,398% vanaf {eur(29_736)}</li>
-                      <li>Nihil vanaf {eur(78_426)}</li>
+                      <li>Maximum: {eur(P.ahk.max)}</li>
+                      <li>Afbouw: {pct(P.ahk.afbouwPct, 3)} vanaf {eur(P.ahk.afbouwVanaf)}</li>
+                      <li>Nihil vanaf {eur(P.ahk.nihilBij)}</li>
                     </ul>
                   </div>
                   <div>
                     <div className="font-medium mb-1">Arbeidskorting</div>
                     <ul className="space-y-0.5 text-body">
-                      <li>Opbouw 8,324% tot {eur(11_965)}</li>
-                      <li>Opbouw 31,009% tot {eur(25_845)}</li>
-                      <li>Opbouw 1,95% tot {eur(45_592)} (maximum {eur(5_685)})</li>
-                      <li>Afbouw 6,510% vanaf {eur(45_593)}, nihil vanaf ± {eur(132_290)}</li>
+                      <li>Opbouw {pct(P.ak.pct1, 3)} tot {eur(P.ak.knik1)}</li>
+                      <li>Opbouw {pct(P.ak.pct2, 3)} tot {eur(P.ak.knik2)}</li>
+                      <li>Opbouw {pct(P.ak.pct3, 2)} tot {eur(P.ak.knik3)} (maximum {eur(P.ak.max)})</li>
+                      <li>Afbouw {pct(P.ak.afbouwPct, 3)} vanaf {eur(P.ak.afbouwVanaf)}, nihil vanaf {eur(P.ak.afbouwVanaf + P.ak.max / P.ak.afbouwPct)}</li>
                     </ul>
                   </div>
                   <div className="text-body pt-1 border-t border-line">

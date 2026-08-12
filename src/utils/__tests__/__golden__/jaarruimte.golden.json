@@ -1,0 +1,191 @@
+{
+  "2016_geen": {
+    "jaarruimte": 7715,
+    "beschikbareReserveringsruimte": 0,
+    "totaalBeschikbaar": 7715,
+    "alIngelegd": 0,
+    "nogTeDoen": 7715,
+    "belastingVoordeel": 2898,
+    "belastingTariefPct": 37.56
+  },
+  "2016_db": {
+    "jaarruimte": 0,
+    "beschikbareReserveringsruimte": 0,
+    "totaalBeschikbaar": 0,
+    "alIngelegd": 0,
+    "nogTeDoen": 0,
+    "belastingVoordeel": 0,
+    "belastingTariefPct": 37.56
+  },
+  "2016_wtp": {
+    "jaarruimte": 6215,
+    "beschikbareReserveringsruimte": 0,
+    "totaalBeschikbaar": 6215,
+    "alIngelegd": 0,
+    "nogTeDoen": 6215,
+    "belastingVoordeel": 2334,
+    "belastingTariefPct": 37.56
+  },
+  "2017_geen": {
+    "jaarruimte": 8000,
+    "beschikbareReserveringsruimte": 0,
+    "totaalBeschikbaar": 8000,
+    "alIngelegd": 0,
+    "nogTeDoen": 8000,
+    "belastingVoordeel": 3005,
+    "belastingTariefPct": 37.56
+  },
+  "2017_db": {
+    "jaarruimte": 0,
+    "beschikbareReserveringsruimte": 0,
+    "totaalBeschikbaar": 0,
+    "alIngelegd": 0,
+    "nogTeDoen": 0,
+    "belastingVoordeel": 0,
+    "belastingTariefPct": 37.56
+  },
+  "2017_wtp": {
+    "jaarruimte": 6500,
+    "beschikbareReserveringsruimte": 0,
+    "totaalBeschikbaar": 6500,
+    "alIngelegd": 0,
+    "nogTeDoen": 6500,
+    "belastingVoordeel": 2441,
+    "belastingTariefPct": 37.56
+  },
+  "2019_geen": {
+    "jaarruimte": 7677,
+    "beschikbareReserveringsruimte": 0,
+    "totaalBeschikbaar": 7677,
+    "alIngelegd": 0,
+    "nogTeDoen": 7677,
+    "belastingVoordeel": 2884,
+    "belastingTariefPct": 37.56
+  },
+  "2019_db": {
+    "jaarruimte": 0,
+    "beschikbareReserveringsruimte": 0,
+    "totaalBeschikbaar": 0,
+    "alIngelegd": 0,
+    "nogTeDoen": 0,
+    "belastingVoordeel": 0,
+    "belastingTariefPct": 37.56
+  },
+  "2019_wtp": {
+    "jaarruimte": 6177,
+    "beschikbareReserveringsruimte": 0,
+    "totaalBeschikbaar": 6177,
+    "alIngelegd": 0,
+    "nogTeDoen": 6177,
+    "belastingVoordeel": 2320,
+    "belastingTariefPct": 37.56
+  },
+  "2022_geen": {
+    "jaarruimte": 7603,
+    "beschikbareReserveringsruimte": 0,
+    "totaalBeschikbaar": 7603,
+    "alIngelegd": 0,
+    "nogTeDoen": 7603,
+    "belastingVoordeel": 2856,
+    "belastingTariefPct": 37.56
+  },
+  "2022_db": {
+    "jaarruimte": 0,
+    "beschikbareReserveringsruimte": 0,
+    "totaalBeschikbaar": 0,
+    "alIngelegd": 0,
+    "nogTeDoen": 0,
+    "belastingVoordeel": 0,
+    "belastingTariefPct": 37.56
+  },
+  "2022_wtp": {
+    "jaarruimte": 6103,
+    "beschikbareReserveringsruimte": 0,
+    "totaalBeschikbaar": 6103,
+    "alIngelegd": 0,
+    "nogTeDoen": 6103,
+    "belastingVoordeel": 2292,
+    "belastingTariefPct": 37.56
+  },
+  "2023_geen": {
+    "jaarruimte": 16906,
+    "beschikbareReserveringsruimte": 0,
+    "totaalBeschikbaar": 16906,
+    "alIngelegd": 0,
+    "nogTeDoen": 16906,
+    "belastingVoordeel": 6350,
+    "belastingTariefPct": 37.56
+  },
+  "2023_db": {
+    "jaarruimte": 7501,
+    "beschikbareReserveringsruimte": 0,
+    "totaalBeschikbaar": 7501,
+    "alIngelegd": 0,
+    "nogTeDoen": 7501,
+    "belastingVoordeel": 2817,
+    "belastingTariefPct": 37.56
+  },
+  "2023_wtp": {
+    "jaarruimte": 15406,
+    "beschikbareReserveringsruimte": 0,
+    "totaalBeschikbaar": 15406,
+    "alIngelegd": 0,
+    "nogTeDoen": 15406,
+    "belastingVoordeel": 5787,
+    "belastingTariefPct": 37.56
+  },
+  "2026_geen": {
+    "jaarruimte": 15248,
+    "beschikbareReserveringsruimte": 0,
+    "totaalBeschikbaar": 15248,
+    "alIngelegd": 0,
+    "nogTeDoen": 15248,
+    "belastingVoordeel": 5727,
+    "belastingTariefPct": 37.56
+  },
+  "2026_db": {
+    "jaarruimte": 5843,
+    "beschikbareReserveringsruimte": 0,
+    "totaalBeschikbaar": 5843,
+    "alIngelegd": 0,
+    "nogTeDoen": 5843,
+    "belastingVoordeel": 2195,
+    "belastingTariefPct": 37.56
+  },
+  "2026_wtp": {
+    "jaarruimte": 13748,
+    "beschikbareReserveringsruimte": 0,
+    "totaalBeschikbaar": 13748,
+    "alIngelegd": 0,
+    "nogTeDoen": 13748,
+    "belastingVoordeel": 5164,
+    "belastingTariefPct": 37.56
+  },
+  "2026_geen_met_reserveringsruimte": {
+    "jaarruimte": 15248,
+    "beschikbareReserveringsruimte": 40000,
+    "totaalBeschikbaar": 55248,
+    "alIngelegd": 5000,
+    "nogTeDoen": 50248,
+    "belastingVoordeel": 18873,
+    "belastingTariefPct": 37.56
+  },
+  "2026_db_met_reserveringsruimte": {
+    "jaarruimte": 5843,
+    "beschikbareReserveringsruimte": 40000,
+    "totaalBeschikbaar": 45843,
+    "alIngelegd": 5000,
+    "nogTeDoen": 40843,
+    "belastingVoordeel": 15341,
+    "belastingTariefPct": 37.56
+  },
+  "2026_wtp_met_reserveringsruimte": {
+    "jaarruimte": 13748,
+    "beschikbareReserveringsruimte": 40000,
+    "totaalBeschikbaar": 53748,
+    "alIngelegd": 5000,
+    "nogTeDoen": 48748,
+    "belastingVoordeel": 18310,
+    "belastingTariefPct": 37.56
+  }
+}

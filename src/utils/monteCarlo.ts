@@ -1,12 +1,30 @@
 import type { PensionInputs, MonteCarloResult, PercentilePoint } from '../types'
 import { brutoToNetto, getMonthlyWithdrawal } from './pensionCalc'
 
-const N_SIMULATIONS = 2000
+export const N_SIMULATIONS = 2000
 
-function sampleNormal(mean: number, std: number): number {
-  const u1 = Math.random()
-  const u2 = Math.random()
+function sampleNormal(mean: number, std: number, rng: () => number): number {
+  const u1 = rng()
+  const u2 = rng()
   return mean + std * Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2)
+}
+
+// De rendementen in risicoprofielen.ts zijn verwachte MEETKUNDIGE (samengestelde)
+// jaarrendementen, niet rekenkundige gemiddelden (besluit 12 augustus 2026).
+// Trek daarom lognormaal: de mediaan van het samengestelde pad is dan exact
+// (1+g)^n, in plaats van er structureel onder te liggen (E8).
+// Twee bijvangsten: een trekking kan niet meer onder −100% rendement uitkomen (het
+// mechanisme achter E6), en een pad kan het vermogen niet negatief maken door
+// rendement alleen.
+function sampleAnnualReturn(geoMeanPct: number, volPct: number, rng: () => number): number {
+  const g = geoMeanPct / 100
+  const s = volPct / 100  // volatiliteit staat in hele procentpunten
+  // Randgeval: een reëel rendement van −100% of lager (absurde inflatie-invoer)
+  // laat zich niet lognormaal modelleren. Val dan terug op een vast verlies.
+  if (g <= -1) return -1
+  const mu = Math.log(1 + g)
+  const sigma = Math.sqrt(Math.log(1 + (s * s) / ((1 + g) * (1 + g))))
+  return Math.exp(sampleNormal(mu, sigma, rng)) - 1
 }
 
 function percentile(arr: number[], p: number): number {
@@ -21,7 +39,8 @@ function realReturn(nominal: number, inflation: number): number {
   return ((1 + nominal / 100) / (1 + inflation / 100) - 1) * 100
 }
 
-export function runMonteCarlo(inputs: PensionInputs): MonteCarloResult {
+export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number; currentYear?: number }): MonteCarloResult {
+  const rng = opts?.rng ?? Math.random
   const {
     currentAge, retirementAge, lifeExpectancy,
     currentCapital, monthlyContribution, contributionFrequency,
@@ -30,20 +49,21 @@ export function runMonteCarlo(inputs: PensionInputs): MonteCarloResult {
     aowMaandBedragNetto, aowStartAge,
     employerPension, employerPensionStartAge,
     lifeEvents = [],
-    stortingen = [],
     volatilityPre, volatilityPost,
   } = inputs
 
   const aowMonthlyNetto = aowMaandBedragNetto
 
-  const currentYear = new Date().getFullYear()
+  const currentYear = opts?.currentYear ?? new Date().getFullYear()
   const retirementYear = currentYear + Math.max(0, retirementAge - currentAge)
-  // Build accumulation-phase event map (life events + stortingen up to retirement)
-  const allEvents = [...lifeEvents, ...stortingen]
-  const lumpSumMap = new Map<number, number>()
-  for (const e of allEvents) {
-    if (e.year >= currentYear && e.year < retirementYear && e.amount !== 0) {
-      lumpSumMap.set(e.year, (lumpSumMap.get(e.year) ?? 0) + e.amount)
+  // Eén kaart over de hele looptijd, opbouw- én uitkeringsfase. Was tot augustus
+  // 2026 gefilterd op year < retirementYear, waardoor een eenmalig bedrag ná de
+  // pensioendatum de slagingskans en de bandbreedte niet raakte terwijl het de
+  // deterministische lijn wél verschoof (E7).
+  const eventMap = new Map<number, number>()
+  for (const e of lifeEvents) {
+    if (e.year >= currentYear && e.amount !== 0) {
+      eventMap.set(e.year, (eventMap.get(e.year) ?? 0) + e.amount)
     }
   }
   const desiredNetto = desiredRetirementIncomeType === 'bruto'
@@ -57,7 +77,6 @@ export function runMonteCarlo(inputs: PensionInputs): MonteCarloResult {
     : monthlyContribution
 
   const totalYears = Math.max(0, lifeExpectancy - currentAge)
-  const yearsToRetirement = Math.max(0, retirementAge - currentAge)
 
   const capitalByAge: number[][] = Array.from(
     { length: totalYears + 1 },
@@ -72,19 +91,26 @@ export function runMonteCarlo(inputs: PensionInputs): MonteCarloResult {
     // Parallel tracker: same economic scenario, but client only needs 75% of income from capital.
     // Using the same random returns ensures a fair like-for-like comparison.
     let capital75 = currentCapital
+    // Een pad is pas geslaagd als het kapitaal onderweg nooit onder nul is gedoken.
+    // Alleen naar de eindstand kijken telt een pad dat halverwege de uitkeringsfase
+    // leegloopt ten onrechte mee zodra het daarna weer boven nul uitkomt (E6).
+    let everNegative = false
+    let everNegative75 = false
 
     for (let yr = 0; yr < totalYears; yr++) {
       const age = currentAge + yr
+      const calYear = currentYear + yr
+      // Eenmalig bedrag aan het begin van het jaar, dan rendement, dan de
+      // onttrekking. Zelfde volgorde als pensionCalc.ts.
+      const event = eventMap.get(calYear) ?? 0
       capitalByAge[yr][sim] = Math.max(0, capital)
 
       if (age < retirementAge) {
-        const r = sampleNormal(realPre, volatilityPre) / 100
-        const calYear = currentYear + yr
-        const lumpSum = lumpSumMap.get(calYear) ?? 0
-        capital   = (capital   + lumpSum) * (1 + r) + monthlyPMT * 12
-        capital75 = (capital75 + lumpSum) * (1 + r) + monthlyPMT * 12
+        const r = sampleAnnualReturn(realPre, volatilityPre, rng)
+        capital   = (capital   + event) * (1 + r) + monthlyPMT * 12
+        capital75 = (capital75 + event) * (1 + r) + monthlyPMT * 12
       } else {
-        const r = sampleNormal(realPost, volatilityPost) / 100
+        const r = sampleAnnualReturn(realPost, volatilityPost, rng)
         // Full income scenario
         const withdrawal = getMonthlyWithdrawal(
           age, desiredNetto, aowMonthlyNetto, aowStartAge,
@@ -97,29 +123,28 @@ export function runMonteCarlo(inputs: PensionInputs): MonteCarloResult {
           age, desiredNetto * 0.75, aowMonthlyNetto, aowStartAge,
           employerPension, employerPensionStartAge
         ) * 12
-        capital   = capital   * (1 + r) - withdrawal
-        capital75 = capital75 * (1 + r) - withdrawal75
+        capital   = (capital   + event) * (1 + r) - withdrawal
+        capital75 = (capital75 + event) * (1 + r) - withdrawal75
+        if (capital   < 0) everNegative   = true
+        if (capital75 < 0) everNegative75 = true
       }
     }
     capitalByAge[totalYears][sim] = Math.max(0, capital)
-    if (capital   >= 0) successCount++
-    if (capital75 >= 0) successCount75++
+    if (!everNegative)   successCount++
+    if (!everNegative75) successCount75++
   }
 
   const percentileData: PercentilePoint[] = []
   for (let yr = 0; yr <= totalYears; yr++) {
     const age = currentAge + yr
-    // Only show accumulation + retirement, skip pre-retirement for the MC bands
-    if (age >= retirementAge - yearsToRetirement) {
-      percentileData.push({
-        age,
-        p10: Math.max(0, percentile(capitalByAge[yr], 10)),
-        p25: Math.max(0, percentile(capitalByAge[yr], 25)),
-        p50: Math.max(0, percentile(capitalByAge[yr], 50)),
-        p75: Math.max(0, percentile(capitalByAge[yr], 75)),
-        p90: Math.max(0, percentile(capitalByAge[yr], 90)),
-      })
-    }
+    percentileData.push({
+      age,
+      p10: Math.max(0, percentile(capitalByAge[yr], 10)),
+      p25: Math.max(0, percentile(capitalByAge[yr], 25)),
+      p50: Math.max(0, percentile(capitalByAge[yr], 50)),
+      p75: Math.max(0, percentile(capitalByAge[yr], 75)),
+      p90: Math.max(0, percentile(capitalByAge[yr], 90)),
+    })
   }
 
   return {

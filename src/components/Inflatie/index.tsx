@@ -254,7 +254,7 @@ export function InflatieCalculator() {
       <div className="card">
         <h2 className="text-sm font-medium text-body mb-1">Nominaal saldo vs. koopkracht</h2>
         <p className="text-xs text-body mb-4">
-          Het rode vlak tussen de lijnen is het deel van je saldo dat door inflatie aan waarde inboet.
+          Het gekleurde vlak tussen de lijnen is het deel van je saldo dat door inflatie aan waarde inboet.
         </p>
         <ResponsiveContainer width="100%" height={280}>
           <ComposedChart data={r.jaren} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
