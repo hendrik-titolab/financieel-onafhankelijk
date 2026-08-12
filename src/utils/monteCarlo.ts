@@ -38,11 +38,14 @@ export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number
 
   const currentYear = opts?.currentYear ?? new Date().getFullYear()
   const retirementYear = currentYear + Math.max(0, retirementAge - currentAge)
-  // Build accumulation-phase event map (life events up to retirement)
-  const lumpSumMap = new Map<number, number>()
+  // Eén kaart over de hele looptijd, opbouw- én uitkeringsfase. Was tot augustus
+  // 2026 gefilterd op year < retirementYear, waardoor een eenmalig bedrag ná de
+  // pensioendatum de slagingskans en de bandbreedte niet raakte terwijl het de
+  // deterministische lijn wél verschoof (E7).
+  const eventMap = new Map<number, number>()
   for (const e of lifeEvents) {
-    if (e.year >= currentYear && e.year < retirementYear && e.amount !== 0) {
-      lumpSumMap.set(e.year, (lumpSumMap.get(e.year) ?? 0) + e.amount)
+    if (e.year >= currentYear && e.amount !== 0) {
+      eventMap.set(e.year, (eventMap.get(e.year) ?? 0) + e.amount)
     }
   }
   const desiredNetto = desiredRetirementIncomeType === 'bruto'
@@ -78,14 +81,16 @@ export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number
 
     for (let yr = 0; yr < totalYears; yr++) {
       const age = currentAge + yr
+      const calYear = currentYear + yr
+      // Eenmalig bedrag aan het begin van het jaar, dan rendement, dan de
+      // onttrekking. Zelfde volgorde als pensionCalc.ts.
+      const event = eventMap.get(calYear) ?? 0
       capitalByAge[yr][sim] = Math.max(0, capital)
 
       if (age < retirementAge) {
         const r = sampleNormal(realPre, volatilityPre, rng) / 100
-        const calYear = currentYear + yr
-        const lumpSum = lumpSumMap.get(calYear) ?? 0
-        capital   = (capital   + lumpSum) * (1 + r) + monthlyPMT * 12
-        capital75 = (capital75 + lumpSum) * (1 + r) + monthlyPMT * 12
+        capital   = (capital   + event) * (1 + r) + monthlyPMT * 12
+        capital75 = (capital75 + event) * (1 + r) + monthlyPMT * 12
       } else {
         const r = sampleNormal(realPost, volatilityPost, rng) / 100
         // Full income scenario
@@ -100,8 +105,8 @@ export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number
           age, desiredNetto * 0.75, aowMonthlyNetto, aowStartAge,
           employerPension, employerPensionStartAge
         ) * 12
-        capital   = capital   * (1 + r) - withdrawal
-        capital75 = capital75 * (1 + r) - withdrawal75
+        capital   = (capital   + event) * (1 + r) - withdrawal
+        capital75 = (capital75 + event) * (1 + r) - withdrawal75
         if (capital   < 0) everNegative   = true
         if (capital75 < 0) everNegative75 = true
       }

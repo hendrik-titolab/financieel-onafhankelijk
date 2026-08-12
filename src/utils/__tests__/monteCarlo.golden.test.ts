@@ -4,11 +4,12 @@
 // zichtbaar wordt in de diff. Als een fix een van deze waarden verandert: dat is de
 // bedoeling, controleer de nieuwe waarde inhoudelijk en werk de fixture bij.
 //
-// Kanttekening: de scenario's '1_basis' en '4_negatief_bedrag_na_pensioendatum'
-// geven hieronder BEIDE exact dezelfde successRate/successRate75/percentielen,
-// ondanks dat scenario 4 een eenmalig bedrag van −€100.000 op leeftijd 75 bevat.
-// Dat is bevinding E7 (monteCarlo.ts negeert eenmalige bedragen ná de
-// pensioendatum) nu concreet met cijfers vastgelegd, niet gecorrigeerd.
+// Bevinding E7 is inmiddels opgelost: de scenario's '1_basis' en
+// '4_negatief_bedrag_na_pensioendatum' gaven eerst exact dezelfde
+// successRate/successRate75/percentielen, ondanks het eenmalige bedrag van
+// −€100.000 op leeftijd 75 in scenario 4. Sinds monteCarlo.ts eenmalige bedragen
+// in de uitkeringsfase toepast, lopen die twee uiteen. De test onderaan bewaakt
+// dat, en zou weer moeten falen als de filtering ooit terugkeert.
 import { describe, it, expect } from 'vitest'
 import { runMonteCarlo } from '../monteCarlo'
 import { makeRng } from '../rng'
@@ -44,13 +45,19 @@ describe('runMonteCarlo — golden master', () => {
     expect(a.percentileData).toEqual(b.percentileData)
   })
 
-  it('bevestigt E7: een eenmalig bedrag na pensioendatum verandert de simulatie niet', () => {
+  it('E7 opgelost: een eenmalig bedrag na pensioendatum verandert de simulatie wél', () => {
     const withoutEvent = runMonteCarlo(SCENARIOS['1_basis'], { rng: makeRng(12345), currentYear: 2026 })
     const withEvent = runMonteCarlo(SCENARIOS['4_negatief_bedrag_na_pensioendatum'], { rng: makeRng(12345), currentYear: 2026 })
-    // Golden master: dit IS het huidige (waarschijnlijk foute) gedrag — vandaar
-    // toEqual, niet toBeGreaterThan. Verandert deze test ooit naar "niet gelijk",
-    // dan is dat het bewijs dat E7 is opgelost.
-    expect(withEvent.successRate).toEqual(withoutEvent.successRate)
-    expect(withEvent.percentileData).toEqual(withoutEvent.percentileData)
+    // Scenario 4 is scenario 1 plus een uitgave van −€100.000 op leeftijd 75.
+    // Een uitgave kan de slagingskans nooit verhogen en het vermogen vanaf dat
+    // moment nooit doen stijgen.
+    expect(withEvent.successRate).toBeLessThanOrEqual(withoutEvent.successRate)
+    expect(withEvent.percentileData).not.toEqual(withoutEvent.percentileData)
+
+    // Vóór leeftijd 75 zijn de paden identiek, vanaf leeftijd 75 lager.
+    const p50 = (r: typeof withEvent, age: number) =>
+      r.percentileData.find(p => p.age === age)!.p50
+    expect(p50(withEvent, 74)).toBeCloseTo(p50(withoutEvent, 74), 6)
+    expect(p50(withEvent, 76)).toBeLessThan(p50(withoutEvent, 76))
   })
 })
