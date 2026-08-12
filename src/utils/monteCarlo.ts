@@ -70,6 +70,11 @@ export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number
     // Parallel tracker: same economic scenario, but client only needs 75% of income from capital.
     // Using the same random returns ensures a fair like-for-like comparison.
     let capital75 = currentCapital
+    // Een pad is pas geslaagd als het kapitaal onderweg nooit onder nul is gedoken.
+    // Alleen naar de eindstand kijken telt een pad dat halverwege de uitkeringsfase
+    // leegloopt ten onrechte mee zodra het daarna weer boven nul uitkomt (E6).
+    let everNegative = false
+    let everNegative75 = false
 
     for (let yr = 0; yr < totalYears; yr++) {
       const age = currentAge + yr
@@ -97,11 +102,13 @@ export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number
         ) * 12
         capital   = capital   * (1 + r) - withdrawal
         capital75 = capital75 * (1 + r) - withdrawal75
+        if (capital   < 0) everNegative   = true
+        if (capital75 < 0) everNegative75 = true
       }
     }
     capitalByAge[totalYears][sim] = Math.max(0, capital)
-    if (capital   >= 0) successCount++
-    if (capital75 >= 0) successCount75++
+    if (!everNegative)   successCount++
+    if (!everNegative75) successCount75++
   }
 
   const percentileData: PercentilePoint[] = []
