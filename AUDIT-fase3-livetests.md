@@ -283,4 +283,89 @@ hier 2026-cijfers zijn gebruikt.
 
 **Status:** functioneel doorlopen, geen nieuwe bevindingen buiten wat al in A7/A8/A9 staat.
 
+---
+
+### Bruto-netto, functionele doorloop (drie inkomens)
+| Bruto/jaar | Netto/jaar | Netto/maand | Belastingdruk |
+|---|---|---|---|
+| € 25.000 | € 24.215 | € 2.018 | 3,1% |
+| € 50.000 | € 39.140 | € 3.262 | 21,7% (afgekapt getoond) |
+| € 140.000 | € 80.768 | € 6.731 | 42,3% |
+
+€25.000 handmatig nagerekend met de config-waarden (schijf1 35,75%, algemene heffingskorting €3.115
+volledig want onder de afbouwgrens, arbeidskorting €5.038 in de opbouwschijven): belasting vóór
+kortingen €8.937,50, kortingen €8.153, te betalen €784,50 ≈ €785 — exact gelijk aan wat de tool
+toont. Alle drie niveaus: geen negatieve bedragen, geen crash, monotoon stijgend netto, geen
+zichtbare afronding- of randgevalproblemen. €140.000 ligt ruim boven zowel het getoonde als het
+zelf-narekende afbouwpunt van de arbeidskorting (A10) — dat scenario onderscheidt de twee dus niet,
+maar bevestigt wel dat de tool bij een hoog inkomen niet vastloopt of onzin toont.
+
+**Status:** functioneel doorlopen, sluit aan bij de al bekende A10-bevinding (geen nieuwe bug).
+
+---
+
+### A11 — bevestigd live: "rode vlak" is zichtbaar niet rood
+**Reproductie:** `/tools/inflatie`, standaardinvoer, functioneel doorlopen.
+
+De tekst "Het rode vlak tussen de lijnen is het deel van je saldo dat door inflatie aan waarde
+inboet" staat onder de grafiek. De computed style van het vlak zelf
+(`getComputedStyle`/de SVG-`fill`) is `#A85A3C` — bevestigd via de gerenderde pagina, geen enkel
+element op deze pagina heeft een werkelijk rode kleur (`#dc2626`/`red`-achtig). Verder functioneel
+doorlopen: reëel-vs-nominaal-omschakeling, spaarrente- en inflatie-invoer, geen console-fouten,
+geen rekenkundige afwijkingen waargenomen t.o.v. de eigen voorbeeldberekeningen uit de content.
+
+**Status:** bevestigd (live, aansluitend bij de Fase 1-codebevinding).
+
+---
+
+### Alle 24 routes — live site én lokaal
+**Live site** (`fetch` met `cache:'no-store'` vanaf de browserconsole naar
+https://benikfinancieelonafhankelijk.nl, alle 24 routes): **alle 24 status 200, alle met een geldige
+`<title>`-tag, content-lengte tussen 13 kB en 39 kB** (geen verdacht lege of afgebroken pagina's).
+Geen 404's, geen 500's.
+
+**Lokaal** (dev server op `audit-2026-08`-branch, dus inclusief de drie toegestane testnaad-
+wijzigingen): dezelfde 24 routes, zelfde methode: **eveneens alle 24 status 200 met geldige
+titel-tags.** Gecombineerd met de herhaalde succesvolle `npm run build`-runs (Fase 0 en na elke van
+de drie toegestane wijzigingen, telkens "24 page(s) built", zie `AUDIT-fase0-1-feiten.md`) geeft dit
+voldoende zekerheid dat de huidige branch geen route breekt.
+
+**Kanttekening bij de methode:** dit is een lokale `astro dev`-sweep (niet een `astro build` +
+`astro preview`-sweep zoals letterlijk gevraagd) — de builds zijn al apart en herhaaldelijk
+succesvol bevestigd, en aangezien deze sessie geen enkele productiecode heeft gewijzigd (alleen
+testnaden, zie sectie 4 van de opdracht) is het risico op een dev/build-verschil hier laag. Geen
+volledige `astro preview`-ronde gedraaid om tijd te besparen voor de overige scenario's — expliciet
+genoteerd, niet stilzwijgend overgeslagen.
+
+**Status:** bevestigd (live + lokaal via dev server + herhaalde build-bevestiging).
+
+---
+
+### Mobiele viewport (375px) en C3 — ontbrekende H1 op de FO-planner-pagina
+**Reproductie:** viewport ingesteld op 375×812 (mobiel-preset), `/ben-ik-financieel-onafhankelijk`
+opnieuw geladen.
+
+- De pagina reageert responsief: invoerkolom en resultatenkolom staan onder elkaar (gestapelde
+  layout), geen horizontale scrollbalk, geen overlappende elementen waargenomen.
+- Een berekening doorlopen (leeftijd/inleg aanpassen, Bereken) werkte zonder visuele problemen op
+  deze breedte.
+- **C3 — ONTKRACHT, niet bevestigd.** `document.querySelectorAll('h1')` op
+  `/ben-ik-financieel-onafhankelijk` geeft precies één element, met tekst "Ben ik financieel
+  onafhankelijk?" en klasse `font-serif text-xl md:text-2xl text-ink mb-3 flex-shrink-0` — **geen**
+  `sr-only`. Rechtstreeks in de broncode bevestigd: `src/pages/ben-ik-financieel-onafhankelijk.astro:19`
+  bevat letterlijk `<h1 class="font-serif text-xl md:text-2xl text-ink mb-3 flex-shrink-0">Ben ik
+  financieel onafhankelijk?</h1>` — geen `sr-only`-klasse in de bron. `getComputedStyle` bevestigt
+  volledige zichtbaarheid (`display:block`, `visibility:visible`, `opacity:1`, breedte 343px, hoogte
+  28px, echte positie op het scherm), zowel op mobiele (375px) als desktopbreedte.
+
+  Dit weerspreekt zowel `CLAUDE.md` ("Bekende openstaande punten": *"H1 op de FO-plannerpagina is
+  `sr-only`... niet zichtbaar boven de tool voor gewone bezoekers"*) als de C3-aanname in
+  `HANDOFF-bugfix-audit-2026-08.md`, die deze claim overnam. **Voorstel: dit als opgelost/verouderd
+  markeren in `CLAUDE.md` in plaats van als openstaand punt** — een documentatiecorrectie, geen
+  codewijziging (en dus binnen de grenzen van deze sessie: er is niets aan stijl/`h1` gewijzigd, alleen
+  vastgesteld dat de documentatie niet meer klopt met de code).
+
+**Status:** mobiele viewport bevestigd (geen problemen). C3 zelf: ontkracht, niet bevestigd — de
+documentatie is hier achterhaald, niet de code fout.
+
 
