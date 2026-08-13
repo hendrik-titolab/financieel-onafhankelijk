@@ -8,8 +8,26 @@ function getParams(year: number) {
   return JAARRUIMTE_PARAMS[year] ?? JAARRUIMTE_PARAMS[2026]
 }
 
+// Het plafond van de reserveringsruimte hoort bij het jaar waarin je de ruimte
+// benut, niet bij de jaren waaruit de onbenutte ruimte komt. Wat je dat jaar niet
+// kwijt kunt, schuift door naar volgend jaar zolang je binnen de terugkijktermijn
+// blijft.
+//
+// Tot en met 2022 bestond er geen enkel plafond: het waren twee bedragen,
+// afhankelijk van of je binnen tien jaar van je AOW-leeftijd zat. Voor die jaren
+// is het veld daarom leeg. Dat kan alleen voorkomen als er een belastingjaar
+// wordt doorgegeven dat de tool niet aanbiedt, en dan is stilzwijgend doorrekenen
+// erger dan stoppen.
 function getReserveringsruimteMax(year: number): number {
-  return (JAARRUIMTE_PARAMS[year] ?? JAARRUIMTE_PARAMS[2026]).reserveringsruimteMax
+  const max = JAARRUIMTE_PARAMS[year]?.reserveringsruimteMax
+  if (max === undefined) {
+    throw new Error(
+      `Geen plafond voor de reserveringsruimte bekend voor ${year}. ` +
+      `Tot en met 2022 was dat leeftijdsafhankelijk en dat kent deze tool niet. ` +
+      `Kies een jaar uit getAvailableYears().`
+    )
+  }
+  return max
 }
 
 // Berekent alleen de jaarruimte voor een enkel jaar — gebruikt in de reserveringsruimte-wizard
@@ -48,12 +66,19 @@ export function calculateJaarruimte(inputs: JaarruimteInputs): JaarruimteResult 
     jaarruimte = Math.max(0, p.percentage * base)
   }
 
-  // Reserveringsruimte: som van onbenutte jaarruimten vorige jaren,
-  // gemaximeerd op het totaalplafond voor dit belastingjaar (Lindenhaege advieskaart).
-  const maxReserveringsruimte = getReserveringsruimteMax(year)
+  // Reserveringsruimte: som van de onbenutte jaarruimten uit voorgaande jaren,
+  // afgetopt op het plafond van dít belastingjaar. Wat er boven valt gaat niet
+  // verloren, dat schuift door naar een volgend jaar zolang je binnen de
+  // terugkijktermijn blijft.
+  //
+  // Het plafond wordt pas opgevraagd als er iets af te toppen valt. Voor de jaren
+  // tot en met 2022 bestaat er namelijk geen enkel plafond, en dan moet de
+  // jaarruimte zelf nog gewoon te berekenen zijn.
+  const teVerdelen = reserveringsruimteRijen.filter(r => r.onbenutBedrag > 0)
   let beschikbareReserveringsruimte = 0
-  for (const rij of reserveringsruimteRijen) {
-    if (rij.onbenutBedrag > 0) {
+  if (teVerdelen.length > 0) {
+    const maxReserveringsruimte = getReserveringsruimteMax(year)
+    for (const rij of teVerdelen) {
       beschikbareReserveringsruimte = Math.min(
         beschikbareReserveringsruimte + rij.onbenutBedrag,
         maxReserveringsruimte
