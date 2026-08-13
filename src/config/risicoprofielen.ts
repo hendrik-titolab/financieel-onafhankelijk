@@ -1,17 +1,16 @@
 /**
- * Risicoprofielen voor de pensioenplanner.
- * Elk profiel stelt het verwachte (nominale) rendement en de volatiliteit in,
- * zowel vóór als ná de pensioendatum.
+ * RISICOPROFIELEN — GEGENEREERD BESTAND
  *
- * Basis: eigen huisvisie, geen externe bron zoals bij fiscaleParameters.ts.
- * De percentages zijn bedoeld als verwachte meetkundige (samengestelde)
- * jaarrendementen, conform wat gangbaar is in Nederlandse consumentenrekentools
- * — besluit Hendrik, 12 augustus 2026 (zie AUDIT-2026-08-bevindingen.md, A12/E8).
+ * !! NIET met de hand aanpassen !!
+ *
+ * Bron:      C:/Users/schak/Documents/Fiscale bron/fiscale-cijfers.json
+ * Genereren: node genereer.mjs   (in die map)
+ *
+ * Eigen huisvisie, geen externe onderbouwing. Verwacht MEETKUNDIG (samengesteld) nominaal jaarrendement, geen rekenkundig gemiddelde. Besluit 12 augustus 2026.
+ *
  * monteCarlo.ts stemt zijn trekkingen hierop af: sampleAnnualReturn() trekt
  * lognormaal, zodat de mediaan van het samengestelde pad op deze percentages
- * uitkomt (doorgevoerd 12 augustus 2026, bevinding E8).
- *
- * Pas hier gerust de getallen aan naar de eigen huisvisie.
+ * uitkomt (bevinding E8, 12 augustus 2026).
  */
 
 export type RiskProfile =
@@ -42,7 +41,7 @@ export const PROFIEL_VOLGORDE: RiskProfile[] = [
 export const RISICOPROFIELEN: Record<RiskProfile, Risicoprofiel> = {
   zeer_defensief: {
     label: 'Zeer defensief',
-    rendementVoor: 3.0, rendementNa: 2.5,
+    rendementVoor: 3, rendementNa: 2.5,
     volatiliteitVoor: 5, volatiliteitNa: 4,
     uitleg: 'Vooral obligaties en spaargeld. Weinig schommeling, maar ook een laag verwacht rendement.',
   },
@@ -54,19 +53,19 @@ export const RISICOPROFIELEN: Record<RiskProfile, Risicoprofiel> = {
   },
   neutraal: {
     label: 'Neutraal',
-    rendementVoor: 6.0, rendementNa: 4.0,
+    rendementVoor: 6, rendementNa: 4,
     volatiliteitVoor: 12, volatiliteitNa: 8,
     uitleg: 'Ongeveer half aandelen, half obligaties. Een gebalanceerde afweging tussen rendement en risico.',
   },
   offensief: {
     label: 'Offensief',
-    rendementVoor: 7.5, rendementNa: 5.0,
+    rendementVoor: 7.5, rendementNa: 5,
     volatiliteitVoor: 16, volatiliteitNa: 10,
     uitleg: 'Overwegend aandelen. Hoger verwacht rendement, maar grotere schommelingen onderweg.',
   },
   zeer_offensief: {
     label: 'Zeer offensief',
-    rendementVoor: 9.0, rendementNa: 6.0,
+    rendementVoor: 9, rendementNa: 6,
     volatiliteitVoor: 20, volatiliteitNa: 12,
     uitleg: 'Vrijwel volledig aandelen. Hoogste verwachte rendement, maar ook de grootste schommelingen.',
   },
