@@ -53,6 +53,32 @@ describe('calculateJaarruimte — golden master (zonder reserveringsruimte)', ()
   }
 })
 
+// Met factor A € 1.500 valt de aftrek in de oudere jaren hoger uit dan de hele
+// jaarruimte, waardoor de uitkomst op nul wordt geklemd en factorMultiplier dus
+// niets meer aan het resultaat verandert. Een fout in die factor bleef daardoor
+// onzichtbaar: de correctie van 2022 (7,44 naar 6,27, augustus 2026) veranderde
+// geen enkele fixture. Met een lagere factor A blijft er wel iets over en telt de
+// vermenigvuldiger wel mee.
+describe('calculateJaarruimte — golden master (lage factor A, zodat de imputatiefactor meetelt)', () => {
+  for (const jaar of JAREN) {
+    const key = `${jaar}_db_factorA500`
+    it(key, () => {
+      const result = calculateJaarruimte({
+        year: jaar,
+        income: 70000,
+        pensioenType: 'db',
+        factorA: 500,
+        werkgeverspremie: 0,
+        alIngelegd: 0,
+        reserveringsruimteRijen: [],
+        clientName: '', adviseurNaam: '', notities: '',
+      })
+      expect(result.jaarruimte).toBeGreaterThan(0)
+      expect(pick(result)).toEqual((fixture as Record<string, any>)[key])
+    })
+  }
+})
+
 describe('calculateJaarruimte — golden master (met reserveringsruimte, 2026)', () => {
   for (const type of TYPES) {
     const key = `2026_${type}_met_reserveringsruimte`

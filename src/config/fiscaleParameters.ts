@@ -109,13 +109,13 @@ export interface JaarruimteJaar {
 }
 
 export const JAARRUIMTE_PARAMS: Record<number, JaarruimteJaar> = {
-  2016: { franchise: 11_996, maxInkomen: 101_519, percentage: 0.133, factorMultiplier: 6.5, reserveringsruimteMax: 28_000 },   // ⚠️ bron wijkt af: percentage=0.138, reserveringsruimteMax=leeftijdsafhankelijk 7088/13997
+  2016: { franchise: 11_996, maxInkomen: 101_519, percentage: 0.138, factorMultiplier: 6.5, reserveringsruimteMax: 28_000 },   // ⚠️ bron wijkt af: reserveringsruimteMax=leeftijdsafhankelijk 7088/13997
   2017: { franchise: 12_032, maxInkomen: 103_317, percentage: 0.138, factorMultiplier: 6.5, reserveringsruimteMax: 28_000 },   // ⚠️ bron wijkt af: reserveringsruimteMax=leeftijdsafhankelijk 7110/14039
-  2018: { franchise: 12_129, maxInkomen: 105_075, percentage: 0.133, factorMultiplier: 6.5, reserveringsruimteMax: 28_000 },   // ⚠️ bron wijkt af: factorMultiplier=6.27, reserveringsruimteMax=leeftijdsafhankelijk 7167/14152
+  2018: { franchise: 12_129, maxInkomen: 105_075, percentage: 0.133, factorMultiplier: 6.27, reserveringsruimteMax: 28_000 },   // ⚠️ bron wijkt af: reserveringsruimteMax=leeftijdsafhankelijk 7167/14152
   2019: { franchise: 12_275, maxInkomen: 107_593, percentage: 0.133, factorMultiplier: 6.27, reserveringsruimteMax: 28_000 },   // ⚠️ bron wijkt af: reserveringsruimteMax=leeftijdsafhankelijk 7254/14322
   2020: { franchise: 12_472, maxInkomen: 110_111, percentage: 0.133, factorMultiplier: 6.27, reserveringsruimteMax: 28_000 },   // ⚠️ bron wijkt af: reserveringsruimteMax=leeftijdsafhankelijk 7371/14552
   2021: { franchise: 12_672, maxInkomen: 112_189, percentage: 0.133, factorMultiplier: 6.27, reserveringsruimteMax: 28_000 },   // ⚠️ bron wijkt af: reserveringsruimteMax=leeftijdsafhankelijk 7489/14785
-  2022: { franchise: 12_837, maxInkomen: 114_866, percentage: 0.133, factorMultiplier: 7.44, reserveringsruimteMax: 28_000 },   // ⚠️ bron wijkt af: factorMultiplier=6.27, reserveringsruimteMax=leeftijdsafhankelijk 7587/14978
+  2022: { franchise: 12_837, maxInkomen: 114_866, percentage: 0.133, factorMultiplier: 6.27, reserveringsruimteMax: 28_000 },   // ⚠️ bron wijkt af: reserveringsruimteMax=leeftijdsafhankelijk 7587/14978
   2023: { franchise: 13_646, maxInkomen: 128_810, percentage: 0.3, factorMultiplier: 6.27, reserveringsruimteMax: 32_000 },   // ⚠️ bron wijkt af: reserveringsruimteMax=38000
   2024: { franchise: 17_545, maxInkomen: 137_800, percentage: 0.3, factorMultiplier: 6.27, reserveringsruimteMax: 38_000 },   // ⚠️ bron wijkt af: reserveringsruimteMax=41608
   2025: { franchise: 18_475, maxInkomen: 137_800, percentage: 0.3, factorMultiplier: 6.27, reserveringsruimteMax: 38_000 },   // ⚠️ bron wijkt af: reserveringsruimteMax=42108
