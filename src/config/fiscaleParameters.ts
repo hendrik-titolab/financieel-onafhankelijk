@@ -1,91 +1,129 @@
 /**
- * FISCALE PARAMETERS — centrale configuratie
+ * FISCALE PARAMETERS — GEGENEREERD BESTAND
  *
- * Dit is de enige plek waar fiscale getallen staan.
- * Alle andere bestanden importeren hieruit.
+ * !! NIET met de hand aanpassen !!
  *
- * Bron:     Lindenhaege advieskaart (jaarlijks)
- *           https://lindenhaeghe.nl/kompas/financieel-dienstverleners/
- * Laatste update: juni 2026 (advieskaart 2026)
- * Volgende check:  oktober 2026
+ * Bron:      C:/Users/schak/Documents/Fiscale bron/fiscale-cijfers.json
+ * Genereren: node genereer.mjs   (in die map)
  *
- * !! NIET handmatig aanpassen — laat de kwartaalagent dit bijwerken !!
+ * Versie 2026.1 · bijgewerkt 2026-08-13
+ * Volgende controle: oktober/november 2026, zodra de Belastingdienst de cijfers voor 2027 publiceert
+ *
+ * Waarden met een ⚠️ wijken af van wat de bron zegt. Die staan bewust nog op de
+ * waarde die vandaag in gebruik is, zodat genereren niets aan het gedrag verandert.
+ * Los ze op in de bron, niet hier.
  */
 
 // ─── Box 1 belastingtarieven ────────────────────────────────────────────────
-// Bron: advieskaart pagina "Belasting", tabel Box 1
-
 export const BOX1_PRE_AOW = {
-  schijf1Grens:  38_883,   // bovengrens schijf 1 (€)
-  schijf2Grens:  78_426,   // bovengrens schijf 2 / ondergrens schijf 3 (€)
-  schijf1Tarief: 0.3575,   // 35,75% — belasting + volksverzekeringen schijf 1
-  schijf2Tarief: 0.3756,   // 37,56% — belasting schijf 2
-  schijf3Tarief: 0.4950,   // 49,50% — belasting schijf 3
+  schijf1Grens:  38_883,
+  schijf2Grens:  78_426,
+  schijf1Tarief: 0.3575,
+  schijf2Tarief: 0.3756,
+  schijf3Tarief: 0.495,
 }
 
 export const BOX1_POST_AOW = {
-  schijf1Grens:  38_883,   // bovengrens schijf 1 (€)
-  schijf2Grens:  78_426,   // bovengrens schijf 2 (€)
-  schijf1Tarief: 0.1785,   // 17,85% — geen AOW-premie meer na AOW-leeftijd
-  schijf2Tarief: 0.3756,   // 37,56%
-  schijf3Tarief: 0.4950,   // 49,50%
+  schijf1Grens:  38_883,
+  schijf2Grens:  78_426,
+  schijf1Tarief: 0.1785,
+  schijf2Tarief: 0.3756,
+  schijf3Tarief: 0.495,
 }
 
 // ─── Heffingskortingen (box 1, jonger dan AOW-leeftijd) ─────────────────────
-// Bron: Belastingdienst (Nieuwsbrief Loonheffingen 2026) en Belastingplan 2026
-// Gebruikt door de bruto-nettotool.
 export const HEFFINGSKORTING_PRE_AOW = {
-  // Algemene heffingskorting
   algemeneHeffingskorting: {
-    max:         3_115,      // maximum (€)
-    afbouwVanaf: 29_736,     // inkomen waarboven de korting afbouwt (€)
-    afbouwPct:   0.06398,    // afbouwpercentage (6,398%)
-    nihilBij:    78_426,     // inkomen waarbij de korting nihil is (€)
+    max:         3_115,
+    afbouwVanaf: 29_736,
+    afbouwPct:   0.06398,
+    nihilBij:    78_426,
   },
-  // Arbeidskorting (opbouw in schijven, daarna afbouw)
   arbeidskorting: {
-    knik1: 11_965, pct1: 0.08324,   // opbouw 8,324% tot €11.965
-    knik2: 25_845, pct2: 0.31009,   // opbouw 31,009% tot €25.845
-    knik3: 45_592, pct3: 0.0195,    // opbouw 1,95% tot €45.592
-    afbouwVanaf: 45_593, afbouwPct: 0.0651,  // afbouw 6,51% vanaf €45.593
-    max: 5_685,                     // maximum (€)
+    knik1: 11_965, pct1: 0.08324,
+    knik2: 25_845, pct2: 0.31009,
+    knik3: 45_592, pct3: 0.0195,
+    afbouwVanaf: 45_593, afbouwPct: 0.0651,
+    max: 5_685,
+  },
+} as const
+
+// ─── Heffingskortingen (box 1, AOW-leeftijd bereikt) ────────────────────────
+// Nog niet in gebruik. Staat klaar voor E4.
+export const HEFFINGSKORTING_POST_AOW = {
+  algemeneHeffingskorting: {
+    max:         1_556,
+    afbouwVanaf: 29_736,
+    afbouwPct:   0.03195,
+    nihilBij:    78_426,
+  },
+  ouderenkorting: {
+    max:         2_067,
+    afbouwVanaf: 46_002,
+    afbouwPct:   0.15,
+    nihilBij:    59_782,
+  },
+  alleenstaandeouderenkorting: 540,
+  arbeidskorting: {
+    knik1: 11_965, pct1: 0.04156,
+    knik2: 25_845, pct2: 0.15483,
+    knik3: 45_592, pct3: 0.00974,
+    afbouwVanaf: 45_593, afbouwPct: 0.0325,
+    max: 2_840,
+  },
+} as const
+
+// ─── Box 3 ──────────────────────────────────────────────────────────────────
+// Nog niet in gebruik. Staat klaar voor E2.
+export const BOX3 = {
+  tarief: 0.36,
+  heffingsvrijVermogen: {
+    alleenstaand:         59_357,
+    fiscaalPartnersSamen: 118_714,
+  },
+  forfaitairRendement: {
+    spaargeld:   0.0128,
+    beleggingen: 0.06,
+    schulden:    0.027,
   },
 } as const
 
 // ─── AOW-bedragen ───────────────────────────────────────────────────────────
-// Bron: advieskaart pagina "Inkomen", tabel AOW-bedragen (met heffingskorting)
-
+// Netto per maand, inclusief loonheffingskorting.
 export const AOW_NETTO_MAAND = {
-  alleenstaand:  1_558,    // €1.558/mnd netto (met heffingskorting, 2026)
-  samenwonend:   1_068,    // €1.068/mnd netto per persoon (met heffingskorting, 2026)
+  alleenstaand:  1_558,
+  samenwonend:   1_068,
 }
 
+export const AOW_LEEFTIJD = 67
+
 // ─── Jaarruimte parameters ──────────────────────────────────────────────────
-// Bron: advieskaart pagina "Pensioen", tabel historische jaarruimtegegevens
-// Formule: jaarruimte = (percentage × premiegrondslag) − (factorMultiplier × factor A)
-// waarbij: premiegrondslag = min(inkomen, maxInkomen) − franchise
+// premiegrondslag = min(inkomen, maxInkomen) - franchise, nooit negatief. Inkomen en factor A zijn die van het voorgaande kalenderjaar.
 
 export interface JaarruimteJaar {
-  franchise:              number   // AOW-franchise (€)
-  maxInkomen:             number   // maximaal toetsingsinkomen (€)
-  percentage:             number   // jaarruimtepercentage (bijv. 0.30)
-  factorMultiplier:       number   // pensioenimputatiefactor (bijv. 6.27)
-  reserveringsruimteMax:  number   // maximale reserveringsruimte totaal dit jaar (€)
+  franchise:              number
+  maxInkomen:             number
+  percentage:             number
+  factorMultiplier:       number
+  reserveringsruimteMax:  number
 }
 
 export const JAARRUIMTE_PARAMS: Record<number, JaarruimteJaar> = {
-  // ── Pre-Wtp (oud regime: 13,3%, factor 7,44) ──
-  2016: { franchise: 11_996, maxInkomen: 101_519, percentage: 0.133, factorMultiplier: 6.50, reserveringsruimteMax: 28_000 },
-  2017: { franchise: 12_032, maxInkomen: 103_317, percentage: 0.138, factorMultiplier: 6.50, reserveringsruimteMax: 28_000 },
-  2018: { franchise: 12_129, maxInkomen: 105_075, percentage: 0.133, factorMultiplier: 6.50, reserveringsruimteMax: 28_000 },
-  2019: { franchise: 12_275, maxInkomen: 107_593, percentage: 0.133, factorMultiplier: 6.27, reserveringsruimteMax: 28_000 },
-  2020: { franchise: 12_472, maxInkomen: 110_111, percentage: 0.133, factorMultiplier: 6.27, reserveringsruimteMax: 28_000 },
-  2021: { franchise: 12_672, maxInkomen: 112_189, percentage: 0.133, factorMultiplier: 6.27, reserveringsruimteMax: 28_000 },
-  2022: { franchise: 12_837, maxInkomen: 114_866, percentage: 0.133, factorMultiplier: 7.44, reserveringsruimteMax: 28_000 },
-  // ── Wtp (nieuw regime: 30%, factor 6,27) ──
-  2023: { franchise: 13_646, maxInkomen: 128_810, percentage: 0.30,  factorMultiplier: 6.27, reserveringsruimteMax: 32_000 },
-  2024: { franchise: 17_545, maxInkomen: 137_800, percentage: 0.30,  factorMultiplier: 6.27, reserveringsruimteMax: 38_000 },
-  2025: { franchise: 18_475, maxInkomen: 137_800, percentage: 0.30,  factorMultiplier: 6.27, reserveringsruimteMax: 38_000 },
-  // 2026: Lindenhaege advieskaart januari 2026 — bevestigd
-  2026: { franchise: 19_172, maxInkomen: 137_800, percentage: 0.30,  factorMultiplier: 6.27, reserveringsruimteMax: 42_753 },
+  2016: { franchise: 11_996, maxInkomen: 101_519, percentage: 0.133, factorMultiplier: 6.5, reserveringsruimteMax: 28_000 },   // ⚠️ bron wijkt af: percentage=0.138, reserveringsruimteMax=leeftijdsafhankelijk 7088/13997
+  2017: { franchise: 12_032, maxInkomen: 103_317, percentage: 0.138, factorMultiplier: 6.5, reserveringsruimteMax: 28_000 },   // ⚠️ bron wijkt af: reserveringsruimteMax=leeftijdsafhankelijk 7110/14039
+  2018: { franchise: 12_129, maxInkomen: 105_075, percentage: 0.133, factorMultiplier: 6.5, reserveringsruimteMax: 28_000 },   // ⚠️ bron wijkt af: factorMultiplier=6.27, reserveringsruimteMax=leeftijdsafhankelijk 7167/14152
+  2019: { franchise: 12_275, maxInkomen: 107_593, percentage: 0.133, factorMultiplier: 6.27, reserveringsruimteMax: 28_000 },   // ⚠️ bron wijkt af: reserveringsruimteMax=leeftijdsafhankelijk 7254/14322
+  2020: { franchise: 12_472, maxInkomen: 110_111, percentage: 0.133, factorMultiplier: 6.27, reserveringsruimteMax: 28_000 },   // ⚠️ bron wijkt af: reserveringsruimteMax=leeftijdsafhankelijk 7371/14552
+  2021: { franchise: 12_672, maxInkomen: 112_189, percentage: 0.133, factorMultiplier: 6.27, reserveringsruimteMax: 28_000 },   // ⚠️ bron wijkt af: reserveringsruimteMax=leeftijdsafhankelijk 7489/14785
+  2022: { franchise: 12_837, maxInkomen: 114_866, percentage: 0.133, factorMultiplier: 7.44, reserveringsruimteMax: 28_000 },   // ⚠️ bron wijkt af: factorMultiplier=6.27, reserveringsruimteMax=leeftijdsafhankelijk 7587/14978
+  2023: { franchise: 13_646, maxInkomen: 128_810, percentage: 0.3, factorMultiplier: 6.27, reserveringsruimteMax: 32_000 },   // ⚠️ bron wijkt af: reserveringsruimteMax=38000
+  2024: { franchise: 17_545, maxInkomen: 137_800, percentage: 0.3, factorMultiplier: 6.27, reserveringsruimteMax: 38_000 },   // ⚠️ bron wijkt af: reserveringsruimteMax=41608
+  2025: { franchise: 18_475, maxInkomen: 137_800, percentage: 0.3, factorMultiplier: 6.27, reserveringsruimteMax: 38_000 },   // ⚠️ bron wijkt af: reserveringsruimteMax=42108
+  2026: { franchise: 19_172, maxInkomen: 137_800, percentage: 0.3, factorMultiplier: 6.27, reserveringsruimteMax: 42_753 },
 }
+
+// Terugkijktermijn van de reserveringsruimte.
+export const RESERVERINGSRUIMTE_TERUGKIJK = {
+  vanaf2023: 10,
+  voor2023:  7,
+} as const

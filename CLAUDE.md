@@ -137,13 +137,30 @@ daarna naar `astro-migratie`, in plaats van rechtstreeks te committen — zie ho
 
 ---
 
+## Fiscale cijfers: `fiscaleParameters.ts` is een gegenereerd bestand
+
+**Pas `src/config/fiscaleParameters.ts` niet met de hand aan.** Het wordt gegenereerd uit
+`C:\Users\schak\Documents\Fiscale bron\fiscale-cijfers.json`. Een handmatige wijziging is bij de
+eerstvolgende generatie weg.
+
+Een fiscaal cijfer bijwerken gaat zo: waarde aanpassen in die json, `node genereer.mjs` draaien in
+die map, en de gewijzigde config hier committen. Vercel bouwt uit deze repo en niet uit die map,
+dus zonder commit verandert er live niets. Draai daarna `node controleer-artikelen.mjs` om te zien
+of er bedragen in de uitlegartikelen achterlopen.
+
+Waarom: dezelfde cijfers stonden op drie plekken en spraken elkaar aantoonbaar tegen (zie
+`FISCALE-BRONNEN.md`). Waarden waar de bron van de site afwijkt houden bewust de waarde die
+vandaag in gebruik is, zodat genereren nooit stilzwijgend een rekenuitkomst verandert.
+
 ## Claude Skill: Jaarruimteberekening
 
 Locatie: `C:\Users\schak\.claude\skills\jaarruimte-berekening\`. Bevat formules voor alle
 situaties, jaarlijks updatable parameters in `references/parameters.md`, verificatiestap na elke
-berekening. **Jaarlijkse update:** alleen `references/parameters.md` én
-`src/config/fiscaleParameters.ts` aanpassen zodra de Belastingdienst nieuwe parameters publiceert
-(oktober/november).
+berekening.
+
+**Let op:** die parameters wijken af van deze site, en welke kant klopt staat nog open (bevinding
+F1). De generator overschrijft ze daarom bewust niet, maar schrijft een
+`verschilrapport-jaarruimte-skill.md` in de bronmap. Werk ze pas bij als F1 is beslecht.
 
 ---
 
@@ -156,7 +173,7 @@ src/
 ├── types/index.ts                # Alle TypeScript types
 ├── config/
 │   ├── site.ts                   # SITE-object, FEEDBACK_URL
-│   ├── fiscaleParameters.ts       # Box 1-tarieven, AOW-bedragen
+│   ├── fiscaleParameters.ts       # GEGENEREERD — Box 1, heffingskortingen, AOW, jaarruimte
 │   └── risicoprofielen.ts         # 5 risicoprofielen
 ├── utils/
 │   ├── pensionCalc.ts             # Kernberekeningen FO-planner
