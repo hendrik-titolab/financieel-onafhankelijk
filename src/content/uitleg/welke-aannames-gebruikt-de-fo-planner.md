@@ -1,7 +1,7 @@
 ---
 titel: "Welke aannames gebruikt de FO-planner?"
 beschrijving: "De FO-planner rekent met een reëel rendement, een fasegevoelige belasting en 2.000 Monte Carlo-simulaties. Uitleg van elke aanname, met rekenvoorbeeld."
-samenvatting: "De planner geeft geen vast antwoord maar een slagingskans, berekend over 2.000 simulaties met wisselend rendement. Alle bedragen staan in koopkracht van vandaag: het nominale rendement wordt eerst gecorrigeerd voor inflatie. Belasting wordt fasegevoelig berekend, met een ander tarief voor en na je AOW-leeftijd. Elke aanname is aan te passen; niets ligt vast."
+samenvatting: "De planner geeft geen vast antwoord maar een slagingskans, berekend over 2.000 simulaties met wisselend rendement. Alle bedragen staan in koopkracht van vandaag: het nominale rendement wordt eerst gecorrigeerd voor inflatie. Belasting wordt berekend over je AOW en pensioen samen, met de tarieven, heffingskortingen en de bijdrage Zorgverzekeringswet die bij je leeftijd en woonsituatie horen. Elke aanname is aan te passen; niets ligt vast."
 pillar: "wat-is-financiele-onafhankelijkheid"
 volgorde: 6
 bijgewerkt: "2026-08-12"
@@ -60,14 +60,35 @@ turnen op wat 4.000 euro over dertig jaar nog waard is. Dat zit al in de bereken
 
 ## Hoe wordt bruto pensioen netto?
 
-Voor het werkgeverspensioen reken je in de planner een bruto bedrag in, en die wordt
-netto gemaakt met de belastingschijven van box 1, hetzelfde systeem als over je loon.
-Één verschil: het tarief in de eerste schijf is lager ná je AOW-leeftijd dan ervoor,
-omdat er dan geen AOW-premie meer in het tarief zit. Van hetzelfde brutobedrag houd je
-na je AOW-leeftijd dus verhoudingsgewijs meer over.
+Voor het werkgeverspensioen vul je in de planner een bruto bedrag in. Dat wordt netto
+gemaakt met de belastingschijven van box 1, de heffingskortingen die bij je situatie
+horen, en de bijdrage Zorgverzekeringswet die van je pensioen wordt ingehouden.
 
-De exacte schijfgrenzen en tarieven wijzigen elk jaar. De planner gebruikt de tarieven
-van het lopende belastingjaar; kijk voor de actuele cijfers op belastingdienst.nl.
+Belangrijk daarbij: de planner belast je AOW en je pensioen samen, niet elk apart.
+Dat moet ook, want de heffingskortingen hangen af van je totale inkomen. Hoe hoger dat
+inkomen, hoe kleiner de korting. Bereken je de korting per inkomensbron los, dan tel je
+hem twee keer half mee en komt er te veel netto uit.
+
+Dat heeft een gevolg dat de meeste mensen verrast. Na je AOW-leeftijd is het tarief in
+de eerste schijf lager, omdat je geen AOW-premie meer betaalt. Maar over een pensioen
+bóvenop je AOW betaal je in de praktijk vaak méér dan dat lage tarief doet vermoeden.
+Je komt namelijk in de tweede schijf terecht, en tegelijk lopen de algemene
+heffingskorting en de ouderenkorting terug naarmate je inkomen stijgt. Over een deel
+van je inkomen kan het effectieve tarief daardoor boven de 55% uitkomen.
+
+Een voorbeeld met de cijfers van 2026. Je bent alleenstaand, hebt een volledige AOW en
+daarnaast € 2.500 bruto pensioen per maand. Van dat pensioen houd je ongeveer € 1.712
+netto per maand over. Zou je alleen naar het tarief van de eerste schijf kijken, dan zou
+je op ruim € 2.050 uitkomen. Dat verschil van ruim € 300 per maand is precies wat de
+afbouw van de kortingen en de tweede schijf samen doen.
+
+Of je alleenstaand bent of samenwoont maakt hierbij uit, en niet alleen voor de hoogte
+van je AOW. Alleenstaanden hebben ook recht op de alleenstaandeouderenkorting. Daarom
+vraagt de planner naar je woonsituatie.
+
+De exacte schijfgrenzen, tarieven en kortingen wijzigen elk jaar. De planner gebruikt de
+cijfers van het lopende belastingjaar; kijk voor de actuele bedragen op
+belastingdienst.nl.
 
 ## Wat doet de planner met AOW, een erfenis of een verbouwing?
 
