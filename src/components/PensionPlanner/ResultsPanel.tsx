@@ -465,7 +465,7 @@ export function ResultsPanel({ inputs, result, mc, mcStale, isCalculating, onRun
             <X size={16} />
           </button>
           <p className="text-sm text-ink leading-relaxed flex-1 min-w-[200px]">
-            Wist je dat je deze tool ook als app kunt installeren? Werkt ook offline.
+            Wist je dat je deze tool als app kunt installeren? Werkt ook offline.
           </p>
           <InstallAppButton
             label="Installeer nu"
