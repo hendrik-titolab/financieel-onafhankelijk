@@ -21,7 +21,7 @@ const DEFAULT_INPUTS: PensionInputs = {
   desiredRetirementIncome: 5000,
   desiredRetirementIncomeType: 'bruto',
   woonsituatie: 'alleenstaand',
-  aowMaandBedragNetto: 1558,  // alleenstaand netto met heffingskorting 2026 (Lindenhaege)
+  aowMaandBedragNetto: 1582,  // alleenstaand netto met heffingskorting, SVB per 1 juli 2026
   aowStartAge: 67,
   employerPension: 0,
   employerPensionStartAge: 67,

@@ -1,7 +1,7 @@
 ---
 titel: "Hoeveel AOW krijg ik?"
 beschrijving: "De AOW is het staatspensioen vanaf je AOW-leeftijd. Lees hoeveel AOW je in 2026 krijgt als alleenstaande of samenwonende, en waar het bedrag van afhangt."
-samenvatting: "De AOW is het staatspensioen dat je vanaf je AOW-leeftijd (67 jaar in 2026) krijgt. In 2026 is de AOW netto ongeveer €1.558 per maand voor alleenstaanden en ongeveer €1.068 per persoon voor samenwonenden (inclusief heffingskorting). Het bedrag hangt af van hoeveel jaar je in Nederland hebt gewoond."
+samenvatting: "De AOW is het staatspensioen dat je vanaf je AOW-leeftijd (67 jaar in 2026) krijgt. Sinds 1 juli 2026 is de AOW netto ongeveer €1.582 per maand voor alleenstaanden en ongeveer €1.084 per persoon voor samenwonenden (inclusief heffingskorting). Het bedrag hangt af van hoeveel jaar je in Nederland hebt gewoond."
 pillar: "hoeveel-pensioen-heb-ik-nodig"
 volgorde: 1
 bijgewerkt: "2026-07-20"
@@ -30,8 +30,8 @@ In 2026 is de AOW-leeftijd **67 jaar**. Die leeftijd kan in de toekomst verder s
 
 Het AOW-bedrag hangt af van je woonsituatie. Netto per maand, inclusief heffingskorting, is het in 2026 ongeveer:
 
-- **Alleenstaand:** €1.558 per maand
-- **Samenwonend of getrouwd:** €1.068 per persoon per maand
+- **Alleenstaand:** €1.582 per maand
+- **Samenwonend of getrouwd:** €1.084 per persoon per maand
 
 Deze bedragen worden twee keer per jaar aangepast, samen met het minimumloon.
 
