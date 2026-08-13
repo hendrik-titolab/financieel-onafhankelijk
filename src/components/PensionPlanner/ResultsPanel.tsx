@@ -476,9 +476,17 @@ export function ResultsPanel({ inputs, result, mc, mcStale, isCalculating, onRun
 
       {/* Assumptions note */}
       <p className="text-xs text-body leading-relaxed px-1">
-        Deze berekening gaat uit van vrij belegd vermogen in box 3. Staat een deel van je geld in een
-        lijfrente, op een bankspaarrekening of in pensioenbeleggen, dan is de opname daaruit belast in
-        box 1 en houd je netto minder over dan hier staat.
+        Over je AOW en je werkgeverspensioen rekenen we de belasting van box 1 en de bijdrage
+        Zorgverzekeringswet, met de heffingskortingen die bij je leeftijd en woonsituatie horen.
+        Omdat die kortingen afbouwen naarmate je inkomen stijgt, houd je van een pensioen bovenop je
+        AOW netto minder over dan het schijftarief doet vermoeden.
+        Je eigen vermogen behandelen we als vrij belegd vermogen in box 3: een opname daaruit is niet
+        belast. Staat een deel van je geld in een lijfrente, op een bankspaarrekening of in
+        pensioenbeleggen, dan is elke uitkering daaruit wél belast in box 1 en houd je minder over dan
+        hier staat. Vul in dat geval alleen je vrij belegde vermogen in.
+        Drie dingen laten we bewust weg, en die maken het beeld gunstiger dan de werkelijkheid: de
+        belasting in box 3 over je vermogen, de kosten van beleggen, en het risico dat je pensioen niet
+        volledig met de inflatie meestijgt.
         We berekenen in 2.000 scenario's met verschillende toekomstige rendementen hoe groot de kans is dat je jouw doel haalt.
         Voor het gemiddelde rendement en de inflatie gaan we uit van wat er is ingevoerd.
         Dit is een indicatieve berekening en geen financieel advies.

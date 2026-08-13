@@ -8,7 +8,7 @@
 // (zie AUDIT-fase0-1-feiten.md, bevinding E10) — dat is hier bewust vastgelegd
 // zoals het nu is, niet gecorrigeerd.
 import { describe, it, expect } from 'vitest'
-import { calculatePension } from '../pensionCalc'
+import { calculatePension, getIncomeBreakdown } from '../pensionCalc'
 import type { YearData } from '../../types'
 import { SCENARIOS, round } from './fixtures'
 import fixture from './__golden__/pensionCalc.golden.json'
@@ -25,6 +25,76 @@ function roundYearRow(yd: YearData) {
     totalIncome: round(yd.totalIncome),
   }
 }
+
+// ── E4: belasting over het totale box 1-inkomen ───────────────────────────────
+//
+// De AOW wordt netto ingevuld en het werkgeverspensioen bruto. Heffingskortingen
+// zijn inkomensafhankelijk over het totaal, dus per bron rekenen geeft een te
+// hoge korting. Deze tests leggen vast dat het stapelt zoals het hoort.
+describe('getIncomeBreakdown — AOW en pensioen stapelen', () => {
+  const AOW_NETTO_MND = 1558      // alleenstaand, uit de fiscale bron
+  const NA_AOW = 70               // leeftijd waarop zowel AOW als pensioen loopt
+
+  const breakdown = (pensioenBrutoMnd: number, aowNetto = AOW_NETTO_MND,
+                     woonsituatie: 'alleenstaand' | 'samenwonend' = 'alleenstaand') =>
+    getIncomeBreakdown(NA_AOW, 5000, aowNetto, 67, pensioenBrutoMnd, 65, woonsituatie)
+
+  // Zelfcontrole op de hele keten. De AOW wordt gebruteerd, belast en weer netto
+  // gemaakt; er hoort precies weer uit te komen wat erin ging. Lukt dat niet, dan
+  // klopt de brutering, het tarief, een korting of de Zvw-bijdrage niet.
+  it('geeft zonder pensioen exact de ingevulde AOW terug', () => {
+    const r = breakdown(0)
+    expect(r.aow).toBe(AOW_NETTO_MND)
+    expect(Math.abs(r.employerPension)).toBeLessThan(1)
+  })
+
+  // Dit is de kern van E4. Het pensioen komt bovenop de AOW, valt daardoor in een
+  // hogere schijf en duwt zowel de algemene heffingskorting als de ouderenkorting
+  // in de afbouw. Netto blijft er dus minder over dan het schijftarief suggereert.
+  it('belast het pensioen marginaal, niet alsof het losstaat', () => {
+    const naief = 2500 * (1 - 0.1785)          // wat de oude code deed: € 2.054
+    const r = breakdown(2500)
+    expect(r.employerPension).toBeLessThan(naief)
+    // Alleenstaand met volledige AOW: € 1.712 in plaats van € 2.054. Samenwonend
+    // komt € 45 lager uit, want dan vervalt de alleenstaandeouderenkorting.
+    expect(Math.round(r.employerPension)).toBe(1712)
+  })
+
+  it('hoe hoger het pensioen, hoe groter het verschil met het schijftarief', () => {
+    const verschil = (p: number) => p * (1 - 0.1785) - breakdown(p).employerPension
+    expect(verschil(4000)).toBeGreaterThan(verschil(2500))
+    expect(verschil(2500)).toBeGreaterThan(verschil(1000))
+  })
+
+  // Wie later naar Nederland is geïmmigreerd krijgt een gekorte AOW. De brutering
+  // gebruikt daarom de verhouding en niet een vast verschil, zodat een lagere AOW
+  // gewoon meeschaalt.
+  it('werkt ook bij een gekorte AOW', () => {
+    const vol = breakdown(0, 1558)
+    const deels = breakdown(0, 1091)   // 70% AOW
+    expect(Math.abs(vol.employerPension)).toBeLessThan(1)
+    expect(Math.abs(deels.employerPension)).toBeLessThan(1)
+    expect(deels.aow).toBe(1091)
+  })
+
+  it('past de alleenstaandeouderenkorting alleen toe bij alleenstaand', () => {
+    const alleen = breakdown(2500, AOW_NETTO_MND, 'alleenstaand')
+    const samen  = breakdown(2500, AOW_NETTO_MND, 'samenwonend')
+    // €540 per jaar is €45 per maand.
+    expect(Math.round(alleen.employerPension - samen.employerPension)).toBe(45)
+  })
+
+  it('rekent vóór de AOW-leeftijd met de tarieven van vóór de AOW-leeftijd', () => {
+    // Leeftijd 65: pensioen loopt al, AOW nog niet.
+    const voor = getIncomeBreakdown(65, 5000, AOW_NETTO_MND, 67, 2500, 65)
+    const na   = getIncomeBreakdown(70, 5000, AOW_NETTO_MND, 67, 2500, 65)
+    expect(voor.aow).toBe(0)
+    // Zonder AOW-premievrijstelling is het tarief hoger, dus houdt hij minder over
+    // dan hetzelfde pensioen ná de AOW-leeftijd zou opleveren als het alleen stond.
+    expect(voor.employerPension).toBeLessThan(2500)
+    expect(na.aow).toBe(AOW_NETTO_MND)
+  })
+})
 
 describe('calculatePension — golden master', () => {
   for (const [key, inputs] of Object.entries(SCENARIOS)) {

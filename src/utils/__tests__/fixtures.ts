@@ -21,6 +21,7 @@ export function baseInputs(overrides: Partial<PensionInputs> = {}): PensionInput
     // netto") een echt ander codepad raakt (brutoToNetto-conversie) i.p.v.
     // hetzelfde pad nogmaals te testen.
     desiredRetirementIncomeType: 'netto',
+    woonsituatie: 'alleenstaand',
     aowMaandBedragNetto: 1558,
     aowStartAge: 67,
     employerPension: 0,

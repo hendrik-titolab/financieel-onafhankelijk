@@ -20,6 +20,7 @@ const DEFAULT_INPUTS: PensionInputs = {
   currentIncomeType: 'bruto',
   desiredRetirementIncome: 5000,
   desiredRetirementIncomeType: 'bruto',
+  woonsituatie: 'alleenstaand',
   aowMaandBedragNetto: 1558,  // alleenstaand netto met heffingskorting 2026 (Lindenhaege)
   aowStartAge: 67,
   employerPension: 0,

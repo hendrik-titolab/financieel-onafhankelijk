@@ -73,6 +73,14 @@ export const HEFFINGSKORTING_POST_AOW = {
   },
 } as const
 
+// ─── Bijdrage Zorgverzekeringswet ───────────────────────────────────────────
+// De lage bijdrage is de eigen bijdrage die wordt ingehouden op loon, uitkering of pensioen, dus ook op AOW en aanvullend pensioen. De hoge bijdrage is de werkgeversheffing en speelt bij een gepensioneerde niet. Kruiscontrole met de AOW-bedragen: 79,42 / 1637,57 = 4,850% en 54,42 / 1122,12 = 4,850%, allebei exact de lage bijdrage.
+export const ZVW = {
+  lageBijdrage:           0.0485,
+  hogeBijdrage:           0.061,
+  maximumBijdrageInkomen: 79_409,
+} as const
+
 // ─── Box 3 ──────────────────────────────────────────────────────────────────
 // Nog niet in gebruik. Staat klaar voor E2.
 export const BOX3 = {

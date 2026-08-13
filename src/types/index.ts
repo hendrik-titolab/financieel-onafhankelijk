@@ -10,6 +10,8 @@ export interface LifeEvent {
   year: number    // calendar year
 }
 
+export type Woonsituatie = 'alleenstaand' | 'samenwonend'
+
 export interface PensionInputs {
   currentAge: number
   retirementAge: number
@@ -28,6 +30,8 @@ export interface PensionInputs {
   desiredRetirementIncome: number
   desiredRetirementIncomeType: IncomeType
 
+  // Bepaalt de standaard AOW-bedragen én of de alleenstaandeouderenkorting geldt.
+  woonsituatie: Woonsituatie
   aowMaandBedragNetto: number  // net monthly AOW amount (find on mijnpensioenoverzicht.nl)
   aowStartAge: number         // age at which AOW kicks in
   employerPension: number     // gross monthly (bruto/maand)

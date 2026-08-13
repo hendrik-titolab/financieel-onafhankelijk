@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { X } from 'lucide-react'
-import type { PensionInputs, IncomeType, ContributionFrequency, LifeEvent, RiskProfile } from '../../types'
+import type { PensionInputs, IncomeType, ContributionFrequency, LifeEvent, RiskProfile, Woonsituatie } from '../../types'
 import { RISICOPROFIELEN, PROFIEL_VOLGORDE } from '../../config/risicoprofielen'
+import { AOW_NETTO } from '../../utils/pensionCalc'
 
 const MAX_ROWS = 20
 
@@ -197,14 +198,36 @@ function ParametersTab({ inputs, onChange }: Props) {
             (in te stellen bij "Leeftijd" hierboven). AOW en werkgeverspensioen mogen daar los van staan.
           </p>
         </div>
+        {/* Woonsituatie staat vóór het AOW-bedrag, want de keuze vult dat bedrag
+            in. Ze bepaalt daarnaast of de alleenstaandeouderenkorting geldt, en
+            die telt mee zodra er aanvullend pensioen naast de AOW staat. */}
+        <div className="space-y-1">
+          <div className="flex justify-between items-center">
+            <label className="label mb-0">Woonsituatie</label>
+            <Toggle value={inputs.woonsituatie}
+              onChange={v => onChange({
+                woonsituatie: v as Woonsituatie,
+                aowMaandBedragNetto: v === 'alleenstaand'
+                  ? AOW_NETTO.alleenstaand
+                  : AOW_NETTO.samenwonend,
+              })}
+              options={[
+                { value: 'alleenstaand', label: 'Alleenstaand' },
+                { value: 'samenwonend', label: 'Samenwonend' },
+              ]} />
+          </div>
+          <p className="text-xs text-body">
+            Bepaalt je AOW-bedrag en of je recht hebt op de alleenstaandeouderenkorting.
+          </p>
+        </div>
         <Field label="AOW netto per maand">
           <NumberInput value={inputs.aowMaandBedragNetto}
             onChange={v => onChange({ aowMaandBedragNetto: v })} prefix="€" step={50} />
           <p className="text-xs text-body mt-1">
-            Te vinden op{' '}
+            Ingevuld op basis van je woonsituatie. Klopt dat niet, pas het aan: te vinden op{' '}
             <a href="https://www.mijnpensioenoverzicht.nl" target="_blank" rel="noopener noreferrer"
               className="text-data-700 hover:underline">mijnpensioenoverzicht.nl</a>.
-            {' '}Alleenstaand ~€1.558/mnd, samenwonend ~€1.068/mnd (2026, met heffingskorting).
+            {' '}Heb je niet je hele leven in Nederland gewoond, dan krijg je een lager bedrag.
           </p>
         </Field>
         <Field label="AOW ingangsdatum (leeftijd)">
