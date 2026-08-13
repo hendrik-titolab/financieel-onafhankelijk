@@ -116,11 +116,15 @@ export const JAARRUIMTE_PARAMS: Record<number, JaarruimteJaar> = {
   2020: { franchise: 12_472, maxInkomen: 110_111, percentage: 0.133, factorMultiplier: 6.27, reserveringsruimteMax: 28_000 },   // ⚠️ bron wijkt af: reserveringsruimteMax=leeftijdsafhankelijk 7371/14552
   2021: { franchise: 12_672, maxInkomen: 112_189, percentage: 0.133, factorMultiplier: 6.27, reserveringsruimteMax: 28_000 },   // ⚠️ bron wijkt af: reserveringsruimteMax=leeftijdsafhankelijk 7489/14785
   2022: { franchise: 12_837, maxInkomen: 114_866, percentage: 0.133, factorMultiplier: 6.27, reserveringsruimteMax: 28_000 },   // ⚠️ bron wijkt af: reserveringsruimteMax=leeftijdsafhankelijk 7587/14978
-  2023: { franchise: 13_646, maxInkomen: 128_810, percentage: 0.3, factorMultiplier: 6.27, reserveringsruimteMax: 32_000 },   // ⚠️ bron wijkt af: reserveringsruimteMax=38000
-  2024: { franchise: 17_545, maxInkomen: 137_800, percentage: 0.3, factorMultiplier: 6.27, reserveringsruimteMax: 38_000 },   // ⚠️ bron wijkt af: reserveringsruimteMax=41608
-  2025: { franchise: 18_475, maxInkomen: 137_800, percentage: 0.3, factorMultiplier: 6.27, reserveringsruimteMax: 38_000 },   // ⚠️ bron wijkt af: reserveringsruimteMax=42108
+  2023: { franchise: 13_646, maxInkomen: 128_810, percentage: 0.3, factorMultiplier: 6.27, reserveringsruimteMax: 38_000 },
+  2024: { franchise: 17_545, maxInkomen: 137_800, percentage: 0.3, factorMultiplier: 6.27, reserveringsruimteMax: 41_608 },
+  2025: { franchise: 18_475, maxInkomen: 137_800, percentage: 0.3, factorMultiplier: 6.27, reserveringsruimteMax: 42_108 },
   2026: { franchise: 19_172, maxInkomen: 137_800, percentage: 0.3, factorMultiplier: 6.27, reserveringsruimteMax: 42_753 },
 }
+
+// Jaren waarvoor de tool een berekening aanbiedt.
+// Jaren waarvoor de tool een jaarruimte laat berekenen. Alleen het Wtp-regime vanaf 2023, waarin de reserveringsruimte een vast jaarplafond kent. Vóór 2023 was dat plafond leeftijdsafhankelijk (twee tarieven, omslagpunt AOW-leeftijd min tien jaar) en dat kent de tool niet. Die jaren zijn daarom niet te kiezen: een historische reconstructie valt buiten de scope, en een verkeerd antwoord is erger dan geen antwoord. Besluit Hendrik, 13 augustus 2026.
+export const JAARRUIMTE_BELASTINGJAREN: number[] = [2023, 2024, 2025, 2026]
 
 // Terugkijktermijn van de reserveringsruimte.
 export const RESERVERINGSRUIMTE_TERUGKIJK = {

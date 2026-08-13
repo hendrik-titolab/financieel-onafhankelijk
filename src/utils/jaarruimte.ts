@@ -1,5 +1,5 @@
 import type { JaarruimteInputs, JaarruimteResult, PensioenType } from '../types'
-import { JAARRUIMTE_PARAMS, BOX1_PRE_AOW } from '../config/fiscaleParameters'
+import { JAARRUIMTE_PARAMS, BOX1_PRE_AOW, JAARRUIMTE_BELASTINGJAREN } from '../config/fiscaleParameters'
 
 // Alle fiscale parameters komen uit src/config/fiscaleParameters.ts
 // !! Alleen dát bestand aanpassen bij een kwartaalcheck !!
@@ -83,8 +83,13 @@ export function calculateJaarruimte(inputs: JaarruimteInputs): JaarruimteResult 
   }
 }
 
+// Alleen het Wtp-regime vanaf 2023. Vóór dat jaar was het plafond van de
+// reserveringsruimte leeftijdsafhankelijk en dat kent deze tool niet, dus zou een
+// berekening over 2020 tot en met 2022 een te hoge uitkomst geven. Een historische
+// reconstructie valt buiten de scope; geen antwoord is daar beter dan een verkeerd
+// antwoord. De lijst komt uit de fiscale bron, zie fiscaleParameters.ts.
 export function getAvailableYears(): number[] {
-  return [2020, 2021, 2022, 2023, 2024, 2025, 2026]
+  return [...JAARRUIMTE_BELASTINGJAREN]
 }
 
 // Oudste jaar waarvoor er werkelijk fiscale parameters zijn. getParams() valt voor
