@@ -90,10 +90,31 @@ export const BOX3 = {
 
 // ─── AOW-bedragen ───────────────────────────────────────────────────────────
 // Netto per maand, inclusief loonheffingskorting.
+// nettoMaand is netto INCLUSIEF loonheffingskorting. Wie dat bedrag gebruikt en daarnaast de heffingskortingen nog eens expliciet toepast, telt de korting dubbel. Gebruik voor een belastingberekening brutoMaand.
 export const AOW_NETTO_MAAND = {
   alleenstaand:  1_558,
   samenwonend:   1_068,
 }
+
+// Bruto per maand, exclusief vakantiegeld. Nodig zodra het totale box 1-inkomen
+// belast wordt in plaats van alleen het aanvullend pensioen.
+// Bruto min loonheffing min Zvw-bijdrage geeft netto. Met loonheffingskorting is de loonheffing over alleen de AOW nul, omdat de algemene heffingskorting en de ouderenkorting samen hoger zijn dan de verschuldigde belasting. Zodra er aanvullend pensioen bij komt, is dat niet meer zo: dan bouwen die kortingen af en loopt het marginale tarief op tot boven de 55%. De brutobedragen staan hier zodat de FO-planner het totale box 1-inkomen kan belasten in plaats van alleen het aanvullend pensioen (E4).
+export const AOW_BRUTO_MAAND = {
+  alleenstaand: 1637.57,
+  samenwonend:  1122.12,
+} as const
+
+export const AOW_VAKANTIEGELD_BRUTO_MAAND = {
+  alleenstaand: 106.55,
+  samenwonend:  76.1,
+} as const
+
+// Bijdrage Zvw over de AOW, per maand. Geen box 1-belasting maar wel een inhouding
+// die het nettobedrag bepaalt.
+export const AOW_ZVW_BIJDRAGE_MAAND = {
+  alleenstaand: 79.42,
+  samenwonend:  54.42,
+} as const
 
 export const AOW_LEEFTIJD = 67
 
