@@ -109,6 +109,9 @@ export interface JaarruimteInputs {
   werkgeverspremie: number     // Wtp-regeling: door werkgever ingelegde premie in t-1
   alIngelegd: number           // already deposited in lijfrente this year
   reserveringsruimteRijen: ReserveringsruimteRij[]  // up to 10 past years, progressive UI
+  // Alleen nodig bij belastingjaar 2021 of 2022. Het plafond van de
+  // reserveringsruimte hing toen af van de leeftijd op 1 januari van dat jaar.
+  geboortedatum?: string       // ISO, bijv. '1964-08-15'
   clientName: string
   adviseurNaam: string
   notities: string
@@ -122,6 +125,11 @@ export interface JaarruimteResult {
   nogTeDoen: number                     // remaining room = totaalBeschikbaar - alIngelegd
   belastingVoordeel: number             // tax benefit on the remaining amount to deposit
   belastingTarief: number
+  // Welk plafond op de reserveringsruimte is toegepast, en waarom. Voor 2021 en
+  // 2022 kan dat het percentage van de premiegrondslag zijn of een van twee
+  // leeftijdsafhankelijke bedragen; vanaf 2023 is het altijd het vaste jaarplafond.
+  reserveringsruimtePlafond: number
+  reserveringsruimtePlafondReden: string
 }
 
 export interface SavedJaarruimte {

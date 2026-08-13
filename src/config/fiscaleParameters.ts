@@ -105,13 +105,21 @@ export interface JaarruimteJaar {
   maxInkomen:             number
   percentage:             number
   factorMultiplier:       number
-  /**
-   * Ontbreekt voor de jaren tot en met 2022. Het plafond was toen
-   * leeftijdsafhankelijk (twee tarieven, omslagpunt AOW-leeftijd min tien jaar),
-   * dus er is geen enkel juist getal. Die jaren zijn ook niet te kiezen als
-   * belastingjaar, zie JAARRUIMTE_BELASTINGJAREN.
-   */
+  /** Vast jaarplafond voor de reserveringsruimte. Alleen vanaf 2023. */
   reserveringsruimteMax?: number
+  /**
+   * Het regime tot en met 2022, waarin de reserveringsruimte de LAAGSTE was van
+   * drie grenzen: de onbenutte jaarruimte over zeven jaar, 17% van de
+   * premiegrondslag, en een absoluut maximum dat afhing van de leeftijd op
+   * 1 januari van het belastingjaar. Alleen ingevuld voor de jaren die de tool
+   * aanbiedt, zie JAARRUIMTE_BELASTINGJAREN.
+   */
+  reserveringsruimteVoor2023?: {
+    maxStandaard: number
+    maxBinnenTienJaarVanAow: number
+    /** AOW-leeftijd van dat jaar in maanden. Omslagpunt is deze waarde min 120. */
+    aowLeeftijdMaanden: number
+  }
 }
 
 export const JAARRUIMTE_PARAMS: Record<number, JaarruimteJaar> = {
@@ -120,8 +128,8 @@ export const JAARRUIMTE_PARAMS: Record<number, JaarruimteJaar> = {
   2018: { franchise: 12_129, maxInkomen: 105_075, percentage: 0.133, factorMultiplier: 6.27 },   // reserveringsruimte was leeftijdsafhankelijk: 7_167 / 14_152
   2019: { franchise: 12_275, maxInkomen: 107_593, percentage: 0.133, factorMultiplier: 6.27 },   // reserveringsruimte was leeftijdsafhankelijk: 7_254 / 14_322
   2020: { franchise: 12_472, maxInkomen: 110_111, percentage: 0.133, factorMultiplier: 6.27 },   // reserveringsruimte was leeftijdsafhankelijk: 7_371 / 14_552
-  2021: { franchise: 12_672, maxInkomen: 112_189, percentage: 0.133, factorMultiplier: 6.27 },   // reserveringsruimte was leeftijdsafhankelijk: 7_489 / 14_785
-  2022: { franchise: 12_837, maxInkomen: 114_866, percentage: 0.133, factorMultiplier: 6.27 },   // reserveringsruimte was leeftijdsafhankelijk: 7_587 / 14_978
+  2021: { franchise: 12_672, maxInkomen: 112_189, percentage: 0.133, factorMultiplier: 6.27, reserveringsruimteVoor2023: { maxStandaard: 7_489, maxBinnenTienJaarVanAow: 14_785, aowLeeftijdMaanden: 796 } },
+  2022: { franchise: 12_837, maxInkomen: 114_866, percentage: 0.133, factorMultiplier: 6.27, reserveringsruimteVoor2023: { maxStandaard: 7_587, maxBinnenTienJaarVanAow: 14_978, aowLeeftijdMaanden: 799 } },
   2023: { franchise: 13_646, maxInkomen: 128_810, percentage: 0.3, factorMultiplier: 6.27, reserveringsruimteMax: 38_000 },
   2024: { franchise: 17_545, maxInkomen: 137_800, percentage: 0.3, factorMultiplier: 6.27, reserveringsruimteMax: 41_608 },
   2025: { franchise: 18_475, maxInkomen: 137_800, percentage: 0.3, factorMultiplier: 6.27, reserveringsruimteMax: 42_108 },
@@ -129,11 +137,15 @@ export const JAARRUIMTE_PARAMS: Record<number, JaarruimteJaar> = {
 }
 
 // Jaren waarvoor de tool een berekening aanbiedt.
-// Jaren waarvoor de tool een jaarruimte laat berekenen. Alleen het Wtp-regime vanaf 2023, waarin de reserveringsruimte een vast jaarplafond kent. Vóór 2023 was dat plafond leeftijdsafhankelijk (twee tarieven, omslagpunt AOW-leeftijd min tien jaar) en dat kent de tool niet. Die jaren zijn daarom niet te kiezen: een historische reconstructie valt buiten de scope, en een verkeerd antwoord is erger dan geen antwoord. Besluit Hendrik, 13 augustus 2026.
-export const JAARRUIMTE_BELASTINGJAREN: number[] = [2023, 2024, 2025, 2026]
+// Jaren waarvoor de tool een jaarruimte laat berekenen. Vanaf 2023 het Wtp-regime. Daarnaast 2021 en 2022, omdat een vergeten lijfrenteaftrek over die jaren via een ambtshalve vermindering nog te herstellen is. Verder terug is fiscaal niet meer te repareren en daarom bewust niet aangeboden: dat zou Wft-aansprakelijkheid opleveren zonder dat iemand er iets aan heeft. Besluit Hendrik, 13 augustus 2026.
+export const JAARRUIMTE_BELASTINGJAREN: number[] = [2021, 2022, 2023, 2024, 2025, 2026]
 
-// Terugkijktermijn van de reserveringsruimte.
+// Reserveringsruimte: terugkijktermijn en, tot en met 2022, het percentage van de
+// premiegrondslag dat daarnaast als bovengrens gold.
+// Tot en met 2022 golden er DRIE begrenzingen tegelijk, en de reserveringsruimte was de laagste daarvan: (1) de som van de onbenutte jaarruimte over de voorgaande zeven jaar, (2) 17% van de premiegrondslag, (3) een absoluut maximum dat afhing van de leeftijd. Vanaf 2023 zijn (1) tien jaar geworden en zijn (2) en het leeftijdsonderscheid vervallen.
 export const RESERVERINGSRUIMTE_TERUGKIJK = {
   vanaf2023: 10,
   voor2023:  7,
 } as const
+
+export const RESERVERINGSRUIMTE_PCT_VOOR_2023 = 0.17

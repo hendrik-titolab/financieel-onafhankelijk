@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Trash2, Plus, ChevronDown, ChevronUp, Info, AlertTriangle } from 'lucide-react'
 import type { JaarruimteInputs, JaarruimteResult, SavedJaarruimte, ReserveringsruimteRij, PensioenType } from '../../types'
-import { calculateJaarruimte, getAvailableYears, getJaarruimteParamsNote, isPreWtp, berekenJaarruimteEenvoudig, getOudsteParameterJaar } from '../../utils/jaarruimte'
+import { calculateJaarruimte, getAvailableYears, getJaarruimteParamsNote, isPreWtp, berekenJaarruimteEenvoudig, getOudsteParameterJaar, getFormuleTekst } from '../../utils/jaarruimte'
 
 const STORAGE_KEY = 'jaarruimte_berekeningen'
 
@@ -562,6 +562,27 @@ export function JaarruimteTab() {
             )}
           </div>
 
+          {/* Tot en met 2022 hing het plafond van de reserveringsruimte af van de
+              leeftijd op 1 januari van dat jaar (art. 3.127 lid 2 Wet IB 2001).
+              Vanaf 2023 is dat plafond voor iedereen gelijk, dus dan vragen we het
+              niet. */}
+          {isPreWtp(inputs.year) && (
+            <div>
+              <label className="label">Geboortedatum</label>
+              <input
+                type="date"
+                value={inputs.geboortedatum ?? ''}
+                onChange={e => set('geboortedatum', e.target.value)}
+                className="input-field"
+              />
+              <p className="text-xs text-body mt-1">
+                In {inputs.year} was de reserveringsruimte hoger voor wie op 1 januari
+                binnen tien jaar van de AOW-leeftijd zat. Zonder geboortedatum rekenen
+                we met het lage bedrag.
+              </p>
+            </div>
+          )}
+
           <div>
             <label className="label">Klantnaam</label>
             <input
@@ -632,11 +653,13 @@ export function JaarruimteTab() {
             {inputs.pensioenType === 'db' && (
               <p className="text-xs text-body mt-1.5">
                 Traditioneel pensioen (eindloon / middelloon / CDC).
-                {isPreWtp(inputs.year) ? ' Formule: 13,3% × grondslag − 7,44 × factor A.' : ' Formule: 30% × grondslag − 6,27 × factor A.'}
+                {' '}Formule: {getFormuleTekst(inputs.year, 'db')}.
               </p>
             )}
             {inputs.pensioenType === 'wtp' && (
-              <p className="text-xs text-body mt-1.5">Wtp beschikbare-premieregeling. Formule: 30% × grondslag − werkgeverspremie.</p>
+              <p className="text-xs text-body mt-1.5">
+                Wtp beschikbare-premieregeling. Formule: {getFormuleTekst(inputs.year, 'wtp')}.
+              </p>
             )}
           </div>
 
@@ -736,13 +759,17 @@ export function JaarruimteTab() {
             label="Jaarruimte"
             value={eur(result.jaarruimte)}
             highlight
-            sub="30% × (inkomen − franchise) − 6,27 × factor A"
+            sub={getFormuleTekst(inputs.year, inputs.pensioenType)}
           />
           {result.beschikbareReserveringsruimte > 0 && (
             <ResultRow
               label="Reserveringsruimte"
               value={eur(result.beschikbareReserveringsruimte)}
-              sub={`${inputs.reserveringsruimteRijen.length} jaar(en) onbenutte ruimte`}
+              sub={
+                result.beschikbareReserveringsruimte >= result.reserveringsruimtePlafond
+                  ? `${inputs.reserveringsruimteRijen.length} jaar(en) onbenutte ruimte, afgetopt op ${eur(result.reserveringsruimtePlafond)} (${result.reserveringsruimtePlafondReden})`
+                  : `${inputs.reserveringsruimteRijen.length} jaar(en) onbenutte ruimte`
+              }
             />
           )}
           <ResultRow
