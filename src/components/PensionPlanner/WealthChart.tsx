@@ -51,7 +51,13 @@ export function WealthChart({ result, mc, retirementAge, showMonteCarlo, lifeEve
     const mcPoint = mc.percentileData.find(p => p.age === yd.age)
     return {
       age: yd.age,
-      vermogen: Math.max(0, yd.capital),
+      // Mediaan van de Monte Carlo-simulatie, niet de deterministische
+      // vaste-rendement-lijn (yd.capital): die las als "het verwachte pad"
+      // terwijl de banden ernaast wél uit de simulatie kwamen. Nu komt de
+      // lijn uit dezelfde bron als de banden waar hij doorheen loopt.
+      // yd.capital blijft alleen als fallback voor het randgeval dat er
+      // geen mcPoint bij deze leeftijd is.
+      vermogen: mcPoint ? Math.max(0, mcPoint.p50) : Math.max(0, yd.capital),
       p10: mcPoint ? Math.max(0, mcPoint.p10) : 0,
       // Stacked bands: base=p10, then deltas
       band1: mcPoint ? Math.max(0, mcPoint.p25 - mcPoint.p10) : 0,
@@ -104,7 +110,7 @@ export function WealthChart({ result, mc, retirementAge, showMonteCarlo, lifeEve
           fill="#29392E"
           fillOpacity={0.06}
           dot={false}
-          name="Prognose"
+          name="Mediaan"
           activeDot={{ r: 4, fill: '#29392E' }}
         />
 

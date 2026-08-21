@@ -8,7 +8,13 @@ import {
 // !! Alleen dát bestand aanpassen bij een kwartaalcheck !!
 
 function getParams(year: number) {
-  return JAARRUIMTE_PARAMS[year] ?? JAARRUIMTE_PARAMS[2026]
+  const p = JAARRUIMTE_PARAMS[year]
+  if (!p) {
+    throw new Error(
+      `Geen jaarruimteparameters bekend voor ${year}. Kies een jaar uit getAvailableYears().`
+    )
+  }
+  return p
 }
 
 /**
@@ -166,11 +172,12 @@ export function calculateJaarruimte(inputs: JaarruimteInputs): JaarruimteResult 
   }
 }
 
-// Alleen het Wtp-regime vanaf 2023. Vóór dat jaar was het plafond van de
-// reserveringsruimte leeftijdsafhankelijk en dat kent deze tool niet, dus zou een
-// berekening over 2020 tot en met 2022 een te hoge uitkomst geven. Een historische
-// reconstructie valt buiten de scope; geen antwoord is daar beter dan een verkeerd
-// antwoord. De lijst komt uit de fiscale bron, zie fiscaleParameters.ts.
+// Vanaf 2023 het Wtp-regime. Daarnaast 2021 en 2022: het leeftijdsafhankelijke
+// pre-2023-plafond is inmiddels wél geïmplementeerd (zie bepaalPlafond hierboven).
+// Verder terug dan 2021 is een gemiste lijfrenteaftrek niet meer te herstellen via
+// een ambtshalve vermindering, dus is er voor die jaren fiscaal niets meer aan een
+// uitkomst te doen, ook al zou de berekening zelf wel kunnen. Besluit Hendrik,
+// 13 augustus 2026. De lijst komt uit de fiscale bron, zie fiscaleParameters.ts.
 export function getAvailableYears(): number[] {
   return [...JAARRUIMTE_BELASTINGJAREN]
 }

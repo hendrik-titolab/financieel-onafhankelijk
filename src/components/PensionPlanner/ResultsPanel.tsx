@@ -1,3 +1,4 @@
+import { track } from '@vercel/analytics'
 import { FileText, Sheet, TrendingUp, LogOut, X, MessageSquare, RotateCcw } from 'lucide-react'
 import type { PensionResult, MonteCarloResult, PensionInputs } from '../../types'
 import { WealthChart } from './WealthChart'
@@ -7,7 +8,7 @@ import { FEEDBACK_URL } from '../../config/site'
 import { FREE_DOWNLOAD_LIMIT, getDownloadCount, incrementDownloadCount } from '../../utils/downloadLimit'
 import { useInstallPrompt } from '../../hooks/useInstallPrompt'
 import { InstallAppButton } from '../InstallAppButton'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 const INSTALL_BANNER_DISMISSED_KEY = 'fp_install_banner_dismissed'
 
@@ -122,6 +123,14 @@ export function ResultsPanel({ inputs, result, mc, mcStale, isCalculating, onRun
   )
   const { canInstall: canInstallApp } = useInstallPrompt()
   const limitReached = downloadCount >= FREE_DOWNLOAD_LIMIT
+
+  // Zicht op wie tegen de downloadlimiet aanloopt, los van hoeveel er daadwerkelijk
+  // gedownload zijn — dat laatste blijkt al uit downloadCount, dit is het moment
+  // waarop iemand voor het eerst wordt tegengehouden.
+  useEffect(() => {
+    if (limitReached) track('download_limiet_bereikt')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [limitReached])
   const surplus = result.projectedCapital - result.requiredCapital
   const isOnTrack = surplus >= 0
   const currentMonthlyPMT = inputs.contributionFrequency === 'maandelijks'
@@ -131,6 +140,7 @@ export function ResultsPanel({ inputs, result, mc, mcStale, isCalculating, onRun
 
   const handlePDF = async () => {
     if (limitReached) return
+    track('download_pdf')
     setIsExportingPdf(true)
     try {
       await exportToPDF(inputs, result, mc, clientName, 'wealth-chart')
@@ -142,6 +152,7 @@ export function ResultsPanel({ inputs, result, mc, mcStale, isCalculating, onRun
 
   const handleExcel = async () => {
     if (limitReached) return
+    track('download_excel')
     await exportToExcel(inputs, result, mc ?? { successRate: 0, successRate75: 0, percentileData: [] }, clientName)
     setDownloadCount(incrementDownloadCount())
   }
@@ -484,10 +495,14 @@ export function ResultsPanel({ inputs, result, mc, mcStale, isCalculating, onRun
         belast. Staat een deel van je geld in een lijfrente, op een bankspaarrekening of in
         pensioenbeleggen, dan is elke uitkering daaruit wél belast in box 1 en houd je minder over dan
         hier staat. Vul in dat geval alleen je vrij belegde vermogen in.
-        Drie dingen laten we bewust weg, en die maken het beeld gunstiger dan de werkelijkheid: de
-        belasting in box 3 over je vermogen, de kosten van beleggen, en het risico dat je pensioen niet
-        volledig met de inflatie meestijgt.
+        Het ingevulde rendement is wat je netto overhoudt: na kosten van beleggen en na belasting in
+        box 3. Je bruto rendement ligt hoger.
+        We gaan er daarnaast van uit dat je aanvullend pensioen, net als de AOW, volledig met de
+        inflatie meestijgt. Voor AOW is dat verdedigbaar, voor een aanvullend pensioen niet:
+        indexatie is niet gegarandeerd en kan achterblijven, waardoor je koopkracht na pensionering
+        lager uitvalt dan dit model laat zien.
         We berekenen in 2.000 scenario's met verschillende toekomstige rendementen hoe groot de kans is dat je jouw doel haalt.
+        De lijn in de grafiek is de mediaan van die 2.000 scenario's: de middelste uitkomst, niet het gemiddelde.
         Voor het gemiddelde rendement en de inflatie gaan we uit van wat er is ingevoerd.
         Dit is een indicatieve berekening en geen financieel advies.
         Voor goed advies raden wij aan een financieel planner te raadplegen:

@@ -106,7 +106,7 @@ export async function exportToExcel(
   setColumnWidths(ws2, [40, 20, 20, 20])
 
   // --- Sheet 3: Jaarlijkse Prognose ---
-  const headers = ['Leeftijd', 'Jaar', 'Fase', 'Vermogen (€)', 'Eigen kapitaal (€/mnd)', 'AOW (€/mnd)', 'Werkgever (€/mnd)', 'Totaal inkomen (€/mnd)']
+  const headers = ['Leeftijd', 'Jaar', 'Fase', 'Vermogen bij vast rendement (€)', 'Eigen kapitaal (€/mnd)', 'AOW (€/mnd)', 'Werkgever (€/mnd)', 'Totaal inkomen (€/mnd)']
   const dataRows = result.yearData.map(d => [
     d.age,
     d.year,

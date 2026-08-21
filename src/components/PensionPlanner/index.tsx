@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
+import { track } from '@vercel/analytics'
 import { RefreshCw, ChevronDown } from 'lucide-react'
 import type { PensionInputs, PensionResult, MonteCarloResult } from '../../types'
 import { calculatePension } from '../../utils/pensionCalc'
@@ -91,6 +92,9 @@ export function PensionPlanner({ clientName, onCloseSession }: Props) {
   const result: PensionResult = calculatePension(inputs)
 
   const handleRunMonteCarlo = useCallback(() => {
+    // Zicht op of bezoekers de tool daadwerkelijk gebruiken, niet alleen de
+    // pagina bezoeken (Vercel Web Analytics gaf tot nu toe alleen dat laatste).
+    track('bereken_geklikt')
     setIsCalculating(true)
     setTimeout(() => {
       const mcResult = runMonteCarlo(inputs)

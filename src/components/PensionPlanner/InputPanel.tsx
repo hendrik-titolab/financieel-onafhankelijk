@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { track } from '@vercel/analytics'
 import { X } from 'lucide-react'
 import type { PensionInputs, IncomeType, ContributionFrequency, LifeEvent, RiskProfile, Woonsituatie } from '../../types'
 import { RISICOPROFIELEN, PROFIEL_VOLGORDE } from '../../config/risicoprofielen'
@@ -164,6 +165,9 @@ function ParametersTab({ inputs, onChange }: Props) {
           </div>
           <NumberInput value={inputs.currentIncome} onChange={v => onChange({ currentIncome: v })}
             prefix="€" suffix="/jr" step={500} />
+          <p className="text-xs text-body mt-1">
+            Alleen voor je eigen overzicht in de Excel-export. Telt niet mee in de berekening.
+          </p>
         </div>
         <div className="space-y-1">
           <div className="flex justify-between items-center">
@@ -285,6 +289,10 @@ function RisicoprofielSection({ inputs, onChange }: Props) {
 
   return (
     <Section title="Risicoprofiel">
+      <p className="text-xs text-body leading-relaxed">
+        De rendementen hieronder zijn netto: wat je overhoudt na kosten van beleggen en na
+        belasting in box 3. Je bruto beleggingsrendement ligt hoger.
+      </p>
       {!inputs.useCustomReturns && (
         <div className="space-y-2">
           <div className="flex justify-between items-center">
@@ -524,7 +532,11 @@ export function InputPanel({ inputs, onChange }: Props) {
           { id: 'parameters', label: 'Uitgangspunten' },
           { id: 'events', label: `Eenmalige bedragen${eventCount > 0 ? ` (${eventCount})` : ''}` },
         ] as const).map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)}
+          <button key={t.id} onClick={() => {
+              // Zicht op of bezoekers verder komen dan het eerste tabblad.
+              if (t.id === 'events' && tab !== 'events') track('tab_eenmalige_bedragen')
+              setTab(t.id)
+            }}
             className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors -mb-px ${
               tab === t.id
                 ? 'border-ink text-ink'
