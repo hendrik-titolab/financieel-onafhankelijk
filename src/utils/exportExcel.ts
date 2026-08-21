@@ -120,7 +120,7 @@ export async function exportToExcel(
 
   const ws3 = wb.addWorksheet('Jaarlijkse Prognose')
   ws3.addRows([headers, ...dataRows])
-  setColumnWidths(ws3, [10, 8, 12, 16, 20, 14, 18, 22])
+  setColumnWidths(ws3, [10, 8, 12, 30, 20, 14, 18, 22])
 
   // --- Sheet 4: Monte Carlo Percentielen ---
   const mcHeaders = ['Leeftijd', 'P10 (€)', 'P25 (€)', 'P50 mediaan (€)', 'P75 (€)', 'P90 (€)']

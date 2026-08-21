@@ -48,6 +48,7 @@ export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number
     desiredRetirementIncome, desiredRetirementIncomeType,
     aowMaandBedragNetto, aowStartAge, woonsituatie = 'alleenstaand',
     employerPension, employerPensionStartAge,
+    lijfrenteUitkering, lijfrenteStartAge,
     lifeEvents = [],
     volatilityPre, volatilityPost,
   } = inputs
@@ -113,14 +114,16 @@ export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number
         // Full income scenario
         const withdrawal = getMonthlyWithdrawal(
           age, desiredNetto, aowMonthlyNetto, aowStartAge,
-          employerPension, employerPensionStartAge, woonsituatie
+          employerPension, employerPensionStartAge, woonsituatie,
+          lijfrenteUitkering, lijfrenteStartAge
         ) * 12
         // 75% income scenario: client accepts 25% lower total income
-        // getMonthlyWithdrawal handles phase-aware tax: fixed income (AOW + emp) already covers
-        // part of the 75% threshold, so the capital withdrawal is reduced accordingly.
+        // getMonthlyWithdrawal handles phase-aware tax: fixed income (AOW + emp + lijfrente)
+        // already covers part of the 75% threshold, so the capital withdrawal is reduced accordingly.
         const withdrawal75 = getMonthlyWithdrawal(
           age, desiredNetto * 0.75, aowMonthlyNetto, aowStartAge,
-          employerPension, employerPensionStartAge, woonsituatie
+          employerPension, employerPensionStartAge, woonsituatie,
+          lijfrenteUitkering, lijfrenteStartAge
         ) * 12
         capital   = (capital   + event) * (1 + r) - withdrawal
         capital75 = (capital75 + event) * (1 + r) - withdrawal75

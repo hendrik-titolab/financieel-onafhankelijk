@@ -85,8 +85,9 @@ React-component `src/components/BrutoNetto/`. Belastingschijven en heffingskorti
 ### 3. Jaarruimte — `/tools/jaarruimte`
 React-component `src/components/Jaarruimte/`. Pensioentype-keuze (Geen/DB/Wtp), twee
 reserveringsruimte-modi, berekeningen opslaan in `localStorage`.
-- Correcte formule per jaar: pre-2023 13,3% × grondslag − 7,44 × factor A; 2023+ 30% × grondslag
-  − 6,27 × factor A (DB) of − werkgeverspremie (Wtp).
+- Correcte formule per jaar: pre-2023 13,3% × grondslag − 6,27 × factor A; 2023+ 30% × grondslag
+  − 6,27 × factor A (DB) of − werkgeverspremie (Wtp). De factor is 6,27 sinds 2019 (daarvoor 6,50);
+  er is geen jaar waarin hij 7,44 was, zie `jaarruimte.ts`.
 
 ### 4. Inflatie & spaargeld — `/tools/inflatie`
 React-component `src/components/Inflatie/`. Reëel vs. nominaal rendement, negeert bewust box 3.

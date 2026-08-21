@@ -6,6 +6,7 @@ import { exportToExcel } from '../../utils/exportExcel'
 import { exportToPDF } from '../../utils/exportPDF'
 import { FEEDBACK_URL } from '../../config/site'
 import { FREE_DOWNLOAD_LIMIT, getDownloadCount, incrementDownloadCount } from '../../utils/downloadLimit'
+import { marginaalTarief, aowNettoNaarBruto } from '../../utils/pensionCalc'
 import { useInstallPrompt } from '../../hooks/useInstallPrompt'
 import { InstallAppButton } from '../InstallAppButton'
 import { useState, useEffect } from 'react'
@@ -137,6 +138,18 @@ export function ResultsPanel({ inputs, result, mc, mcStale, isCalculating, onRun
     ? inputs.monthlyContribution
     : inputs.monthlyContribution / 12
   const needsMoreContribution = result.requiredMonthlyContribution > currentMonthlyPMT
+
+  // Marginaal tarief op het steady-state inkomen (AOW + werkgeverspensioen +
+  // lijfrente-/bankspaaruitkering, alle drie ingegaan): numeriek afgeleid uit
+  // nettoJaarinkomen(), dus altijd in lijn met wat de rest van de tool als netto
+  // bedrag toont (zie A7: een los uitgeschreven formule bleek eerder al eens niet
+  // met de rekenkern mee te lopen).
+  const marginaalLeeftijd = Math.max(inputs.aowStartAge, inputs.employerPensionStartAge, inputs.lijfrenteStartAge)
+  const marginaalBruto = aowNettoNaarBruto(inputs.aowMaandBedragNetto) * 12
+    + inputs.employerPension * 12 + inputs.lijfrenteUitkering * 12
+  const marginaalPct = Math.round(
+    marginaalTarief(marginaalBruto, true, inputs.woonsituatie === 'alleenstaand') * 100
+  )
 
   const handlePDF = async () => {
     if (limitReached) return
@@ -303,7 +316,7 @@ export function ResultsPanel({ inputs, result, mc, mcStale, isCalculating, onRun
         <div className="space-y-3">
           {result.incomePhases.map((phase, i) => {
             const total = phase.total
-            const isGap = phase.aow === 0 && phase.employerPension === 0
+            const isGap = phase.aow === 0 && phase.employerPension === 0 && phase.lijfrenteUitkering === 0
             return (
               <div key={i} className={`rounded-[3px] p-3 border ${isGap ? 'border-signal bg-panel' : 'border-line-soft bg-canvas'}`}>
                 <div className="flex justify-between items-center mb-2">
@@ -318,6 +331,7 @@ export function ResultsPanel({ inputs, result, mc, mcStale, isCalculating, onRun
                     { label: 'Eigen vermogen', value: phase.incomeFromCapital, color: '#527898' },
                     { label: 'AOW', value: phase.aow, color: '#29392E' },
                     { label: 'Werkgeverspensioen', value: phase.employerPension, color: '#9A835B' },
+                    { label: 'Lijfrente-/bankspaaruitkering', value: phase.lijfrenteUitkering, color: '#3B5972' },
                   ].filter(r => r.value > 0 || r.label === 'Eigen vermogen').map(row => (
                     <div key={row.label} className="flex items-center gap-2">
                       <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: row.color }} />
@@ -341,6 +355,15 @@ export function ResultsPanel({ inputs, result, mc, mcStale, isCalculating, onRun
           <span className={`font-numeric tabular font-medium ${result.surplusAtEnd >= 0 ? 'text-ink' : 'text-signal'}`}>
             {eur(result.surplusAtEnd)}
           </span>
+        </p>
+
+        <p className="text-xs text-body mt-2 leading-relaxed">
+          Een extra euro AOW- of pensioeninkomen op leeftijd {marginaalLeeftijd} kost je ongeveer{' '}
+          <span className="font-numeric tabular font-medium text-ink">{marginaalPct}%</span> aan
+          belasting, Zvw-bijdrage en afbouwende heffingskortingen samen, meer dan het schijftarief
+          alleen doet vermoeden. Dat percentage ligt het hoogst tussen € 46.002 en € 59.782 bruto per
+          jaar; valt jouw inkomen daar middenin, dan kan het lonen een lijfrente- of
+          bankspaaruitkering over meerdere jaren te spreiden.
         </p>
 
         {/* Inflation detail toggle */}
@@ -492,9 +515,9 @@ export function ResultsPanel({ inputs, result, mc, mcStale, isCalculating, onRun
         Omdat die kortingen afbouwen naarmate je inkomen stijgt, houd je van een pensioen bovenop je
         AOW netto minder over dan het schijftarief doet vermoeden.
         Je eigen vermogen behandelen we als vrij belegd vermogen in box 3: een opname daaruit is niet
-        belast. Staat een deel van je geld in een lijfrente, op een bankspaarrekening of in
-        pensioenbeleggen, dan is elke uitkering daaruit wél belast in box 1 en houd je minder over dan
-        hier staat. Vul in dat geval alleen je vrij belegde vermogen in.
+        belast. Heb je een lijfrente, banksparen of pensioenbeleggen? Vul de verwachte uitkering
+        daarvan in bij "Lijfrente-/bankspaaruitkering" hierboven, niet bij je eigen vermogen: die
+        uitkering is namelijk wél belast in box 1, net als je AOW en werkgeverspensioen.
         Het ingevulde rendement is wat je netto overhoudt: na kosten van beleggen en na belasting in
         box 3. Je bruto rendement ligt hoger.
         We gaan er daarnaast van uit dat je aanvullend pensioen, net als de AOW, volledig met de

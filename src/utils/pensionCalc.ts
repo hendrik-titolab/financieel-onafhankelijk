@@ -37,8 +37,9 @@ function realAnnualReturn(nominal: number, inflation: number): number {
 // uitgeschreven, bevinding A1).
 export interface MaandInkomenVerdeling {
   aow: number
-  employerPension: number  // netto, fase-afhankelijk belast
-  fromCapital: number      // wat er nog uit eigen vermogen moet komen
+  employerPension: number      // netto, fase-afhankelijk belast
+  lijfrenteUitkering: number   // netto, fase-afhankelijk belast (E1-optie-B)
+  fromCapital: number          // wat er nog uit eigen vermogen moet komen
 }
 
 /**
@@ -55,7 +56,7 @@ export interface MaandInkomenVerdeling {
  * later naar Nederland is geïmmigreerd krijgt een gekorte AOW, en dan schaalt de
  * Zvw-inhouding mee terwijl een vast verschil ernaast zou zitten.
  */
-function aowNettoNaarBruto(nettoMaand: number): number {
+export function aowNettoNaarBruto(nettoMaand: number): number {
   return nettoMaand / (1 - ZVW.lageBijdrage)
 }
 
@@ -65,11 +66,27 @@ function zvwBijdrage(brutoJaar: number): number {
 }
 
 /** Wat er van een bruto jaarinkomen overblijft na box 1-belasting en Zvw. */
-function nettoJaarinkomen(brutoJaar: number, pastAow: boolean, alleenstaand: boolean): number {
+export function nettoJaarinkomen(brutoJaar: number, pastAow: boolean, alleenstaand: boolean): number {
   if (brutoJaar <= 0) return 0
   // arbeidsinkomen 0: AOW en pensioen zijn geen arbeidsinkomen, dus geen arbeidskorting.
   const r = belastingBox1(brutoJaar, { pastAow, arbeidsinkomen: 0, alleenstaand })
   return r.nettoJaar - zvwBijdrage(brutoJaar)
+}
+
+/**
+ * Effectief marginaal tarief op een extra euro AOW-/pensioeninkomen: niet alleen
+ * het schijftarief, maar ook de afbouw van heffingskortingen én de Zvw-bijdrage
+ * (die nettoJaarinkomen ook aftrekt, en die dus ook in dit cijfer hoort — anders
+ * spreekt dit tarief de netto-bedragen tegen die de rest van de tool toont).
+ * Numeriek afgeleid in plaats van de tarieven los opgeteld, zodat dit cijfer nooit
+ * kan losraken van wat nettoJaarinkomen() daadwerkelijk berekent (bevinding A7 was
+ * precies dat een los opgeschreven formule niet meer overeenkwam met de rekenkern).
+ */
+export function marginaalTarief(brutoJaar: number, pastAow: boolean, alleenstaand: boolean): number {
+  const delta = 100
+  const laag = nettoJaarinkomen(brutoJaar, pastAow, alleenstaand)
+  const hoog = nettoJaarinkomen(brutoJaar + delta, pastAow, alleenstaand)
+  return 1 - (hoog - laag) / delta
 }
 
 export function getIncomeBreakdown(
@@ -79,33 +96,51 @@ export function getIncomeBreakdown(
   aowStartAge: number,
   employerPensionBruto: number,
   employerPensionStartAge: number,
-  woonsituatie: Woonsituatie = 'alleenstaand'
+  woonsituatie: Woonsituatie = 'alleenstaand',
+  // Lijfrente-/bankspaaruitkering (E1-optie-B): fiscaal beklemd, box 1, dezelfde
+  // behandeling als werkgeverspensioen. Achteraan toegevoegd met een default, zodat
+  // elke bestaande aanroep ongewijzigd blijft werken en compileren — geen van de
+  // andere call sites in pensionCalc.ts/monteCarlo.ts hoefde hierdoor aangepast te
+  // worden aan de argumentvolgorde.
+  lijfrenteUitkeringBruto = 0,
+  lijfrenteStartAge = 67
 ): MaandInkomenVerdeling {
   const pastAow = age >= aowStartAge
   const alleenstaand = woonsituatie === 'alleenstaand'
 
   const aow = pastAow ? aowNetto : 0
   const heeftPensioen = age >= employerPensionStartAge
+  const heeftLijfrente = age >= lijfrenteStartAge
 
   // Belasten over het TOTALE box 1-inkomen, niet per bron. Heffingskortingen zijn
   // inkomensafhankelijk, dus per bron rekenen geeft een te hoge korting en daarmee
   // een te rooskleurig netto (bevinding E4).
   //
-  // De AOW blijft staan op het bedrag dat de gebruiker invulde. Het pensioen krijgt
-  // wat er bovenop de AOW netto overblijft. Dat is precies de marginale behandeling
-  // die klopt: het pensioen valt in een hogere schijf en duwt de algemene
-  // heffingskorting en de ouderenkorting in de afbouw.
+  // De AOW blijft staan op het bedrag dat de gebruiker invulde. Elke volgende bron
+  // krijgt wat er bovenop de vorige netto overblijft. Dat is precies de marginale
+  // behandeling die klopt: elke bron duwt de algemene heffingskorting en de
+  // ouderenkorting verder in de afbouw. De volgorde AOW -> werkgeverspensioen ->
+  // lijfrente is willekeurig gekozen (er is geen fiscaal correcte manier om een
+  // gedeelde korting-afbouw over twee gelijktijdige bronnen te verdelen), niet
+  // fiscaal betekenisvol.
   const aowBrutoJaar = pastAow ? aowNettoNaarBruto(aowNetto) * 12 : 0
   const pensioenBrutoJaar = heeftPensioen ? employerPensionBruto * 12 : 0
+  const lijfrenteBrutoJaar = heeftLijfrente ? lijfrenteUitkeringBruto * 12 : 0
 
-  const nettoTotaalJaar = nettoJaarinkomen(aowBrutoJaar + pensioenBrutoJaar, pastAow, alleenstaand)
   const nettoAowJaar = pastAow ? aowNetto * 12 : 0
-  const employerPension = Math.max(0, (nettoTotaalJaar - nettoAowJaar) / 12)
+  const nettoAowPensioenJaar = nettoJaarinkomen(aowBrutoJaar + pensioenBrutoJaar, pastAow, alleenstaand)
+  const nettoAowPensioenLijfrenteJaar = nettoJaarinkomen(
+    aowBrutoJaar + pensioenBrutoJaar + lijfrenteBrutoJaar, pastAow, alleenstaand
+  )
+
+  const employerPension = Math.max(0, (nettoAowPensioenJaar - nettoAowJaar) / 12)
+  const lijfrenteUitkering = Math.max(0, (nettoAowPensioenLijfrenteJaar - nettoAowPensioenJaar) / 12)
 
   return {
     aow,
     employerPension,
-    fromCapital: Math.max(0, desiredNetto - aow - employerPension),
+    lijfrenteUitkering,
+    fromCapital: Math.max(0, desiredNetto - aow - employerPension - lijfrenteUitkering),
   }
 }
 
@@ -118,11 +153,13 @@ export function getMonthlyWithdrawal(
   aowStartAge: number,
   employerPensionBruto: number,
   employerPensionStartAge: number,
-  woonsituatie: Woonsituatie = 'alleenstaand'
+  woonsituatie: Woonsituatie = 'alleenstaand',
+  lijfrenteUitkeringBruto = 0,
+  lijfrenteStartAge = 67
 ): number {
   return getIncomeBreakdown(
     age, desiredNetto, aowNetto, aowStartAge, employerPensionBruto, employerPensionStartAge,
-    woonsituatie
+    woonsituatie, lijfrenteUitkeringBruto, lijfrenteStartAge
   ).fromCapital
 }
 
@@ -189,6 +226,7 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
     desiredRetirementIncome, desiredRetirementIncomeType,
     aowMaandBedragNetto, aowStartAge, woonsituatie = 'alleenstaand',
     employerPension, employerPensionStartAge,
+    lijfrenteUitkering, lijfrenteStartAge,
     lifeEvents = [],
   } = inputs
 
@@ -233,7 +271,8 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
     const age = retirementAge + yr
     const annualWithdrawal = getMonthlyWithdrawal(
       age, desiredMonthlyNetto, aowMonthlyNetto, aowStartAge,
-      employerPension, employerPensionStartAge, woonsituatie
+      employerPension, employerPensionStartAge, woonsituatie,
+      lijfrenteUitkering, lijfrenteStartAge
     ) * 12
     requiredCapital += annualWithdrawal / Math.pow(rPostAnnual, yr + 1)
   }
@@ -261,6 +300,7 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
       incomeFromCapital: 0,
       aowIncome: 0,
       employerIncome: 0,
+      lijfrenteIncome: 0,
       totalIncome: 0,
     })
 
@@ -273,14 +313,16 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
     const age = retirementAge + yr
     const calYear = retirementYear + yr
 
-    const { aow, employerPension: emp, fromCapital } = getIncomeBreakdown(
+    const { aow, employerPension: emp, lijfrenteUitkering: lijf, fromCapital } = getIncomeBreakdown(
       age, desiredMonthlyNetto, aowMonthlyNetto, aowStartAge,
-      employerPension, employerPensionStartAge, woonsituatie
+      employerPension, employerPensionStartAge, woonsituatie,
+      lijfrenteUitkering, lijfrenteStartAge
     )
     // Alleen voor de weergave: is het vermogen op, dan krijgt iemand feitelijk nog
-    // alleen AOW en werkgeverspensioen. De kapitaalmutatie hieronder gebruikt bewust
-    // de ónbeperkte fromCapital, anders stopt de onttrekking zodra de pot leeg is en
-    // meet het getoonde tekort iets anders dan het tekort werkelijk is (A1).
+    // alleen AOW, werkgeverspensioen en lijfrente-/bankspaaruitkering. De
+    // kapitaalmutatie hieronder gebruikt bewust de ónbeperkte fromCapital, anders
+    // stopt de onttrekking zodra de pot leeg is en meet het getoonde tekort iets
+    // anders dan het tekort werkelijk is (A1).
     const actualFromCapital = capital > 0 ? fromCapital : 0
 
     yearData.push({
@@ -291,7 +333,8 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
       incomeFromCapital: actualFromCapital,
       aowIncome: aow,
       employerIncome: emp,
-      totalIncome: actualFromCapital + aow + emp,
+      lijfrenteIncome: lijf,
+      totalIncome: actualFromCapital + aow + emp + lijf,
     })
 
     if (yr === yearsInRetirement) {
@@ -307,7 +350,8 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
   const incomePhases = buildIncomePhases(
     retirementAge, lifeExpectancy,
     desiredMonthlyNetto, aowMonthlyNetto, aowStartAge,
-    employerPension, employerPensionStartAge, woonsituatie
+    employerPension, employerPensionStartAge, woonsituatie,
+    lijfrenteUitkering, lijfrenteStartAge
   )
 
   return {
@@ -331,20 +375,23 @@ function buildIncomePhases(
   aowStartAge: number,
   employerPensionBruto: number,
   empStartAge: number,
-  woonsituatie: Woonsituatie
+  woonsituatie: Woonsituatie,
+  lijfrenteUitkeringBruto = 0,
+  lijfrenteStartAge = 67
 ): IncomePhase[] {
   const breakpoints = new Set([retirementAge, lifeExpectancy])
   if (aowStartAge > retirementAge && aowStartAge < lifeExpectancy) breakpoints.add(aowStartAge)
   if (empStartAge > retirementAge && empStartAge < lifeExpectancy) breakpoints.add(empStartAge)
+  if (lijfrenteStartAge > retirementAge && lijfrenteStartAge < lifeExpectancy) breakpoints.add(lijfrenteStartAge)
 
   const sorted = [...breakpoints].sort((a, b) => a - b)
   const phases: IncomePhase[] = []
 
   for (let i = 0; i < sorted.length - 1; i++) {
     const fromAge = sorted[i]
-    const { aow, employerPension: emp, fromCapital } = getIncomeBreakdown(
+    const { aow, employerPension: emp, lijfrenteUitkering: lijf, fromCapital } = getIncomeBreakdown(
       fromAge, desiredNetto, aowNetto, aowStartAge, employerPensionBruto, empStartAge,
-      woonsituatie
+      woonsituatie, lijfrenteUitkeringBruto, lijfrenteStartAge
     )
 
     phases.push({
@@ -354,7 +401,8 @@ function buildIncomePhases(
       incomeFromCapital: fromCapital,
       aow,
       employerPension: emp,
-      total: fromCapital + aow + emp,
+      lijfrenteUitkering: lijf,
+      total: fromCapital + aow + emp + lijf,
     })
   }
 

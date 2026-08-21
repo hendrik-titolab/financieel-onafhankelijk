@@ -96,6 +96,45 @@ describe('getIncomeBreakdown — AOW en pensioen stapelen', () => {
   })
 })
 
+// ── E1-optie-B: lijfrente-/bankspaaruitkering stapelt als derde bron ──────────
+//
+// Zelfde mechanisme als hierboven (E4), nu met AOW + werkgeverspensioen +
+// lijfrente-/bankspaaruitkering tegelijk. Verwachte waarden hieronder zijn met de
+// hand met de 2026-tarieven nagerekend (schijf1 17,85%, AHK-afbouw 3,195% vanaf
+// €29.736, ouderenkorting €2.067 vlak tot €46.002, aok €540, Zvw 4,85%) vóórdat
+// deze test is toegevoegd — niet achteraf aangepast aan wat de code toevallig
+// teruggaf.
+describe('getIncomeBreakdown — lijfrente stapelt bovenop AOW en werkgeverspensioen', () => {
+  const AOW_NETTO_MND = 1582  // alleenstaand, per 1 juli 2026
+  const NA_AOW = 70
+
+  it('drie bronnen tegelijk, alleenstaand: hand-nagerekend', () => {
+    const r = getIncomeBreakdown(
+      NA_AOW, 5000, AOW_NETTO_MND, 67, 800, 65, 'alleenstaand', 500, 65
+    )
+    expect(r.aow).toBe(AOW_NETTO_MND)
+    expect(Math.round(r.employerPension)).toBe(669)
+    expect(Math.round(r.lijfrenteUitkering)).toBe(371)
+    expect(round(r.fromCapital)).toBe(round(5000 - AOW_NETTO_MND - r.employerPension - r.lijfrenteUitkering))
+  })
+
+  it('nul zolang de lijfrente-ingangsleeftijd nog niet bereikt is', () => {
+    const nogNiet = getIncomeBreakdown(60, 5000, AOW_NETTO_MND, 67, 800, 65, 'alleenstaand', 500, 65)
+    expect(nogNiet.lijfrenteUitkering).toBe(0)
+  })
+
+  it('bestaande aanroepen zonder de twee nieuwe argumenten blijven exact hetzelfde gedrag geven', () => {
+    // Reden dat de nieuwe parameters achteraan zijn toegevoegd met een default in
+    // plaats van tussen de bestaande argumenten: dit moet blijven werken zonder dat
+    // een van de aanroepen elders in de codebase hoefde te wijzigen.
+    const zonder = getIncomeBreakdown(NA_AOW, 5000, AOW_NETTO_MND, 67, 800, 65, 'alleenstaand')
+    expect(zonder.lijfrenteUitkering).toBe(0)
+    expect(round(zonder.employerPension)).toBe(round(
+      getIncomeBreakdown(NA_AOW, 5000, AOW_NETTO_MND, 67, 800, 65, 'alleenstaand', 0, 67).employerPension
+    ))
+  })
+})
+
 describe('calculatePension — golden master', () => {
   for (const [key, inputs] of Object.entries(SCENARIOS)) {
     it(key, () => {

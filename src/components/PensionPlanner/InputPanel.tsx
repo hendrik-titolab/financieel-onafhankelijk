@@ -256,9 +256,35 @@ function ParametersTab({ inputs, onChange }: Props) {
             </p>
           </div>
         </div>
-        {inputs.retirementAge < Math.min(inputs.aowStartAge, inputs.employerPensionStartAge) && (
+        {/* Lijfrente/banksparen/pensioenbeleggen: fiscaal beklemd (box 1), geen vrije
+            onttrekking. Zelfde patroon als werkgeverspensioen hierboven — je vult de
+            verwáchte uitkering in, niet de opbouw (E1-optie-B). */}
+        <div className="border-t border-line-soft pt-3">
+          <Field label="Lijfrente-/bankspaaruitkering (bruto/mnd)">
+            <NumberInput value={inputs.lijfrenteUitkering}
+              onChange={v => onChange({ lijfrenteUitkering: v })} prefix="€" step={50} />
+            <p className="text-xs text-body leading-relaxed mt-1">
+              Lijfrente, banksparen of pensioenbeleggen: vul de verwáchte bruto-uitkering in, niet
+              het opgebouwde bedrag. Dit vermogen is fiscaal beklemd, een vrije opname zoals bij je
+              eigen vermogen hierboven kan hier niet. Nog niet bekend? Laat op € 0 staan.
+            </p>
+          </Field>
+          <div className="mt-2">
+            <Field label="Lijfrente-/bankspaaruitkering ingang (leeftijd)">
+              <NumberInput value={inputs.lijfrenteStartAge}
+                onChange={v => onChange({ lijfrenteStartAge: v })}
+                suffix="jr" step={1} min={55} max={75} />
+            </Field>
+            <p className="text-xs text-body mt-1">
+              Te vinden op de prognose van je aanbieder of via{' '}
+              <a href="https://www.mijnpensioenoverzicht.nl" target="_blank" rel="noopener noreferrer"
+                className="text-data-700 hover:underline">mijnpensioenoverzicht.nl</a>.
+            </p>
+          </div>
+        </div>
+        {inputs.retirementAge < Math.min(inputs.aowStartAge, inputs.employerPensionStartAge, inputs.lijfrenteStartAge) && (
           <p className="text-xs text-signal bg-panel border border-signal rounded-[3px] p-2 leading-relaxed">
-            ⚠ Overbruggingsperiode van {Math.min(inputs.aowStartAge, inputs.employerPensionStartAge) - inputs.retirementAge} jaar: eigen vermogen dekt het volledige inkomen.
+            ⚠ Overbruggingsperiode van {Math.min(inputs.aowStartAge, inputs.employerPensionStartAge, inputs.lijfrenteStartAge) - inputs.retirementAge} jaar: eigen vermogen dekt het volledige inkomen.
           </p>
         )}
       </Section>
