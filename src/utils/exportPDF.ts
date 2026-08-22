@@ -117,10 +117,15 @@ export async function exportToPDF(
     pdf.setFont('helvetica', 'normal')
     pdf.setFontSize(8)
     pdf.setTextColor(76, 90, 80)
-    pdf.text(
-      `Eigen vermogen: ${eur(phase.incomeFromCapital)}   AOW: ${eur(phase.aow)}   Werkgever: ${eur(phase.employerPension)}`,
-      margin + 4, y + 3.5
-    )
+    // Lijfrente alleen tonen als er ook echt een bedrag is, anders wordt deze
+    // regel voor de meeste gebruikers (veld staat standaard op € 0) onnodig lang.
+    const delen = [
+      `Eigen vermogen: ${eur(phase.incomeFromCapital)}`,
+      `AOW: ${eur(phase.aow)}`,
+      `Werkgever: ${eur(phase.employerPension)}`,
+      ...(phase.lijfrenteUitkering > 0 ? [`Lijfrente: ${eur(phase.lijfrenteUitkering)}`] : []),
+    ]
+    pdf.text(delen.join('   '), margin + 4, y + 3.5)
     y += 5
   })
 

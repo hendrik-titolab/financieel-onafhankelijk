@@ -96,6 +96,15 @@ export const BOX3 = {
   },
 } as const
 
+// ─── Lijfrente-/bankspaaruitkering ──────────────────────────────────────────
+// Tijdelijke oudedagslijfrente: art. 3.125 lid 1 onderdeel c Wet IB 2001. Afkoopgrens kleine pensioenen: art. 66 PW.
+// In gebruik sinds E1-optie-B: zachte waarschuwing tegen een onrealistisch hoog
+// ingevuld uitkeringsbedrag, geen harde blokkade.
+export const LIJFRENTE = {
+  maxJaaruitkeringTijdelijkeOudedagslijfrente: 27_192,
+  maxJaaruitkeringOverbruggingslijfrente:      63_288,
+} as const
+
 // ─── AOW-bedragen ───────────────────────────────────────────────────────────
 // Netto per maand, inclusief loonheffingskorting.
 // nettoMaand is netto INCLUSIEF loonheffingskorting. Wie dat bedrag gebruikt en daarnaast de heffingskortingen nog eens expliciet toepast, telt de korting dubbel. Gebruik voor een belastingberekening brutoMaand.

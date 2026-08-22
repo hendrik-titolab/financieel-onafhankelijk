@@ -4,6 +4,7 @@ import { X } from 'lucide-react'
 import type { PensionInputs, IncomeType, ContributionFrequency, LifeEvent, RiskProfile, Woonsituatie } from '../../types'
 import { RISICOPROFIELEN, PROFIEL_VOLGORDE } from '../../config/risicoprofielen'
 import { AOW_NETTO } from '../../utils/pensionCalc'
+import { LIJFRENTE } from '../../config/fiscaleParameters'
 
 const MAX_ROWS = 20
 
@@ -268,6 +269,19 @@ function ParametersTab({ inputs, onChange }: Props) {
               het opgebouwde bedrag. Dit vermogen is fiscaal beklemd, een vrije opname zoals bij je
               eigen vermogen hierboven kan hier niet. Nog niet bekend? Laat op € 0 staan.
             </p>
+            {/* Zachte waarschuwing, geen blokkade: banksparen/pensioenbeleggen kennen
+                deze wettelijke jaargrens niet, alleen een lijfrente. Vergelijkt tegen
+                de hoogste van de twee grenzen uit art. 3.125 Wet IB 2001, omdat welke
+                van de twee van toepassing is afhangt van de uitkeringsduur — een vraag
+                die dit ene veld bewust niet stelt (zie E1-optie-B). */}
+            {inputs.lijfrenteUitkering * 12 > LIJFRENTE.maxJaaruitkeringOverbruggingslijfrente && (
+              <p className="text-xs text-signal bg-panel border border-signal rounded-[3px] p-2 mt-1 leading-relaxed">
+                ⚠ Dit is hoger dan het wettelijk maximum voor een lijfrente-uitkering
+                (€ {Math.round(LIJFRENTE.maxJaaruitkeringOverbruggingslijfrente / 12).toLocaleString('nl-NL')}/mnd,
+                art. 3.125 Wet IB 2001). Klopt het bedrag? Bij banksparen of pensioenbeleggen geldt
+                deze grens niet.
+              </p>
+            )}
           </Field>
           <div className="mt-2">
             <Field label="Lijfrente-/bankspaaruitkering ingang (leeftijd)">
