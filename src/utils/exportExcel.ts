@@ -58,6 +58,8 @@ export async function exportToExcel(
     ['AOW ingangsdatum (leeftijd)', inputs.aowStartAge],
     ['Werkgeverspensioen (bruto/maand)', inputs.employerPension],
     ['Werkgeverspensioen ingangsdatum (leeftijd)', inputs.employerPensionStartAge],
+    ['Lijfrente-/bankspaaruitkering (bruto/maand)', inputs.lijfrenteUitkering],
+    ['Lijfrente-/bankspaaruitkering ingangsdatum (leeftijd)', inputs.lijfrenteStartAge],
     ['', ''],
     ['LIFE EVENTS', ''],
     ...((inputs.lifeEvents ?? []).length > 0
@@ -77,7 +79,8 @@ export async function exportToExcel(
   result.incomePhases.forEach(p => {
     phaseRows.push([p.label, '', '', ''])
     phaseRows.push(['  Eigen vermogen', eur(p.incomeFromCapital), 'AOW', eur(p.aow)])
-    phaseRows.push(['  Werkgeverspensioen', eur(p.employerPension), 'Totaal', eur(p.total)])
+    phaseRows.push(['  Werkgeverspensioen', eur(p.employerPension), 'Lijfrente-/bankspaaruitkering', eur(p.lijfrenteUitkering)])
+    phaseRows.push(['  Totaal', eur(p.total), '', ''])
   })
 
   const resultRows = [
@@ -106,7 +109,7 @@ export async function exportToExcel(
   setColumnWidths(ws2, [40, 20, 20, 20])
 
   // --- Sheet 3: Jaarlijkse Prognose ---
-  const headers = ['Leeftijd', 'Jaar', 'Fase', 'Vermogen (€)', 'Eigen kapitaal (€/mnd)', 'AOW (€/mnd)', 'Werkgever (€/mnd)', 'Totaal inkomen (€/mnd)']
+  const headers = ['Leeftijd', 'Jaar', 'Fase', 'Vermogen bij vast rendement (€)', 'Eigen kapitaal (€/mnd)', 'AOW (€/mnd)', 'Werkgever (€/mnd)', 'Lijfrente (€/mnd)', 'Totaal inkomen (€/mnd)']
   const dataRows = result.yearData.map(d => [
     d.age,
     d.year,
@@ -115,12 +118,13 @@ export async function exportToExcel(
     Math.round(d.incomeFromCapital),
     Math.round(d.aowIncome),
     Math.round(d.employerIncome),
+    Math.round(d.lijfrenteIncome),
     Math.round(d.totalIncome),
   ])
 
   const ws3 = wb.addWorksheet('Jaarlijkse Prognose')
   ws3.addRows([headers, ...dataRows])
-  setColumnWidths(ws3, [10, 8, 12, 16, 20, 14, 18, 22])
+  setColumnWidths(ws3, [10, 8, 12, 30, 20, 14, 18, 16, 22])
 
   // --- Sheet 4: Monte Carlo Percentielen ---
   const mcHeaders = ['Leeftijd', 'P10 (€)', 'P25 (€)', 'P50 mediaan (€)', 'P75 (€)', 'P90 (€)']

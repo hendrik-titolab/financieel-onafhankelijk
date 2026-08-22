@@ -1,3 +1,4 @@
+import { track } from '@vercel/analytics'
 import { FileText, Sheet, TrendingUp, LogOut, X, MessageSquare, RotateCcw } from 'lucide-react'
 import type { PensionResult, MonteCarloResult, PensionInputs } from '../../types'
 import { WealthChart } from './WealthChart'
@@ -5,9 +6,10 @@ import { exportToExcel } from '../../utils/exportExcel'
 import { exportToPDF } from '../../utils/exportPDF'
 import { FEEDBACK_URL } from '../../config/site'
 import { FREE_DOWNLOAD_LIMIT, getDownloadCount, incrementDownloadCount } from '../../utils/downloadLimit'
+import { marginaalTarief, aowNettoNaarBruto } from '../../utils/pensionCalc'
 import { useInstallPrompt } from '../../hooks/useInstallPrompt'
 import { InstallAppButton } from '../InstallAppButton'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 const INSTALL_BANNER_DISMISSED_KEY = 'fp_install_banner_dismissed'
 
@@ -122,6 +124,14 @@ export function ResultsPanel({ inputs, result, mc, mcStale, isCalculating, onRun
   )
   const { canInstall: canInstallApp } = useInstallPrompt()
   const limitReached = downloadCount >= FREE_DOWNLOAD_LIMIT
+
+  // Zicht op wie tegen de downloadlimiet aanloopt, los van hoeveel er daadwerkelijk
+  // gedownload zijn — dat laatste blijkt al uit downloadCount, dit is het moment
+  // waarop iemand voor het eerst wordt tegengehouden.
+  useEffect(() => {
+    if (limitReached) track('download_limiet_bereikt')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [limitReached])
   const surplus = result.projectedCapital - result.requiredCapital
   const isOnTrack = surplus >= 0
   const currentMonthlyPMT = inputs.contributionFrequency === 'maandelijks'
@@ -129,8 +139,21 @@ export function ResultsPanel({ inputs, result, mc, mcStale, isCalculating, onRun
     : inputs.monthlyContribution / 12
   const needsMoreContribution = result.requiredMonthlyContribution > currentMonthlyPMT
 
+  // Marginaal tarief op het steady-state inkomen (AOW + werkgeverspensioen +
+  // lijfrente-/bankspaaruitkering, alle drie ingegaan): numeriek afgeleid uit
+  // nettoJaarinkomen(), dus altijd in lijn met wat de rest van de tool als netto
+  // bedrag toont (zie A7: een los uitgeschreven formule bleek eerder al eens niet
+  // met de rekenkern mee te lopen).
+  const marginaalLeeftijd = Math.max(inputs.aowStartAge, inputs.employerPensionStartAge, inputs.lijfrenteStartAge)
+  const marginaalBruto = aowNettoNaarBruto(inputs.aowMaandBedragNetto) * 12
+    + inputs.employerPension * 12 + inputs.lijfrenteUitkering * 12
+  const marginaalPct = Math.round(
+    marginaalTarief(marginaalBruto, true, inputs.woonsituatie === 'alleenstaand') * 100
+  )
+
   const handlePDF = async () => {
     if (limitReached) return
+    track('download_pdf')
     setIsExportingPdf(true)
     try {
       await exportToPDF(inputs, result, mc, clientName, 'wealth-chart')
@@ -142,6 +165,7 @@ export function ResultsPanel({ inputs, result, mc, mcStale, isCalculating, onRun
 
   const handleExcel = async () => {
     if (limitReached) return
+    track('download_excel')
     await exportToExcel(inputs, result, mc ?? { successRate: 0, successRate75: 0, percentileData: [] }, clientName)
     setDownloadCount(incrementDownloadCount())
   }
@@ -292,7 +316,7 @@ export function ResultsPanel({ inputs, result, mc, mcStale, isCalculating, onRun
         <div className="space-y-3">
           {result.incomePhases.map((phase, i) => {
             const total = phase.total
-            const isGap = phase.aow === 0 && phase.employerPension === 0
+            const isGap = phase.aow === 0 && phase.employerPension === 0 && phase.lijfrenteUitkering === 0
             return (
               <div key={i} className={`rounded-[3px] p-3 border ${isGap ? 'border-signal bg-panel' : 'border-line-soft bg-canvas'}`}>
                 <div className="flex justify-between items-center mb-2">
@@ -307,6 +331,7 @@ export function ResultsPanel({ inputs, result, mc, mcStale, isCalculating, onRun
                     { label: 'Eigen vermogen', value: phase.incomeFromCapital, color: '#527898' },
                     { label: 'AOW', value: phase.aow, color: '#29392E' },
                     { label: 'Werkgeverspensioen', value: phase.employerPension, color: '#9A835B' },
+                    { label: 'Lijfrente-/bankspaaruitkering', value: phase.lijfrenteUitkering, color: '#3B5972' },
                   ].filter(r => r.value > 0 || r.label === 'Eigen vermogen').map(row => (
                     <div key={row.label} className="flex items-center gap-2">
                       <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: row.color }} />
@@ -330,6 +355,15 @@ export function ResultsPanel({ inputs, result, mc, mcStale, isCalculating, onRun
           <span className={`font-numeric tabular font-medium ${result.surplusAtEnd >= 0 ? 'text-ink' : 'text-signal'}`}>
             {eur(result.surplusAtEnd)}
           </span>
+        </p>
+
+        <p className="text-xs text-body mt-2 leading-relaxed">
+          Een extra euro AOW- of pensioeninkomen op leeftijd {marginaalLeeftijd} kost je ongeveer{' '}
+          <span className="font-numeric tabular font-medium text-ink">{marginaalPct}%</span> aan
+          belasting, Zvw-bijdrage en afbouwende heffingskortingen samen, meer dan het schijftarief
+          alleen doet vermoeden. Dat percentage ligt het hoogst tussen € 46.002 en € 59.782 bruto per
+          jaar; valt jouw inkomen daar middenin, dan kan het lonen een lijfrente- of
+          bankspaaruitkering over meerdere jaren te spreiden.
         </p>
 
         {/* Inflation detail toggle */}
@@ -481,13 +515,17 @@ export function ResultsPanel({ inputs, result, mc, mcStale, isCalculating, onRun
         Omdat die kortingen afbouwen naarmate je inkomen stijgt, houd je van een pensioen bovenop je
         AOW netto minder over dan het schijftarief doet vermoeden.
         Je eigen vermogen behandelen we als vrij belegd vermogen in box 3: een opname daaruit is niet
-        belast. Staat een deel van je geld in een lijfrente, op een bankspaarrekening of in
-        pensioenbeleggen, dan is elke uitkering daaruit wél belast in box 1 en houd je minder over dan
-        hier staat. Vul in dat geval alleen je vrij belegde vermogen in.
-        Drie dingen laten we bewust weg, en die maken het beeld gunstiger dan de werkelijkheid: de
-        belasting in box 3 over je vermogen, de kosten van beleggen, en het risico dat je pensioen niet
-        volledig met de inflatie meestijgt.
+        belast. Heb je een lijfrente, banksparen of pensioenbeleggen? Vul de verwachte uitkering
+        daarvan in bij "Lijfrente-/bankspaaruitkering" hierboven, niet bij je eigen vermogen: die
+        uitkering is namelijk wél belast in box 1, net als je AOW en werkgeverspensioen.
+        Het ingevulde rendement is wat je netto overhoudt: na kosten van beleggen en na belasting in
+        box 3. Je bruto rendement ligt hoger.
+        We gaan er daarnaast van uit dat je aanvullend pensioen, net als de AOW, volledig met de
+        inflatie meestijgt. Voor AOW is dat verdedigbaar, voor een aanvullend pensioen niet:
+        indexatie is niet gegarandeerd en kan achterblijven, waardoor je koopkracht na pensionering
+        lager uitvalt dan dit model laat zien.
         We berekenen in 2.000 scenario's met verschillende toekomstige rendementen hoe groot de kans is dat je jouw doel haalt.
+        De lijn in de grafiek is de mediaan van die 2.000 scenario's: de middelste uitkomst, niet het gemiddelde.
         Voor het gemiddelde rendement en de inflatie gaan we uit van wat er is ingevoerd.
         Dit is een indicatieve berekening en geen financieel advies.
         Voor goed advies raden wij aan een financieel planner te raadplegen:

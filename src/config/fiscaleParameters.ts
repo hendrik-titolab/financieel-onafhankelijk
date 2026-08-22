@@ -49,7 +49,9 @@ export const HEFFINGSKORTING_PRE_AOW = {
 } as const
 
 // ─── Heffingskortingen (box 1, AOW-leeftijd bereikt) ────────────────────────
-// Nog niet in gebruik. Staat klaar voor E4.
+// In gebruik sinds E4 (13 augustus 2026): belastingBox1() past dit toe op het
+// totale box 1-inkomen. De losse Bruto-Netto-tool rekent nog steeds alleen met
+// de tarieven van vóór de AOW-leeftijd.
 export const HEFFINGSKORTING_POST_AOW = {
   algemeneHeffingskorting: {
     max:         1_556,
@@ -94,6 +96,15 @@ export const BOX3 = {
     beleggingen: 0.06,
     schulden:    0.027,
   },
+} as const
+
+// ─── Lijfrente-/bankspaaruitkering ──────────────────────────────────────────
+// Tijdelijke oudedagslijfrente: art. 3.125 lid 1 onderdeel c Wet IB 2001. Afkoopgrens kleine pensioenen: art. 66 PW.
+// In gebruik sinds E1-optie-B: zachte waarschuwing tegen een onrealistisch hoog
+// ingevuld uitkeringsbedrag, geen harde blokkade.
+export const LIJFRENTE = {
+  maxJaaruitkeringTijdelijkeOudedagslijfrente: 27_192,
+  maxJaaruitkeringOverbruggingslijfrente:      63_288,
 } as const
 
 // ─── AOW-bedragen ───────────────────────────────────────────────────────────

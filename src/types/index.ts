@@ -37,6 +37,13 @@ export interface PensionInputs {
   employerPension: number     // gross monthly (bruto/maand)
   employerPensionStartAge: number  // age at which employer pension kicks in (default 67, see UPO)
 
+  // Lijfrente, banksparen of pensioenbeleggen: fiscaal beklemd (box 1), geen vrije
+  // onttrekking mogelijk (art. 3.125 Wet IB 2001). Ingevuld als de verwáchte
+  // bruto-uitkering die het product oplevert, niet als opbouw — dezelfde conventie
+  // als werkgeverspensioen hierboven (E1-optie-B).
+  lijfrenteUitkering: number        // gross monthly (bruto/maand)
+  lijfrenteStartAge: number         // age at which the lijfrente-/bankspaaruitkering starts
+
   lifeEvents: LifeEvent[]  // named events: schenking, woningaankoop, erfenis…
 
   volatilityPre: number       // std dev annual % for Monte Carlo
@@ -55,6 +62,7 @@ export interface YearData {
   incomeFromCapital: number
   aowIncome: number
   employerIncome: number
+  lijfrenteIncome: number
   totalIncome: number
 }
 
@@ -65,6 +73,7 @@ export interface IncomePhase {
   incomeFromCapital: number
   aow: number
   employerPension: number
+  lijfrenteUitkering: number
   total: number
 }
 

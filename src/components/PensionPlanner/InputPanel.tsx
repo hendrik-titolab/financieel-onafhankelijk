@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
+import { track } from '@vercel/analytics'
 import { X } from 'lucide-react'
 import type { PensionInputs, IncomeType, ContributionFrequency, LifeEvent, RiskProfile, Woonsituatie } from '../../types'
 import { RISICOPROFIELEN, PROFIEL_VOLGORDE } from '../../config/risicoprofielen'
 import { AOW_NETTO } from '../../utils/pensionCalc'
+import { LIJFRENTE } from '../../config/fiscaleParameters'
 
 const MAX_ROWS = 20
 
@@ -164,6 +166,9 @@ function ParametersTab({ inputs, onChange }: Props) {
           </div>
           <NumberInput value={inputs.currentIncome} onChange={v => onChange({ currentIncome: v })}
             prefix="€" suffix="/jr" step={500} />
+          <p className="text-xs text-body mt-1">
+            Alleen voor je eigen overzicht in de Excel-export. Telt niet mee in de berekening.
+          </p>
         </div>
         <div className="space-y-1">
           <div className="flex justify-between items-center">
@@ -252,9 +257,48 @@ function ParametersTab({ inputs, onChange }: Props) {
             </p>
           </div>
         </div>
-        {inputs.retirementAge < Math.min(inputs.aowStartAge, inputs.employerPensionStartAge) && (
+        {/* Lijfrente/banksparen/pensioenbeleggen: fiscaal beklemd (box 1), geen vrije
+            onttrekking. Zelfde patroon als werkgeverspensioen hierboven — je vult de
+            verwáchte uitkering in, niet de opbouw (E1-optie-B). */}
+        <div className="border-t border-line-soft pt-3">
+          <Field label="Lijfrente-/bankspaaruitkering (bruto/mnd)">
+            <NumberInput value={inputs.lijfrenteUitkering}
+              onChange={v => onChange({ lijfrenteUitkering: v })} prefix="€" step={50} />
+            <p className="text-xs text-body leading-relaxed mt-1">
+              Lijfrente, banksparen of pensioenbeleggen: vul de verwáchte bruto-uitkering in, niet
+              het opgebouwde bedrag. Dit vermogen is fiscaal beklemd, een vrije opname zoals bij je
+              eigen vermogen hierboven kan hier niet. Nog niet bekend? Laat op € 0 staan.
+            </p>
+            {/* Zachte waarschuwing, geen blokkade: banksparen/pensioenbeleggen kennen
+                deze wettelijke jaargrens niet, alleen een lijfrente. Vergelijkt tegen
+                de hoogste van de twee grenzen uit art. 3.125 Wet IB 2001, omdat welke
+                van de twee van toepassing is afhangt van de uitkeringsduur — een vraag
+                die dit ene veld bewust niet stelt (zie E1-optie-B). */}
+            {inputs.lijfrenteUitkering * 12 > LIJFRENTE.maxJaaruitkeringOverbruggingslijfrente && (
+              <p className="text-xs text-signal bg-panel border border-signal rounded-[3px] p-2 mt-1 leading-relaxed">
+                ⚠ Dit is hoger dan het wettelijk maximum voor een lijfrente-uitkering
+                (€ {Math.round(LIJFRENTE.maxJaaruitkeringOverbruggingslijfrente / 12).toLocaleString('nl-NL')}/mnd,
+                art. 3.125 Wet IB 2001). Klopt het bedrag? Bij banksparen of pensioenbeleggen geldt
+                deze grens niet.
+              </p>
+            )}
+          </Field>
+          <div className="mt-2">
+            <Field label="Lijfrente-/bankspaaruitkering ingang (leeftijd)">
+              <NumberInput value={inputs.lijfrenteStartAge}
+                onChange={v => onChange({ lijfrenteStartAge: v })}
+                suffix="jr" step={1} min={55} max={75} />
+            </Field>
+            <p className="text-xs text-body mt-1">
+              Te vinden op de prognose van je aanbieder of via{' '}
+              <a href="https://www.mijnpensioenoverzicht.nl" target="_blank" rel="noopener noreferrer"
+                className="text-data-700 hover:underline">mijnpensioenoverzicht.nl</a>.
+            </p>
+          </div>
+        </div>
+        {inputs.retirementAge < Math.min(inputs.aowStartAge, inputs.employerPensionStartAge, inputs.lijfrenteStartAge) && (
           <p className="text-xs text-signal bg-panel border border-signal rounded-[3px] p-2 leading-relaxed">
-            ⚠ Overbruggingsperiode van {Math.min(inputs.aowStartAge, inputs.employerPensionStartAge) - inputs.retirementAge} jaar: eigen vermogen dekt het volledige inkomen.
+            ⚠ Overbruggingsperiode van {Math.min(inputs.aowStartAge, inputs.employerPensionStartAge, inputs.lijfrenteStartAge) - inputs.retirementAge} jaar: eigen vermogen dekt het volledige inkomen.
           </p>
         )}
       </Section>
@@ -285,6 +329,10 @@ function RisicoprofielSection({ inputs, onChange }: Props) {
 
   return (
     <Section title="Risicoprofiel">
+      <p className="text-xs text-body leading-relaxed">
+        De rendementen hieronder zijn netto: wat je overhoudt na kosten van beleggen en na
+        belasting in box 3. Je bruto beleggingsrendement ligt hoger.
+      </p>
       {!inputs.useCustomReturns && (
         <div className="space-y-2">
           <div className="flex justify-between items-center">
@@ -524,7 +572,11 @@ export function InputPanel({ inputs, onChange }: Props) {
           { id: 'parameters', label: 'Uitgangspunten' },
           { id: 'events', label: `Eenmalige bedragen${eventCount > 0 ? ` (${eventCount})` : ''}` },
         ] as const).map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)}
+          <button key={t.id} onClick={() => {
+              // Zicht op of bezoekers verder komen dan het eerste tabblad.
+              if (t.id === 'events' && tab !== 'events') track('tab_eenmalige_bedragen')
+              setTab(t.id)
+            }}
             className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors -mb-px ${
               tab === t.id
                 ? 'border-ink text-ink'
