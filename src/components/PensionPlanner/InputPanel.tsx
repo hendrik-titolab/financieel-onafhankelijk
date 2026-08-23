@@ -185,7 +185,10 @@ function ParametersTab({ inputs, onChange }: Props) {
         <Field label="Inflatie">
           <NumberInput value={inputs.inflation}
             onChange={v => onChange({ inflation: v })} suffix="%" step={0.1} min={0} max={10} />
-          <p className="text-xs text-body mt-1">Waarmee we je koopkracht corrigeren (Nederlands langjarig gemiddelde: circa 3,5%, CBS 1960-2025).</p>
+          <p className="text-xs text-body mt-1">
+            Waarmee we je koopkracht corrigeren. We houden hier standaard 3,0% aan; het
+            Nederlands langjarig gemiddelde ligt met circa 3,5% iets hoger (CBS 1960-2025).
+          </p>
         </Field>
       </Section>
 
@@ -331,7 +334,8 @@ function RisicoprofielSection({ inputs, onChange }: Props) {
     <Section title="Risicoprofiel">
       <p className="text-xs text-body leading-relaxed">
         De rendementen hieronder zijn netto: wat je overhoudt na kosten van beleggen en na
-        belasting in box 3. Je bruto beleggingsrendement ligt hoger.
+        belasting in box 3. Je bruto beleggingsrendement ligt hoger. Wil je zelf al rekenen met
+        rendement ná kosten en belasting, schuif dan een profiel op naar defensiever.
       </p>
       {!inputs.useCustomReturns && (
         <div className="space-y-2">
