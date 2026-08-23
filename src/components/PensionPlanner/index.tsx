@@ -16,7 +16,7 @@ const DEFAULT_INPUTS: PensionInputs = {
   contributionFrequency: 'maandelijks',
   returnBeforeRetirement: 6,
   returnAfterRetirement: 4,
-  inflation: 2.5,
+  inflation: 3.0,
   currentIncome: 80000,
   currentIncomeType: 'bruto',
   desiredRetirementIncome: 5000,

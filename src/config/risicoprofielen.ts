@@ -6,7 +6,7 @@
  * Bron:      C:/Users/schak/Documents/Fiscale bron/fiscale-cijfers.json
  * Genereren: node genereer.mjs   (in die map)
  *
- * Eigen huisvisie, geen externe onderbouwing. Verwacht MEETKUNDIG (samengesteld) nominaal jaarrendement, geen rekenkundig gemiddelde. Besluit 12 augustus 2026.
+ * Eigen huisvisie, geen externe onderbouwing — dat is hier bewust de bron, geen onvolledigheid. Verwacht MEETKUNDIG (samengesteld) nominaal jaarrendement, geen rekenkundig gemiddelde. Besluit 12 augustus 2026, opnieuw beoordeeld en in orde bevonden 22 augustus 2026.
  *
  * monteCarlo.ts stemt zijn trekkingen hierop af: sampleAnnualReturn() trekt
  * lognormaal, zodat de mediaan van het samengestelde pad op deze percentages

@@ -4,7 +4,7 @@ beschrijving: "De FO-planner rekent met een reëel rendement, een fasegevoelige 
 samenvatting: "De planner geeft geen vast antwoord maar een slagingskans, berekend over 2.000 simulaties met wisselend rendement. Alle bedragen staan in koopkracht van vandaag: het nominale rendement wordt eerst gecorrigeerd voor inflatie. Belasting wordt berekend over je AOW en pensioen samen, met de tarieven, heffingskortingen en de bijdrage Zorgverzekeringswet die bij je leeftijd en woonsituatie horen. Elke aanname is aan te passen; niets ligt vast."
 pillar: "wat-is-financiele-onafhankelijkheid"
 volgorde: 6
-bijgewerkt: "2026-08-12"
+bijgewerkt: "2026-08-22"
 tool:
   label: "Bekijk je eigen uitkomst in de planner"
   href: "/ben-ik-financieel-onafhankelijk"
@@ -16,7 +16,7 @@ faq:
   - vraag: "Rekent de planner ook met box 3 (vermogensbelasting)?"
     antwoord: "Nee. Box 3 hangt sterk af van je vermogensmix, vrijstellingen en jaarlijkse regelwijzigingen, en zou de uitkomst minder betrouwbaar maken dan nu geen rekening ermee houden. Houd er zelf rekening mee dat je netto rendement op spaargeld en beleggingen hierdoor iets lager uitvalt."
   - vraag: "Klopt de uitkomst ook als mijn geld in een lijfrente of op een bankspaarrekening staat?"
-    antwoord: "Niet zonder meer. De planner gaat uit van vrij belegd vermogen in box 3 en haalt het gewenste inkomen netto uit je vermogen. Uit een lijfrente, bankspaarrekening of pensioenbeleggingsrekening is elke uitkering belast als inkomen in box 1. Er moet dan bruto meer uit om hetzelfde netto over te houden, waardoor je vermogen sneller opraakt dan de planner laat zien. Vul in dat geval alleen je vrij belegde vermogen in."
+    antwoord: "Deels automatisch. Je eigen vermogen blijft de planner behandelen als vrij belegd vermogen in box 3, vul daar dus alleen dat deel in. Voor een lijfrente-, bankspaar- of pensioenbeleggingsuitkering is er een apart veld: die uitkering is belast in box 1 en kan niet vrij worden opgenomen. Vul daar de verwáchte bruto-uitkering in, niet het opgebouwde bedrag — die vind je op de prognose van je aanbieder."
 bronnen:
   - titel: "Belastingdienst: tarieven box 1"
     url: "https://www.belastingdienst.nl/wps/wcm/connect/nl/werk-en-inkomen/content/hoeveel-inkomstenbelasting-betalen"
@@ -54,7 +54,7 @@ Dat werkt via het reële rendement: het rendement na aftrek van inflatie.
 reëel rendement = (1 + nominaal rendement) / (1 + inflatie) − 1
 ```
 
-Bij 7% nominaal rendement en 2,5% inflatie is dat (1,07 / 1,025) − 1 ≈ 4,4%. Met dat
+Bij 7% nominaal rendement en 3% inflatie is dat (1,07 / 1,03) − 1 ≈ 3,9%. Met dat
 gecorrigeerde percentage rekent de planner verder. Het voordeel: je hoeft zelf niet te
 turnen op wat 4.000 euro over dertig jaar nog waard is. Dat zit al in de berekening.
 
@@ -115,13 +115,15 @@ uitkomst rekent meteen opnieuw.
 ## Wat de planner bewust niet doet
 
 Geen rekening met box 3, met specifieke beleggingsproducten of met kosten daarvan. Dat
-zou de uitkomst niet preciezer maken, alleen ingewikkelder om uit te leggen.
+zou de uitkomst niet preciezer maken, alleen ingewikkelder om uit te leggen. Het ingevulde
+rendement is dus wat je netto overhoudt, na kosten en na box 3. Wil je zelf al rekenen met
+rendement ná kosten en belasting, kies dan een defensiever risicoprofiel dan je eigenlijk zou
+kiezen.
 
-De planner gaat er ook van uit dat je vermogen vrij belegd is, in box 3. Staat een deel op
-een lijfrenterekening, een bankspaarrekening of een pensioenbeleggingsrekening, dan klopt de
-uitkomst niet zonder meer. Zulk kapitaal is fiscaal beklemd: je mag het niet vrij opnemen, en
-elke uitkering telt mee als inkomen in box 1. Om hetzelfde bedrag netto over te houden moet er
-bruto meer uit, en dat betekent dat je vermogen sneller opraakt dan de grafiek laat zien. Vul in
-dat geval alleen je vrij belegde vermogen in. Verander één
-aanname in de planner, en de slagingskans verschuift meteen mee. Dat is het hele punt:
-niet één vast antwoord, maar zicht op wat je uitkomst kwetsbaar maakt.
+De planner gaat er ook van uit dat je eigen vermogen vrij belegd is, in box 3: vul daar dus
+alleen dat deel in. Heb je daarnaast een lijfrente, banksparen of pensioenbeleggen, dan is
+daar een apart veld voor: die uitkering is belast in box 1 en kan niet vrij worden opgenomen,
+dus hoort niet bij je vrije vermogen.
+
+Verander één aanname in de planner, en de slagingskans verschuift meteen mee. Dat is het hele
+punt: niet één vast antwoord, maar zicht op wat je uitkomst kwetsbaar maakt.
