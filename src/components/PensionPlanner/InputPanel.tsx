@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useId, Children, isValidElement, cloneElement } from 'react'
 import { track } from '@vercel/analytics'
 import { X } from 'lucide-react'
 import type { PensionInputs, IncomeType, ContributionFrequency, LifeEvent, RiskProfile, Woonsituatie } from '../../types'
@@ -40,11 +40,21 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   )
 }
 
+// Koppelt het label programmatisch aan het eerste kind (in de praktijk altijd
+// een NumberInput) via htmlFor/id, niet alleen visueel ernaast. Zonder die
+// koppeling is voor een screenreader of formulier-automatisering niet af te
+// leiden welk label bij welk veld hoort — bestond al vóór deze sessie, hier
+// in één keer voor alle ~13 Field-aanroepen opgelost in plaats van per
+// aanroepplek een losse id te verzinnen.
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  const id = useId()
+  const [first, ...rest] = Children.toArray(children)
+  const linked = isValidElement<{ id?: string }>(first) ? cloneElement(first, { id }) : first
   return (
     <div>
-      <label className="label">{label}</label>
-      {children}
+      <label htmlFor={id} className="label">{label}</label>
+      {linked}
+      {rest}
     </div>
   )
 }
@@ -52,7 +62,8 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 // Bedragvelden houden de ruwe tekst lokaal bij, zodat een leeg veld leeg mag
 // blijven terwijl je typt. Alleen bij het verlaten van het veld valt een lege
 // of ongeldige invoer terug op 0 — niet meer bij elke toetsaanslag.
-function NumberInput({ value, onChange, prefix, suffix, step = 1, min = 0, max }: {
+function NumberInput({ id, value, onChange, prefix, suffix, step = 1, min = 0, max }: {
+  id?: string
   value: number; onChange: (v: number) => void
   prefix?: string; suffix?: string; step?: number; min?: number; max?: number
 }) {
@@ -81,7 +92,7 @@ function NumberInput({ value, onChange, prefix, suffix, step = 1, min = 0, max }
   return (
     <div className="relative flex items-center">
       {prefix && <span className="absolute left-3 text-body text-sm">{prefix}</span>}
-      <input type="number" value={text} min={min} max={max} step={step}
+      <input id={id} type="number" value={text} min={min} max={max} step={step}
         onChange={e => {
           setText(e.target.value)
           const parsed = parseFloat(e.target.value.replace(',', '.'))
@@ -98,14 +109,15 @@ function NumberInput({ value, onChange, prefix, suffix, step = 1, min = 0, max }
 function AgeSliderRow({ label, value, min, max, onChange }: {
   label: string; value: number; min: number; max: number; onChange: (v: number) => void
 }) {
+  const id = useId()
   const fillPct = ((value - min) / (max - min)) * 100
   return (
     <div className="space-y-1">
       <div className="flex justify-between items-center">
-        <label className="label mb-0">{label}</label>
+        <label htmlFor={id} className="label mb-0">{label}</label>
         <span className="font-numeric tabular text-sm text-data-700">{value} jaar</span>
       </div>
-      <input type="range" min={min} max={max} value={value}
+      <input id={id} type="range" min={min} max={max} value={value}
         style={{ '--range-fill': `${fillPct}%` } as React.CSSProperties}
         onChange={e => onChange(parseInt(e.target.value))} />
       <div className="flex justify-between text-xs text-body">
@@ -118,6 +130,12 @@ function AgeSliderRow({ label, value, min, max, onChange }: {
 // ---- Parameters tab ----
 
 function ParametersTab({ inputs, onChange }: Props) {
+  // Losse velden buiten Field om (met een Toggle ernaast in plaats van alleen
+  // een hint-paragraaf) hebben elk hun eigen stabiele id nodig, om dezelfde
+  // reden als in Field hierboven.
+  const inlegId = useId()
+  const huidigInkomenId = useId()
+  const gewenstInkomenId = useId()
   return (
     <div className="space-y-5 pb-4">
       <Section title="Leeftijd">
@@ -144,12 +162,12 @@ function ParametersTab({ inputs, onChange }: Props) {
         </Field>
         <div className="space-y-1">
           <div className="flex justify-between items-center">
-            <label className="label mb-0">Inleg</label>
+            <label htmlFor={inlegId} className="label mb-0">Inleg</label>
             <Toggle value={inputs.contributionFrequency}
               onChange={v => onChange({ contributionFrequency: v as ContributionFrequency })}
               options={[{ value: 'maandelijks', label: 'Maand' }, { value: 'jaarlijks', label: 'Jaar' }]} />
           </div>
-          <NumberInput value={inputs.monthlyContribution}
+          <NumberInput id={inlegId} value={inputs.monthlyContribution}
             onChange={v => onChange({ monthlyContribution: v })} prefix="€" step={50} />
         </div>
       </Section>
@@ -159,12 +177,12 @@ function ParametersTab({ inputs, onChange }: Props) {
       <Section title="Inkomen">
         <div className="space-y-1">
           <div className="flex justify-between items-center">
-            <label className="label mb-0">Huidig inkomen</label>
+            <label htmlFor={huidigInkomenId} className="label mb-0">Huidig inkomen</label>
             <Toggle value={inputs.currentIncomeType}
               onChange={v => onChange({ currentIncomeType: v as IncomeType })}
               options={[{ value: 'bruto', label: 'Bruto' }, { value: 'netto', label: 'Netto' }]} />
           </div>
-          <NumberInput value={inputs.currentIncome} onChange={v => onChange({ currentIncome: v })}
+          <NumberInput id={huidigInkomenId} value={inputs.currentIncome} onChange={v => onChange({ currentIncome: v })}
             prefix="€" suffix="/jr" step={500} />
           <p className="text-xs text-body mt-1">
             Alleen voor je eigen overzicht in de Excel-export. Telt niet mee in de berekening.
@@ -172,12 +190,12 @@ function ParametersTab({ inputs, onChange }: Props) {
         </div>
         <div className="space-y-1">
           <div className="flex justify-between items-center">
-            <label className="label mb-0">Gewenst pensioeninkomen</label>
+            <label htmlFor={gewenstInkomenId} className="label mb-0">Gewenst pensioeninkomen</label>
             <Toggle value={inputs.desiredRetirementIncomeType}
               onChange={v => onChange({ desiredRetirementIncomeType: v as IncomeType })}
               options={[{ value: 'bruto', label: 'Bruto' }, { value: 'netto', label: 'Netto' }]} />
           </div>
-          <NumberInput value={inputs.desiredRetirementIncome}
+          <NumberInput id={gewenstInkomenId} value={inputs.desiredRetirementIncome}
             onChange={v => onChange({ desiredRetirementIncome: v })}
             prefix="€" suffix="/mnd" step={100} />
           <p className="text-xs text-body">In koopkracht van vandaag: inflatie wordt automatisch verwerkt</p>
@@ -315,6 +333,7 @@ function ParametersTab({ inputs, onChange }: Props) {
 
 // ---- Risicoprofiel: schuif + uitleg, of zelf invullen ----
 function RisicoprofielSection({ inputs, onChange }: Props) {
+  const profielSliderId = useId()
   const profiel = RISICOPROFIELEN[inputs.riskProfile]
   const index = Math.max(0, PROFIEL_VOLGORDE.indexOf(inputs.riskProfile))
 
@@ -340,10 +359,10 @@ function RisicoprofielSection({ inputs, onChange }: Props) {
       {!inputs.useCustomReturns && (
         <div className="space-y-2">
           <div className="flex justify-between items-center">
-            <label className="label mb-0">Beleggingsprofiel</label>
+            <label htmlFor={profielSliderId} className="label mb-0">Beleggingsprofiel</label>
             <span className="text-sm font-medium text-data-700">{profiel.label}</span>
           </div>
-          <input type="range" min={0} max={PROFIEL_VOLGORDE.length - 1} step={1} value={index}
+          <input id={profielSliderId} type="range" min={0} max={PROFIEL_VOLGORDE.length - 1} step={1} value={index}
             style={{ '--range-fill': `${(index / (PROFIEL_VOLGORDE.length - 1)) * 100}%` } as React.CSSProperties}
             onChange={e => kiesProfiel(parseInt(e.target.value))} />
           <div className="flex justify-between text-xs text-body">
