@@ -107,8 +107,14 @@ export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number
 
       if (age < retirementAge) {
         const r = sampleAnnualReturn(realPre, volatilityPre, rng)
-        capital   = (capital   + event) * (1 + r) + monthlyPMT * 12
-        capital75 = (capital75 + event) * (1 + r) + monthlyPMT * 12
+        // Mid-year-conventie voor de jaarinleg, zelfde reden en zelfde
+        // Math.sqrt(1+r) als in pensionCalc.ts's simulateAccumulation. r kan
+        // hier niet onder -100% uitkomen (lognormale trekking, zie
+        // sampleAnnualReturn), dus 1+r is altijd positief en de wortel is
+        // altijd reëel.
+        const groeifactorInleg = Math.sqrt(1 + r)
+        capital   = (capital   + event) * (1 + r) + monthlyPMT * 12 * groeifactorInleg
+        capital75 = (capital75 + event) * (1 + r) + monthlyPMT * 12 * groeifactorInleg
       } else {
         const r = sampleAnnualReturn(realPost, volatilityPost, rng)
         // Full income scenario

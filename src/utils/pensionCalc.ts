@@ -179,6 +179,19 @@ function buildEventMap(
 
 // Year-by-year accumulation simulation. Life events (positive or negative) are applied at
 // the start of each year before growth — same as lump sums in the original design.
+//
+// De jaarinleg (monthlyPMT * 12) krijgt Math.sqrt(annualFactor) mee: de
+// mid-year-conventie voor een bedrag dat in werkelijkheid in twaalf gelijke
+// maandelijkse termijnen wordt ingelegd, niet in één keer aan het einde van
+// het jaar. Zonder deze factor kreeg de inleg van dat jaar zelf nul rendement
+// (rekenkundig alsof ze allemaal op 31 december binnenkwamen), terwijl de
+// eerste termijn al in januari rendement had moeten opbouwen. Geometrisch
+// (wortel) in plaats van lineair (annualFactor/2 erbij), consistent met hoe
+// deze codebase elders ook exact rekent i.p.v. benadert (zie realAnnualReturn:
+// (1+n)/(1+i)-1, niet n-i). Op 22 augustus 2026 hand-nagerekend: bij 10%
+// rendement en €12.000 jaarinleg geeft dit €12.585,71 i.p.v. €12.000 in het
+// eerste jaar — dat is 12.000 * sqrt(1,10), zoals verwacht bij een bedrag dat
+// gemiddeld een half jaar heeft kunnen groeien.
 function simulateAccumulation(
   startCapital: number,
   monthlyPMT: number,
@@ -193,7 +206,7 @@ function simulateAccumulation(
   for (let yr = 0; yr < yearsToRetirement; yr++) {
     const calYear = startCalendarYear + yr
     const event = eventMap.get(calYear) ?? 0
-    capital = (capital + event) * annualFactor + monthlyPMT * 12
+    capital = (capital + event) * annualFactor + monthlyPMT * 12 * Math.sqrt(annualFactor)
   }
   return capital
 }
@@ -304,7 +317,8 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
       totalIncome: 0,
     })
 
-    capital = (capital + event) * (1 + realPre / 100) + monthlyPMT * 12
+    // Mid-year-conventie voor de jaarinleg, zie simulateAccumulation hierboven.
+    capital = (capital + event) * (1 + realPre / 100) + monthlyPMT * 12 * Math.sqrt(1 + realPre / 100)
   }
 
   // Retirement phase
