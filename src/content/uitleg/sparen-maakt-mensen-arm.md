@@ -4,7 +4,7 @@ beschrijving: "Spaargeld voelt veilig, maar door inflatie verlies je op de lange
 samenvatting: "Wie spaart voelt zich veilig, maar op de lange termijn verlies je koopkracht: de inflatie is meestal hoger dan je spaarrente. Bij zo'n 3% inflatie is €100.000 na twintig jaar nog maar ongeveer €71.000 aan koopkracht waard, ondanks de rente die je ontvangt. Een spaarrekening is ideaal voor je buffer, maar geld dat je jaren kunt missen kun je beter aan het werk zetten."
 pillar: "wat-is-inflatie"
 volgorde: 1
-bijgewerkt: "2026-07-21"
+bijgewerkt: "2026-08-25"
 tool:
   label: "Bereken hoe snel inflatie jouw spaargeld opeet"
   href: "/tools/inflatie"
@@ -28,11 +28,11 @@ De mens is sterk gemotiveerd door angst. Angst bij beleggen, want bij de gedacht
 
 ## Hoe werkt inflatie, en waarom worden rijke spaarders arm?
 
-Inflatie is de stijging van het algemene prijspeil. Neem een mandje boodschappen: wat je daarvoor vandaag afrekent, kost volgend jaar iets meer. In Nederland lag de inflatie de afgelopen tien jaar gemiddeld rond de 3% per jaar. In januari 2026 kwam ze uit op 2,4%, dicht bij de 2% die de Europese Centrale Bank nastreeft. Niets bijzonders aan de hand, zou je denken.
+Inflatie is de stijging van het algemene prijspeil. Neem een mandje boodschappen: wat je daarvoor vandaag afrekent, kost volgend jaar iets meer. In Nederland lag de inflatie de afgelopen tien jaar tegen de drie procent per jaar. In de eerste helft van 2026 lag de inflatie gemiddeld net iets onder de 3%. Niets bijzonders aan de hand, zou je denken.
 
 Maar pas op. Kijk je niet één jaar vooruit maar tien, dan ziet het er opeens heel anders uit. Bij 3% inflatie is je geld over tien jaar nog maar zo'n 74% van zijn koopkracht waard. Dat mandje boodschappen van €100 kost dan €134. Je saldo op de bank verandert niet, maar wat je ermee kunt kopen, is elk jaar minder.
 
-Tegenover die inflatie staat je spaarrente. En daar wordt het pijnlijk. In de zomer van 2026 boden de drie grote Nederlandse banken alle drie exact hetzelfde: 1,25% op een vrij opneembare spaarrekening. Je krijgt dus 1,25% rente, terwijl de prijzen met ongeveer 3% stijgen. Per saldo verlies je zo'n 1,75% aan koopkracht. Per jaar. Gegarandeerd.
+Tegenover die inflatie staat je spaarrente. En daar wordt het pijnlijk. De drie grote banken boden zomer 2026 rentes aan van niet hoger dan 1,50% op een vrij opneembare spaarrekening. Zelfs in het gunstigste geval krijg je dus 1,50% rente, terwijl de prijzen met ongeveer 3% stijgen. Per saldo verlies je zo op zijn minst zo'n 1,5% aan koopkracht. Per jaar. Gegarandeerd.
 
 *Benieuwd wat dit voor jouw spaargeld betekent? [Bereken hoe snel inflatie jouw spaargeld opeet](/tools/inflatie).*
 
