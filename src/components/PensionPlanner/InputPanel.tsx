@@ -205,7 +205,7 @@ function ParametersTab({ inputs, onChange }: Props) {
             onChange={v => onChange({ inflation: v })} suffix="%" step={0.1} min={0} max={10} />
           <p className="text-xs text-body mt-1">
             Waarmee we je koopkracht corrigeren. We houden hier standaard 3,0% aan; het
-            Nederlands langjarig gemiddelde ligt met circa 3,5% iets hoger (CBS 1960-2025).
+            Nederlandse langjarige gemiddelde ligt met circa 3,5% iets hoger (CBS 1960-2025).
           </p>
         </Field>
       </Section>
