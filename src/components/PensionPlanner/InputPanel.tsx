@@ -59,6 +59,26 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 
+// Zet een getypte bedrag-string om naar een getal, met Nederlandse notatie: een
+// punt als duizendtal-scheiding, een komma als decimaalteken (bijv. "1.234,56").
+// Een <input type="number"> leest een punt zelf altijd als decimaalteken, dus
+// zonder deze functie werd "50.000" (bedoeld: vijftigduizend) stilzwijgend 50 —
+// gevonden tijdens het natrekken van de eenmalige-bedragen-fix hierboven, en
+// van toepassing op ieder bedragveld in de tool, niet alleen dat ene scherm.
+function parseBedrag(raw: string): number {
+  const s = raw.trim()
+  if (s.includes(',')) {
+    // Punten vóór de komma zijn duizendtal-scheidingen, de komma is decimaal.
+    return parseFloat(s.replace(/\./g, '').replace(',', '.'))
+  }
+  // Geen komma: een punt gevolgd door precies 3 cijfers (en dan niets meer, of
+  // weer zo'n groep) is een duizendtal-scheiding — de enige vorm die in het
+  // Nederlands zonder komma voorkomt. Een punt gevolgd door 1-2 cijfers (zoals
+  // "3,5" als iemand toch een punt typt bij een percentage) is een echt
+  // decimaalteken en blijft staan.
+  return parseFloat(s.replace(/\.(?=\d{3}(\D|$))/g, ''))
+}
+
 // Bedragvelden houden de ruwe tekst lokaal bij, zodat een leeg veld leeg mag
 // blijven terwijl je typt. Alleen bij het verlaten van het veld valt een lege
 // of ongeldige invoer terug op 0 — niet meer bij elke toetsaanslag.
@@ -71,8 +91,11 @@ function NumberInput({ id, value, onChange, prefix, suffix, step = 1, min = 0, m
 
   useEffect(() => {
     // Alleen synchroniseren als de waarde van buitenaf wijzigt (bijv. profielwissel),
-    // niet bij elke render, anders overschrijft dit het typen.
-    if (Number(text) !== value) setText(String(value))
+    // niet bij elke render, anders overschrijft dit het typen. parseBedrag (niet
+    // Number) vergelijken: anders werd "50.000" die al correct als 50000 was
+    // doorgegeven hier alsnog herschreven, want Number("50.000") leest de punt
+    // zelf weer als decimaalteken en ziet dan 50 in plaats van 50000.
+    if (parseBedrag(text) !== value) setText(String(value))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value])
 
@@ -82,7 +105,7 @@ function NumberInput({ id, value, onChange, prefix, suffix, step = 1, min = 0, m
   // enige melding (bevinding A5). Tijdens het typen gebeurt dit bewust niet, want
   // dan springt een half ingetypt getal onder je handen weg.
   const commit = (raw: string) => {
-    const parsed = parseFloat(raw.replace(',', '.'))
+    const parsed = parseBedrag(raw)
     const next = isNaN(parsed) ? 0 : parsed
     const begrensd = Math.min(max ?? Infinity, Math.max(min ?? -Infinity, next))
     setText(String(begrensd))
@@ -95,7 +118,7 @@ function NumberInput({ id, value, onChange, prefix, suffix, step = 1, min = 0, m
       <input id={id} type="number" value={text} min={min} max={max} step={step}
         onChange={e => {
           setText(e.target.value)
-          const parsed = parseFloat(e.target.value.replace(',', '.'))
+          const parsed = parseBedrag(e.target.value)
           if (!isNaN(parsed)) onChange(parsed)
         }}
         onBlur={e => commit(e.target.value)}
@@ -141,10 +164,14 @@ function ParametersTab({ inputs, onChange }: Props) {
       <Section title="Leeftijd">
         <AgeSliderRow label="Huidige leeftijd" value={inputs.currentAge} min={18} max={70}
           onChange={v => onChange({ currentAge: v })} />
-        <AgeSliderRow label="Pensioenleeftijd" value={inputs.retirementAge} min={50} max={75}
+        <AgeSliderRow label="Pensioenleeftijd" value={inputs.retirementAge} min={35} max={75}
           onChange={v => onChange({ retirementAge: v })} />
+        {/* Statische min (niet meer inputs.retirementAge + 1): anders klemt de
+            browser deze schuifknop zelf vast op zijn min zodra pensioenleeftijd
+            erboven uitkomt, wat er hetzelfde uitziet als het ongewenste
+            "vanzelf meebewegen" dat hierboven bij handleChange is opgelost. */}
         <AgeSliderRow label="Levensverwachting" value={inputs.lifeExpectancy}
-          min={inputs.retirementAge + 1} max={100}
+          min={36} max={100}
           onChange={v => onChange({ lifeExpectancy: v })} />
       </Section>
 
@@ -467,18 +494,28 @@ function EenmaligeBedragenSection({ inputs, onChange }: Props) {
   // in de lijst en in de optelling bleef staan (bevinding A22).
   const laatsteJaar = currentYear + Math.max(0, inputs.lifeExpectancy - inputs.currentAge) - 1
 
-  const isFilled = (r: DraftEvent) => r.amount !== '' && Number(r.amount) !== 0
+  const isFilled = (r: DraftEvent) => r.amount !== '' && parseBedrag(r.amount) !== 0
 
   const buitenLooptijd = (r: DraftEvent) =>
     isFilled(r) && r.year !== '' && !isNaN(Number(r.year)) &&
     (Number(r.year) < currentYear || Number(r.year) > laatsteJaar)
 
   useEffect(() => {
-    const valid: LifeEvent[] = rows
-      .filter(r => r.amount && r.year && !isNaN(Number(r.amount)) && Number(r.amount) !== 0 && !isNaN(Number(r.year)))
-      .filter(r => !buitenLooptijd(r))
-      .map(r => ({ name: r.name.trim() || '—', amount: Number(r.amount), year: Number(r.year) }))
-    onChange({ lifeEvents: valid })
+    // Gedebouncet: zonder dit ging elke toetsaanslag direct de berekening in. Een
+    // tussenstaat tijdens het wijzigen van een al ingevuld jaar (bijv. "2" terwijl
+    // je 2027 naar 2028 aan het overtypen bent) of een kort leeg bedrag-veld viel
+    // dan buiten de looptijd resp. buiten "ingevuld", waardoor die regel er even
+    // uitviel en het KPI-raster zichtbaar terugsprong naar de waarde zonder die
+    // regel — precies zolang je nog aan het typen was (bevinding tijdens deze
+    // sessie: "als ik het jaartal invul, springt tekort steeds terug").
+    const timeoutId = setTimeout(() => {
+      const valid: LifeEvent[] = rows
+        .filter(r => r.amount && r.year && !isNaN(parseBedrag(r.amount)) && parseBedrag(r.amount) !== 0 && !isNaN(Number(r.year)))
+        .filter(r => !buitenLooptijd(r))
+        .map(r => ({ name: r.name.trim() || '—', amount: parseBedrag(r.amount), year: Number(r.year) }))
+      onChange({ lifeEvents: valid })
+    }, 300)
+    return () => clearTimeout(timeoutId)
   // laatsteJaar hangt af van leeftijd en levensverwachting: verandert de gebruiker
   // die, dan moet opnieuw bepaald worden welke regels binnen de looptijd vallen.
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -505,8 +542,8 @@ function EenmaligeBedragenSection({ inputs, onChange }: Props) {
 
   const validCount = (inputs.lifeEvents ?? []).length
   const teltMee = (r: DraftEvent) => isFilled(r) && !buitenLooptijd(r)
-  const totaalBij = rows.filter(r => teltMee(r) && Number(r.amount) > 0).reduce((s, r) => s + Number(r.amount), 0)
-  const totaalAf = rows.filter(r => teltMee(r) && Number(r.amount) < 0).reduce((s, r) => s + Math.abs(Number(r.amount)), 0)
+  const totaalBij = rows.filter(r => teltMee(r) && parseBedrag(r.amount) > 0).reduce((s, r) => s + parseBedrag(r.amount), 0)
+  const totaalAf = rows.filter(r => teltMee(r) && parseBedrag(r.amount) < 0).reduce((s, r) => s + Math.abs(parseBedrag(r.amount)), 0)
 
   return (
     <Section title={`Eenmalige bedragen${validCount > 0 ? ` (${validCount})` : ''}`}>
@@ -518,7 +555,7 @@ function EenmaligeBedragenSection({ inputs, onChange }: Props) {
         {rows.map((row, i) => {
           const isLast = i === rows.length - 1
           const isDraft = isLast && !isFilled(row)
-          const isExpense = Number(row.amount) < 0
+          const isExpense = parseBedrag(row.amount) < 0
           return (
             <div key={row.id} className={`space-y-1 ${isDraft ? 'opacity-50' : ''}`}>
               <input type="text" value={row.name} placeholder="Omschrijving (optioneel)"

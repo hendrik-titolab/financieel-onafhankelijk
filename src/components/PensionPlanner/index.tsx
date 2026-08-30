@@ -81,13 +81,16 @@ export function PensionPlanner({ clientName, onCloseSession }: Props) {
     }
   }, [])
 
+  // Elk leeftijdveld toont en onthoudt precies wat je instelt, zonder een ander
+  // veld te corrigeren. Eerder werd retirementAge/lifeExpectancy hier automatisch
+  // opgehoogd zodra currentAge/retirementAge die inhaalde, waardoor een schuifje
+  // zichtbaar "vanzelf" meebewoog met een ander schuifje — expliciet ongewenst.
+  // Een leeftijdcombinatie die zichzelf tegenspreekt (bijv. currentAge >
+  // retirementAge) geeft geen fout: pensionCalc.ts/monteCarlo.ts begrenzen
+  // yearsToRetirement/yearsInRetirement/totalYears al met Math.max(0, …) resp.
+  // Math.max(1, …), dus dat geeft hooguit een kort/leeg traject.
   const handleChange = useCallback((updates: Partial<PensionInputs>) => {
-    setInputs(prev => {
-      const next = { ...prev, ...updates }
-      if (next.retirementAge <= next.currentAge) next.retirementAge = next.currentAge + 1
-      if (next.lifeExpectancy <= next.retirementAge) next.lifeExpectancy = next.retirementAge + 1
-      return next
-    })
+    setInputs(prev => ({ ...prev, ...updates }))
     setMcStale(mcPrev => mcPrev || true)
   }, [])
 
