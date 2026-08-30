@@ -10,7 +10,7 @@
 import { describe, it, expect } from 'vitest'
 import { calculatePension, getIncomeBreakdown } from '../pensionCalc'
 import type { YearData } from '../../types'
-import { SCENARIOS, round } from './fixtures'
+import { SCENARIOS, baseInputs, round } from './fixtures'
 import fixture from './__golden__/pensionCalc.golden.json'
 
 function roundYearRow(yd: YearData) {
@@ -132,6 +132,67 @@ describe('getIncomeBreakdown — lijfrente stapelt bovenop AOW en werkgeverspens
     expect(round(zonder.employerPension)).toBe(round(
       getIncomeBreakdown(NA_AOW, 5000, AOW_NETTO_MND, 67, 800, 65, 'alleenstaand', 0, 67).employerPension
     ))
+  })
+})
+
+// ── Eenmalig bedrag rond de pensioendatum telt aan beide kanten mee ──────────
+//
+// Een bedrag dat één jaar ná de pensioendatum valt in plaats van één jaar ervóór
+// hoort de uitkomst nauwelijks te veranderen: het is hetzelfde geld, het staat
+// alleen een jaar korter te renderen. Vóór deze fix viel zo'n bedrag aan béide
+// kanten van de vergelijking weg — het zat niet in projectedCapital (dat stopt op
+// de pensioendatum) en evenmin in requiredCapital (dat alleen onttrekkingen
+// contant maakte). Eén jaar schuiven sloeg daardoor een overschot van € 122.039
+// om in een tekort van € 301.262, terwijl het restkapitaal op leeftijd 90 met
+// € 396.016 tegen € 320.404 nauwelijks verschilde. De invoer hieronder is exact
+// het geval dat Hendrik op 30 augustus 2026 meldde.
+describe('calculatePension — eenmalig bedrag rond de pensioendatum', () => {
+  const scenario = (year: number) => baseInputs({
+    currentAge: 48, retirementAge: 49, lifeExpectancy: 90,
+    currentCapital: 700000, monthlyContribution: 0,
+    returnBeforeRetirement: 9, returnAfterRetirement: 6, inflation: 3,
+    desiredRetirementIncome: 5000, desiredRetirementIncomeType: 'bruto',
+    woonsituatie: 'samenwonend', aowMaandBedragNetto: 1084,
+    lifeEvents: [{ name: 'geld', amount: 400000, year }],
+  })
+
+  const uitkomst = (year: number) => {
+    const r = calculatePension(scenario(year), { currentYear: 2026 })
+    return { surplus: r.projectedCapital - r.requiredCapital, restkapitaal: r.surplusAtEnd }
+  }
+
+  it('een jaar opschuiven kost één jaar rendement, niet het hele bedrag', () => {
+    const voor = uitkomst(2026)  // laatste jaar vóór de pensioendatum: opbouwfase
+    const na = uitkomst(2027)    // pensioenjaar zelf: eerste uitkeringsjaar
+
+    // 400.000 × (1,09/1,03 − 1) = € 23.301 aan gemist reëel rendement.
+    expect(Math.round(voor.surplus - na.surplus)).toBe(23301)
+    expect(Math.round(voor.surplus)).toBe(122039)
+    expect(Math.round(na.surplus)).toBe(98738)
+  })
+
+  it('blijft in beide gevallen een overschot, net als het restkapitaal', () => {
+    // De kern van de melding: dit sloeg om naar een tekort van € 301.262 terwijl
+    // het restkapitaal op de einddatum in beide gevallen ruim positief bleef.
+    for (const year of [2026, 2027]) {
+      const r = uitkomst(year)
+      expect(r.surplus).toBeGreaterThan(0)
+      expect(r.restkapitaal).toBeGreaterThan(0)
+    }
+  })
+
+  // Tegenhanger: een uitgave ná de pensioendatum hoort het doelbedrag juist te
+  // verhógen met de contante waarde ervan, niet stilzwijgend te verdwijnen.
+  it('een uitgave ná de pensioendatum verhoogt het benodigd eindvermogen', () => {
+    const zonder = calculatePension(baseInputs(), { currentYear: 2026 })
+    const met = calculatePension(SCENARIOS['4_negatief_bedrag_na_pensioendatum'], { currentYear: 2026 })
+    // −100.000 in 2056, acht jaar na de pensioendatum 2048, contant tegen het
+    // reële rendement ná pensioendatum (1,04/1,025 − 1 = 1,46341% per jaar).
+    // Uitgeschreven als formule en niet als afgerond bedrag: de uitkomst
+    // (€ 89.027,51) ligt te dicht op een halve euro om op een rond getal te
+    // toetsen zonder de toets zelf broos te maken.
+    const contanteWaarde = 100000 / Math.pow(1.04 / 1.025, 8)
+    expect(met.requiredCapital - zonder.requiredCapital).toBeCloseTo(contanteWaarde, 6)
   })
 })
 

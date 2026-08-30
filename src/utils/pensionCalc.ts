@@ -290,6 +290,32 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
     requiredCapital += annualWithdrawal / Math.pow(rPostAnnual, yr + 1)
   }
 
+  // Eenmalige bedragen ná de pensioendatum verlagen (of verhogen) wat je óp die
+  // datum nodig hebt: een erfenis van € 400.000 een jaar na je pensioen betaalt
+  // een deel van je uitkeringen gewoon mee. Zonder deze correctie vergeleek het
+  // KPI-raster een vermogen zónder dat bedrag met een doelbedrag dat er evenmin
+  // rekening mee hield, waardoor het bedrag aan beide kanten wegviel. Eén jaar
+  // schuiven met een bedrag (van vlak vóór naar vlak ná de pensioendatum) sloeg
+  // daardoor een overschot van € 122.039 om in een tekort van € 301.262, terwijl
+  // het restkapitaal op de einddatum nauwelijks veranderde: de KPI toonde het
+  // tekort óp de pensioendatum, niet het tekort om financieel onafhankelijk te
+  // zijn (gemeld 30 augustus 2026).
+  //
+  // Contant maken met exponent yr en niet yr + 1: de simulatie hieronder schrijft
+  // een eenmalig bedrag aan het BEGIN van het jaar bij, vóór het rendement,
+  // terwijl een onttrekking aan het eind valt. Uit C_{yr+1} = (C_yr + E_yr) * r
+  // − W_yr volgt voor een eindkapitaal van nul precies
+  // C_0 = Σ W_yr / r^(yr+1) − Σ E_yr / r^yr.
+  for (const [calYear, amount] of retEventMap) {
+    const yr = calYear - retirementYear
+    // Alleen de jaren die de uitkeringslus hieronder ook echt doorloopt. In het
+    // jaar waarin de levensverwachting bereikt wordt breekt die lus af vóórdat
+    // er nog een bedrag wordt bijgeschreven, dus dat jaar telt hier ook niet mee.
+    if (yr >= 0 && yr < yearsInRetirement) {
+      requiredCapital -= amount / Math.pow(rPostAnnual, yr)
+    }
+  }
+
   // Required monthly contribution (binary search, accounts for life events)
   const requiredMonthlyContribution = findRequiredPMT(
     requiredCapital, currentCapital, yearsToRetirement, realPre, accEventMap, currentYear

@@ -85,9 +85,9 @@
   },
   "4_negatief_bedrag_na_pensioendatum": {
     "projectedCapital": 404654,
-    "requiredCapital": 801717,
+    "requiredCapital": 890744,
     "desiredMonthlyNetto": 5000,
-    "requiredMonthlyContribution": 1516,
+    "requiredMonthlyContribution": 1744,
     "surplusAtEnd": -678946,
     "yearDataLength": 46,
     "yearDataFirst": {
