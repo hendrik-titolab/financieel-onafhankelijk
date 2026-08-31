@@ -196,6 +196,53 @@ describe('calculatePension — eenmalig bedrag rond de pensioendatum', () => {
   })
 })
 
+// Het scherm en de PDF-/Excel-export tonen naast het doelbedrag ook waar het
+// vandaan komt: "benodigd voor je inkomen" min de eenmalige bedragen ná de
+// pensioendatum. Dat brutobedrag wordt niet apart teruggegeven maar afgeleid als
+// requiredCapital + pvEventsAfterRetirement. Deze tests leggen die identiteit
+// vast: gaat pvEventsAfterRetirement ooit iets anders bevatten dan precies het
+// bedrag dat van requiredCapital is afgetrokken, dan liegt de toelichting op het
+// scherm over de rekenkern, en dat is precies het soort stille afwijking dat de
+// melding van 30 augustus 2026 veroorzaakte.
+describe('calculatePension — pvEventsAfterRetirement onderbouwt het doelbedrag', () => {
+  const metJaar = (year: number) => baseInputs({
+    currentAge: 48, retirementAge: 49, lifeExpectancy: 90,
+    currentCapital: 700000, monthlyContribution: 0,
+    returnBeforeRetirement: 9, returnAfterRetirement: 6, inflation: 3,
+    desiredRetirementIncome: 5000, desiredRetirementIncomeType: 'bruto',
+    woonsituatie: 'samenwonend', aowMaandBedragNetto: 1084,
+    lifeEvents: [{ name: 'geld', amount: 400000, year }],
+  })
+
+  it('is nul zonder eenmalige bedragen ná de pensioendatum', () => {
+    // 2026 valt nog in de opbouwfase: telt mee in projectedCapital, niet hier.
+    expect(calculatePension(metJaar(2026), { currentYear: 2026 }).pvEventsAfterRetirement).toBe(0)
+    expect(calculatePension(baseInputs(), { currentYear: 2026 }).pvEventsAfterRetirement).toBe(0)
+  })
+
+  it('is in het pensioenjaar zelf het onverdisconteerde bedrag', () => {
+    // 2027 is het eerste uitkeringsjaar (yr = 0), dus contant maken deelt door
+    // r^0 = 1 en de contante waarde is het bedrag zelf.
+    const r = calculatePension(metJaar(2027), { currentYear: 2026 })
+    expect(r.pvEventsAfterRetirement).toBeCloseTo(400000, 6)
+  })
+
+  it('is precies wat van het doelbedrag is afgetrokken', () => {
+    const met = calculatePension(metJaar(2027), { currentYear: 2026 })
+    const zonder = calculatePension(metJaar(2026), { currentYear: 2026 })
+    // Beide scenario's hebben hetzelfde inkomensdoel, dus hetzelfde brutobedrag.
+    // Dat is wat het scherm als "benodigd voor je inkomen" toont.
+    expect(met.requiredCapital + met.pvEventsAfterRetirement).toBeCloseTo(zonder.requiredCapital, 6)
+  })
+
+  it('is negatief bij een uitgave ná de pensioendatum', () => {
+    const r = calculatePension(SCENARIOS['4_negatief_bedrag_na_pensioendatum'], { currentYear: 2026 })
+    const zonder = calculatePension(baseInputs(), { currentYear: 2026 })
+    expect(r.pvEventsAfterRetirement).toBeLessThan(0)
+    expect(r.requiredCapital + r.pvEventsAfterRetirement).toBeCloseTo(zonder.requiredCapital, 6)
+  })
+})
+
 describe('calculatePension — golden master', () => {
   for (const [key, inputs] of Object.entries(SCENARIOS)) {
     it(key, () => {

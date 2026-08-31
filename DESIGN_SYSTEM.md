@@ -123,6 +123,15 @@ Regels:
 - **KPI-strip (FO-planner):** één haarlijn-raster (`grid gap-px bg-line border border-line`),
   cellen `bg-panel`, precies **één** donkere cel (`bg-ink`) voor de belangrijkste uitkomst
   (benodigde maandinleg). Tekort krijgt `text-signal` **plus** een 5px stip, nooit kleur alleen.
+  **Responsive: `grid-cols-1 sm:grid-cols-2`**, dus 2×2 vanaf 640px en daaronder één kolom. Dat
+  laatste is geen smaakkeuze maar een meetuitkomst: in twee kolommen is een cel op een 375px-scherm
+  138px breed, en daar passen `VERWACHT EINDVERMOGEN` en `BENODIGD EINDVERMOGEN` (beide 141px) niet
+  in, net zomin als een bedrag vanaf een miljoen (`€ 1.164.078` = 155px) of een negatief benodigd
+  eindvermogen (`−€ 555.028` = 147px). Die kapten stilzwijgend af via `truncate`. Een afgekapt
+  getal is erger dan afgekapte tekst: `€ 1.164.0…` ziet er niet kapot uit maar als een ánder
+  bedrag. Eén kolom geeft 309px en haalt het faalgeval weg in plaats van het te verschuiven; de
+  cijfers kleiner zetten zou alleen het breekpunt opschuiven (24px past precies, en `currentCapital`
+  kent geen bovengrens). Prijs: dat blok is op mobiel twee keer zo hoog.
 - **Tabs:** onderlijn-stijl (`border-b-2`), geen pill-groep. Beide tabs identiek gestyled —
   de afwijkende amberkleur van de oude "Events"-tab is vervallen.
 - **Grafiek (WealthChart):** Monte Carlo-banden symmetrisch rond de mediaan gekleurd

@@ -80,6 +80,13 @@ export interface IncomePhase {
 export interface PensionResult {
   projectedCapital: number
   requiredCapital: number
+  // Contante waarde, op de pensioendatum, van de eenmalige bedragen ná die datum.
+  // Positief = geld dat later binnenkomt en dus verlaagt wat je óp de pensioendatum
+  // nodig hebt. requiredCapital hierboven is hier al mee verrekend; wat je inkomen
+  // op zichzelf kost (zonder die latere bedragen) is requiredCapital + dit veld.
+  // Apart teruggegeven zodat het scherm en de export die verrekening kunnen tonen
+  // in plaats van hem stilzwijgend in één getal te verstoppen.
+  pvEventsAfterRetirement: number
   desiredMonthlyNetto: number
   requiredMonthlyContribution: number
   yearsToRetirement: number

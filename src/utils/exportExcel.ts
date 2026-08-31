@@ -87,6 +87,21 @@ export async function exportToExcel(
     ['FINANCIËLE PLANNING - RESULTATEN', ''],
     ['', ''],
     ['Verwacht eindvermogen', eur(result.projectedCapital)],
+    // Eenmalige bedragen ná de pensioendatum zitten verrekend in
+    // requiredCapital (zie pensionCalc.ts). Hier staat de afleiding uitgeschreven,
+    // anders is uit het doelbedrag alleen niet af te lezen waardoor het afwijkt van
+    // wat het inkomen op zichzelf kost. Alleen tonen als er zo'n bedrag is.
+    ...(Math.round(result.pvEventsAfterRetirement) !== 0
+      ? [
+          ['Benodigd voor je inkomen', eur(result.requiredCapital + result.pvEventsAfterRetirement)],
+          [
+            result.pvEventsAfterRetirement > 0
+              ? 'Af: eenmalige bedragen ná de pensioendatum (contante waarde)'
+              : 'Bij: eenmalige bedragen ná de pensioendatum (contante waarde)',
+            eur(Math.abs(result.pvEventsAfterRetirement)),
+          ],
+        ]
+      : []),
     ['Benodigd eindvermogen', eur(result.requiredCapital)],
     ['Verschil', eur(result.projectedCapital - result.requiredCapital)],
     ['Restkapitaal op ' + inputs.lifeExpectancy + ' jaar', eur(result.surplusAtEnd)],

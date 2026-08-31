@@ -151,6 +151,30 @@ export function ResultsPanel({ inputs, result, mc, mcStale, isCalculating, onRun
     marginaalTarief(marginaalBruto, true, inputs.woonsituatie === 'alleenstaand') * 100
   )
 
+  // Eenmalige bedragen ná de pensioendatum zijn al van result.requiredCapital
+  // afgetrokken (zie pensionCalc.ts). Zonder een spoor daarvan op het scherm zie je
+  // alleen een lager doelbedrag, zonder te kunnen zien waardoor het lager is. De
+  // onderregel van die cel benoemt de verrekening daarom expliciet.
+  //
+  // Kort gehouden, en dat blijft zo: deze regel heeft `truncate`. Toen de cel op
+  // mobiel nog een halve schermbreedte was (138px) paste "later geld dekt dit
+  // volledig" er met 144px niet in; sinds het raster onder 640px één kolom is
+  // (309px, zie DESIGN_SYSTEM.md §4) is dat geen harde grens meer. De korte vorm
+  // is gebleven omdat hij beter leest, niet omdat het moet. Een volledige som
+  // ("€ 1.042.039 − € 400.000") staat in de PDF- en Excel-export, waar een regel
+  // de hele breedte krijgt en niemand hem hoeft af te lezen naast een cijfer.
+  const pvLater = result.pvEventsAfterRetirement
+  const benodigdSub =
+    Math.round(pvLater) === 0
+      ? `voor ${inputs.lifeExpectancy - inputs.retirementAge} jaar inkomen`
+      : result.requiredCapital < 0
+        // Het doelbedrag is negatief: wat er later binnenkomt is méér dan alle
+        // onttrekkingen samen. Het getal blijft mét minteken staan, want de drie
+        // andere cellen rekenen ermee — een nette € 0 tonen zou het scherm laten
+        // afwijken van de rekenkern.
+        ? 'later geld dekt alles'
+        : `${pvLater > 0 ? '−' : '+'} ${eurAbs(pvLater)} later`
+
   const handlePDF = async () => {
     if (limitReached) return
     track('download_pdf')
@@ -281,7 +305,7 @@ export function ResultsPanel({ inputs, result, mc, mcStale, isCalculating, onRun
 
       {/* KPI-raster: haarlijnen tussen de cellen, precies één donkere cel */}
       <div
-        className="grid grid-cols-2 gap-px bg-line border border-line rounded-[3px] overflow-hidden"
+        className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-line border border-line rounded-[3px] overflow-hidden"
       >
         <MetricCell
           label="Verwacht eindvermogen"
@@ -291,7 +315,7 @@ export function ResultsPanel({ inputs, result, mc, mcStale, isCalculating, onRun
         <MetricCell
           label="Benodigd eindvermogen"
           value={eur(result.requiredCapital)}
-          sub={`voor ${inputs.lifeExpectancy - inputs.retirementAge} jaar inkomen`}
+          sub={benodigdSub}
         />
         <MetricCell
           label={isOnTrack ? 'Overschot' : 'Tekort'}

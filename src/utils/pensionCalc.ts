@@ -306,15 +306,21 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
   // terwijl een onttrekking aan het eind valt. Uit C_{yr+1} = (C_yr + E_yr) * r
   // − W_yr volgt voor een eindkapitaal van nul precies
   // C_0 = Σ W_yr / r^(yr+1) − Σ E_yr / r^yr.
+  //
+  // De optelsom wordt apart bijgehouden en meegegeven in het resultaat. Zonder dat
+  // verdwijnt een bedrag van bijvoorbeeld € 400.000 stilzwijgend in één netto
+  // doelbedrag: je ziet dan wel dat het doel lager ligt, maar niet waardoor.
+  let pvEventsAfterRetirement = 0
   for (const [calYear, amount] of retEventMap) {
     const yr = calYear - retirementYear
     // Alleen de jaren die de uitkeringslus hieronder ook echt doorloopt. In het
     // jaar waarin de levensverwachting bereikt wordt breekt die lus af vóórdat
     // er nog een bedrag wordt bijgeschreven, dus dat jaar telt hier ook niet mee.
     if (yr >= 0 && yr < yearsInRetirement) {
-      requiredCapital -= amount / Math.pow(rPostAnnual, yr)
+      pvEventsAfterRetirement += amount / Math.pow(rPostAnnual, yr)
     }
   }
+  requiredCapital -= pvEventsAfterRetirement
 
   // Required monthly contribution (binary search, accounts for life events)
   const requiredMonthlyContribution = findRequiredPMT(
@@ -397,6 +403,7 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
   return {
     projectedCapital,
     requiredCapital,
+    pvEventsAfterRetirement,
     desiredMonthlyNetto,
     requiredMonthlyContribution,
     yearsToRetirement,

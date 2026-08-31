@@ -131,6 +131,23 @@ export async function exportToPDF(
 
   const incomeRows = [
     ['Gewenst netto inkomen', eur(result.desiredMonthlyNetto)],
+    // Eenmalige bedragen ná de pensioendatum zitten verrekend in het benodigd
+    // eindvermogen in de kaders bovenaan (zie pensionCalc.ts). Hier staat de
+    // afleiding uitgeschreven: in die kaders past geen toelichting, en zonder
+    // deze regels is niet te zien waardoor het doelbedrag afwijkt van wat het
+    // inkomen op zichzelf kost. Alleen tonen als er zo'n bedrag is.
+    ...(Math.round(result.pvEventsAfterRetirement) !== 0
+      ? [
+          ['Benodigd voor je inkomen', eur(result.requiredCapital + result.pvEventsAfterRetirement)],
+          [
+            result.pvEventsAfterRetirement > 0
+              ? 'Af: eenmalige bedragen na de pensioendatum (contante waarde)'
+              : 'Bij: eenmalige bedragen na de pensioendatum (contante waarde)',
+            eur(Math.abs(result.pvEventsAfterRetirement)),
+          ],
+          ['Benodigd eindvermogen', eur(result.requiredCapital)],
+        ]
+      : []),
     ['Restkapitaal op ' + inputs.lifeExpectancy + ' jaar', eur(result.surplusAtEnd)],
   ]
 
