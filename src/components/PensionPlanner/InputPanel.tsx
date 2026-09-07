@@ -226,6 +226,17 @@ function ParametersTab({ inputs, onChange }: Props) {
             onChange={v => onChange({ desiredRetirementIncome: v })}
             prefix="€" suffix="/mnd" step={100} />
           <p className="text-xs text-body">In koopkracht van vandaag: inflatie wordt automatisch verwerkt</p>
+          {inputs.desiredRetirementIncomeType === 'bruto' && (
+            <p className="text-xs text-body leading-relaxed">
+              We rekenen dit om naar netto met de belastingregels die gelden op je pensioenleeftijd
+              ({inputs.retirementAge} jaar): {inputs.retirementAge >= inputs.aowStartAge
+                ? 'de tarieven en kortingen ná de AOW-leeftijd'
+                : 'de tarieven en kortingen vóór de AOW-leeftijd, want je AOW gaat pas op ' + inputs.aowStartAge + ' jaar in'}
+              , en de situatie {inputs.woonsituatie === 'alleenstaand' ? 'alleenstaand' : 'samenwonend'}.
+              Inclusief heffingskortingen en de bijdrage Zvw. Eén bedrag kan het verschil tussen de
+              jaren vóór en ná je AOW niet uitdrukken; weet je je netto bedrag, kies dan Netto.
+            </p>
+          )}
         </div>
         <Field label="Inflatie">
           <NumberInput value={inputs.inflation}

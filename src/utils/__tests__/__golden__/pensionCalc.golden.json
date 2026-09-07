@@ -197,10 +197,10 @@
   },
   "8_bruto_gewenst_inkomen": {
     "projectedCapital": 404654,
-    "requiredCapital": 593834,
-    "desiredMonthlyNetto": 4108,
-    "requiredMonthlyContribution": 984,
-    "surplusAtEnd": -264237,
+    "requiredCapital": 478478,
+    "desiredMonthlyNetto": 3612,
+    "requiredMonthlyContribution": 689,
+    "surplusAtEnd": -103113,
     "yearDataLength": 46,
     "yearDataFirst": {
       "age": 45,

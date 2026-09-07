@@ -8,7 +8,7 @@
 // (zie AUDIT-fase0-1-feiten.md, bevinding E10) — dat is hier bewust vastgelegd
 // zoals het nu is, niet gecorrigeerd.
 import { describe, it, expect } from 'vitest'
-import { calculatePension, getIncomeBreakdown } from '../pensionCalc'
+import { calculatePension, getIncomeBreakdown, brutoMaandNaarNettoMaand } from '../pensionCalc'
 import type { YearData } from '../../types'
 import { SCENARIOS, baseInputs, round } from './fixtures'
 import fixture from './__golden__/pensionCalc.golden.json'
@@ -165,10 +165,20 @@ describe('calculatePension — eenmalig bedrag rond de pensioendatum', () => {
     const voor = uitkomst(2026)  // laatste jaar vóór de pensioendatum: opbouwfase
     const na = uitkomst(2027)    // pensioenjaar zelf: eerste uitkeringsjaar
 
-    // 400.000 × (1,09/1,03 − 1) = € 23.301 aan gemist reëel rendement.
+    // 400.000 × (1,09/1,03 − 1) = € 23.301 aan gemist reëel rendement. Dit is de
+    // kern van deze test en het cijfer is niet veranderd door de bruto-nettofix van
+    // september 2026: het hangt aan het eenmalige bedrag, niet aan het inkomensdoel.
     expect(Math.round(voor.surplus - na.surplus)).toBe(23301)
-    expect(Math.round(voor.surplus)).toBe(122039)
-    expect(Math.round(na.surplus)).toBe(98738)
+    // De absolute ankers schoven wél mee (122.039 en 98.738 vóór die fix). Dit
+    // scenario stopt op leeftijd 49 en gebruikt een bruto inkomensdoel, dus geldt
+    // nu het pre-AOW-regime in plaats van het post-AOW-regime dat de oude
+    // conversie er altijd op losliet. € 5.000 bruto per maand levert samenwonend
+    // vóór de AOW-leeftijd € 3.036,37 netto op in plaats van € 4.107,50: over
+    // € 60.000 is dat € 21.832,22 belasting minus € 1.178,71 algemene
+    // heffingskorting en minus € 2.910 Zvw. Een lager netto doel betekent een
+    // lager benodigd vermogen en dus een hoger overschot.
+    expect(Math.round(voor.surplus)).toBe(427348)
+    expect(Math.round(na.surplus)).toBe(404047)
   })
 
   it('blijft in beide gevallen een overschot, net als het restkapitaal', () => {
@@ -259,4 +269,56 @@ describe('calculatePension — golden master', () => {
       expect(roundYearRow(r.yearData[r.yearData.length - 1])).toEqual(expected.yearDataLast)
     })
   }
+})
+
+// Bevinding 1 uit de audit van 7 september 2026: het gewenste pensioeninkomen werd
+// als bruto MAANDbedrag rechtstreeks tegen de JAARschijven gelegd, zonder
+// heffingskortingen en zonder Zvw, en altijd onder het post-AOW-regime. Deze tests
+// leggen de handmatig nagerekende uitkomsten vast, niet wat de code toevallig doet.
+describe('brutoMaandNaarNettoMaand — onafhankelijk nagerekend', () => {
+  it('€ 5.000/mnd, alleenstaand, na de AOW-leeftijd', () => {
+    // € 60.000 per jaar.
+    //   belasting  38.883 × 17,85%              =  6.940,6155
+    //            + 21.117 × 37,56%              =  7.931,5452  ->  14.872,1607
+    //   AHK        1.556 − 3,195% × 30.264      =    589,0652
+    //   ouderenkorting  2.067 − 15% × 13.998 < 0 ->      0
+    //   alleenstaandeouderenkorting             =    540
+    //   te betalen 14.872,1607 − 1.129,0652     = 13.743,0955
+    //   Zvw        60.000 × 4,85%               =  2.910
+    //   netto      60.000 − 13.743,0955 − 2.910 = 43.346,9045  ->  € 3.612,24/mnd
+    expect(brutoMaandNaarNettoMaand(5000, true, true)).toBeCloseTo(3612.24, 2)
+  })
+
+  it('€ 5.000/mnd, samenwonend, vóór de AOW-leeftijd', () => {
+    //   belasting  38.883 × 35,75% + 21.117 × 37,56% = 21.832,2170
+    //   AHK        3.115 − 6,398% × 30.264           =  1.178,7076
+    //   netto      60.000 − 20.653,5094 − 2.910      = 36.436,4906 -> € 3.036,37/mnd
+    expect(brutoMaandNaarNettoMaand(5000, false, false)).toBeCloseTo(3036.37, 2)
+  })
+
+  it('rekent niet langer een maandbedrag tegen de jaarschijven af', () => {
+    // De oude conversie gaf 5000 × (1 − 17,85%) = 4.107,50: het maandbedrag viel
+    // altijd in de eerste schijf. Elke uitkomst boven de € 4.000 wijst erop dat
+    // die fout terug is.
+    expect(brutoMaandNaarNettoMaand(5000, true, true)).toBeLessThan(4000)
+  })
+
+  it('geeft nul terug bij nul of negatief', () => {
+    expect(brutoMaandNaarNettoMaand(0, true, true)).toBe(0)
+    expect(brutoMaandNaarNettoMaand(-100, true, true)).toBe(0)
+  })
+
+  it('gebruikt het regime van de pensioendatum, niet altijd post-AOW', () => {
+    // Stoppen op 60 met AOW op 67: de overbruggingsjaren vallen onder het hogere
+    // pre-AOW-tarief, dus hetzelfde brutobedrag levert minder netto op.
+    const vroeg = calculatePension(
+      baseInputs({ retirementAge: 60, desiredRetirementIncomeType: 'bruto' }),
+      { currentYear: 2026 }
+    )
+    const laat = calculatePension(
+      baseInputs({ retirementAge: 67, desiredRetirementIncomeType: 'bruto' }),
+      { currentYear: 2026 }
+    )
+    expect(vroeg.desiredMonthlyNetto).toBeLessThan(laat.desiredMonthlyNetto)
+  })
 })

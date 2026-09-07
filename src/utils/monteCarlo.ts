@@ -1,5 +1,5 @@
 import type { PensionInputs, MonteCarloResult, PercentilePoint } from '../types'
-import { brutoToNetto, getMonthlyWithdrawal } from './pensionCalc'
+import { brutoMaandNaarNettoMaand, getMonthlyWithdrawal } from './pensionCalc'
 
 export const N_SIMULATIONS = 2000
 
@@ -66,8 +66,16 @@ export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number
       eventMap.set(e.year, (eventMap.get(e.year) ?? 0) + e.amount)
     }
   }
+  // Zelfde conversie als calculatePension(): via de volledige belastingmotor, met
+  // het regime dat op de pensioendatum geldt. Stond hier los van de deterministische
+  // kern met een eigen maandbedrag-tegen-jaarschijven-conversie, waardoor beide
+  // kernen van een ander netto doelinkomen uitgingen.
   const desiredNetto = desiredRetirementIncomeType === 'bruto'
-    ? brutoToNetto(desiredRetirementIncome, true)
+    ? brutoMaandNaarNettoMaand(
+        desiredRetirementIncome,
+        retirementAge >= aowStartAge,
+        woonsituatie === 'alleenstaand'
+      )
     : desiredRetirementIncome
 
   const realPre = realReturn(returnBeforeRetirement, inflation)

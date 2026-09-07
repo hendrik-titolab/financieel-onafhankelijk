@@ -1,30 +1,11 @@
 import type { PensionInputs, PensionResult, YearData, IncomePhase, LifeEvent, Woonsituatie } from '../types'
-import { BOX1_PRE_AOW, BOX1_POST_AOW, AOW_NETTO_MAAND, ZVW } from '../config/fiscaleParameters'
+import { AOW_NETTO_MAAND, ZVW } from '../config/fiscaleParameters'
 import { belastingBox1 } from './brutoNetto'
 
 // AOW netto maandbedragen — uit centrale config (fiscaleParameters.ts)
 export const AOW_NETTO = {
   alleenstaand: AOW_NETTO_MAAND.alleenstaand,
   samenwonend:  AOW_NETTO_MAAND.samenwonend,
-}
-
-// Box 1 bruto → netto conversie — tarieven uit centrale config (fiscaleParameters.ts)
-export function brutoToNetto(bruto: number, pastAowAge: boolean): number {
-  if (bruto <= 0) return 0
-  const t = pastAowAge ? BOX1_POST_AOW : BOX1_PRE_AOW
-  if (bruto <= t.schijf1Grens) return bruto * (1 - t.schijf1Tarief)
-  if (bruto <= t.schijf2Grens) return t.schijf1Grens * (1 - t.schijf1Tarief) + (bruto - t.schijf1Grens) * (1 - t.schijf2Tarief)
-  return t.schijf1Grens * (1 - t.schijf1Tarief) + (t.schijf2Grens - t.schijf1Grens) * (1 - t.schijf2Tarief) + (bruto - t.schijf2Grens) * (1 - t.schijf3Tarief)
-}
-
-export function nettoToBruto(netto: number, pastAowAge: boolean): number {
-  if (netto <= 0) return 0
-  const t = pastAowAge ? BOX1_POST_AOW : BOX1_PRE_AOW
-  const net1 = t.schijf1Grens * (1 - t.schijf1Tarief)
-  const net2 = net1 + (t.schijf2Grens - t.schijf1Grens) * (1 - t.schijf2Tarief)
-  if (netto <= net1) return netto / (1 - t.schijf1Tarief)
-  if (netto <= net2) return t.schijf1Grens + (netto - net1) / (1 - t.schijf2Tarief)
-  return t.schijf2Grens + (netto - net2) / (1 - t.schijf3Tarief)
 }
 
 function realAnnualReturn(nominal: number, inflation: number): number {
@@ -71,6 +52,37 @@ export function nettoJaarinkomen(brutoJaar: number, pastAow: boolean, alleenstaa
   // arbeidsinkomen 0: AOW en pensioen zijn geen arbeidsinkomen, dus geen arbeidskorting.
   const r = belastingBox1(brutoJaar, { pastAow, arbeidsinkomen: 0, alleenstaand })
   return r.nettoJaar - zvwBijdrage(brutoJaar)
+}
+
+/**
+ * Een bruto MAANDbedrag naar netto per maand, via de volledige belastingmotor.
+ *
+ * Hier stond tot september 2026 een eigen conversie (brutoToNetto) die een
+ * maandbedrag rechtstreeks tegen de JAARschijven legde. Bij € 5.000 bruto per
+ * maand viel dat bedrag daardoor altijd in de eerste schijf en kwam er € 4.107,50
+ * netto uit, terwijl het werkelijke antwoord voor een alleenstaande die het hele
+ * jaar AOW-gerechtigd is rond € 3.612 ligt. Het netto doelinkomen lag zo circa
+ * 14% te hoog, en daarmee ook het benodigde vermogen en de benodigde inleg.
+ *
+ * Even belangrijk: die conversie kende geen heffingskortingen en geen Zvw,
+ * terwijl getIncomeBreakdown() hieronder de inkomstenbronnen wél door
+ * belastingBox1 + Zvw haalt. Er stonden dus twee belastingmotoren naast elkaar
+ * in één berekening. Alleen ×12 doen had die scheefheid laten staan; daarom loopt
+ * dit nu door dezelfde nettoJaarinkomen() als alle andere bronnen.
+ *
+ * Let op de beperking: dit is één conversie voor de hele uitkeringsfase, op basis
+ * van het regime dat geldt op de pensioendatum. Wie vóór de AOW-leeftijd stopt
+ * betaalt over hetzelfde brutobedrag in de overbruggingsjaren méér belasting dan
+ * daarna. De invoer is één getal, dus dat verschil is hier niet uit te drukken.
+ * De UI benoemt onder welke aannames de omrekening geldt.
+ */
+export function brutoMaandNaarNettoMaand(
+  brutoMaand: number,
+  pastAow: boolean,
+  alleenstaand: boolean
+): number {
+  if (brutoMaand <= 0) return 0
+  return nettoJaarinkomen(brutoMaand * 12, pastAow, alleenstaand) / 12
 }
 
 /**
@@ -265,9 +277,16 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
     currentCapital, monthlyPMT, yearsToRetirement, realPre, accEventMap, currentYear
   )
 
-  // Desired netto monthly income
+  // Gewenst netto maandinkomen. Bij een bruto-invoer geldt het belastingregime op
+  // de pensioendatum: wie ná de AOW-leeftijd stopt valt onder de lagere eerste
+  // schijf, wie eerder stopt niet. Zie brutoMaandNaarNettoMaand() voor waarom dit
+  // één conversie is en niet per jaar verschilt.
   const desiredMonthlyNetto = desiredRetirementIncomeType === 'bruto'
-    ? brutoToNetto(desiredRetirementIncome, true)
+    ? brutoMaandNaarNettoMaand(
+        desiredRetirementIncome,
+        retirementAge >= aowStartAge,
+        woonsituatie === 'alleenstaand'
+      )
     : desiredRetirementIncome
 
   const aowMonthlyNetto = aowMaandBedragNetto
