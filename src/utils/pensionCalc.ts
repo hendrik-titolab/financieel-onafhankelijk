@@ -8,6 +8,57 @@ export const AOW_NETTO = {
   samenwonend:  AOW_NETTO_MAAND.samenwonend,
 }
 
+/**
+ * Toetst of de drie leeftijden een samenhangend verhaal vertellen.
+ *
+ * De schuifjes blijven bewust zelfstandig bedienbaar (zie het commentaar in
+ * PensionPlanner/index.tsx): geen enkel veld corrigeert een ander. Dat betekent
+ * wél dat er combinaties in te stellen zijn die niets betekenen, en tot september
+ * 2026 rekende de tool die gewoon door. Huidige leeftijd 70, stoppen op 60,
+ * eindleeftijd 65 liet de deterministische kern vanaf leeftijd 60 lopen terwijl
+ * Monte Carlo nul jaren doorliep en 100% slagingskans meldde: twee kernen die
+ * elkaar tegenspraken, allebei zonder waarschuwing (audit 7 september 2026,
+ * bevinding 3).
+ *
+ * Errors blokkeren de uitkomst. Notes leggen alleen uit hoe een ongebruikelijke
+ * maar zinnige combinatie wordt gelezen.
+ */
+export interface LeeftijdControle {
+  errors: string[]
+  notes: string[]
+  /** De leeftijd waarop de uitkeringsfase feitelijk begint. */
+  effectiveRetirementAge: number
+}
+
+export function controleerLeeftijden(
+  currentAge: number,
+  retirementAge: number,
+  lifeExpectancy: number
+): LeeftijdControle {
+  const errors: string[] = []
+  const notes: string[] = []
+
+  // Al gepensioneerd: de uitkeringsfase begint vandaag, niet in het verleden.
+  // Zonder deze regel begon de jaartabel op een leeftijd die al voorbij is.
+  const effectiveRetirementAge = Math.max(currentAge, retirementAge)
+
+  if (retirementAge < currentAge) {
+    notes.push(
+      `Je pensioenleeftijd (${retirementAge}) ligt vóór je huidige leeftijd (${currentAge}). ` +
+      `We rekenen daarom vanaf vandaag: je bent al met pensioen.`
+    )
+  }
+
+  if (lifeExpectancy <= effectiveRetirementAge) {
+    errors.push(
+      `Je plant tot leeftijd ${lifeExpectancy}, maar je uitkeringsfase begint pas op ` +
+      `${effectiveRetirementAge}. Zet "plannen tot leeftijd" hoger dan ${effectiveRetirementAge}.`
+    )
+  }
+
+  return { errors, notes, effectiveRetirementAge }
+}
+
 function realAnnualReturn(nominal: number, inflation: number): number {
   return ((1 + nominal / 100) / (1 + inflation / 100) - 1) * 100
 }
@@ -334,7 +385,7 @@ function findRequiredPMT(
 
 export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: number }): PensionResult {
   const {
-    currentAge, retirementAge, lifeExpectancy,
+    currentAge, retirementAge: retirementAgeInput, lifeExpectancy,
     currentCapital, monthlyContribution, contributionFrequency,
     returnBeforeRetirement, returnAfterRetirement, inflation,
     desiredRetirementIncome, desiredRetirementIncomeType,
@@ -346,6 +397,14 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
 
   const realPre = realAnnualReturn(returnBeforeRetirement, inflation)
   const realPost = realAnnualReturn(returnAfterRetirement, inflation)
+
+  // Eén gedeelde lezing van de leeftijden, zodat deze kern en monteCarlo.ts niet
+  // uiteen kunnen lopen bij een combinatie die zichzelf tegenspreekt. Wie zijn
+  // pensioenleeftijd onder zijn huidige leeftijd zet is al met pensioen: de
+  // uitkeringsfase begint dan vandaag en niet in het verleden.
+  const retirementAge = controleerLeeftijden(
+    currentAge, retirementAgeInput, lifeExpectancy
+  ).effectiveRetirementAge
 
   const yearsToRetirement = Math.max(0, retirementAge - currentAge)
   const yearsInRetirement = Math.max(1, lifeExpectancy - retirementAge)

@@ -1,5 +1,5 @@
 import type { PensionInputs, MonteCarloResult, PercentilePoint } from '../types'
-import { brutoMaandNaarNettoMaand, getMonthlyWithdrawal } from './pensionCalc'
+import { brutoMaandNaarNettoMaand, getMonthlyWithdrawal, controleerLeeftijden } from './pensionCalc'
 
 export const N_SIMULATIONS = 2000
 
@@ -42,7 +42,7 @@ function realReturn(nominal: number, inflation: number): number {
 export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number; currentYear?: number }): MonteCarloResult {
   const rng = opts?.rng ?? Math.random
   const {
-    currentAge, retirementAge, lifeExpectancy,
+    currentAge, retirementAge: retirementAgeInput, lifeExpectancy,
     currentCapital, monthlyContribution, contributionFrequency,
     returnBeforeRetirement, returnAfterRetirement, inflation,
     desiredRetirementIncome, desiredRetirementIncomeType,
@@ -52,6 +52,15 @@ export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number
     lifeEvents = [],
     volatilityPre, volatilityPost,
   } = inputs
+
+  // Dezelfde lezing van de leeftijden als calculatePension(). Die twee liepen
+  // uiteen bij een combinatie die zichzelf tegenspreekt: bij huidige leeftijd 70,
+  // stoppen op 60 en eindleeftijd 65 liep de deterministische kern vanaf leeftijd
+  // 60 door terwijl deze lus nul jaren doorliep en 100% slagingskans meldde
+  // (audit 7 september 2026, bevinding 3).
+  const retirementAge = controleerLeeftijden(
+    currentAge, retirementAgeInput, lifeExpectancy
+  ).effectiveRetirementAge
 
   const aowMonthlyNetto = aowMaandBedragNetto
 

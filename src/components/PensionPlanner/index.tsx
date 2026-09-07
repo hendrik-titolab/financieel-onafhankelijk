@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { track } from '@vercel/analytics'
 import { RefreshCw, ChevronDown } from 'lucide-react'
 import type { PensionInputs, PensionResult, MonteCarloResult } from '../../types'
-import { calculatePension } from '../../utils/pensionCalc'
+import { calculatePension, controleerLeeftijden } from '../../utils/pensionCalc'
 import { runMonteCarlo } from '../../utils/monteCarlo'
 import { InputPanel } from './InputPanel'
 import { ResultsPanel } from './ResultsPanel'
@@ -85,20 +85,30 @@ export function PensionPlanner({ clientName, onCloseSession }: Props) {
   // veld te corrigeren. Eerder werd retirementAge/lifeExpectancy hier automatisch
   // opgehoogd zodra currentAge/retirementAge die inhaalde, waardoor een schuifje
   // zichtbaar "vanzelf" meebewoog met een ander schuifje — expliciet ongewenst.
-  // Een leeftijdcombinatie die zichzelf tegenspreekt (bijv. currentAge >
-  // retirementAge) geeft geen fout: pensionCalc.ts/monteCarlo.ts begrenzen
-  // yearsToRetirement/yearsInRetirement/totalYears al met Math.max(0, …) resp.
-  // Math.max(1, …), dus dat geeft hooguit een kort/leeg traject.
+  //
+  // Een combinatie die zichzelf tegenspreekt levert nu wél een melding op. Tot
+  // september 2026 niet: de Math.max()-begrenzingen in pensionCalc.ts en
+  // monteCarlo.ts vingen dat stilzwijgend op, maar niet op dezelfde manier. Bij
+  // huidige leeftijd 70, stoppen op 60 en eindleeftijd 65 liep de ene kern vanaf
+  // leeftijd 60 door terwijl de andere nul jaren doorliep en 100% slagingskans
+  // meldde (audit 7 september 2026, bevinding 3). De schuifjes blijven zelfstandig
+  // bedienbaar; alleen de uitkomst wordt tegengehouden zolang ze niets betekent.
   const handleChange = useCallback((updates: Partial<PensionInputs>) => {
     setInputs(prev => ({ ...prev, ...updates }))
     setMcStale(mcPrev => mcPrev || true)
   }, [])
 
-  const result: PensionResult = calculatePension(inputs)
+  const leeftijden = controleerLeeftijden(inputs.currentAge, inputs.retirementAge, inputs.lifeExpectancy)
+  const isGeldig = leeftijden.errors.length === 0
+
+  // Bij een ongeldige combinatie wordt er niet gerekend. Een uitkomst tonen die
+  // op een onmogelijke aanname rust is in het Wft-domein erger dan geen uitkomst.
+  const result: PensionResult | null = isGeldig ? calculatePension(inputs) : null
 
   const handleRunMonteCarlo = useCallback(() => {
     // Zicht op of bezoekers de tool daadwerkelijk gebruiken, niet alleen de
     // pagina bezoeken (Vercel Web Analytics gaf tot nu toe alleen dat laatste).
+    if (!isGeldig) return
     track('bereken_geklikt')
     setIsCalculating(true)
     setTimeout(() => {
@@ -116,7 +126,7 @@ export function PensionPlanner({ clientName, onCloseSession }: Props) {
         })
       }
     }, 50)
-  }, [inputs])
+  }, [inputs, isGeldig])
 
   return (
     // Responsive: stacked on mobile/portrait tablet, side-by-side on desktop/landscape
@@ -143,13 +153,18 @@ export function PensionPlanner({ clientName, onCloseSession }: Props) {
           <div className="flex-shrink-0 border-t border-line-soft p-3 bg-panel">
             <button
               onClick={handleRunMonteCarlo}
-              disabled={isCalculating}
+              disabled={isCalculating || !isGeldig}
               className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium bg-ink hover:bg-[#1F2C23] text-warmwhite rounded-[3px] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <RefreshCw size={16} className={isCalculating ? 'animate-spin' : ''} />
               {isCalculating ? 'Berekenen…' : 'Bereken'}
             </button>
-            {mcStale && mc && !isCalculating && (
+            {!isGeldig && (
+              <p className="text-xs text-signal mt-2 text-center leading-relaxed">
+                {leeftijden.errors[0]}
+              </p>
+            )}
+            {isGeldig && mcStale && mc && !isCalculating && (
               <p className="text-xs text-body mt-2 text-center">Invoer gewijzigd — resultaat hiernaast is nog van de vorige berekening.</p>
             )}
           </div>
@@ -158,6 +173,20 @@ export function PensionPlanner({ clientName, onCloseSession }: Props) {
 
       {/* Right: Results — full width, scrollable */}
       <div className="flex-1 lg:overflow-y-auto">
+        {!isGeldig || result === null ? (
+          <div className="card">
+            <h2 className="text-sm font-medium text-ink mb-2">Deze leeftijden kunnen niet samen</h2>
+            <ul className="space-y-1">
+              {leeftijden.errors.map((e, i) => (
+                <li key={i} className="text-sm text-signal leading-relaxed">{e}</li>
+              ))}
+            </ul>
+            <p className="text-xs text-body mt-3 leading-relaxed">
+              Zolang de combinatie niets betekent laten we geen uitkomst zien. Een getal dat op een
+              onmogelijke aanname rust is misleidender dan geen getal.
+            </p>
+          </div>
+        ) : (
         <ResultsPanel
           inputs={inputs}
           result={result}
@@ -168,6 +197,14 @@ export function PensionPlanner({ clientName, onCloseSession }: Props) {
           clientName={clientName}
           onCloseSession={onCloseSession}
         />
+        )}
+        {isGeldig && leeftijden.notes.length > 0 && (
+          <div className="card mt-4">
+            {leeftijden.notes.map((n, i) => (
+              <p key={i} className="text-xs text-body leading-relaxed">{n}</p>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

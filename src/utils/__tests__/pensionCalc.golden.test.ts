@@ -8,7 +8,7 @@
 // (zie AUDIT-fase0-1-feiten.md, bevinding E10) — dat is hier bewust vastgelegd
 // zoals het nu is, niet gecorrigeerd.
 import { describe, it, expect } from 'vitest'
-import { calculatePension, getIncomeBreakdown, brutoMaandNaarNettoMaand } from '../pensionCalc'
+import { calculatePension, getIncomeBreakdown, brutoMaandNaarNettoMaand, controleerLeeftijden } from '../pensionCalc'
 import type { YearData } from '../../types'
 import { SCENARIOS, baseInputs, round } from './fixtures'
 import fixture from './__golden__/pensionCalc.golden.json'
@@ -424,5 +424,49 @@ describe('jaartabel — toont alleen inkomen dat er werkelijk is', () => {
   it('meldt ook geen tekort als er ruim genoeg is', () => {
     const r = calculatePension(nu({ currentCapital: 200000 }), { currentYear: 2026 })
     expect(r.firstShortfallAge).toBeNull()
+  })
+})
+
+// Bevinding 3 uit de audit van 7 september 2026: de schuifjes lieten combinaties
+// toe die niets betekenen, en de twee rekenkernen gingen daar verschillend mee om.
+describe('controleerLeeftijden', () => {
+  it('wijst de combinatie uit de audit af', () => {
+    // Huidige leeftijd 70, stoppen op 60, eindleeftijd 65. De deterministische kern
+    // liep vanaf leeftijd 60, Monte Carlo liep nul jaren en meldde 100% succes.
+    const c = controleerLeeftijden(70, 60, 65)
+    expect(c.errors).toHaveLength(1)
+    expect(c.errors[0]).toContain('70')
+  })
+
+  it('leest een pensioenleeftijd in het verleden als: al met pensioen', () => {
+    const c = controleerLeeftijden(70, 60, 90)
+    expect(c.errors).toHaveLength(0)
+    expect(c.effectiveRetirementAge).toBe(70)
+    expect(c.notes).toHaveLength(1)
+  })
+
+  it('laat een gewone combinatie met rust', () => {
+    const c = controleerLeeftijden(45, 67, 90)
+    expect(c.errors).toHaveLength(0)
+    expect(c.notes).toHaveLength(0)
+    expect(c.effectiveRetirementAge).toBe(67)
+  })
+
+  it('wijst een horizon op of onder de pensioenleeftijd af', () => {
+    expect(controleerLeeftijden(45, 67, 67).errors).toHaveLength(1)
+    expect(controleerLeeftijden(45, 67, 60).errors).toHaveLength(1)
+  })
+
+  it('laat beide kernen vanaf dezelfde leeftijd rekenen', () => {
+    // Al met pensioen: de uitkeringsfase begint vandaag (70), niet op de ingestelde
+    // pensioenleeftijd (60) die al voorbij is.
+    const r = calculatePension(
+      baseInputs({ currentAge: 70, retirementAge: 60, lifeExpectancy: 90 }),
+      { currentYear: 2026 }
+    )
+    expect(r.yearData[0].age).toBe(70)
+    expect(r.yearData[0].phase).toBe('uitkering')
+    expect(r.yearsToRetirement).toBe(0)
+    expect(r.yearsInRetirement).toBe(20)
   })
 })
