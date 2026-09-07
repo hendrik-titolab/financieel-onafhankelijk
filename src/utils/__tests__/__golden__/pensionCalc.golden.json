@@ -189,10 +189,10 @@
       "year": 2108,
       "phase": "uitkering",
       "capital": 307824,
-      "incomeFromCapital": 3442,
+      "incomeFromCapital": 0,
       "aowIncome": 1558,
       "employerIncome": 0,
-      "totalIncome": 5000
+      "totalIncome": 1558
     }
   },
   "8_bruto_gewenst_inkomen": {

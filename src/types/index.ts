@@ -58,11 +58,17 @@ export interface YearData {
   year: number
   capital: number
   phase: 'opbouw' | 'uitkering'
-  // Income breakdown for this year
+  // Income breakdown for this year, alles netto per maand.
+  /** Wat er dit jaar uit eigen vermogen nódig was om het inkomensdoel te halen. */
+  desiredFromCapital: number
+  /** Wat er werkelijk uit vermogen betaald kon worden. Nooit meer dan er staat. */
   incomeFromCapital: number
+  /** Het ongedekte deel: desiredFromCapital − incomeFromCapital. Nul als het lukt. */
+  shortfall: number
   aowIncome: number
   employerIncome: number
   lijfrenteIncome: number
+  /** incomeFromCapital + de drie vaste bronnen. Wat er werkelijk binnenkomt. */
   totalIncome: number
 }
 
@@ -70,11 +76,23 @@ export interface IncomePhase {
   label: string
   fromAge: number
   toAge: number
+  /**
+   * Het bedrag dat in deze fase uit eigen vermogen nódig is. Of dat ook betaald
+   * kan worden zegt shortfallFromAge: deze fasenlijst is een weergave van het
+   * inkomensplan, niet van het saldoverloop.
+   */
   incomeFromCapital: number
   aow: number
   employerPension: number
   lijfrenteUitkering: number
   total: number
+  /**
+   * De eerste leeftijd binnen deze fase waarop het vermogen het gewenste bedrag
+   * niet meer kan opbrengen, of null als de fase volledig gedekt is. Afgeleid uit
+   * dezelfde yearData als de grafiek, zodat de fasenlijst geen inkomen kan tonen
+   * dat de rekenkern nergens betaalt.
+   */
+  shortfallFromAge: number | null
 }
 
 export interface PensionResult {
@@ -97,6 +115,13 @@ export interface PensionResult {
    * tot een later bedrag binnenkomt. Nul als de eindwaarde al toereikend is.
    */
   overbruggingsToeslag: number
+  /**
+   * De leeftijd waarop het inkomensdoel voor het eerst niet meer volledig uit
+   * vermogen betaald kan worden, of null als dat niet gebeurt. "Wanneer ontstaat
+   * het eerste tekort" is voor een adviesgesprek een bruikbaarder antwoord dan
+   * alleen een bedrag aan het eind.
+   */
+  firstShortfallAge: number | null
   // Contante waarde, op de pensioendatum, van de eenmalige bedragen ná die datum.
   // Positief = geld dat later binnenkomt en dus verlaagt wat je óp de pensioendatum
   // nodig hebt. requiredCapital hierboven is hier al mee verrekend; wat je inkomen

@@ -368,3 +368,61 @@ describe('benodigd vermogen — liquiditeit onderweg', () => {
     }
   })
 })
+
+// Bevinding 5 uit de audit van 7 september 2026: bij ieder positief beginsaldo
+// toonde de jaartabel het vólle gewenste maandbedrag uit vermogen, zonder te
+// begrenzen op wat er werkelijk stond. En een ontvangst aan het begin van het jaar
+// werd pas verwerkt nádat de inkomensregel was samengesteld.
+describe('jaartabel — toont alleen inkomen dat er werkelijk is', () => {
+  const nu = (over: Parameters<typeof baseInputs>[0] = {}) => baseInputs({
+    currentAge: 60, retirementAge: 60, lifeExpectancy: 70,
+    monthlyContribution: 0,
+    returnBeforeRetirement: 0, returnAfterRetirement: 0, inflation: 0,
+    desiredRetirementIncome: 1000, desiredRetirementIncomeType: 'netto',
+    aowMaandBedragNetto: 0, aowStartAge: 67, employerPension: 0, lijfrenteUitkering: 0,
+    ...over,
+  })
+
+  it('begrenst op het beschikbare saldo in plaats van het volle bedrag te tonen', () => {
+    // € 1.000 vermogen tegenover € 1.000 maandbehoefte. De oude tabel toonde
+    // twaalf maanden € 1.000; er is één maandbedrag van € 83,33 beschikbaar.
+    const r = calculatePension(nu({ currentCapital: 1000 }), { currentYear: 2026 })
+    const eerste = r.yearData.find(y => y.phase === 'uitkering')!
+    expect(eerste.desiredFromCapital).toBeCloseTo(1000, 2)
+    expect(eerste.incomeFromCapital).toBeCloseTo(1000 / 12, 2)
+    expect(eerste.shortfall).toBeCloseTo(1000 - 1000 / 12, 2)
+    expect(eerste.totalIncome).toBeCloseTo(1000 / 12, 2)
+  })
+
+  it('verwerkt een ontvangst aan het begin van het jaar in datzelfde jaar', () => {
+    // € 0 beginsaldo en € 12.000 binnen aan het begin van het jaar. De oude tabel
+    // toonde € 0 inkomen uit vermogen, omdat het bedrag pas ná de inkomensregel
+    // werd bijgeschreven.
+    const r = calculatePension(
+      nu({ currentCapital: 0, lifeEvents: [{ name: 'ontvangst', amount: 12000, year: 2026 }] }),
+      { currentYear: 2026 }
+    )
+    const eerste = r.yearData.find(y => y.phase === 'uitkering')!
+    expect(eerste.incomeFromCapital).toBeCloseTo(1000, 2)
+    expect(eerste.shortfall).toBe(0)
+  })
+
+  it('meldt vanaf welke leeftijd het tekort begint', () => {
+    // € 24.000 dekt precies twee jaar van € 1.000 per maand, daarna is het op.
+    const r = calculatePension(nu({ currentCapital: 24000 }), { currentYear: 2026 })
+    expect(r.firstShortfallAge).toBe(62)
+  })
+
+  it('meldt geen tekort als het plan rondkomt', () => {
+    // € 120.000 dekt precies tien jaar van € 1.000 per maand: op de horizon staat
+    // het saldo op nul en dat is een geslaagd plan, geen tekort.
+    const r = calculatePension(nu({ currentCapital: 120000 }), { currentYear: 2026 })
+    expect(r.firstShortfallAge).toBeNull()
+    expect(r.yearData.filter(y => y.phase === 'uitkering' && y.shortfall > 0.005)).toHaveLength(0)
+  })
+
+  it('meldt ook geen tekort als er ruim genoeg is', () => {
+    const r = calculatePension(nu({ currentCapital: 200000 }), { currentYear: 2026 })
+    expect(r.firstShortfallAge).toBeNull()
+  })
+})

@@ -470,7 +470,9 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
       year: calYear,
       capital: Math.max(0, capital),
       phase: 'opbouw',
+      desiredFromCapital: 0,
       incomeFromCapital: 0,
+      shortfall: 0,
       aowIncome: 0,
       employerIncome: 0,
       lijfrenteIncome: 0,
@@ -483,41 +485,70 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
 
   // Retirement phase
   let surplusAtEnd = 0
+  let firstShortfallAge: number | null = null
   for (let yr = 0; yr <= yearsInRetirement; yr++) {
     const age = retirementAge + yr
     const calYear = retirementYear + yr
+    const isLaatsteRij = yr === yearsInRetirement
 
     const { aow, employerPension: emp, lijfrenteUitkering: lijf, fromCapital } = getIncomeBreakdown(
       age, desiredMonthlyNetto, aowMonthlyNetto, aowStartAge,
       employerPension, employerPensionStartAge, woonsituatie,
       lijfrenteUitkering, lijfrenteStartAge
     )
-    // Alleen voor de weergave: is het vermogen op, dan krijgt iemand feitelijk nog
-    // alleen AOW, werkgeverspensioen en lijfrente-/bankspaaruitkering. De
-    // kapitaalmutatie hieronder gebruikt bewust de ónbeperkte fromCapital, anders
-    // stopt de onttrekking zodra de pot leeg is en meet het getoonde tekort iets
-    // anders dan het tekort werkelijk is (A1).
-    const actualFromCapital = capital > 0 ? fromCapital : 0
+
+    // Het eenmalige bedrag van dit jaar komt aan het begin binnen en is dus
+    // beschikbaar voor het inkomen van datzelfde jaar. Het werd hieronder pas
+    // verwerkt nádat de inkomensregel was samengesteld, waardoor een ontvangst van
+    // € 12.000 in januari bij een beginsaldo van € 0 een getoond inkomen uit
+    // vermogen van € 0 opleverde (audit 7 september 2026, bevinding 5).
+    const retEvent = retEventMap.get(calYear) ?? 0
+
+    // De laatste rij is de eindstand op de planningshorizon, geen uitkeringsjaar:
+    // daar vindt geen groei en geen onttrekking meer plaats. Ze toont dus wat er
+    // overblijft plus de vaste bronnen die gewoon doorlopen, en géén onttrekking
+    // uit vermogen. Anders meldt een plan dat op de einddatum precies op nul
+    // uitkomt daar een tekort van een vol maandbedrag, terwijl het gewoon geslaagd
+    // is. Tot september 2026 toonde die rij juist het omgekeerde: bij een
+    // restvermogen stond er een onttrekking die het model nooit heeft uitgevoerd.
+    const gewenstPerMaand = isLaatsteRij ? 0 : fromCapital
+
+    // Wat er dit jaar werkelijk uit vermogen te halen valt, ná het eenmalige bedrag
+    // en de groei van dat jaar. Begrenzen op dat bedrag: dit was een binaire poort
+    // (capital > 0 ? fromCapital : 0), waardoor de tabel in het jaar waarin de pot
+    // leegloopt nog de vólle onttrekking toonde. Bij € 1.000 vermogen en € 1.000
+    // maandbehoefte stond er twaalf maanden lang € 1.000 aan inkomen uit vermogen,
+    // terwijl er één maandbedrag van € 83,33 beschikbaar was.
+    const beschikbaarJaar = Math.max(0, (capital + retEvent) * (1 + realPost / 100))
+    const betaaldPerMaand = Math.min(gewenstPerMaand, beschikbaarJaar / 12)
+    const tekortPerMaand = Math.max(0, gewenstPerMaand - betaaldPerMaand)
+
+    if (tekortPerMaand > 0.005 && firstShortfallAge === null) firstShortfallAge = age
 
     yearData.push({
       age,
       year: calYear,
       capital: Math.max(0, capital),
       phase: 'uitkering',
-      incomeFromCapital: actualFromCapital,
+      desiredFromCapital: gewenstPerMaand,
+      incomeFromCapital: betaaldPerMaand,
+      shortfall: tekortPerMaand,
       aowIncome: aow,
       employerIncome: emp,
       lijfrenteIncome: lijf,
-      totalIncome: actualFromCapital + aow + emp + lijf,
+      totalIncome: betaaldPerMaand + aow + emp + lijf,
     })
 
-    if (yr === yearsInRetirement) {
+    if (isLaatsteRij) {
       surplusAtEnd = capital
       break
     }
 
-    // Apply retirement life events at start of year before growth and withdrawal
-    const retEvent = retEventMap.get(calYear) ?? 0
+    // De kapitaalmutatie gebruikt bewust de ónbeperkte fromCapital. Zou de
+    // onttrekking hier op nul worden geklemd zodra de pot leeg is, dan zou
+    // surplusAtEnd altijd nul zijn en zou het KPI-raster geen tekort meer kunnen
+    // tonen. Het saldo loopt dus dóór in het negatieve; alleen de weergave is
+    // begrensd (bevinding A1).
     capital = (capital + retEvent) * (1 + realPost / 100) - fromCapital * 12
   }
 
@@ -525,7 +556,8 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
     retirementAge, lifeExpectancy,
     desiredMonthlyNetto, aowMonthlyNetto, aowStartAge,
     employerPension, employerPensionStartAge, woonsituatie,
-    lijfrenteUitkering, lijfrenteStartAge
+    lijfrenteUitkering, lijfrenteStartAge,
+    yearData
   )
 
   return {
@@ -541,6 +573,7 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
     yearData,
     incomePhases,
     surplusAtEnd,
+    firstShortfallAge,
   }
 }
 
@@ -554,7 +587,13 @@ function buildIncomePhases(
   empStartAge: number,
   woonsituatie: Woonsituatie,
   lijfrenteUitkeringBruto = 0,
-  lijfrenteStartAge = 67
+  lijfrenteStartAge = 67,
+  // Het saldoverloop uit dezelfde berekening. Zonder dit toonde de fasenlijst het
+  // volledige gewenste bedrag uit eigen vermogen, ook voor jaren waarin de pot al
+  // leeg was: het scherm sprak dan de grafiek ernaast tegen (audit 7 september
+  // 2026, bevinding 5, "laat tabel, diagram, fasen en exports dezelfde uitkomst
+  // gebruiken").
+  yearData: YearData[] = []
 ): IncomePhase[] {
   const breakpoints = new Set([retirementAge, lifeExpectancy])
   if (aowStartAge > retirementAge && aowStartAge < lifeExpectancy) breakpoints.add(aowStartAge)
@@ -571,15 +610,21 @@ function buildIncomePhases(
       woonsituatie, lijfrenteUitkeringBruto, lijfrenteStartAge
     )
 
+    const toAge = sorted[i + 1]
+    const eersteTekort = yearData.find(
+      y => y.phase === 'uitkering' && y.age >= fromAge && y.age < toAge && y.shortfall > 0.005
+    )
+
     phases.push({
-      label: `Leeftijd ${sorted[i]}–${sorted[i + 1]}`,
+      label: `Leeftijd ${sorted[i]}–${toAge}`,
       fromAge,
-      toAge: sorted[i + 1],
+      toAge,
       incomeFromCapital: fromCapital,
       aow,
       employerPension: emp,
       lijfrenteUitkering: lijf,
       total: fromCapital + aow + emp + lijf,
+      shortfallFromAge: eersteTekort ? eersteTekort.age : null,
     })
   }
 

@@ -346,6 +346,16 @@ export function ResultsPanel({ inputs, result, mc, mcStale, isCalculating, onRun
           <h3 className="text-sm font-medium text-ink">Inkomen per fase</h3>
           <span className="text-xs text-body">Gewenst: {eur(result.desiredMonthlyNetto)}/mnd</span>
         </div>
+        {result.firstShortfallAge !== null && (
+          <div className="rounded-[3px] border border-signal bg-panel p-3 mb-4">
+            <p className="text-xs text-signal leading-relaxed">
+              <strong className="font-medium">Je plan loopt vast op leeftijd {result.firstShortfallAge}.</strong>{' '}
+              Vanaf dat moment kan je gewenste inkomen niet meer volledig uit je vermogen komen en
+              blijft alleen over wat er vast binnenkomt. Wat helpt: later stoppen, meer inleggen,
+              of je gewenste inkomen verlagen.
+            </p>
+          </div>
+        )}
         <div className="space-y-3">
           {result.incomePhases.map((phase, i) => {
             const total = phase.total
@@ -359,6 +369,16 @@ export function ResultsPanel({ inputs, result, mc, mcStale, isCalculating, onRun
                   </span>
                   <span className="font-numeric tabular text-sm text-ink">{eur(total)}/mnd</span>
                 </div>
+                {/* Een fase kan er op papier volledig uitzien terwijl het vermogen
+                    halverwege op is. Zonder deze regel toont de lijst een inkomen
+                    uit eigen vermogen dat de rekenkern vanaf die leeftijd nergens
+                    meer betaalt (audit 7 september 2026, bevinding 5). */}
+                {phase.shortfallFromAge !== null && (
+                  <p className="text-xs text-signal leading-relaxed mb-2">
+                    ⚠ Vanaf leeftijd {phase.shortfallFromAge} is je eigen vermogen op. Het bedrag
+                    hieronder is wat je nodig hebt, niet wat er dan nog binnenkomt.
+                  </p>
+                )}
                 <div className="space-y-1.5">
                   {[
                     { label: 'Eigen vermogen', value: phase.incomeFromCapital, color: '#527898' },
