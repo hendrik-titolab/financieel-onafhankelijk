@@ -19,17 +19,65 @@ function formatEur(v: number): string {
   return `€${v.toFixed(0)}`
 }
 
-const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: { name: string; value: number; color: string }[]; label?: number }) => {
+interface ChartRow {
+  age: number
+  vermogen: number
+  p10: number
+  band1: number
+  band2: number
+  band3: number
+  band4: number
+  a10: number
+  a25: number
+  a50: number
+  a75: number
+  a90: number
+  heeftMc: boolean
+}
+
+/**
+ * De banden worden als deltas gestapeld, want zo tekent Recharts ze op elkaar.
+ * De tooltip liet die deltas zien: onder het label "P25-P50" stond het verschil
+ * tussen twee percentielen, wat een lezer als vermogensniveau leest. Bij een
+ * mediaan van 900.000 kon daar dus 180.000 staan (audit 7 september 2026,
+ * bevinding 22).
+ *
+ * Deze tooltip toont absolute grenzen, in gewone taal, en zegt erbij dat een
+ * percentiellijn geen doorgerekend levenspad is: hij verbindt per leeftijd
+ * losse standen uit 2.000 verschillende simulaties.
+ */
+const CustomTooltip = ({ active, payload, label }: {
+  active?: boolean
+  payload?: { payload: ChartRow }[]
+  label?: number
+}) => {
   if (!active || !payload?.length) return null
+  const r = payload[0].payload
+  if (!r) return null
+
+  const regels: { label: string; waarde: string }[] = r.heeftMc
+    ? [
+        { label: 'Mediaan', waarde: formatEur(r.a50) },
+        { label: 'Middelste helft', waarde: `${formatEur(r.a25)} tot ${formatEur(r.a75)}` },
+        { label: '8 van de 10 scenario\u2019s', waarde: `${formatEur(r.a10)} tot ${formatEur(r.a90)}` },
+      ]
+    : [{ label: 'Vermogen', waarde: formatEur(r.vermogen) }]
+
   return (
-    <div className="bg-panel border border-line rounded-[3px] p-3 text-xs">
+    <div className="bg-panel border border-line rounded-[3px] p-3 text-xs max-w-[240px]">
       <p className="font-medium text-ink mb-2">Leeftijd {label}</p>
-      {payload.map((p, i) => (
+      {regels.map((x, i) => (
         <div key={i} className="flex items-center justify-between gap-4 py-0.5">
-          <span style={{ color: p.color }} className="font-medium">{p.name}</span>
-          <span className="font-numeric tabular text-ink">{formatEur(p.value)}</span>
+          <span className="text-body">{x.label}</span>
+          <span className="font-numeric tabular text-ink">{x.waarde}</span>
         </div>
       ))}
+      {r.heeftMc && (
+        <p className="text-[10px] text-body mt-2 leading-snug border-t border-line-soft pt-1.5">
+          Standen bij deze leeftijd over 2.000 simulaties. Een band is geen enkel doorgerekend
+          levenspad: het beste scenario op je 70e hoeft niet hetzelfde te zijn als dat op je 85e.
+        </p>
+      )}
     </div>
   )
 }
@@ -44,7 +92,9 @@ export function WealthChart({ result, mc, retirementAge, showMonteCarlo, lifeEve
     name: e.name,
     year: e.year,
     isExpense: e.amount < 0,
-  })).filter(e => e.age > currentAge)
+    // >= en niet >: een bedrag in het huidige jaar viel weg, terwijl dat juist het
+    // bedrag is dat nu speelt (audit 7 september 2026, bevinding 22).
+  })).filter(e => e.age >= currentAge)
 
   // Build combined dataset aligning year data with MC percentiles
   const data = result.yearData.map(yd => {
@@ -64,6 +114,15 @@ export function WealthChart({ result, mc, retirementAge, showMonteCarlo, lifeEve
       band2: mcPoint ? Math.max(0, mcPoint.p50 - mcPoint.p25) : 0,
       band3: mcPoint ? Math.max(0, mcPoint.p75 - mcPoint.p50) : 0,
       band4: mcPoint ? Math.max(0, mcPoint.p90 - mcPoint.p75) : 0,
+      // De absolute percentielen ernaast. De banden hierboven moeten deltas zijn
+      // om gestapeld te kunnen worden, maar de tooltip hoort bedragen te tonen die
+      // een lezer kan plaatsen.
+      a10: mcPoint ? Math.max(0, mcPoint.p10) : 0,
+      a25: mcPoint ? Math.max(0, mcPoint.p25) : 0,
+      a50: mcPoint ? Math.max(0, mcPoint.p50) : 0,
+      a75: mcPoint ? Math.max(0, mcPoint.p75) : 0,
+      a90: mcPoint ? Math.max(0, mcPoint.p90) : 0,
+      heeftMc: Boolean(mcPoint),
     }
   })
 

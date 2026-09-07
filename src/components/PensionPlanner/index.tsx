@@ -1,9 +1,10 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { track } from '@vercel/analytics'
 import { RefreshCw, ChevronDown } from 'lucide-react'
-import type { PensionInputs, PensionResult, MonteCarloResult } from '../../types'
+import type { PensionInputs, PensionResult, BerekeningsSet } from '../../types'
 import { calculatePension, controleerLeeftijden } from '../../utils/pensionCalc'
 import { runMonteCarlo } from '../../utils/monteCarlo'
+import { MODEL_VERSIE, PARAMETER_JAAR } from '../../config/modelVersie'
 import { InputPanel } from './InputPanel'
 import { ResultsPanel } from './ResultsPanel'
 
@@ -42,7 +43,11 @@ interface Props {
 
 export function PensionPlanner({ clientName, onCloseSession }: Props) {
   const [inputs, setInputs] = useState<PensionInputs>(DEFAULT_INPUTS)
-  const [mc, setMc] = useState<MonteCarloResult | null>(null)
+  // Eén afgeronde berekening, vastgelegd op het moment van rekenen: invoer,
+  // deterministisch resultaat, simulatie, peildatum en modelversie bij elkaar. De
+  // export leest uitsluitend hieruit, zodat een rapport nooit nieuwe invoer met
+  // een oude simulatie kan mengen (audit 7 september 2026, bevinding 6).
+  const [berekening, setBerekening] = useState<BerekeningsSet | null>(null)
   // Het resultaat blijft in beeld staan na een invoerwijziging (was: setMc(null),
   // waardoor de grafiek en beide meters meteen verdwenen). mcStale markeert dat
   // het getoonde resultaat niet meer bij de huidige invoer hoort, zonder het weg
@@ -112,8 +117,18 @@ export function PensionPlanner({ clientName, onCloseSession }: Props) {
     track('bereken_geklikt')
     setIsCalculating(true)
     setTimeout(() => {
-      const mcResult = runMonteCarlo(inputs)
-      setMc(mcResult)
+      // Beide kernen in één keer, op dezelfde invoer. Het deterministische
+      // resultaat wordt hier apart berekend en niet uit de live `result`
+      // overgenomen: die hoort bij wat er nú op het scherm staat, en dat is
+      // precies wat er in de export niet door elkaar mag lopen.
+      setBerekening({
+        inputs,
+        result: calculatePension(inputs),
+        mc: runMonteCarlo(inputs),
+        peildatum: new Date().toISOString(),
+        modelVersie: MODEL_VERSIE,
+        parameterJaar: PARAMETER_JAAR,
+      })
       setMcStale(false)
       setIsCalculating(false)
       // Op mobiel staat de invoerkolom boven de resultaten (gestapelde layout
@@ -164,7 +179,7 @@ export function PensionPlanner({ clientName, onCloseSession }: Props) {
                 {leeftijden.errors[0]}
               </p>
             )}
-            {isGeldig && mcStale && mc && !isCalculating && (
+            {isGeldig && mcStale && berekening && !isCalculating && (
               <p className="text-xs text-body mt-2 text-center">Invoer gewijzigd — resultaat hiernaast is nog van de vorige berekening.</p>
             )}
           </div>
@@ -190,7 +205,7 @@ export function PensionPlanner({ clientName, onCloseSession }: Props) {
         <ResultsPanel
           inputs={inputs}
           result={result}
-          mc={mc}
+          berekening={berekening}
           mcStale={mcStale}
           isCalculating={isCalculating}
           onRunMonteCarlo={handleRunMonteCarlo}

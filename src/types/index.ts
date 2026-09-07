@@ -211,3 +211,28 @@ export interface SavedJaarruimte {
   result: JaarruimteResult
   notities: string
 }
+
+/**
+ * Eén afgeronde berekening: de invoer, beide uitkomsten en waar ze vandaan komen.
+ *
+ * Tot september 2026 kon een export twee verschillende berekeningen door elkaar
+ * halen. De deterministische uitkomst werd bij elke toetsaanslag opnieuw berekend,
+ * de Monte Carlo-uitkomst alleen op knopdruk, en exporteren mocht altijd. Een
+ * Excel-bestand bevatte dan een invoertab met € 50.000 vermogen naast een Monte
+ * Carlo-tab die op € 100.000 begon: aantoonbaar verschillende scenario's in één
+ * rapport (audit 7 september 2026, bevinding 6).
+ *
+ * Deze set wordt vastgelegd op het moment van rekenen en daarna niet meer
+ * aangeraakt. De export leest uitsluitend hieruit.
+ */
+export interface BerekeningsSet {
+  inputs: PensionInputs
+  result: PensionResult
+  mc: MonteCarloResult
+  /** Wanneer er gerekend is, als ISO-string. */
+  peildatum: string
+  /** Versie van de rekenmodellen, zie config/modelVersie.ts. */
+  modelVersie: string
+  /** Belastingjaar van de gebruikte fiscale parameters. */
+  parameterJaar: number
+}
