@@ -141,9 +141,18 @@ export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number
         ) * 12
         capital   = (capital   + event) * (1 + r) - withdrawal
         capital75 = (capital75 + event) * (1 + r) - withdrawal75
-        if (capital   < 0) everNegative   = true
-        if (capital75 < 0) everNegative75 = true
       }
+
+      // Liquiditeitstoets voor élk jaar, ook in de opbouwfase. Stond tot september
+      // 2026 binnen de uitkeringstak hierboven, waardoor een uitgave die de pot
+      // vóór de pensioendatum onder nul duwde niet als mislukking telde: de pot
+      // dook negatief, groeide daarna gewoon door en het pad heette geslaagd.
+      // Het geval uit de audit van 7 september 2026: geen vermogen, nu € 10.000
+      // uitgeven, volgend jaar € 20.000 ontvangen, geen rendement en geen
+      // inkomensdoel gaf 100% succes, terwijl de eerste uitgave nergens
+      // gefinancierd werd (bevinding 4).
+      if (capital   < 0) everNegative   = true
+      if (capital75 < 0) everNegative75 = true
     }
     capitalByAge[totalYears][sim] = Math.max(0, capital)
     if (!everNegative)   successCount++
