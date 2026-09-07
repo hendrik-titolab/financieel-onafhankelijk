@@ -79,7 +79,24 @@ export interface IncomePhase {
 
 export interface PensionResult {
   projectedCapital: number
+  /**
+   * Het kleinste vermogen op de pensioendatum waarbij het saldo in geen enkel jaar
+   * negatief wordt. Was tot september 2026 een zuivere eindwaardeberekening, die
+   * niet zag dat een erfenis over vijf jaar de eerste vijf jaar niet betaalt
+   * (audit 7 september 2026, bevinding 2).
+   */
   requiredCapital: number
+  /**
+   * Hetzelfde doelbedrag volgens alleen de eindwaarde: contante waarde van de
+   * onttrekkingen minus pvEventsAfterRetirement. Verklaart de opbouw op het scherm
+   * en in de export. Gelijk aan requiredCapital zolang er niets te overbruggen is.
+   */
+  requiredCapitalEindwaarde: number
+  /**
+   * Wat er bovenop requiredCapitalEindwaarde nodig is om de jaren te overbruggen
+   * tot een later bedrag binnenkomt. Nul als de eindwaarde al toereikend is.
+   */
+  overbruggingsToeslag: number
   // Contante waarde, op de pensioendatum, van de eenmalige bedragen ná die datum.
   // Positief = geld dat later binnenkomt en dus verlaagt wat je óp de pensioendatum
   // nodig hebt. requiredCapital hierboven is hier al mee verrekend; wat je inkomen

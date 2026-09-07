@@ -322,3 +322,49 @@ describe('brutoMaandNaarNettoMaand — onafhankelijk nagerekend', () => {
     expect(vroeg.desiredMonthlyNetto).toBeLessThan(laat.desiredMonthlyNetto)
   })
 })
+
+// Bevinding 2 uit de audit van 7 september 2026. De tool trok de contante waarde
+// van latere ontvangsten volledig van het benodigde startvermogen af. Dat is een
+// eindwaardeberekening: ze zegt of het geld op de einddatum uitkomt, niet of
+// iedere tussenliggende maand betaalbaar was.
+describe('benodigd vermogen — liquiditeit onderweg', () => {
+  // Het geval uit de audit: nu stoppen op 60, plannen tot 70, geen vermogen,
+  // € 1.000 netto per maand nodig, geen andere inkomsten, 0% rendement en
+  // inflatie, en over vijf jaar € 120.000 ontvangen.
+  const overbrugging = baseInputs({
+    currentAge: 60, retirementAge: 60, lifeExpectancy: 70,
+    currentCapital: 0, monthlyContribution: 0,
+    returnBeforeRetirement: 0, returnAfterRetirement: 0, inflation: 0,
+    desiredRetirementIncome: 1000, desiredRetirementIncomeType: 'netto',
+    aowMaandBedragNetto: 0, employerPension: 0, lijfrenteUitkering: 0,
+    lifeEvents: [{ name: 'erfenis', amount: 120000, year: 2031 }],
+  })
+
+  it('vraagt de overbrugging op, niet nul', () => {
+    const r = calculatePension(overbrugging, { currentYear: 2026 })
+    // Vijf jaar × € 12.000 moet je zelf voorschieten voordat de erfenis binnenkomt.
+    // Eén euro minder en het saldo staat in jaar vijf op −1.
+    expect(Math.round(r.requiredCapital)).toBe(60000)
+  })
+
+  it('laat zien waar dat bedrag vandaan komt', () => {
+    const r = calculatePension(overbrugging, { currentYear: 2026 })
+    // Op eindwaarde valt alles tegen elkaar weg: € 120.000 aan onttrekkingen,
+    // € 120.000 aan erfenis. Precies de uitkomst die de audit als misleidend
+    // aanwees, nu zichtbaar als losse regel in plaats van als eindantwoord.
+    expect(Math.round(r.requiredCapitalEindwaarde)).toBe(0)
+    expect(Math.round(r.overbruggingsToeslag)).toBe(60000)
+  })
+
+  it('valt terug op de eindwaarde zodra er niets te overbruggen is', () => {
+    // Zonder eenmalige bedragen daalt het saldo monotoon naar nul op de einddatum:
+    // het laagste saldo ís dan het eindsaldo, dus de zoekmethode en de oude
+    // contante waarde geven hetzelfde antwoord. Dat is de reden dat de zeven
+    // netto-scenario's in de golden master niet zijn verschoven.
+    for (const key of ['1_basis', '5_randgeval_leeg', '7_extreem_18_100']) {
+      const r = calculatePension(SCENARIOS[key as keyof typeof SCENARIOS], { currentYear: 2026 })
+      expect(r.overbruggingsToeslag).toBe(0)
+      expect(r.requiredCapital).toBeCloseTo(r.requiredCapitalEindwaarde, 4)
+    }
+  })
+})

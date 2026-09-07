@@ -163,17 +163,26 @@ export function ResultsPanel({ inputs, result, mc, mcStale, isCalculating, onRun
   // is gebleven omdat hij beter leest, niet omdat het moet. Een volledige som
   // ("€ 1.042.039 − € 400.000") staat in de PDF- en Excel-export, waar een regel
   // de hele breedte krijgt en niemand hem hoeft af te lezen naast een cijfer.
+  //
+  // Sinds de liquiditeitsfix van september 2026 (audit-bevinding 2) kan het
+  // doelbedrag hóger liggen dan die verrekening: geld dat pas over vijf jaar
+  // binnenkomt betaalt de eerste vijf jaar niet. Die overbrugging krijgt een eigen
+  // onderregel, want anders staat er een doelbedrag van € 60.000 met eronder
+  // "− € 120.000 later" en spreekt het scherm zichzelf tegen.
   const pvLater = result.pvEventsAfterRetirement
+  const overbrugging = result.overbruggingsToeslag
   const benodigdSub =
-    Math.round(pvLater) === 0
-      ? `voor ${inputs.lifeExpectancy - inputs.retirementAge} jaar inkomen`
-      : result.requiredCapital < 0
-        // Het doelbedrag is negatief: wat er later binnenkomt is méér dan alle
-        // onttrekkingen samen. Het getal blijft mét minteken staan, want de drie
-        // andere cellen rekenen ermee — een nette € 0 tonen zou het scherm laten
-        // afwijken van de rekenkern.
-        ? 'later geld dekt alles'
-        : `${pvLater > 0 ? '−' : '+'} ${eurAbs(pvLater)} later`
+    Math.round(overbrugging) > 0
+      ? `incl. ${eurAbs(overbrugging)} overbrugging`
+      : Math.round(pvLater) === 0
+        ? `voor ${inputs.lifeExpectancy - inputs.retirementAge} jaar inkomen`
+        : result.requiredCapital < 0
+          // Het doelbedrag is negatief: wat er later binnenkomt is méér dan alle
+          // onttrekkingen samen. Het getal blijft mét minteken staan, want de drie
+          // andere cellen rekenen ermee — een nette € 0 tonen zou het scherm laten
+          // afwijken van de rekenkern.
+          ? 'later geld dekt alles'
+          : `${pvLater > 0 ? '−' : '+'} ${eurAbs(pvLater)} later`
 
   const handlePDF = async () => {
     if (limitReached) return

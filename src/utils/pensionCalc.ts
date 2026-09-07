@@ -223,6 +223,95 @@ function simulateAccumulation(
   return capital
 }
 
+/**
+ * Doorloopt de uitkeringsfase vanaf een gegeven startvermogen en geeft terug wat
+ * het laagste saldo onderweg was. Zelfde recursie als de jaartabel verderop:
+ * eenmalig bedrag aan het begin van het jaar, dan rendement, dan de onttrekking.
+ *
+ * Het laagste saldo is wat telt, niet het eindsaldo. Een eindwaardeberekening zegt
+ * alleen of het geld op de einddatum uitkomt, niet of iedere tussenliggende maand
+ * betaalbaar was. Zie findRequiredCapital() hieronder.
+ */
+function simulateRetirementPath(
+  startCapital: number,
+  yearsInRetirement: number,
+  retirementAge: number,
+  retirementYear: number,
+  realPostAnnual: number,
+  retEventMap: Map<number, number>,
+  withdrawalAtAge: (age: number) => number
+): { minCapital: number; endCapital: number } {
+  let capital = startCapital
+  let minCapital = startCapital
+  const factor = 1 + realPostAnnual / 100
+
+  for (let yr = 0; yr < yearsInRetirement; yr++) {
+    const age = retirementAge + yr
+    const event = retEventMap.get(retirementYear + yr) ?? 0
+    capital = (capital + event) * factor - withdrawalAtAge(age) * 12
+    // Ná de onttrekking van dat jaar: dát is het moment waarop de rekening
+    // betaald moet zijn. Vóór de onttrekking meten zou een tekort dat pas in
+    // december ontstaat een jaar te laat zien.
+    if (capital < minCapital) minCapital = capital
+  }
+
+  return { minCapital, endCapital: capital }
+}
+
+/**
+ * Het kleinste startvermogen waarbij het saldo in GEEN ENKEL jaar negatief wordt.
+ *
+ * Hier stond tot september 2026 een contante-waardeberekening die de contante
+ * waarde van latere ontvangsten volledig van het doelbedrag aftrok. Dat is een
+ * eindwaardeberekening en die garandeert niet dat iedere tussentijdse uitgave
+ * betaalbaar is. Het geval uit de audit van 7 september 2026: stoppen op 60,
+ * plannen tot 70, geen vermogen, € 1.000 netto per maand nodig, en over vijf jaar
+ * € 120.000 erven. Het doelbedrag kwam op € 0 uit en de hoofdvergelijking meldde
+ * geen tekort, terwijl de simulatie 0% slaagde. Voor de eerste vijf jaar is
+ * € 60.000 overbrugging nodig.
+ *
+ * Het saldo is een strikt stijgende functie van het startvermogen (de recursie is
+ * lineair, iedere euro extra groeit mee met r^t), dus bisectie vindt hier één
+ * eenduidig antwoord. De bovengrens wordt eerst verdubbelend gezocht: een vaste
+ * bovengrens kan bij een negatief reëel rendement of een grote uitgave in de
+ * uitkeringsfase te laag uitvallen, en dan zou de tool stilzwijgend een te laag
+ * doelbedrag noemen.
+ *
+ * Zonder eenmalige bedragen komt dit exact op de oude contante waarde uit: het
+ * saldo daalt dan monotoon naar nul op de einddatum, dus het laagste saldo ís het
+ * eindsaldo. Dat is vastgelegd in een test.
+ */
+function findRequiredCapital(
+  yearsInRetirement: number,
+  retirementAge: number,
+  retirementYear: number,
+  realPostAnnual: number,
+  retEventMap: Map<number, number>,
+  withdrawalAtAge: (age: number) => number
+): number {
+  const haalbaar = (start: number) => simulateRetirementPath(
+    start, yearsInRetirement, retirementAge, retirementYear,
+    realPostAnnual, retEventMap, withdrawalAtAge
+  ).minCapital >= 0
+
+  if (haalbaar(0)) return 0
+
+  let hi = 1000
+  for (let i = 0; i < 60 && !haalbaar(hi); i++) hi *= 2
+  // Blijft het onhaalbaar, dan is de invoer zo extreem (bijvoorbeeld een reëel
+  // rendement van bijna −100%) dat geen bedrag volstaat. Teruggeven wat we hebben
+  // is dan eerlijker dan doorzoeken met een grens die toch niet werkt.
+  if (!haalbaar(hi)) return hi
+
+  let lo = 0
+  for (let i = 0; i < 60; i++) {
+    const mid = (lo + hi) / 2
+    if (haalbaar(mid)) hi = mid
+    else lo = mid
+  }
+  return hi
+}
+
 // Binary search for required monthly PMT to reach targetCapital
 function findRequiredPMT(
   targetCapital: number,
@@ -298,15 +387,18 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
   // onttrekking). Anders ligt dit doelbedrag ~1% boven wat de simulatie werkelijk
   // nodig heeft en spreken het KPI-oordeel en de jaartabel elkaar tegen (E9).
   const rPostAnnual = 1 + realPost / 100
-  let requiredCapital = 0
+  const withdrawalAtAge = (age: number) => getMonthlyWithdrawal(
+    age, desiredMonthlyNetto, aowMonthlyNetto, aowStartAge,
+    employerPension, employerPensionStartAge, woonsituatie,
+    lijfrenteUitkering, lijfrenteStartAge
+  )
+
+  // Contante waarde van alle onttrekkingen: wat je inkomen op zichzelf kost, nog
+  // zonder de latere eenmalige bedragen. Blijft berekend omdat het scherm en de
+  // export laten zien hoe het doelbedrag is opgebouwd.
+  let pvWithdrawals = 0
   for (let yr = 0; yr < yearsInRetirement; yr++) {
-    const age = retirementAge + yr
-    const annualWithdrawal = getMonthlyWithdrawal(
-      age, desiredMonthlyNetto, aowMonthlyNetto, aowStartAge,
-      employerPension, employerPensionStartAge, woonsituatie,
-      lijfrenteUitkering, lijfrenteStartAge
-    ) * 12
-    requiredCapital += annualWithdrawal / Math.pow(rPostAnnual, yr + 1)
+    pvWithdrawals += withdrawalAtAge(retirementAge + yr) * 12 / Math.pow(rPostAnnual, yr + 1)
   }
 
   // Eenmalige bedragen ná de pensioendatum verlagen (of verhogen) wat je óp die
@@ -339,7 +431,24 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
       pvEventsAfterRetirement += amount / Math.pow(rPostAnnual, yr)
     }
   }
-  requiredCapital -= pvEventsAfterRetirement
+  // Het doelbedrag volgens de eindwaarde: alle onttrekkingen contant gemaakt, minus
+  // wat er later binnenkomt. Dit is wat er tot september 2026 als requiredCapital
+  // uit deze functie kwam, en het is nog steeds het bedrag dat de opbouw op het
+  // scherm verklaart.
+  const requiredCapitalEindwaarde = pvWithdrawals - pvEventsAfterRetirement
+
+  // Het werkelijke doelbedrag: het kleinste startvermogen waarbij het saldo
+  // onderweg nooit negatief wordt. Gelijk aan de eindwaarde zolang er geen
+  // overbrugging nodig is, hoger zodra een ontvangst pas later binnenkomt.
+  const requiredCapital = findRequiredCapital(
+    yearsInRetirement, retirementAge, retirementYear, realPost, retEventMap, withdrawalAtAge
+  )
+
+  // Wat er bovenop de eindwaarde nodig is om de jaren tót die latere ontvangst te
+  // overbruggen. Apart teruggegeven zodat het scherm dit als eigen regel kan tonen
+  // in plaats van het stilzwijgend in het doelbedrag te verwerken: zonder die regel
+  // ziet iemand wél een hoger doelbedrag, maar niet waardoor.
+  const overbruggingsToeslag = Math.max(0, requiredCapital - requiredCapitalEindwaarde)
 
   // Required monthly contribution (binary search, accounts for life events)
   const requiredMonthlyContribution = findRequiredPMT(
@@ -422,6 +531,8 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
   return {
     projectedCapital,
     requiredCapital,
+    requiredCapitalEindwaarde,
+    overbruggingsToeslag,
     pvEventsAfterRetirement,
     desiredMonthlyNetto,
     requiredMonthlyContribution,
