@@ -33,6 +33,10 @@ const DEFAULT_INPUTS: PensionInputs = {
   employerPensionStartAge: 67,
   lijfrenteUitkering: 0,
   lijfrenteStartAge: 67,
+  lijfrenteSoort: 'levenslang',
+  // Alleen van betekenis bij een tijdelijke uitkering; bij levenslang loopt ze
+  // door tot de planningshorizon.
+  lijfrenteEindLeeftijd: 87,
   lifeEvents: [],
   volatilityPre: 12,
   volatilityPost: 8,

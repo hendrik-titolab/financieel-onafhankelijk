@@ -30,6 +30,8 @@ export function baseInputs(overrides: Partial<PensionInputs> = {}): PensionInput
     employerPensionStartAge: 67,
     lijfrenteUitkering: 0,
     lijfrenteStartAge: 67,
+    lijfrenteSoort: 'levenslang',
+    lijfrenteEindLeeftijd: 87,
     lifeEvents: [],
     volatilityPre: 12,
     volatilityPost: 8,

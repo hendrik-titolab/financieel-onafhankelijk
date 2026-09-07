@@ -501,3 +501,63 @@ describe('onttrekkingen — mid-year-conventie', () => {
     expect(Math.abs(r.requiredCapital - 211282) / 211282).toBeLessThan(0.005)
   })
 })
+
+// Bevinding 9 uit de audit van 7 september 2026: de tool vroeg alleen bedrag en
+// startleeftijd, waarna iedere lijfrente doorliep tot de planningshorizon. Een
+// tijdelijke uitkering van vijf of twintig jaar telde daardoor veel te lang mee.
+describe('lijfrente — levenslang of tijdelijk', () => {
+  const basis = (over: Parameters<typeof baseInputs>[0] = {}) => baseInputs({
+    currentAge: 66, retirementAge: 67, lifeExpectancy: 90,
+    currentCapital: 0, monthlyContribution: 0,
+    returnBeforeRetirement: 0, returnAfterRetirement: 0, inflation: 0,
+    desiredRetirementIncome: 3000, desiredRetirementIncomeType: 'netto',
+    aowMaandBedragNetto: 0, aowStartAge: 99, employerPension: 0,
+    lijfrenteUitkering: 1000, lijfrenteStartAge: 67,
+    ...over,
+  })
+
+  it('laat een levenslange uitkering doorlopen tot de horizon', () => {
+    const r = calculatePension(basis({ lijfrenteSoort: 'levenslang' }), { currentYear: 2026 })
+    const op80 = r.yearData.find(y => y.age === 80)!
+    const op89 = r.yearData.find(y => y.age === 89)!
+    expect(op80.lijfrenteIncome).toBeGreaterThan(0)
+    expect(op89.lijfrenteIncome).toBeGreaterThan(0)
+  })
+
+  it('stopt een tijdelijke uitkering op de opgegeven leeftijd', () => {
+    const r = calculatePension(
+      basis({ lijfrenteSoort: 'tijdelijk', lijfrenteEindLeeftijd: 77 }),
+      { currentYear: 2026 }
+    )
+    expect(r.yearData.find(y => y.age === 76)!.lijfrenteIncome).toBeGreaterThan(0)
+    // Op de einddatum zelf is de uitkering afgelopen: tien jaar vanaf 67 betekent
+    // uitkeringen op 67 tot en met 76.
+    expect(r.yearData.find(y => y.age === 77)!.lijfrenteIncome).toBe(0)
+    expect(r.yearData.find(y => y.age === 85)!.lijfrenteIncome).toBe(0)
+  })
+
+  it('vraagt meer vermogen bij een tijdelijke dan bij een levenslange uitkering', () => {
+    // Dit is waar de fout op uitkwam: een tijdelijke uitkering die tot de horizon
+    // doorliep maakte het plan te rooskleurig.
+    const levenslang = calculatePension(basis({ lijfrenteSoort: 'levenslang' }), { currentYear: 2026 })
+    const tijdelijk = calculatePension(
+      basis({ lijfrenteSoort: 'tijdelijk', lijfrenteEindLeeftijd: 77 }), { currentYear: 2026 })
+    expect(tijdelijk.requiredCapital).toBeGreaterThan(levenslang.requiredCapital)
+  })
+
+  it('geeft het einde van de uitkering een eigen fase', () => {
+    const r = calculatePension(
+      basis({ lijfrenteSoort: 'tijdelijk', lijfrenteEindLeeftijd: 77 }), { currentYear: 2026 })
+    expect(r.incomePhases.some(f => f.fromAge === 77)).toBe(true)
+  })
+
+  it('negeert de einddatum als de uitkering levenslang is', () => {
+    // Het veld blijft in de invoer staan als iemand heen en weer klikt; het mag de
+    // uitkomst dan niet stiekem beïnvloeden.
+    const a = calculatePension(
+      basis({ lijfrenteSoort: 'levenslang', lijfrenteEindLeeftijd: 70 }), { currentYear: 2026 })
+    const b = calculatePension(
+      basis({ lijfrenteSoort: 'levenslang', lijfrenteEindLeeftijd: 95 }), { currentYear: 2026 })
+    expect(a.requiredCapital).toBe(b.requiredCapital)
+  })
+})

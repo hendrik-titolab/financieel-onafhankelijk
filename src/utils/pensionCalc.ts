@@ -167,14 +167,19 @@ export function getIncomeBreakdown(
   // andere call sites in pensionCalc.ts/monteCarlo.ts hoefde hierdoor aangepast te
   // worden aan de argumentvolgorde.
   lijfrenteUitkeringBruto = 0,
-  lijfrenteStartAge = 67
+  lijfrenteStartAge = 67,
+  // Einde van een tijdelijke uitkering. Oneindig betekent levenslang, en dat is de
+  // default zodat elke bestaande aanroep zich gedraagt zoals voorheen.
+  lijfrenteEindLeeftijd = Infinity
 ): MaandInkomenVerdeling {
   const pastAow = age >= aowStartAge
   const alleenstaand = woonsituatie === 'alleenstaand'
 
   const aow = pastAow ? aowNetto : 0
   const heeftPensioen = age >= employerPensionStartAge
-  const heeftLijfrente = age >= lijfrenteStartAge
+  // Een tijdelijke uitkering stopt. Tot september 2026 liep iedere lijfrente door
+  // tot de planningshorizon, ook een uitkering van vijf jaar (bevinding 9).
+  const heeftLijfrente = age >= lijfrenteStartAge && age < lijfrenteEindLeeftijd
 
   // Belasten over het TOTALE box 1-inkomen, niet per bron. Heffingskortingen zijn
   // inkomensafhankelijk, dus per bron rekenen geeft een te hoge korting en daarmee
@@ -219,11 +224,12 @@ export function getMonthlyWithdrawal(
   employerPensionStartAge: number,
   woonsituatie: Woonsituatie = 'alleenstaand',
   lijfrenteUitkeringBruto = 0,
-  lijfrenteStartAge = 67
+  lijfrenteStartAge = 67,
+  lijfrenteEindLeeftijd = Infinity
 ): number {
   return getIncomeBreakdown(
     age, desiredNetto, aowNetto, aowStartAge, employerPensionBruto, employerPensionStartAge,
-    woonsituatie, lijfrenteUitkeringBruto, lijfrenteStartAge
+    woonsituatie, lijfrenteUitkeringBruto, lijfrenteStartAge, lijfrenteEindLeeftijd
   ).fromCapital
 }
 
@@ -398,8 +404,13 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
     aowMaandBedragNetto, aowStartAge, woonsituatie = 'alleenstaand',
     employerPension, employerPensionStartAge,
     lijfrenteUitkering, lijfrenteStartAge,
+    lijfrenteSoort = 'levenslang', lijfrenteEindLeeftijd = Infinity,
     lifeEvents = [],
   } = inputs
+
+  // Alleen een tijdelijke uitkering heeft een einddatum. Bij levenslang blijft de
+  // uitkering doorlopen tot de planningshorizon.
+  const lijfrenteEinde = lijfrenteSoort === 'tijdelijk' ? lijfrenteEindLeeftijd : Infinity
 
   // Kosten en vermogensbelasting gaan er als procentpunten af vóórdat de inflatie
   // eruit wordt gerekend. Staan ze op nul, dan verandert er niets: dat is de stand
@@ -461,7 +472,7 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
   const withdrawalAtAge = (age: number) => getMonthlyWithdrawal(
     age, desiredMonthlyNetto, aowMonthlyNetto, aowStartAge,
     employerPension, employerPensionStartAge, woonsituatie,
-    lijfrenteUitkering, lijfrenteStartAge
+    lijfrenteUitkering, lijfrenteStartAge, lijfrenteEinde
   )
 
   // Contante waarde van alle onttrekkingen: wat je inkomen op zichzelf kost, nog
@@ -567,7 +578,7 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
     const { aow, employerPension: emp, lijfrenteUitkering: lijf, fromCapital } = getIncomeBreakdown(
       age, desiredMonthlyNetto, aowMonthlyNetto, aowStartAge,
       employerPension, employerPensionStartAge, woonsituatie,
-      lijfrenteUitkering, lijfrenteStartAge
+      lijfrenteUitkering, lijfrenteStartAge, lijfrenteEinde
     )
 
     // Het eenmalige bedrag van dit jaar komt aan het begin binnen en is dus
@@ -645,7 +656,7 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
     retirementAge, lifeExpectancy,
     desiredMonthlyNetto, aowMonthlyNetto, aowStartAge,
     employerPension, employerPensionStartAge, woonsituatie,
-    lijfrenteUitkering, lijfrenteStartAge,
+    lijfrenteUitkering, lijfrenteStartAge, lijfrenteEinde,
     yearData
   )
 
@@ -678,6 +689,7 @@ function buildIncomePhases(
   woonsituatie: Woonsituatie,
   lijfrenteUitkeringBruto = 0,
   lijfrenteStartAge = 67,
+  lijfrenteEindLeeftijd = Infinity,
   // Het saldoverloop uit dezelfde berekening. Zonder dit toonde de fasenlijst het
   // volledige gewenste bedrag uit eigen vermogen, ook voor jaren waarin de pot al
   // leeg was: het scherm sprak dan de grafiek ernaast tegen (audit 7 september
@@ -689,6 +701,12 @@ function buildIncomePhases(
   if (aowStartAge > retirementAge && aowStartAge < lifeExpectancy) breakpoints.add(aowStartAge)
   if (empStartAge > retirementAge && empStartAge < lifeExpectancy) breakpoints.add(empStartAge)
   if (lijfrenteStartAge > retirementAge && lijfrenteStartAge < lifeExpectancy) breakpoints.add(lijfrenteStartAge)
+  // Het einde van een tijdelijke uitkering is een knik in het inkomen en hoort dus
+  // een eigen fase te beginnen (bevinding 9).
+  if (Number.isFinite(lijfrenteEindLeeftijd)
+    && lijfrenteEindLeeftijd > retirementAge && lijfrenteEindLeeftijd < lifeExpectancy) {
+    breakpoints.add(lijfrenteEindLeeftijd)
+  }
 
   const sorted = [...breakpoints].sort((a, b) => a - b)
   const phases: IncomePhase[] = []
@@ -697,7 +715,7 @@ function buildIncomePhases(
     const fromAge = sorted[i]
     const { aow, employerPension: emp, lijfrenteUitkering: lijf, fromCapital } = getIncomeBreakdown(
       fromAge, desiredNetto, aowNetto, aowStartAge, employerPensionBruto, empStartAge,
-      woonsituatie, lijfrenteUitkeringBruto, lijfrenteStartAge
+      woonsituatie, lijfrenteUitkeringBruto, lijfrenteStartAge, lijfrenteEindLeeftijd
     )
 
     const toAge = sorted[i + 1]

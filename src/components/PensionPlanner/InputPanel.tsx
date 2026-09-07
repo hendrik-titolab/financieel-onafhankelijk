@@ -4,7 +4,7 @@ import { geschatteBox3Druk } from '../../utils/box3'
 import { PARAMETER_JAAR } from '../../config/modelVersie'
 import { track } from '@vercel/analytics'
 import { X } from 'lucide-react'
-import type { PensionInputs, IncomeType, ContributionFrequency, LifeEvent, RiskProfile, Woonsituatie } from '../../types'
+import type { PensionInputs, IncomeType, ContributionFrequency, LifeEvent, RiskProfile, Woonsituatie, LijfrenteSoort } from '../../types'
 import { RISICOPROFIELEN, PROFIEL_VOLGORDE } from '../../config/risicoprofielen'
 import { AOW_NETTO } from '../../utils/pensionCalc'
 import { LIJFRENTE } from '../../config/fiscaleParameters'
@@ -353,26 +353,62 @@ function ParametersTab({ inputs, onChange }: Props) {
               het opgebouwde bedrag. Dit vermogen is fiscaal beklemd, een vrije opname zoals bij je
               eigen vermogen hierboven kan hier niet. Nog niet bekend? Laat op € 0 staan.
             </p>
-            {/* Zachte waarschuwing, geen blokkade: banksparen/pensioenbeleggen kennen
-                deze wettelijke jaargrens niet, alleen een lijfrente. Vergelijkt tegen
-                de hoogste van de twee grenzen uit art. 3.125 Wet IB 2001, omdat welke
-                van de twee van toepassing is afhangt van de uitkeringsduur — een vraag
-                die dit ene veld bewust niet stelt (zie E1-optie-B). */}
-            {inputs.lijfrenteUitkering * 12 > LIJFRENTE.maxJaaruitkeringOverbruggingslijfrente && (
+            {/* De grens hing hier aan de overbruggingslijfrente (EUR 63.288 per jaar)
+                en werd op élke uitkering losgelaten. Dat klopt tweemaal niet: een
+                levenslange oudedagslijfrente kent helemaal geen jaarmaximum, en
+                voor een tijdelijke oudedagslijfrente geldt een heel ander bedrag
+                (EUR 27.192 in 2026, art. 3.125 lid 1 onderdeel c Wet IB 2001).
+                Sinds september 2026 hangt de grens aan de gekozen productsoort
+                (audit-bevinding 9). Zachte waarschuwing, geen blokkade. */}
+            {inputs.lijfrenteSoort === 'tijdelijk'
+              && inputs.lijfrenteUitkering * 12 > LIJFRENTE.maxJaaruitkeringTijdelijkeOudedagslijfrente && (
               <p className="text-xs text-signal bg-panel border border-signal rounded-[3px] p-2 mt-1 leading-relaxed">
-                ⚠ Dit is hoger dan het wettelijk maximum voor een lijfrente-uitkering
-                (€ {Math.round(LIJFRENTE.maxJaaruitkeringOverbruggingslijfrente / 12).toLocaleString('nl-NL')}/mnd,
-                art. 3.125 Wet IB 2001). Klopt het bedrag? Bij banksparen of pensioenbeleggen geldt
-                deze grens niet.
+                ⚠ Dit is hoger dan het maximum voor een tijdelijke oudedagslijfrente
+                (€ {Math.round(LIJFRENTE.maxJaaruitkeringTijdelijkeOudedagslijfrente / 12).toLocaleString('nl-NL')}/mnd,
+                art. 3.125 lid 1 onderdeel c Wet IB 2001). Klopt het bedrag, of is het een
+                levenslange uitkering? Bij banksparen met een looptijd geldt deze grens niet.
               </p>
             )}
           </Field>
           <div className="mt-2">
+            {/* Productsoort en looptijd. Zonder deze twee liep iedere lijfrente door
+                tot de planningshorizon, ook een uitkering van vijf jaar
+                (audit-bevinding 9). */}
+            {inputs.lijfrenteUitkering > 0 && (
+              <div className="mb-2">
+                <span className="label">Soort uitkering</span>
+                <Toggle value={inputs.lijfrenteSoort}
+                  onChange={v => onChange({ lijfrenteSoort: v as LijfrenteSoort })}
+                  options={[
+                    { value: 'levenslang', label: 'Levenslang' },
+                    { value: 'tijdelijk', label: 'Tijdelijk' },
+                  ]} />
+                <p className="text-xs text-body leading-relaxed mt-1">
+                  {inputs.lijfrenteSoort === 'levenslang'
+                    ? 'Loopt door tot het einde van je planning. Zo werkt een levenslange oudedagslijfrente bij een verzekeraar.'
+                    : 'Stopt op de leeftijd die je hieronder invult. Zo werkt een uitkering vanaf een lijfrenterekening bij een bank, of een tijdelijke oudedagslijfrente.'}
+                </p>
+              </div>
+            )}
             <Field label="Lijfrente-/bankspaaruitkering ingang (leeftijd)">
               <NumberInput value={inputs.lijfrenteStartAge}
                 onChange={v => onChange({ lijfrenteStartAge: v })}
                 suffix="jr" step={1} min={55} max={75} />
             </Field>
+            {inputs.lijfrenteUitkering > 0 && inputs.lijfrenteSoort === 'tijdelijk' && (
+              <div className="mt-2">
+                <Field label="Uitkering stopt op (leeftijd)">
+                  <NumberInput value={inputs.lijfrenteEindLeeftijd}
+                    onChange={v => onChange({ lijfrenteEindLeeftijd: v })}
+                    suffix="jr" step={1} min={inputs.lijfrenteStartAge + 1} max={100} />
+                  <p className="text-xs text-body leading-relaxed mt-1">
+                    {inputs.lijfrenteEindLeeftijd > inputs.lijfrenteStartAge
+                      ? `Dat is ${inputs.lijfrenteEindLeeftijd - inputs.lijfrenteStartAge} jaar uitkering. Staat op je polis of op de prognose van je aanbieder.`
+                      : 'De einddatum moet na de ingangsdatum liggen.'}
+                  </p>
+                </Field>
+              </div>
+            )}
             <p className="text-xs text-body mt-1">
               Te vinden op de prognose van je aanbieder of via{' '}
               <a href="https://www.mijnpensioenoverzicht.nl" target="_blank" rel="noopener noreferrer"

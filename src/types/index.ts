@@ -12,6 +12,16 @@ export interface LifeEvent {
 
 export type Woonsituatie = 'alleenstaand' | 'samenwonend'
 
+/**
+ * Levenslang verzekerd of tijdelijk (bancair of verzekerd).
+ *
+ * Het verschil is fiscaal en praktisch relevant: een levenslange
+ * oudedagslijfrente loopt tot overlijden en kent geen jaarmaximum, een tijdelijke
+ * oudedagslijfrente loopt een afgesproken aantal jaren en kent dat wel
+ * (art. 3.125 lid 1 onderdeel c Wet IB 2001).
+ */
+export type LijfrenteSoort = 'levenslang' | 'tijdelijk'
+
 export interface PensionInputs {
   currentAge: number
   retirementAge: number
@@ -64,6 +74,24 @@ export interface PensionInputs {
   // als werkgeverspensioen hierboven (E1-optie-B).
   lijfrenteUitkering: number        // gross monthly (bruto/maand)
   lijfrenteStartAge: number         // age at which the lijfrente-/bankspaaruitkering starts
+  /**
+   * Levenslang of tijdelijk.
+   *
+   * De tool kende dit onderscheid niet: iedere lijfrente liep door tot de
+   * planningshorizon, waardoor een tijdelijke uitkering van vijf of twintig jaar
+   * veel te lang meetelde. Bovendien werd elke uitkering getoetst aan de grens
+   * voor een overbruggingslijfrente (EUR 63.288), terwijl een levenslange
+   * oudedagslijfrente helemaal geen jaarmaximum kent en voor een tijdelijke
+   * oudedagslijfrente een heel ander bedrag geldt (audit 7 september 2026,
+   * bevinding 9).
+   */
+  lijfrenteSoort: LijfrenteSoort
+  /**
+   * Leeftijd waarop een tijdelijke uitkering stopt. Alleen van betekenis bij
+   * lijfrenteSoort 'tijdelijk'; bij 'levenslang' loopt de uitkering door tot de
+   * planningshorizon.
+   */
+  lijfrenteEindLeeftijd: number
 
   lifeEvents: LifeEvent[]  // named events: schenking, woningaankoop, erfenis…
 
