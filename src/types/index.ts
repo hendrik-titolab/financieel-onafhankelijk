@@ -181,6 +181,15 @@ export interface JaarruimteInputs {
   // Alleen nodig bij belastingjaar 2021 of 2022. Het plafond van de
   // reserveringsruimte hing toen af van de leeftijd op 1 januari van dat jaar.
   geboortedatum?: string       // ISO, bijv. '1964-08-15'
+  /**
+   * Verwacht belastbaar inkomen in het jaar waarin je de lijfrentepremie aftrekt.
+   *
+   * De jaarruimte zelf rekent met het inkomen van het vóórafgaande jaar (art. 3.127
+   * lid 1 Wet IB 2001), maar het belastingvoordeel valt in het aftrekjaar. Die twee
+   * hoeven niet gelijk te zijn. Blijft dit leeg, dan valt de schatting terug op
+   * `income` en zegt de UI dat erbij (audit 7 september 2026, bevinding 19).
+   */
+  aftrekjaarInkomen?: number
   clientName: string
   adviseurNaam: string
   notities: string

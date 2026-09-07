@@ -5,8 +5,8 @@
     "totaalBeschikbaar": 8005,
     "alIngelegd": 0,
     "nogTeDoen": 8005,
-    "belastingVoordeel": 3007,
-    "belastingTariefPct": 37.56
+    "belastingVoordeel": 3519,
+    "belastingTariefPct": 43.96
   },
   "2016_db": {
     "jaarruimte": 0,
@@ -15,7 +15,7 @@
     "alIngelegd": 0,
     "nogTeDoen": 0,
     "belastingVoordeel": 0,
-    "belastingTariefPct": 37.56
+    "belastingTariefPct": 0
   },
   "2016_wtp": {
     "jaarruimte": 6505,
@@ -23,8 +23,8 @@
     "totaalBeschikbaar": 6505,
     "alIngelegd": 0,
     "nogTeDoen": 6505,
-    "belastingVoordeel": 2443,
-    "belastingTariefPct": 37.56
+    "belastingVoordeel": 2859,
+    "belastingTariefPct": 43.96
   },
   "2016_db_factorA500": {
     "jaarruimte": 4755,
@@ -32,8 +32,8 @@
     "totaalBeschikbaar": 4755,
     "alIngelegd": 0,
     "nogTeDoen": 4755,
-    "belastingVoordeel": 1786,
-    "belastingTariefPct": 37.56
+    "belastingVoordeel": 2090,
+    "belastingTariefPct": 43.96
   },
   "2017_geen": {
     "jaarruimte": 8000,
@@ -41,8 +41,8 @@
     "totaalBeschikbaar": 8000,
     "alIngelegd": 0,
     "nogTeDoen": 8000,
-    "belastingVoordeel": 3005,
-    "belastingTariefPct": 37.56
+    "belastingVoordeel": 3516,
+    "belastingTariefPct": 43.96
   },
   "2017_db": {
     "jaarruimte": 0,
@@ -51,7 +51,7 @@
     "alIngelegd": 0,
     "nogTeDoen": 0,
     "belastingVoordeel": 0,
-    "belastingTariefPct": 37.56
+    "belastingTariefPct": 0
   },
   "2017_wtp": {
     "jaarruimte": 6500,
@@ -59,8 +59,8 @@
     "totaalBeschikbaar": 6500,
     "alIngelegd": 0,
     "nogTeDoen": 6500,
-    "belastingVoordeel": 2441,
-    "belastingTariefPct": 37.56
+    "belastingVoordeel": 2857,
+    "belastingTariefPct": 43.96
   },
   "2017_db_factorA500": {
     "jaarruimte": 4750,
@@ -68,8 +68,8 @@
     "totaalBeschikbaar": 4750,
     "alIngelegd": 0,
     "nogTeDoen": 4750,
-    "belastingVoordeel": 1784,
-    "belastingTariefPct": 37.56
+    "belastingVoordeel": 2088,
+    "belastingTariefPct": 43.96
   },
   "2019_geen": {
     "jaarruimte": 7677,
@@ -77,8 +77,8 @@
     "totaalBeschikbaar": 7677,
     "alIngelegd": 0,
     "nogTeDoen": 7677,
-    "belastingVoordeel": 2884,
-    "belastingTariefPct": 37.56
+    "belastingVoordeel": 3375,
+    "belastingTariefPct": 43.96
   },
   "2019_db": {
     "jaarruimte": 0,
@@ -87,7 +87,7 @@
     "alIngelegd": 0,
     "nogTeDoen": 0,
     "belastingVoordeel": 0,
-    "belastingTariefPct": 37.56
+    "belastingTariefPct": 0
   },
   "2019_wtp": {
     "jaarruimte": 6177,
@@ -95,8 +95,8 @@
     "totaalBeschikbaar": 6177,
     "alIngelegd": 0,
     "nogTeDoen": 6177,
-    "belastingVoordeel": 2320,
-    "belastingTariefPct": 37.56
+    "belastingVoordeel": 2715,
+    "belastingTariefPct": 43.96
   },
   "2019_db_factorA500": {
     "jaarruimte": 4542,
@@ -104,8 +104,8 @@
     "totaalBeschikbaar": 4542,
     "alIngelegd": 0,
     "nogTeDoen": 4542,
-    "belastingVoordeel": 1706,
-    "belastingTariefPct": 37.56
+    "belastingVoordeel": 1997,
+    "belastingTariefPct": 43.96
   },
   "2022_geen": {
     "jaarruimte": 7603,
@@ -113,8 +113,8 @@
     "totaalBeschikbaar": 7603,
     "alIngelegd": 0,
     "nogTeDoen": 7603,
-    "belastingVoordeel": 2856,
-    "belastingTariefPct": 37.56
+    "belastingVoordeel": 3342,
+    "belastingTariefPct": 43.96
   },
   "2022_db": {
     "jaarruimte": 0,
@@ -123,7 +123,7 @@
     "alIngelegd": 0,
     "nogTeDoen": 0,
     "belastingVoordeel": 0,
-    "belastingTariefPct": 37.56
+    "belastingTariefPct": 0
   },
   "2022_wtp": {
     "jaarruimte": 6103,
@@ -131,8 +131,8 @@
     "totaalBeschikbaar": 6103,
     "alIngelegd": 0,
     "nogTeDoen": 6103,
-    "belastingVoordeel": 2292,
-    "belastingTariefPct": 37.56
+    "belastingVoordeel": 2683,
+    "belastingTariefPct": 43.96
   },
   "2022_db_factorA500": {
     "jaarruimte": 4468,
@@ -140,8 +140,8 @@
     "totaalBeschikbaar": 4468,
     "alIngelegd": 0,
     "nogTeDoen": 4468,
-    "belastingVoordeel": 1678,
-    "belastingTariefPct": 37.56
+    "belastingVoordeel": 1964,
+    "belastingTariefPct": 43.96
   },
   "2023_geen": {
     "jaarruimte": 16906,
@@ -149,8 +149,8 @@
     "totaalBeschikbaar": 16906,
     "alIngelegd": 0,
     "nogTeDoen": 16906,
-    "belastingVoordeel": 6350,
-    "belastingTariefPct": 37.56
+    "belastingVoordeel": 7432,
+    "belastingTariefPct": 43.96
   },
   "2023_db": {
     "jaarruimte": 7501,
@@ -158,8 +158,8 @@
     "totaalBeschikbaar": 7501,
     "alIngelegd": 0,
     "nogTeDoen": 7501,
-    "belastingVoordeel": 2817,
-    "belastingTariefPct": 37.56
+    "belastingVoordeel": 3297,
+    "belastingTariefPct": 43.96
   },
   "2023_wtp": {
     "jaarruimte": 15406,
@@ -167,8 +167,8 @@
     "totaalBeschikbaar": 15406,
     "alIngelegd": 0,
     "nogTeDoen": 15406,
-    "belastingVoordeel": 5787,
-    "belastingTariefPct": 37.56
+    "belastingVoordeel": 6772,
+    "belastingTariefPct": 43.96
   },
   "2023_db_factorA500": {
     "jaarruimte": 13771,
@@ -176,8 +176,8 @@
     "totaalBeschikbaar": 13771,
     "alIngelegd": 0,
     "nogTeDoen": 13771,
-    "belastingVoordeel": 5172,
-    "belastingTariefPct": 37.56
+    "belastingVoordeel": 6054,
+    "belastingTariefPct": 43.96
   },
   "2026_geen": {
     "jaarruimte": 15248,
@@ -185,8 +185,8 @@
     "totaalBeschikbaar": 15248,
     "alIngelegd": 0,
     "nogTeDoen": 15248,
-    "belastingVoordeel": 5727,
-    "belastingTariefPct": 37.56
+    "belastingVoordeel": 6703,
+    "belastingTariefPct": 43.96
   },
   "2026_db": {
     "jaarruimte": 5843,
@@ -194,8 +194,8 @@
     "totaalBeschikbaar": 5843,
     "alIngelegd": 0,
     "nogTeDoen": 5843,
-    "belastingVoordeel": 2195,
-    "belastingTariefPct": 37.56
+    "belastingVoordeel": 2569,
+    "belastingTariefPct": 43.96
   },
   "2026_wtp": {
     "jaarruimte": 13748,
@@ -203,8 +203,8 @@
     "totaalBeschikbaar": 13748,
     "alIngelegd": 0,
     "nogTeDoen": 13748,
-    "belastingVoordeel": 5164,
-    "belastingTariefPct": 37.56
+    "belastingVoordeel": 6044,
+    "belastingTariefPct": 43.96
   },
   "2026_db_factorA500": {
     "jaarruimte": 12113,
@@ -212,8 +212,8 @@
     "totaalBeschikbaar": 12113,
     "alIngelegd": 0,
     "nogTeDoen": 12113,
-    "belastingVoordeel": 4550,
-    "belastingTariefPct": 37.56
+    "belastingVoordeel": 5325,
+    "belastingTariefPct": 43.96
   },
   "2026_geen_met_reserveringsruimte": {
     "jaarruimte": 15248,
@@ -221,8 +221,8 @@
     "totaalBeschikbaar": 55248,
     "alIngelegd": 5000,
     "nogTeDoen": 50248,
-    "belastingVoordeel": 18873,
-    "belastingTariefPct": 37.56
+    "belastingVoordeel": 20953,
+    "belastingTariefPct": 41.7
   },
   "2026_db_met_reserveringsruimte": {
     "jaarruimte": 5843,
@@ -230,8 +230,8 @@
     "totaalBeschikbaar": 45843,
     "alIngelegd": 5000,
     "nogTeDoen": 40843,
-    "belastingVoordeel": 15341,
-    "belastingTariefPct": 37.56
+    "belastingVoordeel": 17741,
+    "belastingTariefPct": 43.44
   },
   "2026_wtp_met_reserveringsruimte": {
     "jaarruimte": 13748,
@@ -239,7 +239,7 @@
     "totaalBeschikbaar": 53748,
     "alIngelegd": 5000,
     "nogTeDoen": 48748,
-    "belastingVoordeel": 18310,
-    "belastingTariefPct": 37.56
+    "belastingVoordeel": 20567,
+    "belastingTariefPct": 42.19
   }
 }
