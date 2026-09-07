@@ -1,5 +1,6 @@
 import type { PensionInputs, MonteCarloResult, PercentilePoint } from '../types'
 import { brutoMaandNaarNettoMaand, getMonthlyWithdrawal, controleerLeeftijden } from './pensionCalc'
+import { nettoNominaalRendement } from './box3'
 
 export const N_SIMULATIONS = 2000
 
@@ -45,6 +46,7 @@ export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number
     currentAge, retirementAge: retirementAgeInput, lifeExpectancy,
     currentCapital, monthlyContribution, contributionFrequency,
     returnBeforeRetirement, returnAfterRetirement, inflation,
+    kostenPct = 0, vermogensbelastingPct = 0,
     desiredRetirementIncome, desiredRetirementIncomeType,
     aowMaandBedragNetto, aowStartAge, woonsituatie = 'alleenstaand',
     employerPension, employerPensionStartAge,
@@ -87,8 +89,11 @@ export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number
       )
     : desiredRetirementIncome
 
-  const realPre = realReturn(returnBeforeRetirement, inflation)
-  const realPost = realReturn(returnAfterRetirement, inflation)
+  // Zelfde aftrek als in pensionCalc.ts, zie daar.
+  const realPre = realReturn(
+    nettoNominaalRendement(returnBeforeRetirement, kostenPct, vermogensbelastingPct), inflation)
+  const realPost = realReturn(
+    nettoNominaalRendement(returnAfterRetirement, kostenPct, vermogensbelastingPct), inflation)
   const monthlyPMT = contributionFrequency === 'jaarlijks'
     ? monthlyContribution / 12
     : monthlyContribution

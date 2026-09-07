@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useId, Children, isValidElement, cloneElement } from 'react'
 import { parseBedrag, parseBedragBegrensd, formatBedrag } from '../../utils/bedrag'
+import { geschatteBox3Druk } from '../../utils/box3'
+import { PARAMETER_JAAR } from '../../config/modelVersie'
 import { track } from '@vercel/analytics'
 import { X } from 'lucide-react'
 import type { PensionInputs, IncomeType, ContributionFrequency, LifeEvent, RiskProfile, Woonsituatie } from '../../types'
@@ -410,12 +412,21 @@ function RisicoprofielSection({ inputs, onChange }: Props) {
     })
   }
 
+  // Wat box 3 bij dit vermogen ongeveer kost, uitgedrukt in procentpunten van het
+  // rendement. Berekend uit de gepubliceerde parameters, niet uit een vast getal.
+  const box3Schatting = geschatteBox3Druk(inputs.currentCapital, inputs.woonsituatie)
+
   return (
     <Section title="Risicoprofiel">
+      {/* Deze tekst zei tot september 2026 dat de rendementen al netto waren, na
+          kosten en na box 3, terwijl risicoprofielen.ts diezelfde getallen als
+          nominaal documenteert en de rekenkern nergens iets aftrok. De slotzin
+          adviseerde bovendien een profiel defensiever te kiezen, wat diezelfde
+          correctie dubbel zou tellen (audit 7 september 2026, bevinding 10). */}
       <p className="text-xs text-body leading-relaxed">
-        De rendementen hieronder zijn netto: wat je overhoudt na kosten van beleggen en na
-        belasting in box 3. Je bruto beleggingsrendement ligt hoger. Wil je zelf al rekenen met
-        rendement ná kosten en belasting, schuif dan een profiel op naar defensiever.
+        De rendementen hieronder zijn bruto: het verwachte rendement van de portefeuille, vóór
+        kosten en vóór belasting. Wat je daarvan overhoudt vul je hieronder in bij kosten en
+        vermogensbelasting.
       </p>
       {!inputs.useCustomReturns && (
         <div className="space-y-2">
@@ -487,6 +498,57 @@ function RisicoprofielSection({ inputs, onChange }: Props) {
           </p>
         </div>
       )}
+
+      {/* Kosten en vermogensbelasting, apart van het brutorendement. Bewust twee
+          velden en geen ingebouwde berekening: het box 3-stelsel beweegt richting
+          heffing over werkelijk rendement, en een volledig model daarvoor is bij
+          invoering opnieuw fout. De schatting hiernaast komt wel uit de
+          gepubliceerde parameters, zie utils/box3.ts. */}
+      <div className="border-t border-line-soft pt-3 space-y-3">
+        <p className="text-xs text-body leading-relaxed">
+          Wat er van dat brutorendement af gaat. Laat je beide op 0 staan, dan rekent de tool
+          zonder kosten en zonder vermogensbelasting, en valt de uitkomst dus gunstiger uit dan
+          in werkelijkheid.
+        </p>
+
+        <Field label="Kosten van beleggen">
+          <NumberInput value={inputs.kostenPct}
+            onChange={v => onChange({ kostenPct: v })} suffix="%" step={0.1} min={0} max={5} />
+          <p className="text-xs text-body leading-relaxed mt-1">
+            Fondskosten en platformkosten samen, per jaar. Staat op je overzicht als lopende
+            kosten of TER.
+          </p>
+        </Field>
+
+        <Field label="Vermogensbelasting (box 3)">
+          <NumberInput value={inputs.vermogensbelastingPct}
+            onChange={v => onChange({ vermogensbelastingPct: v })} suffix="%" step={0.1} min={0} max={5} />
+          <div className="text-xs text-body leading-relaxed mt-1 space-y-1">
+            <p>
+              Bij een vermogen van € {Math.round(inputs.currentCapital).toLocaleString('nl-NL')} en
+              je woonsituatie komt de heffing van {PARAMETER_JAAR} uit op ongeveer{' '}
+              <strong className="font-medium text-ink">
+                {box3Schatting.toLocaleString('nl-NL', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%
+              </strong>{' '}
+              van je vermogen per jaar.
+            </p>
+            {Math.abs(box3Schatting - inputs.vermogensbelastingPct) > 0.05 && (
+              <button
+                type="button"
+                onClick={() => onChange({ vermogensbelastingPct: Math.round(box3Schatting * 10) / 10 })}
+                className="underline font-medium text-data-700 hover:text-ink"
+              >
+                Deze schatting overnemen
+              </button>
+            )}
+            <p>
+              Die druk loopt op met de omvang van je vermogen, doordat het heffingsvrije deel
+              een steeds kleiner aandeel wordt. Voor spaargeld ligt hij lager. Dit is een
+              vereenvoudiging: de tool rekent de heffing niet per jaar over je actuele vermogen uit.
+            </p>
+          </div>
+        </Field>
+      </div>
     </Section>
   )
 }

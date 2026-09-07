@@ -14,6 +14,8 @@ export function baseInputs(overrides: Partial<PensionInputs> = {}): PensionInput
     returnBeforeRetirement: 6,
     returnAfterRetirement: 4,
     inflation: 2.5,
+    kostenPct: 0,
+    vermogensbelastingPct: 0,
     currentIncome: 80000,
     currentIncomeType: 'bruto',
     desiredRetirementIncome: 5000,

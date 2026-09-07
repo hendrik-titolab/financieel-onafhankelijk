@@ -14,9 +14,9 @@ faq:
   - vraag: "Wat als ik geen zin heb om zelf rendement en volatiliteit in te vullen?"
     antwoord: "Dan gebruik je een van de vijf standaard risicoprofielen (van defensief tot offensief). Die zijn vooraf ingevuld met een redelijk rendement en bijbehorende schommeling. Zelf invullen kan altijd via het vinkje bij risicoprofiel."
   - vraag: "Rekent de planner ook met box 3 (vermogensbelasting)?"
-    antwoord: "Nee. Box 3 hangt sterk af van je vermogensmix, vrijstellingen en jaarlijkse regelwijzigingen, en zou de uitkomst minder betrouwbaar maken dan nu geen rekening ermee houden. Houd er zelf rekening mee dat je netto rendement op spaargeld en beleggingen hierdoor iets lager uitvalt."
+    antwoord: "Als je dat invult wel. Bij het risicoprofiel staat een veld voor vermogensbelasting in procentpunten, dat van je rendement af gaat. De planner rekent voor wat de heffing bij jouw vermogen ongeveer is, op basis van de forfaitaire percentages en het heffingsvrije vermogen van 2026, en je kunt die schatting met één klik overnemen. Laat je het veld op 0 staan, dan rekent de planner zonder vermogensbelasting en valt de uitkomst gunstiger uit dan in werkelijkheid. Het is een vereenvoudiging: de heffing wordt niet elk jaar opnieuw over je actuele vermogen berekend, en de verdeling tussen spaargeld en beleggingen telt niet mee."
   - vraag: "Klopt de uitkomst ook als mijn geld in een lijfrente of op een bankspaarrekening staat?"
-    antwoord: "Deels automatisch. Je eigen vermogen blijft de planner behandelen als vrij belegd vermogen in box 3, vul daar dus alleen dat deel in. Voor een lijfrente-, bankspaar- of pensioenbeleggingsuitkering is er een apart veld: die uitkering is belast in box 1 en kan niet vrij worden opgenomen. Vul daar de verwáchte bruto-uitkering in, niet het opgebouwde bedrag — die vind je op de prognose van je aanbieder."
+    antwoord: "Deels automatisch. Je eigen vermogen blijft de planner behandelen als vrij belegd vermogen in box 3, vul daar dus alleen dat deel in. Voor een lijfrente-, bankspaar- of pensioenbeleggingsuitkering is er een apart veld: die uitkering is belast in box 1 en kan niet vrij worden opgenomen. Vul daar de verwáchte bruto-uitkering in, niet het opgebouwde bedrag. Die vind je op de prognose van je aanbieder."
 bronnen:
   - titel: "Belastingdienst: tarieven box 1"
     url: "https://www.belastingdienst.nl/wps/wcm/connect/nl/werk-en-inkomen/content/hoeveel-inkomstenbelasting-betalen"
@@ -110,20 +110,34 @@ volatiliteit rechtstreeks in via het vinkje bij risicoprofiel.
 Zelf in te stellen staan verder: je leeftijd, pensioenleeftijd en levensverwachting, je
 huidige vermogen en inleg, je gewenste inkomen, de inflatieverwachting, en de hoogte en
 ingangsdatum van AOW en werkgeverspensioen. Niets ligt vast. Verander een aanname, en de
-uitkomst rekent meteen opnieuw.
+bedragen rekenen meteen opnieuw. Voor de slagingskans klik je op Bereken: die komt uit 2.000
+scenario's en draait daarom niet bij elke toetsaanslag mee.
 
 ## Wat de planner bewust niet doet
 
-Geen rekening met box 3, met specifieke beleggingsproducten of met kosten daarvan. Dat
-zou de uitkomst niet preciezer maken, alleen ingewikkelder om uit te leggen. Het ingevulde
-rendement is dus wat je netto overhoudt, na kosten en na box 3. Wil je zelf al rekenen met
-rendement ná kosten en belasting, kies dan een defensiever risicoprofiel dan je eigenlijk zou
-kiezen.
+Het rendement dat bij een risicoprofiel hoort is een brutorendement: dat is het verwachte
+rendement van de portefeuille zelf, vóór kosten en vóór belasting. Wat daarvan af gaat, vul je
+apart in bij kosten van beleggen en bij vermogensbelasting. Laat je die twee op 0 staan, dan
+rekent de planner alsof beleggen gratis is en er geen belasting over je vermogen wordt geheven.
+De uitkomst valt dan gunstiger uit dan in werkelijkheid.
+
+Voor de vermogensbelasting rekent de planner voor wat de heffing bij jouw vermogen ongeveer is,
+op basis van de forfaitaire percentages en het heffingsvrije vermogen die de Belastingdienst voor
+2026 publiceert. Dat is een schatting en geen aanslag: de planner berekent de heffing niet elk
+jaar opnieuw over je actuele vermogen, en houdt geen rekening met de verdeling tussen spaargeld
+en beleggingen of met schulden. De druk loopt bovendien op naarmate je vermogen groeit, doordat
+het heffingsvrije deel een steeds kleiner aandeel wordt. Bij een ton is het ongeveer 0,9% van je
+vermogen per jaar, bij een miljoen ruim 2%.
+
+Specifieke beleggingsproducten kent de planner niet. Je vult één rendement en één
+kostenpercentage in voor je hele vermogen.
 
 De planner gaat er ook van uit dat je eigen vermogen vrij belegd is, in box 3: vul daar dus
 alleen dat deel in. Heb je daarnaast een lijfrente, banksparen of pensioenbeleggen, dan is
 daar een apart veld voor: die uitkering is belast in box 1 en kan niet vrij worden opgenomen,
 dus hoort niet bij je vrije vermogen.
 
-Verander één aanname in de planner, en de slagingskans verschuift meteen mee. Dat is het hele
-punt: niet één vast antwoord, maar zicht op wat je uitkomst kwetsbaar maakt.
+Verander één aanname en klik opnieuw op Bereken, dan zie je hoe de slagingskans meebeweegt. Die
+kans komt uit 2.000 doorgerekende scenario's en verschijnt dus niet vanzelf terwijl je typt: je
+vorige uitkomst blijft staan met de melding dat hij verouderd is. Dat is het hele punt van de
+tool: niet één vast antwoord, maar zicht op wat je uitkomst kwetsbaar maakt.

@@ -21,9 +21,30 @@ export interface PensionInputs {
   monthlyContribution: number
   contributionFrequency: ContributionFrequency
 
-  returnBeforeRetirement: number  // nominal annual %
-  returnAfterRetirement: number   // nominal annual %
+  returnBeforeRetirement: number  // nominal annual %, BRUTO: voor kosten en belasting
+  returnAfterRetirement: number   // nominal annual %, BRUTO: voor kosten en belasting
   inflation: number               // annual %
+
+  /**
+   * Lopende kosten van beleggen, in procentpunten van het rendement.
+   *
+   * De rendementen hierboven zijn bruto. Tot september 2026 zei de UI dat ze
+   * "netto na kosten en box 3" waren terwijl er nergens iets werd afgetrokken en
+   * risicoprofielen.ts diezelfde getallen als nominaal documenteert (audit
+   * 7 september 2026, bevinding 10). Standaard 0, zodat een bestaande berekening
+   * dezelfde uitkomst houdt en de gebruiker zelf kiest wat hij invult.
+   */
+  kostenPct: number
+  /**
+   * Vermogensbelasting (box 3), in procentpunten van het rendement.
+   *
+   * Bewust een invoerveld en geen berekening: het box 3-stelsel beweegt richting
+   * heffing over werkelijk rendement, en een volledig model daarvoor bouwen levert
+   * een fiscale motor op die bij invoering opnieuw fout is. utils/box3.ts rekent
+   * wel een schatting voor bij het opgegeven vermogen, en is het vervangpunt voor
+   * het volledige model.
+   */
+  vermogensbelastingPct: number
 
   currentIncome: number
   currentIncomeType: IncomeType

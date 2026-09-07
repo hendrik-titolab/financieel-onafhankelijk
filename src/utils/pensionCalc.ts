@@ -1,6 +1,7 @@
 import type { PensionInputs, PensionResult, YearData, IncomePhase, LifeEvent, Woonsituatie } from '../types'
 import { AOW_NETTO_MAAND, ZVW } from '../config/fiscaleParameters'
 import { belastingBox1 } from './brutoNetto'
+import { nettoNominaalRendement } from './box3'
 
 // AOW netto maandbedragen — uit centrale config (fiscaleParameters.ts)
 export const AOW_NETTO = {
@@ -392,6 +393,7 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
     currentAge, retirementAge: retirementAgeInput, lifeExpectancy,
     currentCapital, monthlyContribution, contributionFrequency,
     returnBeforeRetirement, returnAfterRetirement, inflation,
+    kostenPct = 0, vermogensbelastingPct = 0,
     desiredRetirementIncome, desiredRetirementIncomeType,
     aowMaandBedragNetto, aowStartAge, woonsituatie = 'alleenstaand',
     employerPension, employerPensionStartAge,
@@ -399,8 +401,14 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
     lifeEvents = [],
   } = inputs
 
-  const realPre = realAnnualReturn(returnBeforeRetirement, inflation)
-  const realPost = realAnnualReturn(returnAfterRetirement, inflation)
+  // Kosten en vermogensbelasting gaan er als procentpunten af vóórdat de inflatie
+  // eruit wordt gerekend. Staan ze op nul, dan verandert er niets: dat is de stand
+  // van vóór september 2026, toen de tekst iets anders beweerde dan de rekenkern
+  // deed (audit-bevinding 10).
+  const brutoPre = nettoNominaalRendement(returnBeforeRetirement, kostenPct, vermogensbelastingPct)
+  const brutoPost = nettoNominaalRendement(returnAfterRetirement, kostenPct, vermogensbelastingPct)
+  const realPre = realAnnualReturn(brutoPre, inflation)
+  const realPost = realAnnualReturn(brutoPost, inflation)
 
   // Eén gedeelde lezing van de leeftijden, zodat deze kern en monteCarlo.ts niet
   // uiteen kunnen lopen bij een combinatie die zichzelf tegenspreekt. Wie zijn

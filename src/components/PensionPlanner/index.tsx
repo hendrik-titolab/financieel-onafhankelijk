@@ -18,6 +18,10 @@ const DEFAULT_INPUTS: PensionInputs = {
   returnBeforeRetirement: 6,
   returnAfterRetirement: 4,
   inflation: 3.0,
+  // Standaard nul: de rendementen hierboven zijn bruto, en de gebruiker kiest zelf
+  // wat hij aan kosten en vermogensbelasting invult. Zie utils/box3.ts.
+  kostenPct: 0,
+  vermogensbelastingPct: 0,
   currentIncome: 80000,
   currentIncomeType: 'bruto',
   desiredRetirementIncome: 5000,

@@ -613,8 +613,8 @@ export function ResultsPanel({ inputs, result, berekening, mcStale, isCalculatin
         belast. Heb je een lijfrente, banksparen of pensioenbeleggen? Vul de verwachte uitkering
         daarvan in bij "Lijfrente-/bankspaaruitkering" hierboven, niet bij je eigen vermogen: die
         uitkering is namelijk wél belast in box 1, net als je AOW en werkgeverspensioen.
-        Het ingevulde rendement is wat je netto overhoudt: na kosten van beleggen en na belasting in
-        box 3. Je bruto rendement ligt hoger.
+        Het ingevulde rendement is bruto: het verwachte rendement van de portefeuille zelf. Wat je
+        bij kosten en vermogensbelasting invult gaat daar in procentpunten van af.
         We gaan er daarnaast van uit dat je aanvullend pensioen, net als de AOW, volledig met de
         inflatie meestijgt. Voor AOW is dat verdedigbaar, voor een aanvullend pensioen niet:
         indexatie is niet gegarandeerd en kan achterblijven, waardoor je koopkracht na pensionering
