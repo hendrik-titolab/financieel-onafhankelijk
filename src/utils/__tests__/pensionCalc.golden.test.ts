@@ -177,8 +177,12 @@ describe('calculatePension — eenmalig bedrag rond de pensioendatum', () => {
     // € 60.000 is dat € 21.832,22 belasting minus € 1.178,71 algemene
     // heffingskorting en minus € 2.910 Zvw. Een lager netto doel betekent een
     // lager benodigd vermogen en dus een hoger overschot.
-    expect(Math.round(voor.surplus)).toBe(427348)
-    expect(Math.round(na.surplus)).toBe(404047)
+    // Bijgesteld op 7 september 2026 toen de onttrekkingen een mid-year-conventie
+    // kregen (audit-bevinding 14). Het benodigd vermogen ging omhoog met exact
+    // sqrt(1 + reëel rendement na pensioen) = sqrt(1,0291262) = 1,0144586:
+    // € 736.730 werd € 747.382. Het overschot daalt met datzelfde bedrag.
+    expect(Math.round(voor.surplus)).toBe(416695)
+    expect(Math.round(na.surplus)).toBe(393394)
   })
 
   it('blijft in beide gevallen een overschot, net als het restkapitaal', () => {
@@ -363,7 +367,9 @@ describe('benodigd vermogen — liquiditeit onderweg', () => {
     // netto-scenario's in de golden master niet zijn verschoven.
     for (const key of ['1_basis', '5_randgeval_leeg', '7_extreem_18_100']) {
       const r = calculatePension(SCENARIOS[key as keyof typeof SCENARIOS], { currentYear: 2026 })
-      expect(r.overbruggingsToeslag).toBe(0)
+      // toBeCloseTo en niet toBe: de bisectie in findRequiredCapital() convergeert
+      // tot op een fractie van een cent, niet tot op de laatste bit.
+      expect(r.overbruggingsToeslag).toBeCloseTo(0, 4)
       expect(r.requiredCapital).toBeCloseTo(r.requiredCapitalEindwaarde, 4)
     }
   })
@@ -468,5 +474,30 @@ describe('controleerLeeftijden', () => {
     expect(r.yearData[0].phase).toBe('uitkering')
     expect(r.yearsToRetirement).toBe(0)
     expect(r.yearsInRetirement).toBe(20)
+  })
+})
+
+// Bevinding 14 uit de audit van 7 september 2026: de jaarinleg kreeg wel een
+// mid-year-conventie mee, de onttrekking niet. Die rekende alsof het hele
+// jaarbedrag pas op 31 december werd opgenomen.
+describe('onttrekkingen — mid-year-conventie', () => {
+  it('kost een onttrekking meer dan bij opname aan het jaareinde', () => {
+    // € 1.000 per maand, dertig jaar, 4% reëel. Handmatig nagerekend:
+    //   jaarultimo                       € 207.504
+    //   twaalf maandtermijnen (exact)    € 211.282
+    //   met deze wortelfactor            € 211.614
+    // De benadering neemt 91,2% van het verschil weg en houdt 0,16% over.
+    const r = calculatePension(baseInputs({
+      currentAge: 60, retirementAge: 60, lifeExpectancy: 90,
+      currentCapital: 0, monthlyContribution: 0,
+      returnBeforeRetirement: 4, returnAfterRetirement: 4, inflation: 0,
+      desiredRetirementIncome: 1000, desiredRetirementIncomeType: 'netto',
+      aowMaandBedragNetto: 0, aowStartAge: 91, employerPension: 0, lijfrenteUitkering: 0,
+    }), { currentYear: 2026 })
+
+    expect(Math.round(r.requiredCapital)).toBe(211614)
+    // Blijft binnen een half procent van de exacte maandberekening. Loopt dit op,
+    // dan is de wortelfactor eruit gehaald of verkeerd toegepast.
+    expect(Math.abs(r.requiredCapital - 211282) / 211282).toBeLessThan(0.005)
   })
 })

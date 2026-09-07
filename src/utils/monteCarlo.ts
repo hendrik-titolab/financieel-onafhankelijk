@@ -148,8 +148,13 @@ export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number
           employerPension, employerPensionStartAge, woonsituatie,
           lijfrenteUitkering, lijfrenteStartAge
         ) * 12
-        capital   = (capital   + event) * (1 + r) - withdrawal
-        capital75 = (capital75 + event) * (1 + r) - withdrawal75
+        // Mid-year-conventie voor de onttrekking, zelfde wortelfactor en zelfde
+        // reden als bij de jaarinleg hierboven en als in pensionCalc.ts. Zonder
+        // deze factor rekende de simulatie alsof het hele jaarbedrag pas op
+        // 31 december werd opgenomen, terwijl de inleg wél maandelijks was.
+        const groeifactorOpname = Math.sqrt(1 + r)
+        capital   = (capital   + event) * (1 + r) - withdrawal   * groeifactorOpname
+        capital75 = (capital75 + event) * (1 + r) - withdrawal75 * groeifactorOpname
       }
 
       // Liquiditeitstoets voor élk jaar, ook in de opbouwfase. Stond tot september

@@ -295,11 +295,15 @@ function simulateRetirementPath(
   let capital = startCapital
   let minCapital = startCapital
   const factor = 1 + realPostAnnual / 100
+  // Mid-year-conventie voor de onttrekking, zie de uitkeringslus in
+  // calculatePension(). Moet hier hetzelfde zijn, anders zoekt findRequiredCapital()
+  // naar een doelbedrag dat de jaartabel ernaast niet waarmaakt.
+  const onttrekkingsFactor = Math.sqrt(factor)
 
   for (let yr = 0; yr < yearsInRetirement; yr++) {
     const age = retirementAge + yr
     const event = retEventMap.get(retirementYear + yr) ?? 0
-    capital = (capital + event) * factor - withdrawalAtAge(age) * 12
+    capital = (capital + event) * factor - withdrawalAtAge(age) * 12 * onttrekkingsFactor
     // Ná de onttrekking van dat jaar: dát is het moment waarop de rekening
     // betaald moet zijn. Vóór de onttrekking meten zou een tekort dat pas in
     // december ontstaat een jaar te laat zien.
@@ -455,9 +459,11 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
   // Contante waarde van alle onttrekkingen: wat je inkomen op zichzelf kost, nog
   // zonder de latere eenmalige bedragen. Blijft berekend omdat het scherm en de
   // export laten zien hoe het doelbedrag is opgebouwd.
+  const onttrekkingsFactor = Math.sqrt(rPostAnnual)
   let pvWithdrawals = 0
   for (let yr = 0; yr < yearsInRetirement; yr++) {
-    pvWithdrawals += withdrawalAtAge(retirementAge + yr) * 12 / Math.pow(rPostAnnual, yr + 1)
+    pvWithdrawals += withdrawalAtAge(retirementAge + yr) * 12 * onttrekkingsFactor
+      / Math.pow(rPostAnnual, yr + 1)
   }
 
   // Eenmalige bedragen ná de pensioendatum verlagen (of verhogen) wat je óp die
@@ -579,7 +585,10 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
     // maandbehoefte stond er twaalf maanden lang € 1.000 aan inkomen uit vermogen,
     // terwijl er één maandbedrag van € 83,33 beschikbaar was.
     const beschikbaarJaar = Math.max(0, (capital + retEvent) * (1 + realPost / 100))
-    const betaaldPerMaand = Math.min(gewenstPerMaand, beschikbaarJaar / 12)
+    const betaaldPerMaand = Math.min(
+      gewenstPerMaand,
+      beschikbaarJaar / (12 * Math.sqrt(1 + realPost / 100))
+    )
     const tekortPerMaand = Math.max(0, gewenstPerMaand - betaaldPerMaand)
 
     if (tekortPerMaand > 0.005 && firstShortfallAge === null) firstShortfallAge = age
@@ -608,7 +617,20 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
     // surplusAtEnd altijd nul zijn en zou het KPI-raster geen tekort meer kunnen
     // tonen. Het saldo loopt dus dóór in het negatieve; alleen de weergave is
     // begrensd (bevinding A1).
-    capital = (capital + retEvent) * (1 + realPost / 100) - fromCapital * 12
+    // Mid-year-conventie voor de onttrekking, spiegelbeeld van de jaarinleg in
+    // simulateAccumulation(). Een bedrag dat in twaalf maandtermijnen wordt
+    // opgenomen kost aan het einde van het jaar meer dan hetzelfde bedrag ineens
+    // op 31 december, want elke termijn mist het resterende rendement van dat
+    // jaar. De inleg kreeg die correctie al wel, de onttrekking niet.
+    //
+    // Nagerekend op 7 september 2026 met € 1.000 per maand, dertig jaar, 4% reëel:
+    // jaarultimo € 207.504, twaalf maandtermijnen € 211.282, met deze wortelfactor
+    // € 211.614. De benadering neemt 91,2% van het verschil weg en houdt 0,16%
+    // over. Een volledige maandmotor haalt die laatste 0,16% op en kost een
+    // herbouw van beide rekenkernen; dat is bewust niet gedaan (audit 7 september
+    // 2026, bevinding 14).
+    capital = (capital + retEvent) * (1 + realPost / 100)
+      - fromCapital * 12 * Math.sqrt(1 + realPost / 100)
   }
 
   const incomePhases = buildIncomePhases(
