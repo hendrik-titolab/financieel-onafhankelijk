@@ -111,6 +111,13 @@ export interface PensionResult {
    */
   requiredCapitalEindwaarde: number
   /**
+   * De leeftijd waarop de uitkeringsfase feitelijk begint. Gelijk aan de ingestelde
+   * pensioenleeftijd, behalve wanneer iemand die al voorbij is: dan begint de
+   * uitkeringsfase vandaag. Het scherm en de exports labelen hierop, zodat er geen
+   * "bij leeftijd 60" boven een berekening staat die vanaf 70 loopt.
+   */
+  effectiveRetirementAge: number
+  /**
    * Wat er bovenop requiredCapitalEindwaarde nodig is om de jaren te overbruggen
    * tot een later bedrag binnenkomt. Nul als de eindwaarde al toereikend is.
    */

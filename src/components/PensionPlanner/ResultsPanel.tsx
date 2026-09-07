@@ -175,7 +175,7 @@ export function ResultsPanel({ inputs, result, mc, mcStale, isCalculating, onRun
     Math.round(overbrugging) > 0
       ? `incl. ${eurAbs(overbrugging)} overbrugging`
       : Math.round(pvLater) === 0
-        ? `voor ${inputs.lifeExpectancy - inputs.retirementAge} jaar inkomen`
+        ? `voor ${inputs.lifeExpectancy - result.effectiveRetirementAge} jaar inkomen`
         : result.requiredCapital < 0
           // Het doelbedrag is negatief: wat er later binnenkomt is méér dan alle
           // onttrekkingen samen. Het getal blijft mét minteken staan, want de drie
@@ -319,7 +319,7 @@ export function ResultsPanel({ inputs, result, mc, mcStale, isCalculating, onRun
         <MetricCell
           label="Verwacht eindvermogen"
           value={eur(result.projectedCapital)}
-          sub={`bij leeftijd ${inputs.retirementAge}`}
+          sub={`bij leeftijd ${result.effectiveRetirementAge}`}
         />
         <MetricCell
           label="Benodigd eindvermogen"
@@ -435,8 +435,8 @@ export function ResultsPanel({ inputs, result, mc, mcStale, isCalculating, onRun
           const yEnd = yRetirement + result.yearsInRetirement
           const milestones = [
             { label: `Nu (leeftijd ${inputs.currentAge})`, age: inputs.currentAge, yearsFromNow: 0 },
-            { label: `Pensionering (leeftijd ${inputs.retirementAge})`, age: inputs.retirementAge, yearsFromNow: yRetirement },
-            ...(result.yearsInRetirement > 4 ? [{ label: `Leeftijd ${inputs.retirementAge + Math.round(result.yearsInRetirement / 2)}`, age: inputs.retirementAge + Math.round(result.yearsInRetirement / 2), yearsFromNow: yMid }] : []),
+            { label: `Pensionering (leeftijd ${result.effectiveRetirementAge})`, age: result.effectiveRetirementAge, yearsFromNow: yRetirement },
+            ...(result.yearsInRetirement > 4 ? [{ label: `Leeftijd ${result.effectiveRetirementAge + Math.round(result.yearsInRetirement / 2)}`, age: result.effectiveRetirementAge + Math.round(result.yearsInRetirement / 2), yearsFromNow: yMid }] : []),
             { label: `Leeftijd ${inputs.lifeExpectancy}`, age: inputs.lifeExpectancy, yearsFromNow: yEnd },
           ]
           return (
@@ -505,7 +505,7 @@ export function ResultsPanel({ inputs, result, mc, mcStale, isCalculating, onRun
             <WealthChart
               result={result}
               mc={mc}
-              retirementAge={inputs.retirementAge}
+              retirementAge={result.effectiveRetirementAge}
               showMonteCarlo={showMonteCarlo}
               lifeEvents={inputs.lifeEvents ?? []}
               currentAge={inputs.currentAge}

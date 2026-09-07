@@ -645,6 +645,7 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
     projectedCapital,
     requiredCapital,
     requiredCapitalEindwaarde,
+    effectiveRetirementAge: retirementAge,
     overbruggingsToeslag,
     pvEventsAfterRetirement,
     desiredMonthlyNetto,
