@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useId, Children, isValidElement, cloneElement } from 'react'
+import { parseBedrag, parseBedragBegrensd, formatBedrag } from '../../utils/bedrag'
 import { track } from '@vercel/analytics'
 import { X } from 'lucide-react'
 import type { PensionInputs, IncomeType, ContributionFrequency, LifeEvent, RiskProfile, Woonsituatie } from '../../types'
@@ -59,72 +60,94 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 
-// Zet een getypte bedrag-string om naar een getal, met Nederlandse notatie: een
-// punt als duizendtal-scheiding, een komma als decimaalteken (bijv. "1.234,56").
-// Een <input type="number"> leest een punt zelf altijd als decimaalteken, dus
-// zonder deze functie werd "50.000" (bedoeld: vijftigduizend) stilzwijgend 50 —
-// gevonden tijdens het natrekken van de eenmalige-bedragen-fix hierboven, en
-// van toepassing op ieder bedragveld in de tool, niet alleen dat ene scherm.
-function parseBedrag(raw: string): number {
-  const s = raw.trim()
-  if (s.includes(',')) {
-    // Punten vóór de komma zijn duizendtal-scheidingen, de komma is decimaal.
-    return parseFloat(s.replace(/\./g, '').replace(',', '.'))
-  }
-  // Geen komma: een punt gevolgd door precies 3 cijfers (en dan niets meer, of
-  // weer zo'n groep) is een duizendtal-scheiding — de enige vorm die in het
-  // Nederlands zonder komma voorkomt. Een punt gevolgd door 1-2 cijfers (zoals
-  // "3,5" als iemand toch een punt typt bij een percentage) is een echt
-  // decimaalteken en blijft staan.
-  return parseFloat(s.replace(/\.(?=\d{3}(\D|$))/g, ''))
-}
-
-// Bedragvelden houden de ruwe tekst lokaal bij, zodat een leeg veld leeg mag
-// blijven terwijl je typt. Alleen bij het verlaten van het veld valt een lege
-// of ongeldige invoer terug op 0 — niet meer bij elke toetsaanslag.
-function NumberInput({ id, value, onChange, prefix, suffix, step = 1, min = 0, max }: {
+/**
+ * Bedragveld met Nederlandse notatie.
+ *
+ * Het was een `<input type="number">` met daarachter een eigen parser die punt
+ * als duizendtal en komma als decimaal las. Die twee bijten elkaar: bij
+ * `type="number"` bepaalt de browser zelf wat een geldige waarde is en wat hij
+ * doorgeeft. In de audit van 7 september 2026 werd "50.000" correct 50000, maar
+ * "1.234,56" werd 1.23456 en bleef dat ook na het verlaten van het veld
+ * (bevinding 8).
+ *
+ * Nu een tekstveld met `inputMode="decimal"`: de browser herschrijft niets meer
+ * en parseBedrag() in utils/bedrag.ts is de enige plek waar tekst een getal
+ * wordt. Mobiel geeft `inputMode="decimal"` nog steeds een numeriek toetsenbord.
+ * De spinner-pijltjes vervallen; `step` blijft in de aanroepen staan omdat het
+ * de bedoelde stapgrootte documenteert, maar doet niets meer.
+ *
+ * De ruwe tekst blijft lokaal staan zodat een half ingetypt getal niet onder je
+ * handen wegspringt. Begrenzen en melden gebeurt pas bij het verlaten van het
+ * veld.
+ */
+function NumberInput({ id, value, onChange, prefix, suffix, min = 0, max }: {
   id?: string
   value: number; onChange: (v: number) => void
   prefix?: string; suffix?: string; step?: number; min?: number; max?: number
 }) {
-  const [text, setText] = useState(String(value))
+  const [text, setText] = useState(() => formatBedrag(value))
+  const [melding, setMelding] = useState<string | null>(null)
+  const meldingId = useId()
 
   useEffect(() => {
-    // Alleen synchroniseren als de waarde van buitenaf wijzigt (bijv. profielwissel),
-    // niet bij elke render, anders overschrijft dit het typen. parseBedrag (niet
-    // Number) vergelijken: anders werd "50.000" die al correct als 50000 was
-    // doorgegeven hier alsnog herschreven, want Number("50.000") leest de punt
-    // zelf weer als decimaalteken en ziet dan 50 in plaats van 50000.
-    if (parseBedrag(text) !== value) setText(String(value))
+    // Alleen synchroniseren als de waarde van buitenaf wijzigt (bijv. een
+    // profielwissel), niet bij elke render, anders overschrijft dit het typen.
+    // Vergelijken via de parser en niet via Number(): "50.000" is 50000, maar
+    // Number() leest de punt als decimaalteken en ziet 50.
+    if (parseBedrag(text).waarde !== value) {
+      setText(formatBedrag(value))
+      setMelding(null)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value])
 
-  // Bij het verlaten van het veld wordt de waarde binnen min/max getrokken. Die
-  // twee stonden er wel op het element, maar niets dwong ze af: een rendement van
-  // 99% werd geaccepteerd en leverde een eindvermogen van biljoenen op, zonder
-  // enige melding (bevinding A5). Tijdens het typen gebeurt dit bewust niet, want
-  // dan springt een half ingetypt getal onder je handen weg.
   const commit = (raw: string) => {
-    const parsed = parseBedrag(raw)
-    const next = isNaN(parsed) ? 0 : parsed
-    const begrensd = Math.min(max ?? Infinity, Math.max(min ?? -Infinity, next))
-    setText(String(begrensd))
-    onChange(begrensd)
+    const r = parseBedragBegrensd(raw, min, max)
+    if (r.waarde === null) {
+      // Niet te lezen of leeg. Een leeg veld valt terug op de ondergrens (meestal
+      // 0), zodat de berekening altijd een getal heeft om mee te werken.
+      const terugval = min ?? 0
+      setText(formatBedrag(terugval))
+      setMelding(r.fout)
+      onChange(terugval)
+      return
+    }
+    setText(formatBedrag(r.waarde))
+    setMelding(r.fout)
+    onChange(r.waarde)
   }
 
   return (
-    <div className="relative flex items-center">
-      {prefix && <span className="absolute left-3 text-body text-sm">{prefix}</span>}
-      <input id={id} type="number" value={text} min={min} max={max} step={step}
-        onChange={e => {
-          setText(e.target.value)
-          const parsed = parseBedrag(e.target.value)
-          if (!isNaN(parsed)) onChange(parsed)
-        }}
-        onBlur={e => commit(e.target.value)}
-        onFocus={e => e.target.select()}
-        className={`input-field ${prefix ? 'pl-7' : ''} ${suffix ? 'pr-8' : ''}`} />
-      {suffix && <span className="absolute right-3 text-body text-sm">{suffix}</span>}
+    <div>
+      <div className="relative flex items-center">
+        {prefix && <span className="absolute left-3 text-body text-sm">{prefix}</span>}
+        <input
+          id={id}
+          type="text"
+          inputMode="decimal"
+          autoComplete="off"
+          value={text}
+          aria-invalid={melding !== null}
+          aria-describedby={melding ? meldingId : undefined}
+          onChange={e => {
+            setText(e.target.value)
+            // Tijdens het typen alleen doorgeven wat leesbaar is, en nog niet
+            // begrenzen of klagen. Wie "1.2" typt is onderweg naar "1.234".
+            const r = parseBedrag(e.target.value)
+            if (melding) setMelding(null)
+            if (r.waarde !== null) onChange(r.waarde)
+          }}
+          onBlur={e => commit(e.target.value)}
+          onFocus={e => e.target.select()}
+          className={`input-field ${prefix ? 'pl-7' : ''} ${suffix ? 'pr-8' : ''}`}
+        />
+        {suffix && <span className="absolute right-3 text-body text-sm">{suffix}</span>}
+      </div>
+      {melding && (
+        <p id={meldingId} role="status" className="text-xs text-signal mt-1 leading-relaxed">
+          {melding}
+        </p>
+      )}
     </div>
   )
 }
@@ -505,7 +528,16 @@ function EenmaligeBedragenSection({ inputs, onChange }: Props) {
   // in de lijst en in de optelling bleef staan (bevinding A22).
   const laatsteJaar = currentYear + Math.max(0, inputs.lifeExpectancy - inputs.currentAge) - 1
 
-  const isFilled = (r: DraftEvent) => r.amount !== '' && parseBedrag(r.amount) !== 0
+  // Het bedrag van een regel als getal, of null als het veld leeg of onleesbaar
+  // is. parseBedrag geeft sinds september 2026 een uitkomst mét foutmelding terug
+  // (audit-bevinding 8); deze helper houdt de rest van deze sectie leesbaar.
+  const bedragVan = (r: DraftEvent): number | null => parseBedrag(r.amount).waarde
+  const foutVan = (r: DraftEvent): string | null => parseBedrag(r.amount).fout
+
+  const isFilled = (r: DraftEvent) => {
+    const v = bedragVan(r)
+    return v !== null && v !== 0
+  }
 
   const buitenLooptijd = (r: DraftEvent) =>
     isFilled(r) && r.year !== '' && !isNaN(Number(r.year)) &&
@@ -521,9 +553,9 @@ function EenmaligeBedragenSection({ inputs, onChange }: Props) {
     // sessie: "als ik het jaartal invul, springt tekort steeds terug").
     const timeoutId = setTimeout(() => {
       const valid: LifeEvent[] = rows
-        .filter(r => r.amount && r.year && !isNaN(parseBedrag(r.amount)) && parseBedrag(r.amount) !== 0 && !isNaN(Number(r.year)))
+        .filter(r => r.year !== '' && !isNaN(Number(r.year)) && isFilled(r))
         .filter(r => !buitenLooptijd(r))
-        .map(r => ({ name: r.name.trim() || '—', amount: parseBedrag(r.amount), year: Number(r.year) }))
+        .map(r => ({ name: r.name.trim() || '—', amount: bedragVan(r) as number, year: Number(r.year) }))
       onChange({ lifeEvents: valid })
     }, 300)
     return () => clearTimeout(timeoutId)
@@ -553,8 +585,10 @@ function EenmaligeBedragenSection({ inputs, onChange }: Props) {
 
   const validCount = (inputs.lifeEvents ?? []).length
   const teltMee = (r: DraftEvent) => isFilled(r) && !buitenLooptijd(r)
-  const totaalBij = rows.filter(r => teltMee(r) && parseBedrag(r.amount) > 0).reduce((s, r) => s + parseBedrag(r.amount), 0)
-  const totaalAf = rows.filter(r => teltMee(r) && parseBedrag(r.amount) < 0).reduce((s, r) => s + Math.abs(parseBedrag(r.amount)), 0)
+  const totaalBij = rows.filter(r => teltMee(r) && (bedragVan(r) ?? 0) > 0)
+    .reduce((s, r) => s + (bedragVan(r) ?? 0), 0)
+  const totaalAf = rows.filter(r => teltMee(r) && (bedragVan(r) ?? 0) < 0)
+    .reduce((s, r) => s + Math.abs(bedragVan(r) ?? 0), 0)
 
   return (
     <Section title={`Eenmalige bedragen${validCount > 0 ? ` (${validCount})` : ''}`}>
@@ -566,23 +600,27 @@ function EenmaligeBedragenSection({ inputs, onChange }: Props) {
         {rows.map((row, i) => {
           const isLast = i === rows.length - 1
           const isDraft = isLast && !isFilled(row)
-          const isExpense = parseBedrag(row.amount) < 0
+          const isExpense = (bedragVan(row) ?? 0) < 0
           return (
             <div key={row.id} className={`space-y-1 ${isDraft ? 'opacity-50' : ''}`}>
               <input type="text" value={row.name} placeholder="Omschrijving (optioneel)"
                 onChange={e => handleChange(i, 'name', e.target.value)}
                 className="input-field text-sm" />
               <div className="flex gap-1.5 items-center">
+                {/* Tekstveld met inputMode decimal, net als NumberInput hierboven:
+                    een type="number" laat de browser de tekst herschrijven vóórdat
+                    de parser hem ziet (audit-bevinding 8). */}
                 <div className="flex-[2] relative flex items-center">
                   <span className="absolute left-3 text-body text-sm">€</span>
-                  <input type="number" value={row.amount} step={500}
+                  <input type="text" inputMode="decimal" autoComplete="off" value={row.amount}
                     placeholder="Bedrag (− = afschrijving)"
+                    aria-invalid={foutVan(row) !== null}
                     onChange={e => handleChange(i, 'amount', e.target.value)}
-                    className={`input-field pl-7 text-sm ${isExpense ? 'text-signal' : (!isDraft && row.amount ? 'text-ink' : '')}`} />
+                    className={`input-field pl-7 text-sm ${foutVan(row) ? 'border-signal' : ''} ${isExpense ? 'text-signal' : (!isDraft && row.amount ? 'text-ink' : '')}`} />
                 </div>
                 <div className="w-20 flex-shrink-0">
-                  <input type="number" value={row.year} min={currentYear} max={laatsteJaar}
-                    step={1} placeholder="Jaar"
+                  <input type="text" inputMode="numeric" autoComplete="off" value={row.year}
+                    placeholder="Jaar"
                     onChange={e => handleChange(i, 'year', e.target.value)}
                     className={`input-field text-center text-sm ${buitenLooptijd(row) ? 'border-signal text-signal' : ''}`} />
                 </div>
@@ -590,6 +628,9 @@ function EenmaligeBedragenSection({ inputs, onChange }: Props) {
                   ? <button onClick={() => handleDelete(i)} className="flex-shrink-0 p-1.5 text-body hover:text-signal hover:bg-canvas rounded-[3px] transition-colors"><X size={13} /></button>
                   : <div className="w-7 flex-shrink-0" />}
               </div>
+              {foutVan(row) && (
+                <p role="status" className="text-xs text-signal leading-relaxed">{foutVan(row)}</p>
+              )}
               {buitenLooptijd(row) && (
                 <p className="text-xs text-signal leading-relaxed">
                   Dit jaar valt buiten de looptijd van de berekening ({currentYear} tot en met {laatsteJaar}).
