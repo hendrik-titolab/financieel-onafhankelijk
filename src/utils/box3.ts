@@ -58,6 +58,18 @@ export function geschatteBox3Druk(vermogen: number, woonsituatie: Woonsituatie):
 }
 
 /**
+ * De schatting zoals hij in het invoerveld terechtkomt: op één decimaal.
+ *
+ * Apart van geschatteBox3Druk() zodat het scherm, de default en de vergelijking
+ * "wijkt de ingevulde waarde af van de schatting" gegarandeerd hetzelfde getal
+ * gebruiken. Anders staat er 1,9 in het veld terwijl de code met 1,94666 vergelijkt
+ * en de knop "schatting overnemen" nooit verdwijnt.
+ */
+export function box3DrukAfgerond(vermogen: number, woonsituatie: Woonsituatie): number {
+  return Math.round(geschatteBox3Druk(vermogen, woonsituatie) * 10) / 10
+}
+
+/**
  * Het nominale rendement dat overblijft na kosten en vermogensbelasting.
  *
  * Beide worden als procentpunten van het rendement afgetrokken, niet als

@@ -7,6 +7,7 @@ import {
   controleerJaarruimteInvoer, terugkijktermijn, oudsteReserveringsjaar,
 } from '../../utils/jaarruimte'
 import { PARAMETER_JAAR, PARAMETER_PEILDATUM, modelStempel } from '../../config/modelVersie'
+import { parseBedrag, formatBedrag } from '../../utils/bedrag'
 
 const STORAGE_KEY = 'jaarruimte_berekeningen'
 
@@ -48,7 +49,7 @@ const DEFAULT_INPUTS: JaarruimteInputs = {
   income: 75000,
   pensioenType: 'geen',
   factorA: 0,
-  werkgeverspremie: 0,
+  pensioenpremie: 0,
   alIngelegd: 0,
   reserveringsruimteRijen: [],
   clientName: '',
@@ -262,20 +263,20 @@ function ReserveringsruimteBerekenen({ onChange, baseYear }: ReserveringProps) {
     inkomen: string
     pensioenType: PensioenType
     factorA: string
-    werkgeverspremie: string
+    pensioenpremie: string
     ingelegd: string
     open: boolean
   }
 
   const [kaarten, setKaarten] = useState<JaarKaart[]>([
-    { jaar: baseYear - 1, inkomen: '', pensioenType: 'geen', factorA: '', werkgeverspremie: '', ingelegd: '', open: true },
+    { jaar: baseYear - 1, inkomen: '', pensioenType: 'geen', factorA: '', pensioenpremie: '', ingelegd: '', open: true },
   ])
 
   // Bereken jaarruimte en onbenut voor een kaart
   const bereken = (k: JaarKaart) => {
     const ink = Number(k.inkomen)
     if (!k.inkomen || isNaN(ink)) return { jaarruimte: null, onbenut: null }
-    const jr = berekenJaarruimteEenvoudig(k.jaar, ink, k.pensioenType, Number(k.factorA) || 0, Number(k.werkgeverspremie) || 0)
+    const jr = berekenJaarruimteEenvoudig(k.jaar, ink, k.pensioenType, Number(k.factorA) || 0, Number(k.pensioenpremie) || 0)
     const ing = Number(k.ingelegd) || 0
     return { jaarruimte: jr, onbenut: Math.max(0, jr - ing) }
   }
@@ -297,7 +298,7 @@ function ReserveringsruimteBerekenen({ onChange, baseYear }: ReserveringProps) {
     const vorigeJaar = kaarten[kaarten.length - 1].jaar - 1
     setKaarten(prev => [
       ...prev.map(k => ({ ...k, open: false })),
-      { jaar: vorigeJaar, inkomen: '', pensioenType: 'geen', factorA: '', werkgeverspremie: '', ingelegd: '', open: true },
+      { jaar: vorigeJaar, inkomen: '', pensioenType: 'geen', factorA: '', pensioenpremie: '', ingelegd: '', open: true },
     ])
   }
 
@@ -400,14 +401,14 @@ function ReserveringsruimteBerekenen({ onChange, baseYear }: ReserveringProps) {
                   </div>
                 )}
 
-                {/* Werkgeverspremie (alleen bij Wtp) */}
+                {/* Totale pensioenpremie (alleen bij Wtp), zie het hoofdveld verderop. */}
                 {k.pensioenType === 'wtp' && (
                   <div>
-                    <label className="label text-xs">Werkgeverspremie {k.jaar - 1}</label>
+                    <label className="label text-xs">Totale pensioenpremie {k.jaar - 1}</label>
                     <div className="relative flex items-center">
                       <span className="absolute left-3 text-body text-sm">€</span>
-                      <input type="number" value={k.werkgeverspremie} min={0} step={100} placeholder="0"
-                        onChange={e => update(i, { werkgeverspremie: e.target.value })}
+                      <input type="number" value={k.pensioenpremie} min={0} step={100} placeholder="0"
+                        onChange={e => update(i, { pensioenpremie: e.target.value })}
                         className="input-field pl-7 text-sm" />
                     </div>
                   </div>
@@ -501,6 +502,11 @@ function X({ size }: { size: number }) {
 export function JaarruimteTab() {
   const [inputs, setInputs] = useState<JaarruimteInputs>(DEFAULT_INPUTS)
   const [saved, setSaved] = useState<SavedJaarruimte[]>([])
+  // Ruwe tekst van het premieveld, zodat Nederlandse notatie ("65.000") blijft
+  // staan terwijl je typt. Zelfde reden als NumberInput in de FO-planner: een
+  // type="number" laat de browser de tekst herschrijven vóórdat de parser hem
+  // ziet (audit-bevinding 8).
+  const [premieTekst, setPremieTekst] = useState(() => formatBedrag(DEFAULT_INPUTS.pensioenpremie))
 
   useEffect(() => {
     try {
@@ -513,7 +519,13 @@ export function JaarruimteTab() {
           inputs: {
             ...s.inputs,
             pensioenType: (s.inputs as JaarruimteInputs).pensioenType ?? ('db' as PensioenType),
-            werkgeverspremie: (s.inputs as JaarruimteInputs).werkgeverspremie ?? 0,
+            // Heette tot september 2026 pensioenpremie. Opgeslagen berekeningen
+            // van vóór die wijziging blijven zo leesbaar. Let op: die bedragen
+            // bevatten alleen het werkgeversdeel, dus de jaarruimte die er destijds
+            // uit kwam kan te hoog zijn geweest.
+            pensioenpremie: (s.inputs as JaarruimteInputs).pensioenpremie
+              ?? (s.inputs as unknown as { pensioenpremie?: number }).pensioenpremie
+              ?? 0,
             alIngelegd: s.inputs.alIngelegd ?? 0,
             reserveringsruimteRijen: s.inputs.reserveringsruimteRijen ?? [],
           },
@@ -571,6 +583,9 @@ export function JaarruimteTab() {
 
   const handleLoad = (item: SavedJaarruimte) => {
     setInputs({ ...item.inputs })
+    // Het premieveld houdt zijn eigen tekst bij; zonder deze regel blijft daar het
+    // bedrag van de vorige berekening staan.
+    setPremieTekst(formatBedrag(item.inputs.pensioenpremie ?? 0))
   }
 
   const set = <K extends keyof JaarruimteInputs>(k: K, v: JaarruimteInputs[K]) =>
@@ -737,24 +752,45 @@ export function JaarruimteTab() {
             </div>
           )}
 
-          {/* Werkgeverspremie — alleen zichtbaar bij Wtp */}
+          {/* Totale pensioenpremie — alleen zichtbaar bij Wtp.
+              Vroeg tot september 2026 alleen naar het werkgeversdeel. Dat is te
+              weinig: het bedrag dat de jaarruimte vermindert is de totale inleg in
+              de regeling, dus inclusief eigen bijdrage (audit-bevinding 18). Wie
+              alleen het werkgeversdeel invulde kreeg een te hoge jaarruimte. */}
           {inputs.pensioenType === 'wtp' && (
             <div>
-              <label className="label">Pensioenpremie over {inputs.year - 1}</label>
+              <label className="label">Totale pensioenpremie over {inputs.year - 1}</label>
               <div className="relative flex items-center">
                 <span className="absolute left-3 text-body text-sm">€</span>
                 <input
-                  type="number"
-                  value={inputs.werkgeverspremie}
-                  min={0} step={100}
-                  onChange={e => set('werkgeverspremie', parseFloat(e.target.value) || 0)}
+                  type="text"
+                  inputMode="decimal"
+                  autoComplete="off"
+                  value={premieTekst}
+                  onChange={e => {
+                    setPremieTekst(e.target.value)
+                    const r = parseBedrag(e.target.value)
+                    if (r.waarde !== null) set('pensioenpremie', r.waarde)
+                  }}
+                  onBlur={e => {
+                    const r = parseBedrag(e.target.value)
+                    const v = r.waarde !== null && r.waarde >= 0 ? r.waarde : 0
+                    setPremieTekst(formatBedrag(v))
+                    set('pensioenpremie', v)
+                  }}
                   className="input-field pl-7"
                 />
               </div>
-              <p className="text-xs text-body mt-1">
-                Bron: je UPO of jaaroverzicht van de pensioenuitvoerder over {inputs.year - 1}. Zoek het
-                bedrag dat daar staat als je pensioenaangroei over dat jaar. Let op het opbouwjaar en
-                niet op het jaar waarin het UPO is verstuurd: dat kan verschillen.
+              <p className="text-xs text-body mt-1 leading-relaxed">
+                <strong className="font-medium text-ink">Werkgeversdeel én je eigen bijdrage samen.</strong>{' '}
+                Alleen het werkgeversdeel invullen geeft een te hoge jaarruimte, en dus een
+                aftrek die je niet mag nemen.
+              </p>
+              <p className="text-xs text-body mt-1 leading-relaxed">
+                Bron: je UPO of jaaroverzicht van de pensioenuitvoerder over {inputs.year - 1}. Staat je
+                eigen bijdrage daar niet op, kijk dan op je jaaropgave of salarisstrook van december.
+                Let op het opbouwjaar en niet op het jaar waarin het UPO is verstuurd: dat kan
+                verschillen.
               </p>
             </div>
           )}

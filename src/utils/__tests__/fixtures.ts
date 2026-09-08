@@ -15,7 +15,10 @@ export function baseInputs(overrides: Partial<PensionInputs> = {}): PensionInput
     returnAfterRetirement: 4,
     inflation: 2.5,
     kostenPct: 0,
+    // Nul in de fixtures, zodat de golden master over de rekenfixes gaat en niet
+    // ook over de box 3-schatting. De tool zelf start wél met een schatting.
     vermogensbelastingPct: 0,
+    vermogensbelastingHandmatig: true,
     currentIncome: 80000,
     currentIncomeType: 'bruto',
     desiredRetirementIncome: 5000,

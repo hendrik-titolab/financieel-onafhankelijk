@@ -260,9 +260,14 @@ Twee bewuste afwijkingen van het auditadvies, met Hendrik afgestemd:
   € 211.282 exact maandelijks, bij € 207.504 jaarultimo). Een maandmotor is de duurste ingreep
   met de kleinste opbrengst.
 - **Geen volledig box 3-model.** Het stelsel beweegt richting heffing over werkelijk rendement.
-  In plaats daarvan invoervelden voor kosten en vermogensbelasting, met een schatting uit de
-  gepubliceerde parameters ernaast. `src/utils/box3.ts` benoemt zichzelf als vervangpunt; het
-  volledige model staat na deze ronde op de agenda.
+  In plaats daarvan invoervelden voor kosten en vermogensbelasting; dat laatste veld start op een
+  schatting uit de gepubliceerde parameters en beweegt mee met het opgegeven vermogen.
+  `src/utils/box3.ts` benoemt zichzelf als vervangpunt; het volledige model staat op de agenda.
+
+Bevinding 18 (Wtp-premie) is op 8 september 2026 door Hendrik beslecht: het gaat om de **totale**
+premie in de werkgeversregeling, dus werkgeversdeel én eigen bijdrage. Het veld heette
+`werkgeverspremie` en vroeg ook alleen daarnaar; dat gaf een te hoge jaarruimte. Hernoemd naar
+`pensioenpremie`, met een migratie voor opgeslagen berekeningen.
 
 ## Bekende openstaande punten (niet opgelost, alleen genoteerd)
 
@@ -272,9 +277,11 @@ Twee bewuste afwijkingen van het auditadvies, met Hendrik afgestemd:
   alleen in de Excel-export.
 - De vijf datatokens uit de herstijling (`data-100/300/500/700`, `sand-deep`, zie
   `DESIGN_SYSTEM.md`) zijn zelf afgeleid en nog niet beoordeeld door Hendriks grafisch ontwerper.
-- **Wtp-premievraag** (auditbevinding 18): het label is neutraler gemaakt en verwijst naar de
-  pensioenaangroei op het UPO, maar of eigen bijdragen meetellen is nog niet bij de primaire
-  bron nagegaan. Niet inhoudelijk wijzigen zonder die controle.
+- **Volledig box 3-model** (auditbevinding 10). Het invoerveld voor vermogensbelasting start nu
+  op een schatting die uit het vermogen en de woonsituatie wordt afgeleid en beweegt daarmee mee
+  tot de gebruiker het zelf invult. Wat nog ontbreekt is een echte jaarlijkse heffing over het
+  actuele vermogen, met vermogensmix, schulden en fiscaal partnerschap. `src/utils/box3.ts` is
+  het vervangpunt. Besluit Hendrik, 8 september 2026: eerst het invulbare veld, het model daarna.
 - **Volatiliteit is nominaal, rendement reëel.** `risicoprofielen.ts` geeft nominale
   standaardafwijkingen, `monteCarlo.ts` plakt die op een reëel rendement, en inflatie is
   deterministisch. De auditor noemt dit niet; het is een grotere modelfout dan de

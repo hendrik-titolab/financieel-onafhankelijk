@@ -3,7 +3,7 @@
 // diezelfde getallen als nominaal documenteert en de rekenkern nergens iets
 // aftrok. Het uitlegartikel sprak zichzelf binnen één alinea tegen.
 import { describe, it, expect } from 'vitest'
-import { box3HeffingPerJaar, geschatteBox3Druk, nettoNominaalRendement } from '../box3'
+import { box3HeffingPerJaar, geschatteBox3Druk, box3DrukAfgerond, nettoNominaalRendement } from '../box3'
 import { calculatePension } from '../pensionCalc'
 import { baseInputs } from './fixtures'
 
@@ -94,5 +94,46 @@ describe('kosten en vermogensbelasting in de planner', () => {
       { currentYear: 2026 })
     expect(viaVelden.projectedCapital).toBeCloseTo(direct.projectedCapital, 6)
     expect(viaVelden.requiredCapital).toBeCloseTo(direct.requiredCapital, 6)
+  })
+})
+
+// Besluit Hendrik, 8 september 2026: het volledige box 3-model blijft een
+// openstaand punt, maar het invoerveld krijgt een realistische startwaarde die uit
+// de invoer wordt geschat in plaats van nul.
+describe('box3DrukAfgerond — wat er in het invoerveld komt', () => {
+  const gevallen: [number, number][] = [
+    [100000, 0.9],
+    [250000, 1.6],
+    [600000, 1.9],
+    [1000000, 2.0],
+    [2000000, 2.1],
+  ]
+  for (const [vermogen, verwacht] of gevallen) {
+    it(`EUR ${vermogen} geeft ${verwacht}%`, () => {
+      expect(box3DrukAfgerond(vermogen, 'alleenstaand')).toBe(verwacht)
+    })
+  }
+
+  it('geeft nul onder het heffingsvrije vermogen', () => {
+    expect(box3DrukAfgerond(50000, 'alleenstaand')).toBe(0)
+  })
+
+  it('rondt af op één decimaal, gelijk aan wat het veld toont', () => {
+    // Als deze twee uit elkaar lopen blijft de knop "terug naar de schatting"
+    // staan terwijl het veld al de schatting toont.
+    const v = box3DrukAfgerond(600000, 'alleenstaand')
+    expect(v).toBe(Math.round(v * 10) / 10)
+  })
+
+  it('is lager voor fiscaal partners bij hetzelfde vermogen', () => {
+    expect(box3DrukAfgerond(300000, 'samenwonend'))
+      .toBeLessThan(box3DrukAfgerond(300000, 'alleenstaand'))
+  })
+
+  it('scheelt merkbaar tussen een ton en een miljoen', () => {
+    // De kern van waarom een vast percentage hier niet kan: meer dan een
+    // verdubbeling van de druk over dit bereik.
+    expect(box3DrukAfgerond(1000000, 'alleenstaand'))
+      .toBeGreaterThan(box3DrukAfgerond(100000, 'alleenstaand') * 2)
   })
 })

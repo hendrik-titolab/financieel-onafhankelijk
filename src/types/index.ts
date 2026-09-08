@@ -55,6 +55,19 @@ export interface PensionInputs {
    * het volledige model.
    */
   vermogensbelastingPct: number
+  /**
+   * Of de gebruiker de vermogensbelasting zelf heeft ingevuld.
+   *
+   * Staat dit op false, dan volgt vermogensbelastingPct automatisch de schatting
+   * die utils/box3.ts uit het opgegeven vermogen en de woonsituatie afleidt. Zodra
+   * iemand het veld zelf aanpast gaat de vlag op true en blijft zijn waarde staan.
+   *
+   * Reden: een vast getal kan niet kloppen, want de druk loopt op met de omvang
+   * van het vermogen. Zonder deze automatiek zou de gebruiker bij elke wijziging
+   * van zijn vermogen zelf moeten herrekenen, of blijven zitten met een percentage
+   * dat niet meer bij zijn situatie past.
+   */
+  vermogensbelastingHandmatig: boolean
 
   currentIncome: number
   currentIncomeType: IncomeType
@@ -232,9 +245,23 @@ export type PensioenType = 'geen' | 'db' | 'wtp'
 export interface JaarruimteInputs {
   year: number
   income: number
-  pensioenType: PensioenType   // geen / traditioneel DB (factor A) / Wtp (werkgeverspremie)
+  pensioenType: PensioenType   // geen / traditioneel DB (factor A) / Wtp (pensioenpremie)
   factorA: number              // DB-regeling: pensioenaangroei van UPO (t-1), in €/jaar
-  werkgeverspremie: number     // Wtp-regeling: door werkgever ingelegde premie in t-1
+  /**
+   * Wtp-regeling: de TOTALE premie die in t-1 in de werkgeversregeling is gestort,
+   * dus werkgeversdeel én eigen bijdrage samen.
+   *
+   * Heette werkgeverspremie en het scherm vroeg ook alleen naar het werkgeversdeel.
+   * Dat is te weinig: het bedrag dat de jaarruimte vermindert is de totale inleg in
+   * de regeling (audit 7 september 2026, bevinding 18; bevestigd door Hendrik op
+   * 8 september 2026). Wie alleen het werkgeversdeel invulde kreeg een te hoge
+   * jaarruimte en dus een te hoge aftrek.
+   *
+   * De veldnaam is meeveranderd omdat een naam die het tegenovergestelde zegt van
+   * wat er bedoeld wordt precies de fout is die hier gemaakt werd. Opgeslagen
+   * berekeningen met de oude naam worden bij het inlezen omgezet.
+   */
+  pensioenpremie: number
   alIngelegd: number           // already deposited in lijfrente this year
   reserveringsruimteRijen: ReserveringsruimteRij[]  // up to 10 past years, progressive UI
   // Alleen nodig bij belastingjaar 2021 of 2022. Het plafond van de

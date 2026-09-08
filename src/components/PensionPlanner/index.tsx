@@ -5,6 +5,7 @@ import type { PensionInputs, PensionResult, BerekeningsSet } from '../../types'
 import { calculatePension, controleerLeeftijden } from '../../utils/pensionCalc'
 import { runMonteCarlo } from '../../utils/monteCarlo'
 import { MODEL_VERSIE, PARAMETER_JAAR } from '../../config/modelVersie'
+import { box3DrukAfgerond } from '../../utils/box3'
 import { InputPanel } from './InputPanel'
 import { ResultsPanel } from './ResultsPanel'
 
@@ -18,10 +19,16 @@ const DEFAULT_INPUTS: PensionInputs = {
   returnBeforeRetirement: 6,
   returnAfterRetirement: 4,
   inflation: 3.0,
-  // Standaard nul: de rendementen hierboven zijn bruto, en de gebruiker kiest zelf
-  // wat hij aan kosten en vermogensbelasting invult. Zie utils/box3.ts.
+  // Kosten standaard nul: die hangen af van het product en zijn niet uit de invoer
+  // af te leiden. De gebruiker vult ze zelf in; het scherm zegt erbij dat de
+  // uitkomst zonder kosten gunstiger uitvalt dan in werkelijkheid.
   kostenPct: 0,
-  vermogensbelastingPct: 0,
+  // Vermogensbelasting standaard op de schatting die bij het beginvermogen hoort,
+  // en die blijft meebewegen zolang de gebruiker het veld niet zelf aanpast. Een
+  // vast getal kan hier niet kloppen: de druk loopt op met de omvang van het
+  // vermogen (audit 7 september 2026, bevinding 10; besluit Hendrik 8 september).
+  vermogensbelastingPct: box3DrukAfgerond(100000, 'alleenstaand'),
+  vermogensbelastingHandmatig: false,
   currentIncome: 80000,
   currentIncomeType: 'bruto',
   desiredRetirementIncome: 5000,
@@ -113,6 +120,19 @@ export function PensionPlanner({ clientName, onCloseSession }: Props) {
     setInputs(prev => ({ ...prev, ...updates }))
     setMcStale(mcPrev => mcPrev || true)
   }, [])
+
+  // Zolang de gebruiker de vermogensbelasting niet zelf heeft ingevuld, volgt die
+  // de schatting bij het opgegeven vermogen. Verhoog je je vermogen van een ton
+  // naar een miljoen, dan loopt de druk mee van 0,9% naar 2,0% zonder dat je daar
+  // zelf aan hoeft te denken. Zodra je het veld aanraakt blijft jouw waarde staan.
+  useEffect(() => {
+    if (inputs.vermogensbelastingHandmatig) return
+    const schatting = box3DrukAfgerond(inputs.currentCapital, inputs.woonsituatie)
+    if (schatting !== inputs.vermogensbelastingPct) {
+      setInputs(prev => ({ ...prev, vermogensbelastingPct: schatting }))
+      setMcStale(true)
+    }
+  }, [inputs.currentCapital, inputs.woonsituatie, inputs.vermogensbelastingHandmatig, inputs.vermogensbelastingPct])
 
   const leeftijden = controleerLeeftijden(inputs.currentAge, inputs.retirementAge, inputs.lifeExpectancy)
   const isGeldig = leeftijden.errors.length === 0

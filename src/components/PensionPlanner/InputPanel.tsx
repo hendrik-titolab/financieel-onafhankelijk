@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useId, Children, isValidElement, cloneElement } from 'react'
 import { parseBedrag, parseBedragBegrensd, formatBedrag } from '../../utils/bedrag'
-import { geschatteBox3Druk } from '../../utils/box3'
+import { box3DrukAfgerond } from '../../utils/box3'
 import { aowVakantiegeldFactor } from '../../utils/pensionCalc'
 import { PARAMETER_JAAR } from '../../config/modelVersie'
 import { track } from '@vercel/analytics'
@@ -487,7 +487,10 @@ function RisicoprofielSection({ inputs, onChange }: Props) {
 
   // Wat box 3 bij dit vermogen ongeveer kost, uitgedrukt in procentpunten van het
   // rendement. Berekend uit de gepubliceerde parameters, niet uit een vast getal.
-  const box3Schatting = geschatteBox3Druk(inputs.currentCapital, inputs.woonsituatie)
+  // Afgerond op één decimaal, precies zoals het in het veld staat.
+  const box3Schatting = box3DrukAfgerond(inputs.currentCapital, inputs.woonsituatie)
+  const box3Afwijkend = inputs.vermogensbelastingHandmatig
+    && Math.abs(box3Schatting - inputs.vermogensbelastingPct) > 0.049
 
   return (
     <Section title="Risicoprofiel">
@@ -594,30 +597,52 @@ function RisicoprofielSection({ inputs, onChange }: Props) {
         </Field>
 
         <Field label="Vermogensbelasting (box 3)">
+          {/* Het veld begint op de schatting die bij het opgegeven vermogen hoort en
+              beweegt daarmee mee, tot je het zelf aanpast. Een vast getal kan hier
+              niet kloppen: de druk loopt op met de omvang van het vermogen. */}
           <NumberInput value={inputs.vermogensbelastingPct}
-            onChange={v => onChange({ vermogensbelastingPct: v })} suffix="%" step={0.1} min={0} max={5} />
+            onChange={v => onChange({ vermogensbelastingPct: v, vermogensbelastingHandmatig: true })}
+            suffix="%" step={0.1} min={0} max={5} />
           <div className="text-xs text-body leading-relaxed mt-1 space-y-1">
-            <p>
-              Bij een vermogen van € {Math.round(inputs.currentCapital).toLocaleString('nl-NL')} en
-              je woonsituatie komt de heffing van {PARAMETER_JAAR} uit op ongeveer{' '}
-              <strong className="font-medium text-ink">
-                {box3Schatting.toLocaleString('nl-NL', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%
-              </strong>{' '}
-              van je vermogen per jaar.
-            </p>
-            {Math.abs(box3Schatting - inputs.vermogensbelastingPct) > 0.05 && (
-              <button
-                type="button"
-                onClick={() => onChange({ vermogensbelastingPct: Math.round(box3Schatting * 10) / 10 })}
-                className="underline font-medium text-data-700 hover:text-ink"
-              >
-                Deze schatting overnemen
-              </button>
+            {inputs.vermogensbelastingHandmatig ? (
+              <>
+                <p>
+                  Je hebt dit zelf ingevuld. Bij een vermogen van
+                  € {Math.round(inputs.currentCapital).toLocaleString('nl-NL')} en je woonsituatie
+                  komt onze schatting voor {PARAMETER_JAAR} uit op{' '}
+                  <strong className="font-medium text-ink">
+                    {box3Schatting.toLocaleString('nl-NL', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%
+                  </strong>.
+                </p>
+                {box3Afwijkend && (
+                  <button
+                    type="button"
+                    onClick={() => onChange({
+                      vermogensbelastingPct: box3Schatting,
+                      vermogensbelastingHandmatig: false,
+                    })}
+                    className="underline font-medium text-data-700 hover:text-ink"
+                  >
+                    Terug naar de schatting
+                  </button>
+                )}
+              </>
+            ) : (
+              <p>
+                Geschat op basis van je vermogen van
+                € {Math.round(inputs.currentCapital).toLocaleString('nl-NL')} en je woonsituatie,
+                met de percentages van {PARAMETER_JAAR}. Past dit bedrag zich aan, dan past dit
+                percentage mee. Vul je zelf iets in, dan blijft dat staan.
+              </p>
             )}
             <p>
-              Die druk loopt op met de omvang van je vermogen, doordat het heffingsvrije deel
-              een steeds kleiner aandeel wordt. Voor spaargeld ligt hij lager. Dit is een
-              vereenvoudiging: de tool rekent de heffing niet per jaar over je actuele vermogen uit.
+              De druk loopt op met de omvang van je vermogen, doordat het heffingsvrije deel een
+              steeds kleiner aandeel wordt: bij een ton ongeveer 0,9%, bij een miljoen ruim 2%.
+              Voor spaargeld ligt hij lager dan voor beleggingen.
+            </p>
+            <p>
+              Een vereenvoudiging: de heffing wordt niet elk jaar opnieuw over je actuele vermogen
+              berekend, en de verdeling tussen sparen, beleggen en schulden telt niet mee.
             </p>
           </div>
         </Field>

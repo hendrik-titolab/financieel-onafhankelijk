@@ -45,7 +45,7 @@ describe('calculateJaarruimte — golden master (zonder reserveringsruimte)', ()
           income: 70000,
           pensioenType: type,
           factorA: type === 'db' ? 1500 : 0,
-          werkgeverspremie: type === 'wtp' ? 1500 : 0,
+          pensioenpremie: type === 'wtp' ? 1500 : 0,
           alIngelegd: 0,
           reserveringsruimteRijen: [],
           clientName: '', adviseurNaam: '', notities: '',
@@ -71,7 +71,7 @@ describe('calculateJaarruimte — golden master (lage factor A, zodat de imputat
         income: 70000,
         pensioenType: 'db',
         factorA: 500,
-        werkgeverspremie: 0,
+        pensioenpremie: 0,
         alIngelegd: 0,
         reserveringsruimteRijen: [],
         clientName: '', adviseurNaam: '', notities: '',
@@ -90,7 +90,7 @@ describe('calculateJaarruimte — golden master (lage factor A, zodat de imputat
 describe('calculateJaarruimte — reserveringsruimte 2021 en 2022', () => {
   const basis = (jaar: number, income: number, geboortedatum?: string) => ({
     year: jaar, income, pensioenType: 'geen' as const,
-    factorA: 0, werkgeverspremie: 0, alIngelegd: 0,
+    factorA: 0, pensioenpremie: 0, alIngelegd: 0,
     // Ruim boven elk plafond, zodat altijd het plafond wint en niet de som.
     reserveringsruimteRijen: [{ jaar: jaar - 1, onbenutBedrag: 50000 }],
     geboortedatum,
@@ -167,7 +167,7 @@ describe('leeftijdInMaandenOp1Januari', () => {
   it('telt precies op het omslagpunt mee voor het hoge bedrag', () => {
     const r = calculateJaarruimte({
       year: 2021, income: 110000, pensioenType: 'geen',
-      factorA: 0, werkgeverspremie: 0, alIngelegd: 0,
+      factorA: 0, pensioenpremie: 0, alIngelegd: 0,
       reserveringsruimteRijen: [{ jaar: 2020, onbenutBedrag: 50000 }],
       geboortedatum: '1964-09-01',
       clientName: '', adviseurNaam: '', notities: '',
@@ -185,7 +185,7 @@ describe('calculateJaarruimte — golden master (met reserveringsruimte, 2026)',
         income: 70000,
         pensioenType: type,
         factorA: type === 'db' ? 1500 : 0,
-        werkgeverspremie: type === 'wtp' ? 1500 : 0,
+        pensioenpremie: type === 'wtp' ? 1500 : 0,
         alIngelegd: 5000,
         reserveringsruimteRijen: [
           { jaar: 2025, onbenutBedrag: 20000 },
@@ -205,7 +205,7 @@ describe('calculateJaarruimte — golden master (met reserveringsruimte, 2026)',
 describe('reserveringsruimte — terugkijktermijn en dubbele jaren', () => {
   const basis = (year: number, rijen: { jaar: number; onbenutBedrag: number }[]) => ({
     year, income: 70000, pensioenType: 'geen' as const,
-    factorA: 0, werkgeverspremie: 0, alIngelegd: 0,
+    factorA: 0, pensioenpremie: 0, alIngelegd: 0,
     reserveringsruimteRijen: rijen,
     clientName: '', adviseurNaam: '', notities: '',
   })
@@ -261,7 +261,7 @@ describe('reserveringsruimte — terugkijktermijn en dubbele jaren', () => {
 describe('controleerJaarruimteInvoer', () => {
   const basis = (over: object = {}) => ({
     year: 2026, income: 70000, pensioenType: 'geen' as const,
-    factorA: 0, werkgeverspremie: 0, alIngelegd: 0,
+    factorA: 0, pensioenpremie: 0, alIngelegd: 0,
     reserveringsruimteRijen: [] as { jaar: number; onbenutBedrag: number }[],
     clientName: '', adviseurNaam: '', notities: '',
     ...over,
@@ -312,7 +312,7 @@ describe('controleerJaarruimteInvoer', () => {
 describe('belastingvoordeel — echte verschilberekening', () => {
   const basis = (over: object = {}) => ({
     year: 2026, income: 70000, pensioenType: 'geen' as const,
-    factorA: 0, werkgeverspremie: 0, alIngelegd: 0,
+    factorA: 0, pensioenpremie: 0, alIngelegd: 0,
     reserveringsruimteRijen: [] as { jaar: number; onbenutBedrag: number }[],
     clientName: '', adviseurNaam: '', notities: '',
     ...over,

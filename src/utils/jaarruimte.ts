@@ -98,12 +98,12 @@ export function berekenJaarruimteEenvoudig(
   inkomen: number,
   pensioenType: PensioenType,
   factorA: number,
-  werkgeverspremie: number,
+  pensioenpremie: number,
 ): number {
   const p = getParams(jaar)
   const base = Math.max(0, Math.min(inkomen, p.maxInkomen) - p.franchise)
   if (pensioenType === 'db')  return Math.max(0, p.percentage * base - p.factorMultiplier * factorA)
-  if (pensioenType === 'wtp') return Math.max(0, p.percentage * base - werkgeverspremie)
+  if (pensioenType === 'wtp') return Math.max(0, p.percentage * base - pensioenpremie)
   return Math.max(0, p.percentage * base)
 }
 
@@ -161,8 +161,8 @@ export function controleerJaarruimteInvoer(inputs: JaarruimteInputs): Jaarruimte
   if (inputs.pensioenType === 'db' && (!getal(inputs.factorA) || inputs.factorA < 0)) {
     errors.push('Vul een factor A in van nul of hoger.')
   }
-  if (inputs.pensioenType === 'wtp' && (!getal(inputs.werkgeverspremie) || inputs.werkgeverspremie < 0)) {
-    errors.push('Vul een pensioenpremie in van nul of hoger.')
+  if (inputs.pensioenType === 'wtp' && (!getal(inputs.pensioenpremie) || inputs.pensioenpremie < 0)) {
+    errors.push('Vul een totale pensioenpremie in van nul of hoger.')
   }
   if (!getal(inputs.alIngelegd) || inputs.alIngelegd < 0) {
     errors.push('Vul een reeds ingelegd bedrag in van nul of hoger.')
@@ -211,7 +211,7 @@ export function controleerJaarruimteInvoer(inputs: JaarruimteInputs): Jaarruimte
 }
 
 export function calculateJaarruimte(inputs: JaarruimteInputs): JaarruimteResult {
-  const { year, income, pensioenType, factorA, werkgeverspremie, alIngelegd, reserveringsruimteRijen } = inputs
+  const { year, income, pensioenType, factorA, pensioenpremie, alIngelegd, reserveringsruimteRijen } = inputs
   const p = getParams(year)
 
   const effectiveIncome = Math.min(income, p.maxInkomen)
@@ -220,12 +220,13 @@ export function calculateJaarruimte(inputs: JaarruimteInputs): JaarruimteResult 
   // Jaarruimte formula depends on pension type:
   // - geen:  30% (or 13.3% pre-2023) × grondslag, no deduction
   // - db:    percentage × grondslag − factorMultiplier × factorA
-  // - wtp:   percentage × grondslag − werkgeverspremie (employer contribution replaces factor A)
+  // - wtp:   percentage × grondslag − pensioenpremie (de totale inleg in de
+  //          werkgeversregeling, werkgeversdeel én eigen bijdrage, vervangt factor A)
   let jaarruimte: number
   if (pensioenType === 'db') {
     jaarruimte = Math.max(0, p.percentage * base - p.factorMultiplier * factorA)
   } else if (pensioenType === 'wtp') {
-    jaarruimte = Math.max(0, p.percentage * base - (werkgeverspremie ?? 0))
+    jaarruimte = Math.max(0, p.percentage * base - (pensioenpremie ?? 0))
   } else {
     // geen pensioenregeling
     jaarruimte = Math.max(0, p.percentage * base)
@@ -347,7 +348,7 @@ const nl = (n: number) => n.toLocaleString('nl-NL')
 export function getFormuleTekst(year: number, pensioenType: PensioenType = 'db'): string {
   const p = getParams(year)
   const pct = `${nl(p.percentage * 100)}%`
-  if (pensioenType === 'wtp') return `${pct} × grondslag − werkgeverspremie`
+  if (pensioenType === 'wtp') return `${pct} × grondslag − pensioenpremie`
   if (pensioenType === 'geen') return `${pct} × grondslag`
   return `${pct} × grondslag − ${nl(p.factorMultiplier)} × factor A`
 }
