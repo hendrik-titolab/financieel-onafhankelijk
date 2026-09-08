@@ -1,0 +1,56 @@
+# Verplichte controle vóór een deploy.
+#
+# Er was geen enkele workflow in deze repo. De build slaagde terwijl `tsc --noEmit`
+# faalde op een ontbrekende typedeclaratie, en niets dwong af dat de tests draaiden
+# voordat er naar productie werd gepusht (audit 7 september 2026, bevinding 24).
+#
+# Vercel bouwt uit deze repo en deployt automatisch bij een push naar
+# astro-migratie. Deze workflow draait daar naast: hij houdt een kapotte push niet
+# tegen, maar maakt hem wel meteen zichtbaar. Wie dit hard wil maken, zet
+# branch protection op astro-migratie met deze workflow als verplichte check.
+name: Controle
+
+on:
+  push:
+    branches: [astro-migratie, main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  controle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # Vastgelegd in plaats van "latest": een Node-wissel mag een rekenuitkomst
+          # nooit stilzwijgend veranderen. Sluit aan op de engines-eis in
+          # package.json.
+          node-version: '20'
+          cache: npm
+
+      - name: Afhankelijkheden installeren
+        run: npm ci
+
+      - name: Typecontrole
+        # Los van de build. Astro's build compileert met esbuild en meldt
+        # typefouten niet; dit is de enige stap die dat wel doet.
+        run: npx tsc --noEmit
+
+      - name: Astro-controle
+        run: npm run check
+
+      - name: Tests
+        # Bevat de golden masters, de fiscale referentiegevallen en de
+        # grensgevallen uit de audit van september 2026.
+        run: npm test
+
+      - name: Productiebuild
+        run: npm run build
+
+      - name: Kwetsbaarheden melden
+        # Niet blokkerend: een nieuwe melding in een transitieve afhankelijkheid
+        # mag een correctie aan de rekenkern niet tegenhouden. Wel zichtbaar in het
+        # log, zodat het een besluit is en geen verrassing.
+        run: npm audit --audit-level=high || true
