@@ -138,8 +138,20 @@ De workflow houdt een kapotte push niet tegen, hij maakt hem zichtbaar. Wil je d
 zet branch protection op `astro-migratie` met deze workflow als verplichte check. Dat is een
 handeling in GitHub die ik niet voor je kan doen.
 
-`vercel.json` zet de beveiligingsheaders (CSP, X-Content-Type-Options, Referrer-Policy,
-X-Frame-Options, Permissions-Policy). De CSP is lokaal getest tegen de productiebuild met een
+`vercel.json` zet twee dingen. Ten eerste de beveiligingsheaders (CSP, X-Content-Type-Options,
+Referrer-Policy, X-Frame-Options, Permissions-Policy). Ten tweede een cacheregel voor
+`/_astro/*`: `public, max-age=31536000, immutable`.
+
+Die cacheregel geldt **alleen** voor `/_astro/`, en dat is bewust. Astro geeft alles daar een
+content-hash in de bestandsnaam (`dm-sans-latin-opsz-normal.Bf69Tn_J.woff2`), dus zo'n bestand
+kan per definitie niet veranderen: wijzigt de inhoud, dan wijzigt de naam. Zonder deze regel
+kregen die bestanden Vercels standaard `max-age=0, must-revalidate` en deed elke bezoeker bij
+elk bezoek een controleronde langs alle assets, inclusief circa 211 kB aan lettertypen.
+
+Wat er bewust buiten valt: de HTML-pagina's, `sw.js`, `manifest.webmanifest`, `robots.txt` en de
+sitemaps. Die staan in de root, hebben géén hash in hun naam en moeten wél elke keer
+gecontroleerd worden. Vooral `sw.js`: een permanent gecachete service worker betekent dat een
+update nooit meer aankomt. Zet deze regel dus nooit op `/(.*)`. De CSP is lokaal getest tegen de productiebuild met een
 testserver die die headers meestuurt: fonts, React-eiland, Monte Carlo en beide exports werken
 zonder één CSP-melding. Wijzig je de CSP, test hem dan opnieuw op die manier en niet alleen op
 `astro dev`, want daar gelden deze headers niet.
