@@ -56,7 +56,7 @@ Twee van die drie percentages staan nog niet vast. Alleen de 6,00% voor beleggin
 
 Neem iemand met € 100.000 op de spaarrekening en € 200.000 in beleggingen, zonder fiscale partner en zonder schulden.
 
-Het veronderstelde rendement is € 1.280 over het spaargeld (1,28% van € 100.000) plus € 12.000 over de beleggingen (6,00% van € 200.000), samen € 13.280. Daar gaat het heffingsvrije vermogen vanaf en dan blijft er € 10.651 over waarover geheven wordt. De aanslag: **€ 3.834**.
+Het veronderstelde rendement is € 1.280 over het spaargeld (1,28% van € 100.000) plus € 12.000 over de beleggingen (6,00% van € 200.000), samen € 13.280. Daarvan wordt niet alles belast: door het heffingsvrije vermogen blijft er € 10.651 over. De aanslag: **€ 3.834**.
 
 Dat is 1,3% van het vermogen, elk jaar opnieuw. Bij een belegging die 6% doet is dat ruim een vijfde van het rendement. Bij spaargeld dat 1,5% doet is het meer dan de helft.
 
