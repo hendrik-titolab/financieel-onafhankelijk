@@ -351,7 +351,10 @@ export function InflatieCalculator() {
         <p className="text-sm text-ink leading-relaxed">
           Deze tool houdt bewust <strong>géén</strong> rekening met de vermogensrendementsheffing
           (box 3). Dat zou de berekening te complex maken vanwege verschillende vermogensmixen,
-          vrijstellingen en jaarlijkse wijzigingen. De uitkomst is een indicatie, geen persoonlijk advies.
+          vrijstellingen en jaarlijkse wijzigingen. Wil je dat wel uitrekenen, gebruik dan de{' '}
+          <a href="/tools/box3/" className="underline underline-offset-2 hover:text-data-700">
+            box 3-rekentool
+          </a>. De uitkomst is een indicatie, geen persoonlijk advies.
         </p>
       </div>
     </div>

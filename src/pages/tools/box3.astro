@@ -1,0 +1,60 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import { Box3Tool } from '../../components/Box3'
+import { articleSchema, faqSchema, breadcrumbSchema } from '../../lib/seo'
+
+const title = 'Box 3 berekenen 2026 | Hoeveel belasting betaal je over je vermogen?'
+const description =
+  'Bereken gratis je box 3-belasting voor 2025 of 2026. Forfait én tegenbewijs naast elkaar: zie of je werkelijke rendement gunstiger uitpakt dan de forfaitaire berekening.'
+
+const faq = [
+  {
+    vraag: 'Hoeveel belasting betaal ik over mijn spaargeld en beleggingen?',
+    antwoord:
+      'De Belastingdienst gaat uit van een vast rendement per soort vermogen en heft daar 36% over. In 2026 is dat 1,28% voor bank- en spaartegoeden en 6,00% voor beleggingen en overige bezittingen. Over de eerste € 59.357 per persoon betaal je niets. Wat je werkelijk verdiend hebt maakt voor die berekening niet uit, tenzij je gebruikmaakt van de tegenbewijsregeling.',
+  },
+  {
+    vraag: 'Wat is de tegenbewijsregeling in box 3?',
+    antwoord:
+      'Sinds de arresten van de Hoge Raad mag je aantonen dat je werkelijke rendement lager was dan het forfaitaire voordeel. Is dat zo, dan wordt je belasting over het werkelijke rendement berekend. Bij het werkelijke rendement geldt geen heffingsvrij vermogen, dus bij een kleiner vermogen is het vaak juist ongunstiger.',
+  },
+  {
+    vraag: 'Telt koerswinst die ik nog niet verzilverd heb mee?',
+    antwoord:
+      'Ja. Bij het werkelijke rendement telt de waardeontwikkeling van je bezittingen mee, ook als je niets verkocht hebt. Papieren winst is dus belast, en een papieren verlies verlaagt je rendement.',
+  },
+  {
+    vraag: 'Mag ik mijn kosten aftrekken van mijn werkelijke rendement?',
+    antwoord:
+      'Nee, op één uitzondering na. Aan- en verkoopkosten, beheerkosten en onderhoud van een tweede woning zijn niet aftrekbaar. Rente die je betaalt over een schuld in box 3 mag je wel aftrekken.',
+  },
+  {
+    vraag: 'Wat gebeurt er als mijn rendement negatief was?',
+    antwoord:
+      'Een negatief werkelijk rendement wordt op € 0 gezet. Je betaalt dan geen box 3-belasting over dat jaar, maar je kunt het verlies niet verrekenen met een ander jaar.',
+  },
+]
+
+const schemas = [
+  articleSchema({ title, description, path: '/tools/box3/', dateModified: '2026-09-08' }),
+  faqSchema(faq),
+  breadcrumbSchema([
+    { name: 'Home', path: '/' },
+    { name: 'Rekentools', path: '/tools/' },
+    { name: 'Box 3 berekenen', path: '/tools/box3/' },
+  ]),
+]
+---
+
+<BaseLayout title={title} description={description} canonical="/tools/box3/" jsonLd={schemas}>
+  <main class="flex-1 p-4 md:p-6">
+    <div class="max-w-2xl mx-auto">
+      <h1 class="font-serif text-2xl text-ink mb-1">Box 3 berekenen</h1>
+      <p class="text-sm text-body mb-5 leading-relaxed">
+        Zie hoeveel belasting je betaalt over je spaargeld, beleggingen en overige bezittingen, en
+        of het loont om je werkelijke rendement door te geven in plaats van het forfait.
+      </p>
+      <Box3Tool client:only="react" />
+    </div>
+  </main>
+</BaseLayout>

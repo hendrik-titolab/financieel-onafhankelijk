@@ -84,7 +84,10 @@ export const ZVW = {
 } as const
 
 // ─── Box 3 ──────────────────────────────────────────────────────────────────
-// Nog niet in gebruik. Staat klaar voor E2.
+// In gebruik sinds september 2026, zie src/utils/box3.ts. BOX3 hieronder bevat de
+// waarden van 2026 en voedt de schatting van de belastingdruk in de
+// FO-planner. De box 3-rekentool gebruikt BOX3_JAREN, want die biedt meerdere
+// belastingjaren aan.
 export const BOX3 = {
   tarief: 0.36,
   heffingsvrijVermogen: {
@@ -96,6 +99,38 @@ export const BOX3 = {
     beleggingen: 0.06,
     schulden:    0.027,
   },
+} as const
+
+// Box 3 per belastingjaar. 'voorlopig' betekent: het percentage is nog niet
+// definitief vastgesteld en kan achteraf wijzigen. Voor 2025 gebeurde die
+// vaststelling op 12 februari 2026 (Stcrt. 2026, 3708).
+export const BOX3_JAREN = {
+  2025: {
+    tarief: 0.36,
+    heffingsvrijVermogen: { alleenstaand: 57_684, fiscaalPartnersSamen: 115_368 },
+    schuldendrempel:      { alleenstaand: 3_800, fiscaalPartnersSamen: 7_600 },
+    forfaitairRendement:  { spaargeld: 0.0137, beleggingen: 0.0588, schulden: 0.027 },
+    forfaitStatus:        { spaargeld: 'definitief', beleggingen: 'definitief', schulden: 'definitief' },
+  },
+  2026: {
+    tarief: 0.36,
+    heffingsvrijVermogen: { alleenstaand: 59_357, fiscaalPartnersSamen: 118_714 },
+    schuldendrempel:      { alleenstaand: 3_800, fiscaalPartnersSamen: 7_600 },
+    forfaitairRendement:  { spaargeld: 0.0128, beleggingen: 0.06, schulden: 0.027 },
+    forfaitStatus:        { spaargeld: 'voorlopig', beleggingen: 'definitief', schulden: 'voorlopig' },
+  },
+} as const
+
+/** De belastingjaren die de box 3-rekentool aanbiedt. */
+export const BOX3_JAREN_IN_TOOL = [2025, 2026] as const
+
+// Toerekening van het forfaitaire rendement naar het belastbare voordeel. Het
+// aandeel bij stap 4 wordt afgekapt op twee decimalen en niet afgerond. Dat is
+// afgeleid uit de rekenvoorbeelden van de Belastingdienst en het scheelt in de
+// uitkomst: 60,4287% wordt 60,42% en niet 60,43%.
+export const BOX3_TOEREKENING = {
+  aandeelDecimalen: 2,
+  aandeelAfronding: 'afkappen',
 } as const
 
 // ─── Lijfrente-/bankspaaruitkering ──────────────────────────────────────────

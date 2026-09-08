@@ -3,7 +3,7 @@
 ## Wat is dit?
 
 Een Astro 7-site (SSG, statisch gebouwd) met React-eilanden voor de interactieve rekentools.
-Combinatie van een kennisautoriteitssite (uitlegartikelen) en vier rekentools, gericht op zowel
+Combinatie van een kennisautoriteitssite (uitlegartikelen) en vijf rekentools, gericht op zowel
 breed publiek als financieel adviseurs. Staat live op https://benikfinancieelonafhankelijk.nl
 
 **Stack:** Astro 7 + React 18 (eilanden) + TypeScript + Tailwind CSS 3
@@ -62,7 +62,7 @@ afgestemd.
 
 ---
 
-## De vier rekentools
+## De vijf rekentools
 
 ### 1. FO-planner (hoofdtool) — `/ben-ik-financieel-onafhankelijk`
 React-eiland (`client:only="react"`), component `src/components/PensionPlanner/`.
@@ -94,6 +94,28 @@ reserveringsruimte-modi, berekeningen opslaan in `localStorage`.
 
 ### 4. Inflatie & spaargeld — `/tools/inflatie`
 React-component `src/components/Inflatie/`. Reëel vs. nominaal rendement, negeert bewust box 3.
+De noot onderaan verwijst sinds 8 september 2026 door naar de box 3-tool.
+
+### 5. Box 3 — `/tools/box3`
+React-component `src/components/Box3/`, rekenlogica in `src/utils/box3.ts` en niet in het
+component, anders dan bij Inflatie: deze berekening moet getoetst worden en moet later door de
+FO-planner te gebruiken zijn. Belastingjaren 2025 en 2026, per jaar gevoed door `BOX3_JAREN` uit
+de gegenereerde config.
+- Rekent het forfait en het tegenbewijs allebei uit en toont welke van de twee geldt. Alleen het
+  forfait rekenen geeft iedereen met een tegenvallend rendement een te hoog bedrag.
+- Twee afrondingsregels. Bij de aangifte mag elk veld op een hele euro worden afgerond in het
+  voordeel van de belastingplichtige (Hendrik, 8 september 2026); welke kant dat per veld op valt
+  volgt uit de vijf rekenvoorbeelden van de Belastingdienst. Bezittingen naar beneden, het
+  schuldrendement naar boven omdat het van het totaal af gaat, voordeel en belasting naar beneden.
+  Het aandeel bij stap 4 valt daarbuiten, dat is geen euro maar een percentage: dat wordt afgekapt
+  op twee decimalen en niet afgerond. `box3.test.ts` legt alle vijf voorbeelden vast, plus de drie
+  rekenvoorbeelden uit het uitlegartikel, zodat tool en artikel niet uit elkaar kunnen lopen.
+- **Aan de tegenbewijskant gelden andere regels dan aan de forfaitkant**, en dat is geen slordigheid
+  maar artikel 5.26, derde lid, Wet IB 2001: de schuldendrempel (artikel 5.3, derde lid, onderdeel f)
+  en de vrijstelling groene beleggingen (artikel 5.13) zijn daar niet van toepassing. Pas dus nooit
+  "voor de consistentie" de drempel aan beide kanten toe; er staat een toets op.
+- Bewust niet meegerekend, en in de UI ook zo benoemd: de vrijstelling voor groene beleggingen en
+  de bijtelling voor eigen gebruik van een tweede woning (vanaf 2026 5,06% van de WOZ-waarde).
 
 ### Technische details, alle tools
 - Bedragen in reële koopkracht (na inflatie) tenzij expliciet "nominaal" vermeld.
@@ -238,7 +260,7 @@ src/
 | Beslissing | Reden |
 |---|---|
 | Astro (niet React/Vite-SPA) | Server-side title/description/canonical/OG/JSON-LD per pagina, automatische sitemap — nodig voor SEO/GEO op een contentsite met 14+ artikelen |
-| React-eilanden alleen voor de vier rekentools | Rest van de site is statisch, sneller en beter indexeerbaar |
+| React-eilanden alleen voor de vijf rekentools | Rest van de site is statisch, sneller en beter indexeerbaar |
 | Reëel rendement (na inflatie) | Koopkracht blijft behouden: €4.000 vandaag = €4.000 koopkracht bij pensionering |
 | localStorage, geen backend | Privacy by design, geen persoonsgegevens op een server |
 | Life events en stortingen samengevoegd (11 aug 2026) | Rekenden al identiek, twee gescheiden secties met een niet te raden onderscheid was verwarrend en repareerde een exportbug (stortingen kwamen nooit in Excel terecht) |
