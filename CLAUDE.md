@@ -297,10 +297,20 @@ premie in de werkgeversregeling, dus werkgeversdeel én eigen bijdrage. Het veld
   tot de gebruiker het zelf invult. Wat nog ontbreekt is een echte jaarlijkse heffing over het
   actuele vermogen, met vermogensmix, schulden en fiscaal partnerschap. `src/utils/box3.ts` is
   het vervangpunt. Besluit Hendrik, 8 september 2026: eerst het invulbare veld, het model daarna.
-- **Volatiliteit is nominaal, rendement reëel.** `risicoprofielen.ts` geeft nominale
-  standaardafwijkingen, `monteCarlo.ts` plakt die op een reëel rendement, en inflatie is
-  deterministisch. De auditor noemt dit niet; het is een grotere modelfout dan de
-  lognormaal-omzetting die hij wél noemt (die geeft 12,08% in plaats van 12,00%, verwaarloosbaar).
+- **Inflatie is deterministisch.** Eén vast percentage voor de hele looptijd, dus de
+  bandbreedte in de grafiek toont niet het risico dat de inflatie zelf tegenvalt, en evenmin de
+  correlatie tussen inflatie en rendement. Dat is het deel dat blijft liggen.
+
+  Wat op 8 september 2026 wél is opgelost: `monteCarlo.ts` plakte een nominale
+  standaardafwijking op een reëel rendement. Dat is nu `reeleVolatiliteit()`, met
+  σ_reëel = σ_nominaal / (1 + inflatie): bij 12% en 3% inflatie 11,65%, en de log-sigma van de
+  trekking daalt van 0,11621 naar 0,11285.
+
+  Let op bij het beoordelen daarvan: die te hoge volatiliteit compenseerde de ontbrekende
+  inflatieonzekerheid per ongeluk een beetje. De correctie maakt het model intern kloppend, niet
+  automatisch realistischer. De slagingskans van het basisscenario ging er dan ook ómlaag van
+  8,80% naar 8,25%, want bij een plan dat mediaan niet haalt komt succes uit de bovenstaart en
+  die wordt dunner bij minder spreiding.
 - **Geen huishoudmodel.** Eén persoon; samenwonend stuurt alleen het AOW-bedrag en de
   alleenstaandeouderenkorting. Nu expliciet benoemd in de UI, nog niet opgelost.
 - ~~Lettertypen niet zelf gehost.~~ Opgelost op 8 september 2026. De site laadt geen enkel

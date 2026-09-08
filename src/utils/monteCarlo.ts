@@ -40,6 +40,36 @@ function realReturn(nominal: number, inflation: number): number {
   return ((1 + nominal / 100) / (1 + inflation / 100) - 1) * 100
 }
 
+/**
+ * De standaardafwijking die bij een REËEL rendement hoort, afgeleid uit de
+ * nominale standaardafwijking die de gebruiker invult.
+ *
+ * Tot september 2026 ging er een reëel verwacht rendement de trekking in met een
+ * nominale standaardafwijking ernaast. Die twee horen niet bij elkaar. Omdat de
+ * inflatie in dit model een vast getal is, is de omrekening exact: elk nominaal
+ * rendement wordt gedeeld door (1 + inflatie), en dus schaalt de spreiding mee
+ * met diezelfde deling.
+ *
+ *   σ_reëel = σ_nominaal / (1 + inflatie)
+ *
+ * Bij 12% en 3% inflatie geeft dat 11,65%. De log-sigma die sampleAnnualReturn()
+ * daaruit afleidt gaat van 0,11621 naar 0,11285, dus 2,9% lager.
+ *
+ * WAT DIT NIET OPLOST, en dat weegt zwaarder dan de correctie zelf. Dit model
+ * behandelt inflatie als zeker: één vast percentage voor de hele looptijd. In
+ * werkelijkheid varieert inflatie, en dat maakt een reëel rendement onzekerder
+ * dan hier wordt getoond. De te hoge volatiliteit van hiervoor compenseerde dat
+ * per ongeluk een beetje. Deze correctie maakt de berekening intern kloppend, ze
+ * maakt het risicobeeld niet automatisch realistischer. Lees de bandbreedte in de
+ * grafiek dus niet als een volledige weergave van het risico.
+ *
+ * Stochastische inflatie, en de correlatie tussen inflatie en rendement, staan
+ * als openstaand punt in CLAUDE.md.
+ */
+export function reeleVolatiliteit(volatiliteitNominaal: number, inflatie: number): number {
+  return volatiliteitNominaal / (1 + inflatie / 100)
+}
+
 export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number; currentYear?: number }): MonteCarloResult {
   const rng = opts?.rng ?? Math.random
   const {
@@ -97,6 +127,9 @@ export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number
     nettoNominaalRendement(returnBeforeRetirement, kostenPct, vermogensbelastingPct), inflation)
   const realPost = realReturn(
     nettoNominaalRendement(returnAfterRetirement, kostenPct, vermogensbelastingPct), inflation)
+
+  const volPre = reeleVolatiliteit(volatilityPre, inflation)
+  const volPost = reeleVolatiliteit(volatilityPost, inflation)
   const monthlyPMT = contributionFrequency === 'jaarlijks'
     ? monthlyContribution / 12
     : monthlyContribution
@@ -131,7 +164,7 @@ export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number
       capitalByAge[yr][sim] = Math.max(0, capital)
 
       if (age < retirementAge) {
-        const r = sampleAnnualReturn(realPre, volatilityPre, rng)
+        const r = sampleAnnualReturn(realPre, volPre, rng)
         // Mid-year-conventie voor de jaarinleg, zelfde reden en zelfde
         // Math.sqrt(1+r) als in pensionCalc.ts's simulateAccumulation. r kan
         // hier niet onder -100% uitkomen (lognormale trekking, zie
@@ -141,7 +174,7 @@ export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number
         capital   = (capital   + event) * (1 + r) + monthlyPMT * 12 * groeifactorInleg
         capital75 = (capital75 + event) * (1 + r) + monthlyPMT * 12 * groeifactorInleg
       } else {
-        const r = sampleAnnualReturn(realPost, volatilityPost, rng)
+        const r = sampleAnnualReturn(realPost, volPost, rng)
         // Full income scenario
         const withdrawal = getMonthlyWithdrawal(
           age, desiredNetto, aowMonthlyNetto, aowStartAge,

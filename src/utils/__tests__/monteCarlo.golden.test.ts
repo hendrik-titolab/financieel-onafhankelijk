@@ -11,7 +11,7 @@
 // in de uitkeringsfase toepast, lopen die twee uiteen. De test onderaan bewaakt
 // dat, en zou weer moeten falen als de filtering ooit terugkeert.
 import { describe, it, expect } from 'vitest'
-import { runMonteCarlo } from '../monteCarlo'
+import { runMonteCarlo, reeleVolatiliteit } from '../monteCarlo'
 import { makeRng } from '../rng'
 import { SCENARIOS, baseInputs, round } from './fixtures'
 import fixture from './__golden__/monteCarlo.golden.json'
@@ -96,5 +96,55 @@ describe('runMonteCarlo — liquiditeit in de opbouwfase', () => {
       { rng: makeRng(12345), currentYear: 2026 }
     )
     expect(mc.successRate).toBe(100)
+  })
+})
+
+// De volatiliteit hoorde bij een andere reeks dan het rendement waar ze op werd
+// losgelaten: een reëel verwacht rendement met een nominale standaardafwijking
+// ernaast. Gemeld als openstaand punt bij de audit van 7 september 2026, opgelost
+// op 8 september.
+describe('reeleVolatiliteit', () => {
+  it('deelt door één plus de inflatie', () => {
+    // 12% nominaal bij 3% inflatie is 11,65% reëel.
+    expect(reeleVolatiliteit(12, 3)).toBeCloseTo(11.650485, 5)
+    expect(reeleVolatiliteit(8, 3)).toBeCloseTo(7.766990, 5)
+  })
+
+  it('verandert niets bij nul inflatie', () => {
+    // Zonder inflatie zijn nominaal en reëel hetzelfde, dus deze correctie mag
+    // dan geen enkel effect hebben.
+    expect(reeleVolatiliteit(12, 0)).toBe(12)
+    expect(reeleVolatiliteit(0, 3)).toBe(0)
+  })
+
+  it('verlaagt de log-sigma van de trekking met 2,9%', () => {
+    // Handmatig nagerekend met de formule uit sampleAnnualReturn():
+    //   sigma = sqrt(ln(1 + s² / (1+g)²)), met g het reële rendement 2,912621%
+    //   nominaal 12,0000% -> 0,11621
+    //   reëel    11,6505% -> 0,11285
+    const logSigma = (s: number, g: number) =>
+      Math.sqrt(Math.log(1 + (s / 100) ** 2 / (1 + g / 100) ** 2))
+    const gReeel = (1.06 / 1.03 - 1) * 100
+    expect(logSigma(12, gReeel)).toBeCloseTo(0.11621, 5)
+    expect(logSigma(reeleVolatiliteit(12, 3), gReeel)).toBeCloseTo(0.11285, 5)
+  })
+
+  it('maakt de bandbreedte smaller in de simulatie', () => {
+    // Wiring-test: de correctie moet daadwerkelijk in de trekking terechtkomen.
+    // Zonder inflatie geen effect, mét inflatie een smallere band op dezelfde
+    // leeftijd en met dezelfde toevalsreeks.
+    const scenario = (inflatie: number) => baseInputs({
+      inflation: inflatie,
+      // Rendement meebewegen zodat het reële rendement gelijk blijft en alleen de
+      // volatiliteit verschilt. Anders meet deze test twee dingen tegelijk.
+      returnBeforeRetirement: (1.06 * (1 + inflatie / 100) / 1.03 - 1) * 100,
+      returnAfterRetirement: (1.04 * (1 + inflatie / 100) / 1.03 - 1) * 100,
+    })
+    const band = (inflatie: number) => {
+      const mc = runMonteCarlo(scenario(inflatie), { rng: makeRng(999), currentYear: 2026 })
+      const p = mc.percentileData[Math.floor(mc.percentileData.length / 2)]
+      return p.p90 - p.p10
+    }
+    expect(band(8)).toBeLessThan(band(3))
   })
 })
