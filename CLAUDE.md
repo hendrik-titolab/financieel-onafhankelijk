@@ -311,8 +311,15 @@ premie in de werkgeversregeling, dus werkgeversdeel én eigen bijdrage. Het veld
   automatisch realistischer. De slagingskans van het basisscenario ging er dan ook ómlaag van
   8,80% naar 8,25%, want bij een plan dat mediaan niet haalt komt succes uit de bovenstaart en
   die wordt dunner bij minder spreiding.
-- **Geen huishoudmodel.** Eén persoon; samenwonend stuurt alleen het AOW-bedrag en de
-  alleenstaandeouderenkorting. Nu expliciet benoemd in de UI, nog niet opgelost.
+- **Huishoudmodel is er half.** Sinds 8 september 2026 kan een partner meegerekend worden als
+  tweede, apart belaste persoon (`PartnerGegevens` in `types/index.ts`, `persoonNettoInkomen()` in
+  `pensionCalc.ts`). Box 1 is individueel, dus dat is de enige juiste behandeling: twee partners
+  met elk € 1.084 AOW en € 1.500 pensioen komen apart belast op € 4.673,81 netto per maand uit,
+  tegen € 3.718,73 als je alles in één veld optelt.
+
+  Wat nog ontbreekt: een aparte beleggingspot per persoon, een eigen lijfrente voor de partner,
+  een aparte planningshorizon, en nabestaandenscenario's (wat er gebeurt als één van beiden eerder
+  overlijdt). Het vermogen en het gewenste inkomen gelden voor het huishouden samen.
 - ~~Lettertypen niet zelf gehost.~~ Opgelost op 8 september 2026. De site laadt geen enkel
   bestand meer van een derde partij; `font-src` en `style-src` in de CSP staan nu op `'self'`.
   Nagetrokken tegen de productiebuild: alle drie de families laden vanaf het eigen domein en de

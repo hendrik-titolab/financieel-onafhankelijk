@@ -85,6 +85,20 @@ export async function exportToExcel(berekening: BerekeningsSet, clientName: stri
     ['Lijfrente-/bankspaaruitkering (bruto/maand)', inputs.lijfrenteUitkering],
     ['Lijfrente-/bankspaaruitkering ingangsdatum (leeftijd)', inputs.lijfrenteStartAge],
     ['', ''],
+    // Zonder deze regels is een dossier met partner niet te reproduceren: je ziet
+    // wel een hoger vast inkomen, maar niet waar het vandaan komt.
+    ['PARTNER', ''],
+    ...(inputs.partner?.actief
+      ? [
+          ['Partner meegerekend', 'ja, apart belast'],
+          ['Leeftijd partner nu', inputs.partner.leeftijd],
+          ['AOW partner netto per maand', inputs.partner.aowMaandBedragNetto],
+          ['AOW partner ingangsdatum (leeftijd)', inputs.partner.aowStartAge],
+          ['Werkgeverspensioen partner (bruto/maand)', inputs.partner.employerPension],
+          ['Werkgeverspensioen partner ingangsdatum (leeftijd)', inputs.partner.employerPensionStartAge],
+        ]
+      : [['Partner meegerekend', 'nee, berekening voor één persoon']]),
+    ['', ''],
     ['LIFE EVENTS', ''],
     ...((inputs.lifeEvents ?? []).length > 0
       ? (inputs.lifeEvents ?? []).map(e => [`${e.name} (${e.year})`, e.amount])

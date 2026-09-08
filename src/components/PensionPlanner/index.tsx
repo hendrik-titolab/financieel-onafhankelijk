@@ -39,6 +39,16 @@ const DEFAULT_INPUTS: PensionInputs = {
   // Standaard aan: de SVB keert het vakantiegeld in mei apart uit, dus het
   // maandbedrag op iemands overzicht is exclusief.
   aowVakantiegeld: true,
+  // Partner staat uit: dan is de uitkomst exact gelijk aan die van vóór het
+  // partnermodel, en verschuift er geen enkele golden-waarde om die reden.
+  partner: {
+    actief: false,
+    leeftijd: 40,
+    aowMaandBedragNetto: 1084,
+    aowStartAge: 67,
+    employerPension: 0,
+    employerPensionStartAge: 67,
+  },
   employerPension: 0,
   employerPensionStartAge: 67,
   lijfrenteUitkering: 0,

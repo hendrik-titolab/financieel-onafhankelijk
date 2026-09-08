@@ -13,6 +13,40 @@ export interface LifeEvent {
 export type Woonsituatie = 'alleenstaand' | 'samenwonend'
 
 /**
+ * De partner als tweede, apart belaste persoon.
+ *
+ * De inkomstenbelasting in box 1 is individueel: twee mensen hebben elk hun eigen
+ * schijven en hun eigen heffingskortingen. De tool rekende één persoon, en voor
+ * een stel ging dat op twee manieren mis. Vulde je alleen je eigen AOW in, dan
+ * miste het huishouden de AOW van je partner. Vulde je de opgetelde AOW in één
+ * veld in, dan belastte de tool dat als het inkomen van één persoon.
+ *
+ * Doorgerekend met de parameters van 2026, twee partners met elk € 1.084 AOW
+ * netto en € 1.500 werkgeverspensioen bruto per maand:
+ *   apart belast (juist)          € 4.673,81 netto per maand
+ *   samengeteld in één veld       € 3.718,73
+ *   verschil                      €   955,08, oftewel 25,7%
+ *
+ * Bij alleen AOW is het verschil circa 5%. Zodra er aanvullend pensioen bij komt
+ * loopt het hard op, omdat één persoon door de schijven schuift en zijn
+ * ouderenkorting volledig afbouwt terwijl twee personen elk onder die grenzen
+ * blijven (audit 7 september 2026, bevinding 16).
+ *
+ * Bewust NIET gemodelleerd: een aparte portefeuille per persoon, een
+ * nabestaandenscenario, een aparte planningshorizon, en een lijfrente voor de
+ * partner. Die staan als openstaand punt in CLAUDE.md.
+ */
+export interface PartnerGegevens {
+  actief: boolean
+  /** Huidige leeftijd van de partner. Mag afwijken van die van de hoofdpersoon. */
+  leeftijd: number
+  aowMaandBedragNetto: number
+  aowStartAge: number
+  employerPension: number          // bruto/mnd
+  employerPensionStartAge: number
+}
+
+/**
  * Levenslang verzekerd of tijdelijk (bancair of verzekerd).
  *
  * Het verschil is fiscaal en praktisch relevant: een levenslange
@@ -87,6 +121,12 @@ export interface PensionInputs {
    * zetten hoort alleen als het ingevulde bedrag het al bevat.
    */
   aowVakantiegeld: boolean
+
+  /**
+   * De partner. `actief: false` betekent dat er alleen voor één persoon wordt
+   * gerekend, en dan is de uitkomst exact gelijk aan die van vóór september 2026.
+   */
+  partner: PartnerGegevens
   aowStartAge: number         // age at which AOW kicks in
   employerPension: number     // gross monthly (bruto/maand)
   employerPensionStartAge: number  // age at which employer pension kicks in (default 67, see UPO)

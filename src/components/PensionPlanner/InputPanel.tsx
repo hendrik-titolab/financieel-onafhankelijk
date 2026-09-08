@@ -286,14 +286,15 @@ function ParametersTab({ inputs, onChange }: Props) {
       <div className="border-t border-line-soft" />
 
       <Section title="Pensioenuitkeringen">
-        {/* Expliciete afbakening. De tool kent geen tweede persoon met eigen
-            pensioen, eigen belasting en eigen leeftijd; woonsituatie stuurt alleen
-            het AOW-bedrag en de alleenstaandeouderenkorting (audit 7 september
-            2026, bevinding 16). */}
+        {/* De tool rekende tot september 2026 alleen één persoon. Voor een stel gaat
+            dat op twee manieren mis, want box 1 is individueel: alleen je eigen AOW
+            invullen laat de helft van het vaste inkomen weg, en de opgetelde AOW in
+            één veld zetten belast dat als het inkomen van één persoon
+            (audit-bevinding 16). */}
         <p className="text-xs text-body leading-relaxed">
-          Deze berekening gaat over één persoon. Kies je samenwonend, dan past dat je AOW-bedrag
-          en je heffingskortingen aan, maar er wordt geen tweede persoon met een eigen pensioen,
-          eigen leeftijd en eigen belasting doorgerekend.
+          {inputs.partner.actief
+            ? 'Jij en je partner worden apart belast, zoals de inkomstenbelasting werkt: ieder met eigen schijven en eigen heffingskortingen. Wat je hieronder invult geldt per persoon.'
+            : 'Deze berekening gaat over één persoon. Woon je samen en heeft je partner ook AOW of pensioen, zet dan hieronder "Partner meerekenen" aan.'}
         </p>
         {/* Referentie aan je eigen pensioenleeftijd: die staat in de sectie
             "Leeftijd" hierboven, dus zonder deze regel zie je 'm niet meer
@@ -313,12 +314,23 @@ function ParametersTab({ inputs, onChange }: Props) {
           <div className="flex justify-between items-center">
             <label className="label mb-0">Woonsituatie</label>
             <Toggle value={inputs.woonsituatie}
-              onChange={v => onChange({
-                woonsituatie: v as Woonsituatie,
-                aowMaandBedragNetto: v === 'alleenstaand'
-                  ? AOW_NETTO.alleenstaand
-                  : AOW_NETTO.samenwonend,
-              })}
+              onChange={v => {
+                const samen = v === 'samenwonend'
+                onChange({
+                  woonsituatie: v as Woonsituatie,
+                  aowMaandBedragNetto: samen ? AOW_NETTO.samenwonend : AOW_NETTO.alleenstaand,
+                  // Overschakelen naar samenwonend zet de partner meteen aan en vult
+                  // hem met het standaardbedrag: voor een stel is dát de juiste
+                  // uitgangssituatie, niet de helft van het huishoudinkomen. Terug
+                  // naar alleenstaand zet hem weer uit.
+                  partner: {
+                    ...inputs.partner,
+                    actief: samen,
+                    leeftijd: inputs.partner.leeftijd || inputs.currentAge,
+                    aowMaandBedragNetto: AOW_NETTO.samenwonend,
+                  },
+                })
+              }}
               options={[
                 { value: 'alleenstaand', label: 'Alleenstaand' },
                 { value: 'samenwonend', label: 'Samenwonend' },
@@ -328,6 +340,81 @@ function ParametersTab({ inputs, onChange }: Props) {
             Bepaalt je AOW-bedrag en of je recht hebt op de alleenstaandeouderenkorting.
           </p>
         </div>
+
+        {/* Partner meerekenen. Alleen zichtbaar bij samenwonend: als alleenstaande
+            is er geen tweede persoon om te belasten. */}
+        {inputs.woonsituatie === 'samenwonend' && (
+          <div className="border-t border-line-soft pt-3 space-y-3">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={inputs.partner.actief}
+                onChange={e => onChange({ partner: { ...inputs.partner, actief: e.target.checked } })}
+                className="rounded accent-ink" />
+              <span className="text-xs font-medium text-ink">Partner meerekenen</span>
+            </label>
+
+            {!inputs.partner.actief && (
+              <p className="text-xs text-signal leading-relaxed">
+                Je rekent nu alleen met jouw eigen AOW en pensioen. Heeft je partner ook een
+                AOW-uitkering, dan mist het huishouden die helemaal.
+              </p>
+            )}
+
+            {inputs.partner.actief && (
+              <div className="space-y-3">
+                <p className="text-xs text-body leading-relaxed">
+                  De bedragen van je partner worden apart belast en daarna bij die van jou
+                  opgeteld. Dat scheelt: twee mensen hebben elk hun eigen schijven en hun eigen
+                  heffingskortingen. Alles bij elkaar in één veld zetten geeft een fors lager netto.
+                </p>
+
+                <Field label="Leeftijd partner nu">
+                  <NumberInput value={inputs.partner.leeftijd}
+                    onChange={v => onChange({ partner: { ...inputs.partner, leeftijd: v } })}
+                    suffix="jr" step={1} min={18} max={100} />
+                  <p className="text-xs text-body leading-relaxed mt-1">
+                    {inputs.partner.leeftijd === inputs.currentAge
+                      ? 'Even oud als jij.'
+                      : inputs.partner.leeftijd < inputs.currentAge
+                        ? `${inputs.currentAge - inputs.partner.leeftijd} jaar jonger dan jij, dus AOW en pensioen gaan later in.`
+                        : `${inputs.partner.leeftijd - inputs.currentAge} jaar ouder dan jij, dus AOW en pensioen gaan eerder in.`}
+                  </p>
+                </Field>
+
+                <Field label="AOW partner netto per maand">
+                  <NumberInput value={inputs.partner.aowMaandBedragNetto}
+                    onChange={v => onChange({ partner: { ...inputs.partner, aowMaandBedragNetto: v } })}
+                    prefix="€" step={50} />
+                </Field>
+
+                <Field label="AOW partner ingangsdatum (leeftijd)">
+                  <NumberInput value={inputs.partner.aowStartAge}
+                    onChange={v => onChange({ partner: { ...inputs.partner, aowStartAge: v } })}
+                    suffix="jr" step={1} min={60} max={75} />
+                </Field>
+
+                <Field label="Werkgeverspensioen partner (bruto/mnd)">
+                  <NumberInput value={inputs.partner.employerPension}
+                    onChange={v => onChange({ partner: { ...inputs.partner, employerPension: v } })}
+                    prefix="€" step={50} />
+                </Field>
+
+                <Field label="Werkgeverspensioen partner ingang (leeftijd)">
+                  <NumberInput value={inputs.partner.employerPensionStartAge}
+                    onChange={v => onChange({ partner: { ...inputs.partner, employerPensionStartAge: v } })}
+                    suffix="jr" step={1} min={55} max={75} />
+                </Field>
+
+                <p className="text-xs text-body leading-relaxed">
+                  Wat hier niet in zit: een aparte beleggingspot per persoon, een eigen lijfrente
+                  voor je partner, en wat er gebeurt als één van jullie eerder overlijdt. Het
+                  vermogen en het gewenste inkomen gelden voor jullie samen.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
         <Field label="AOW netto per maand">
           <NumberInput value={inputs.aowMaandBedragNetto}
             onChange={v => onChange({ aowMaandBedragNetto: v })} prefix="€" step={50} />
