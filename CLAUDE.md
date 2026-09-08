@@ -53,7 +53,10 @@ wit, ochtendblauw, zand — weg van het generieke Tailwind-blauw). Volledige doc
 stijl of componenten wijzigt — deze sectie herhaalt de details niet.
 
 Twee fonts naast DM Sans: **Instrument Serif** voor koppen, **Newsreader** (met tabular figures)
-voor alle cijfers/bedragen/KPI-waarden. Bewuste afsplitsing: Instrument Serif zelf heeft geen
+voor alle cijfers/bedragen/KPI-waarden. Alle drie worden **zelf gehost** sinds 8 september 2026
+(`@fontsource-variable/dm-sans`, `@fontsource/instrument-serif`, `@fontsource-variable/newsreader`,
+geïmporteerd in `BaseLayout.astro`). Let op de familienamen: die pakketten heten `DM Sans Variable`
+en `Newsreader Variable`, en `tailwind.config.js` is daarop aangepast. Bewuste afsplitsing: Instrument Serif zelf heeft geen
 tabular figures, waardoor live veranderende getallen zichtbaar sprongen — getest en met Hendrik
 afgestemd.
 
@@ -288,8 +291,10 @@ premie in de werkgeversregeling, dus werkgeversdeel én eigen bijdrage. Het veld
   lognormaal-omzetting die hij wél noemt (die geeft 12,08% in plaats van 12,00%, verwaarloosbaar).
 - **Geen huishoudmodel.** Eén persoon; samenwonend stuurt alleen het AOW-bedrag en de
   alleenstaandeouderenkorting. Nu expliciet benoemd in de UI, nog niet opgelost.
-- **Lettertypen niet zelf gehost.** Google Fonts maakt op elke pagina een externe verbinding.
-  Benoemd in de privacytekst; zelf hosten raakt de CSP en verdient een eigen controle.
+- ~~Lettertypen niet zelf gehost.~~ Opgelost op 8 september 2026. De site laadt geen enkel
+  bestand meer van een derde partij; `font-src` en `style-src` in de CSP staan nu op `'self'`.
+  Nagetrokken tegen de productiebuild: alle drie de families laden vanaf het eigen domein en de
+  tabular figures van Newsreader werken nog ("0" en "1" allebei 22,83px bij 40px).
 
 (Audit 2026-08 heeft nagelopen of de H1 op de FO-planner-pagina nog `sr-only` was, zoals hier
 eerder stond — dat bleek niet meer zo: de H1 is zichtbaar. Dit punt is daarom verwijderd, zie

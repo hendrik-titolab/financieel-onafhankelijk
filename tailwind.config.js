@@ -6,7 +6,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['DM Sans', 'system-ui', 'sans-serif'],
+        sans: ['DM Sans Variable', 'DM Sans', 'system-ui', 'sans-serif'],
         // Koppen: Instrument Serif. Smal display-font, blijft passen op weinig
         // breedte (± 30% smaller dan Newsreader bij gelijke leesgrootte).
         serif: ['Instrument Serif', 'Georgia', 'serif'],
@@ -14,7 +14,7 @@ export default {
         // tabular figures (een "0" is 2x breder dan een "1"), waardoor bedragen
         // die live veranderen (KPI's, slider-waarden) zichtbaar springen. Getest
         // en bevestigd op 11 augustus 2026, zie DESIGN_SYSTEM.md-aanvulling.
-        numeric: ['Newsreader', 'Georgia', 'serif'],
+        numeric: ['Newsreader Variable', 'Newsreader', 'Georgia', 'serif'],
         mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
       },
       colors: {
