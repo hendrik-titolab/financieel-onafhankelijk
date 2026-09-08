@@ -1,9 +1,11 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { track } from '@vercel/analytics'
 import { RefreshCw, ChevronDown } from 'lucide-react'
-import type { PensionInputs, PensionResult, MonteCarloResult } from '../../types'
-import { calculatePension } from '../../utils/pensionCalc'
+import type { PensionInputs, PensionResult, BerekeningsSet } from '../../types'
+import { calculatePension, controleerLeeftijden } from '../../utils/pensionCalc'
 import { runMonteCarlo } from '../../utils/monteCarlo'
+import { MODEL_VERSIE, PARAMETER_JAAR } from '../../config/modelVersie'
+import { box3DrukAfgerond } from '../../utils/box3'
 import { InputPanel } from './InputPanel'
 import { ResultsPanel } from './ResultsPanel'
 
@@ -17,6 +19,16 @@ const DEFAULT_INPUTS: PensionInputs = {
   returnBeforeRetirement: 6,
   returnAfterRetirement: 4,
   inflation: 3.0,
+  // Kosten standaard nul: die hangen af van het product en zijn niet uit de invoer
+  // af te leiden. De gebruiker vult ze zelf in; het scherm zegt erbij dat de
+  // uitkomst zonder kosten gunstiger uitvalt dan in werkelijkheid.
+  kostenPct: 0,
+  // Vermogensbelasting standaard op de schatting die bij het beginvermogen hoort,
+  // en die blijft meebewegen zolang de gebruiker het veld niet zelf aanpast. Een
+  // vast getal kan hier niet kloppen: de druk loopt op met de omvang van het
+  // vermogen (audit 7 september 2026, bevinding 10; besluit Hendrik 8 september).
+  vermogensbelastingPct: box3DrukAfgerond(100000, 'alleenstaand'),
+  vermogensbelastingHandmatig: false,
   currentIncome: 80000,
   currentIncomeType: 'bruto',
   desiredRetirementIncome: 5000,
@@ -24,10 +36,17 @@ const DEFAULT_INPUTS: PensionInputs = {
   woonsituatie: 'alleenstaand',
   aowMaandBedragNetto: 1582,  // alleenstaand netto met heffingskorting, SVB per 1 juli 2026
   aowStartAge: 67,
+  // Standaard aan: de SVB keert het vakantiegeld in mei apart uit, dus het
+  // maandbedrag op iemands overzicht is exclusief.
+  aowVakantiegeld: true,
   employerPension: 0,
   employerPensionStartAge: 67,
   lijfrenteUitkering: 0,
   lijfrenteStartAge: 67,
+  lijfrenteSoort: 'levenslang',
+  // Alleen van betekenis bij een tijdelijke uitkering; bij levenslang loopt ze
+  // door tot de planningshorizon.
+  lijfrenteEindLeeftijd: 87,
   lifeEvents: [],
   volatilityPre: 12,
   volatilityPost: 8,
@@ -42,7 +61,11 @@ interface Props {
 
 export function PensionPlanner({ clientName, onCloseSession }: Props) {
   const [inputs, setInputs] = useState<PensionInputs>(DEFAULT_INPUTS)
-  const [mc, setMc] = useState<MonteCarloResult | null>(null)
+  // Eén afgeronde berekening, vastgelegd op het moment van rekenen: invoer,
+  // deterministisch resultaat, simulatie, peildatum en modelversie bij elkaar. De
+  // export leest uitsluitend hieruit, zodat een rapport nooit nieuwe invoer met
+  // een oude simulatie kan mengen (audit 7 september 2026, bevinding 6).
+  const [berekening, setBerekening] = useState<BerekeningsSet | null>(null)
   // Het resultaat blijft in beeld staan na een invoerwijziging (was: setMc(null),
   // waardoor de grafiek en beide meters meteen verdwenen). mcStale markeert dat
   // het getoonde resultaat niet meer bij de huidige invoer hoort, zonder het weg
@@ -85,25 +108,58 @@ export function PensionPlanner({ clientName, onCloseSession }: Props) {
   // veld te corrigeren. Eerder werd retirementAge/lifeExpectancy hier automatisch
   // opgehoogd zodra currentAge/retirementAge die inhaalde, waardoor een schuifje
   // zichtbaar "vanzelf" meebewoog met een ander schuifje — expliciet ongewenst.
-  // Een leeftijdcombinatie die zichzelf tegenspreekt (bijv. currentAge >
-  // retirementAge) geeft geen fout: pensionCalc.ts/monteCarlo.ts begrenzen
-  // yearsToRetirement/yearsInRetirement/totalYears al met Math.max(0, …) resp.
-  // Math.max(1, …), dus dat geeft hooguit een kort/leeg traject.
+  //
+  // Een combinatie die zichzelf tegenspreekt levert nu wél een melding op. Tot
+  // september 2026 niet: de Math.max()-begrenzingen in pensionCalc.ts en
+  // monteCarlo.ts vingen dat stilzwijgend op, maar niet op dezelfde manier. Bij
+  // huidige leeftijd 70, stoppen op 60 en eindleeftijd 65 liep de ene kern vanaf
+  // leeftijd 60 door terwijl de andere nul jaren doorliep en 100% slagingskans
+  // meldde (audit 7 september 2026, bevinding 3). De schuifjes blijven zelfstandig
+  // bedienbaar; alleen de uitkomst wordt tegengehouden zolang ze niets betekent.
   const handleChange = useCallback((updates: Partial<PensionInputs>) => {
     setInputs(prev => ({ ...prev, ...updates }))
     setMcStale(mcPrev => mcPrev || true)
   }, [])
 
-  const result: PensionResult = calculatePension(inputs)
+  // Zolang de gebruiker de vermogensbelasting niet zelf heeft ingevuld, volgt die
+  // de schatting bij het opgegeven vermogen. Verhoog je je vermogen van een ton
+  // naar een miljoen, dan loopt de druk mee van 0,9% naar 2,0% zonder dat je daar
+  // zelf aan hoeft te denken. Zodra je het veld aanraakt blijft jouw waarde staan.
+  useEffect(() => {
+    if (inputs.vermogensbelastingHandmatig) return
+    const schatting = box3DrukAfgerond(inputs.currentCapital, inputs.woonsituatie)
+    if (schatting !== inputs.vermogensbelastingPct) {
+      setInputs(prev => ({ ...prev, vermogensbelastingPct: schatting }))
+      setMcStale(true)
+    }
+  }, [inputs.currentCapital, inputs.woonsituatie, inputs.vermogensbelastingHandmatig, inputs.vermogensbelastingPct])
+
+  const leeftijden = controleerLeeftijden(inputs.currentAge, inputs.retirementAge, inputs.lifeExpectancy)
+  const isGeldig = leeftijden.errors.length === 0
+
+  // Bij een ongeldige combinatie wordt er niet gerekend. Een uitkomst tonen die
+  // op een onmogelijke aanname rust is in het Wft-domein erger dan geen uitkomst.
+  const result: PensionResult | null = isGeldig ? calculatePension(inputs) : null
 
   const handleRunMonteCarlo = useCallback(() => {
     // Zicht op of bezoekers de tool daadwerkelijk gebruiken, niet alleen de
     // pagina bezoeken (Vercel Web Analytics gaf tot nu toe alleen dat laatste).
+    if (!isGeldig) return
     track('bereken_geklikt')
     setIsCalculating(true)
     setTimeout(() => {
-      const mcResult = runMonteCarlo(inputs)
-      setMc(mcResult)
+      // Beide kernen in één keer, op dezelfde invoer. Het deterministische
+      // resultaat wordt hier apart berekend en niet uit de live `result`
+      // overgenomen: die hoort bij wat er nú op het scherm staat, en dat is
+      // precies wat er in de export niet door elkaar mag lopen.
+      setBerekening({
+        inputs,
+        result: calculatePension(inputs),
+        mc: runMonteCarlo(inputs),
+        peildatum: new Date().toISOString(),
+        modelVersie: MODEL_VERSIE,
+        parameterJaar: PARAMETER_JAAR,
+      })
       setMcStale(false)
       setIsCalculating(false)
       // Op mobiel staat de invoerkolom boven de resultaten (gestapelde layout
@@ -116,7 +172,7 @@ export function PensionPlanner({ clientName, onCloseSession }: Props) {
         })
       }
     }, 50)
-  }, [inputs])
+  }, [inputs, isGeldig])
 
   return (
     // Responsive: stacked on mobile/portrait tablet, side-by-side on desktop/landscape
@@ -143,13 +199,18 @@ export function PensionPlanner({ clientName, onCloseSession }: Props) {
           <div className="flex-shrink-0 border-t border-line-soft p-3 bg-panel">
             <button
               onClick={handleRunMonteCarlo}
-              disabled={isCalculating}
+              disabled={isCalculating || !isGeldig}
               className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium bg-ink hover:bg-[#1F2C23] text-warmwhite rounded-[3px] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <RefreshCw size={16} className={isCalculating ? 'animate-spin' : ''} />
               {isCalculating ? 'Berekenen…' : 'Bereken'}
             </button>
-            {mcStale && mc && !isCalculating && (
+            {!isGeldig && (
+              <p className="text-xs text-signal mt-2 text-center leading-relaxed">
+                {leeftijden.errors[0]}
+              </p>
+            )}
+            {isGeldig && mcStale && berekening && !isCalculating && (
               <p className="text-xs text-body mt-2 text-center">Invoer gewijzigd — resultaat hiernaast is nog van de vorige berekening.</p>
             )}
           </div>
@@ -158,16 +219,38 @@ export function PensionPlanner({ clientName, onCloseSession }: Props) {
 
       {/* Right: Results — full width, scrollable */}
       <div className="flex-1 lg:overflow-y-auto">
+        {!isGeldig || result === null ? (
+          <div className="card">
+            <h2 className="text-sm font-medium text-ink mb-2">Deze leeftijden kunnen niet samen</h2>
+            <ul className="space-y-1">
+              {leeftijden.errors.map((e, i) => (
+                <li key={i} className="text-sm text-signal leading-relaxed">{e}</li>
+              ))}
+            </ul>
+            <p className="text-xs text-body mt-3 leading-relaxed">
+              Zolang de combinatie niets betekent laten we geen uitkomst zien. Een getal dat op een
+              onmogelijke aanname rust is misleidender dan geen getal.
+            </p>
+          </div>
+        ) : (
         <ResultsPanel
           inputs={inputs}
           result={result}
-          mc={mc}
+          berekening={berekening}
           mcStale={mcStale}
           isCalculating={isCalculating}
           onRunMonteCarlo={handleRunMonteCarlo}
           clientName={clientName}
           onCloseSession={onCloseSession}
         />
+        )}
+        {isGeldig && leeftijden.notes.length > 0 && (
+          <div className="card mt-4">
+            {leeftijden.notes.map((n, i) => (
+              <p key={i} className="text-xs text-body leading-relaxed">{n}</p>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

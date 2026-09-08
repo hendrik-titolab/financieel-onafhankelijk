@@ -1,6 +1,7 @@
 import type { PensionInputs, PensionResult, YearData, IncomePhase, LifeEvent, Woonsituatie } from '../types'
-import { BOX1_PRE_AOW, BOX1_POST_AOW, AOW_NETTO_MAAND, ZVW } from '../config/fiscaleParameters'
+import { AOW_NETTO_MAAND, AOW_BRUTO_MAAND, AOW_VAKANTIEGELD_BRUTO_MAAND, ZVW } from '../config/fiscaleParameters'
 import { belastingBox1 } from './brutoNetto'
+import { nettoNominaalRendement } from './box3'
 
 // AOW netto maandbedragen — uit centrale config (fiscaleParameters.ts)
 export const AOW_NETTO = {
@@ -8,23 +9,55 @@ export const AOW_NETTO = {
   samenwonend:  AOW_NETTO_MAAND.samenwonend,
 }
 
-// Box 1 bruto → netto conversie — tarieven uit centrale config (fiscaleParameters.ts)
-export function brutoToNetto(bruto: number, pastAowAge: boolean): number {
-  if (bruto <= 0) return 0
-  const t = pastAowAge ? BOX1_POST_AOW : BOX1_PRE_AOW
-  if (bruto <= t.schijf1Grens) return bruto * (1 - t.schijf1Tarief)
-  if (bruto <= t.schijf2Grens) return t.schijf1Grens * (1 - t.schijf1Tarief) + (bruto - t.schijf1Grens) * (1 - t.schijf2Tarief)
-  return t.schijf1Grens * (1 - t.schijf1Tarief) + (t.schijf2Grens - t.schijf1Grens) * (1 - t.schijf2Tarief) + (bruto - t.schijf2Grens) * (1 - t.schijf3Tarief)
+/**
+ * Toetst of de drie leeftijden een samenhangend verhaal vertellen.
+ *
+ * De schuifjes blijven bewust zelfstandig bedienbaar (zie het commentaar in
+ * PensionPlanner/index.tsx): geen enkel veld corrigeert een ander. Dat betekent
+ * wél dat er combinaties in te stellen zijn die niets betekenen, en tot september
+ * 2026 rekende de tool die gewoon door. Huidige leeftijd 70, stoppen op 60,
+ * eindleeftijd 65 liet de deterministische kern vanaf leeftijd 60 lopen terwijl
+ * Monte Carlo nul jaren doorliep en 100% slagingskans meldde: twee kernen die
+ * elkaar tegenspraken, allebei zonder waarschuwing (audit 7 september 2026,
+ * bevinding 3).
+ *
+ * Errors blokkeren de uitkomst. Notes leggen alleen uit hoe een ongebruikelijke
+ * maar zinnige combinatie wordt gelezen.
+ */
+export interface LeeftijdControle {
+  errors: string[]
+  notes: string[]
+  /** De leeftijd waarop de uitkeringsfase feitelijk begint. */
+  effectiveRetirementAge: number
 }
 
-export function nettoToBruto(netto: number, pastAowAge: boolean): number {
-  if (netto <= 0) return 0
-  const t = pastAowAge ? BOX1_POST_AOW : BOX1_PRE_AOW
-  const net1 = t.schijf1Grens * (1 - t.schijf1Tarief)
-  const net2 = net1 + (t.schijf2Grens - t.schijf1Grens) * (1 - t.schijf2Tarief)
-  if (netto <= net1) return netto / (1 - t.schijf1Tarief)
-  if (netto <= net2) return t.schijf1Grens + (netto - net1) / (1 - t.schijf2Tarief)
-  return t.schijf2Grens + (netto - net2) / (1 - t.schijf3Tarief)
+export function controleerLeeftijden(
+  currentAge: number,
+  retirementAge: number,
+  lifeExpectancy: number
+): LeeftijdControle {
+  const errors: string[] = []
+  const notes: string[] = []
+
+  // Al gepensioneerd: de uitkeringsfase begint vandaag, niet in het verleden.
+  // Zonder deze regel begon de jaartabel op een leeftijd die al voorbij is.
+  const effectiveRetirementAge = Math.max(currentAge, retirementAge)
+
+  if (retirementAge < currentAge) {
+    notes.push(
+      `Je pensioenleeftijd (${retirementAge}) ligt vóór je huidige leeftijd (${currentAge}). ` +
+      `We rekenen daarom vanaf vandaag: je bent al met pensioen.`
+    )
+  }
+
+  if (lifeExpectancy <= effectiveRetirementAge) {
+    errors.push(
+      `Je plant tot leeftijd ${lifeExpectancy}, maar je uitkeringsfase begint pas op ` +
+      `${effectiveRetirementAge}. Zet "plannen tot leeftijd" hoger dan ${effectiveRetirementAge}.`
+    )
+  }
+
+  return { errors, notes, effectiveRetirementAge }
 }
 
 function realAnnualReturn(nominal: number, inflation: number): number {
@@ -60,6 +93,34 @@ export function aowNettoNaarBruto(nettoMaand: number): number {
   return nettoMaand / (1 - ZVW.lageBijdrage)
 }
 
+/**
+ * Met hoeveel het AOW-jaarinkomen omhoog gaat als je het vakantiegeld meetelt.
+ *
+ * De SVB keert het vakantiegeld in mei apart uit; het maandbedrag dat mensen op
+ * hun overzicht zien is exclusief. De rekenkern gebruikte twaalf van die
+ * maandbedragen en liet het vakantiegeld dus vallen, waardoor het beschikbare
+ * inkomen structureel te laag uitkwam (audit 7 september 2026, bevinding 12).
+ * AOW_VAKANTIEGELD_BRUTO_MAAND stond al in de config maar werd nergens gebruikt.
+ *
+ * Als factor en niet als vast bedrag, zodat een gekorte AOW (wie niet zijn hele
+ * leven in Nederland woonde) evenredig meeschaalt in plaats van er een volledig
+ * vakantiegeld bovenop te krijgen.
+ *
+ * Over alleen een AOW-uitkering is de loonheffing nul, dus netto en bruto schalen
+ * met dezelfde factor. Zodra er aanvullend pensioen bij komt belast
+ * getIncomeBreakdown() het totaal, inclusief dit deel, tegen het juiste marginale
+ * tarief.
+ *
+ * Alleenstaand: (1.662,64 + 106,55) / 1.662,64 = 1,064086.
+ * Samenwonend:  (1.139,25 +  76,10) / 1.139,25 = 1,066799.
+ */
+export function aowVakantiegeldFactor(woonsituatie: Woonsituatie): number {
+  const bruto = AOW_BRUTO_MAAND[woonsituatie]
+  const vakantiegeld = AOW_VAKANTIEGELD_BRUTO_MAAND[woonsituatie]
+  if (!(bruto > 0)) return 1
+  return (bruto + vakantiegeld) / bruto
+}
+
 /** Bijdrage Zvw over een jaarinkomen, afgetopt op het maximumbijdrage-inkomen. */
 function zvwBijdrage(brutoJaar: number): number {
   return Math.min(Math.max(0, brutoJaar), ZVW.maximumBijdrageInkomen) * ZVW.lageBijdrage
@@ -71,6 +132,37 @@ export function nettoJaarinkomen(brutoJaar: number, pastAow: boolean, alleenstaa
   // arbeidsinkomen 0: AOW en pensioen zijn geen arbeidsinkomen, dus geen arbeidskorting.
   const r = belastingBox1(brutoJaar, { pastAow, arbeidsinkomen: 0, alleenstaand })
   return r.nettoJaar - zvwBijdrage(brutoJaar)
+}
+
+/**
+ * Een bruto MAANDbedrag naar netto per maand, via de volledige belastingmotor.
+ *
+ * Hier stond tot september 2026 een eigen conversie (brutoToNetto) die een
+ * maandbedrag rechtstreeks tegen de JAARschijven legde. Bij € 5.000 bruto per
+ * maand viel dat bedrag daardoor altijd in de eerste schijf en kwam er € 4.107,50
+ * netto uit, terwijl het werkelijke antwoord voor een alleenstaande die het hele
+ * jaar AOW-gerechtigd is rond € 3.612 ligt. Het netto doelinkomen lag zo circa
+ * 14% te hoog, en daarmee ook het benodigde vermogen en de benodigde inleg.
+ *
+ * Even belangrijk: die conversie kende geen heffingskortingen en geen Zvw,
+ * terwijl getIncomeBreakdown() hieronder de inkomstenbronnen wél door
+ * belastingBox1 + Zvw haalt. Er stonden dus twee belastingmotoren naast elkaar
+ * in één berekening. Alleen ×12 doen had die scheefheid laten staan; daarom loopt
+ * dit nu door dezelfde nettoJaarinkomen() als alle andere bronnen.
+ *
+ * Let op de beperking: dit is één conversie voor de hele uitkeringsfase, op basis
+ * van het regime dat geldt op de pensioendatum. Wie vóór de AOW-leeftijd stopt
+ * betaalt over hetzelfde brutobedrag in de overbruggingsjaren méér belasting dan
+ * daarna. De invoer is één getal, dus dat verschil is hier niet uit te drukken.
+ * De UI benoemt onder welke aannames de omrekening geldt.
+ */
+export function brutoMaandNaarNettoMaand(
+  brutoMaand: number,
+  pastAow: boolean,
+  alleenstaand: boolean
+): number {
+  if (brutoMaand <= 0) return 0
+  return nettoJaarinkomen(brutoMaand * 12, pastAow, alleenstaand) / 12
 }
 
 /**
@@ -103,14 +195,30 @@ export function getIncomeBreakdown(
   // andere call sites in pensionCalc.ts/monteCarlo.ts hoefde hierdoor aangepast te
   // worden aan de argumentvolgorde.
   lijfrenteUitkeringBruto = 0,
-  lijfrenteStartAge = 67
+  lijfrenteStartAge = 67,
+  // Einde van een tijdelijke uitkering. Oneindig betekent levenslang, en dat is de
+  // default zodat elke bestaande aanroep zich gedraagt zoals voorheen.
+  lijfrenteEindLeeftijd = Infinity,
+  // Of het AOW-vakantiegeld meetelt. Default false zodat een losse aanroep zich
+  // gedraagt als voorheen; calculatePension en runMonteCarlo geven de keuze van de
+  // gebruiker door.
+  aowVakantiegeld = false
 ): MaandInkomenVerdeling {
   const pastAow = age >= aowStartAge
   const alleenstaand = woonsituatie === 'alleenstaand'
 
-  const aow = pastAow ? aowNetto : 0
+  // Het vakantiegeld verhoogt zowel het bruto- als het nettobedrag met dezelfde
+  // factor, zie aowVakantiegeldFactor() hierboven. Uitgedrukt per maand, want de
+  // rest van deze functie rekent in maandbedragen: het bedrag komt in mei binnen,
+  // maar over een jaar gemeten telt het gewoon mee.
+  const vg = pastAow && aowVakantiegeld ? aowVakantiegeldFactor(woonsituatie) : 1
+  const aowNettoMetVg = aowNetto * vg
+
+  const aow = pastAow ? aowNettoMetVg : 0
   const heeftPensioen = age >= employerPensionStartAge
-  const heeftLijfrente = age >= lijfrenteStartAge
+  // Een tijdelijke uitkering stopt. Tot september 2026 liep iedere lijfrente door
+  // tot de planningshorizon, ook een uitkering van vijf jaar (bevinding 9).
+  const heeftLijfrente = age >= lijfrenteStartAge && age < lijfrenteEindLeeftijd
 
   // Belasten over het TOTALE box 1-inkomen, niet per bron. Heffingskortingen zijn
   // inkomensafhankelijk, dus per bron rekenen geeft een te hoge korting en daarmee
@@ -123,11 +231,11 @@ export function getIncomeBreakdown(
   // lijfrente is willekeurig gekozen (er is geen fiscaal correcte manier om een
   // gedeelde korting-afbouw over twee gelijktijdige bronnen te verdelen), niet
   // fiscaal betekenisvol.
-  const aowBrutoJaar = pastAow ? aowNettoNaarBruto(aowNetto) * 12 : 0
+  const aowBrutoJaar = pastAow ? aowNettoNaarBruto(aowNettoMetVg) * 12 : 0
   const pensioenBrutoJaar = heeftPensioen ? employerPensionBruto * 12 : 0
   const lijfrenteBrutoJaar = heeftLijfrente ? lijfrenteUitkeringBruto * 12 : 0
 
-  const nettoAowJaar = pastAow ? aowNetto * 12 : 0
+  const nettoAowJaar = pastAow ? aowNettoMetVg * 12 : 0
   const nettoAowPensioenJaar = nettoJaarinkomen(aowBrutoJaar + pensioenBrutoJaar, pastAow, alleenstaand)
   const nettoAowPensioenLijfrenteJaar = nettoJaarinkomen(
     aowBrutoJaar + pensioenBrutoJaar + lijfrenteBrutoJaar, pastAow, alleenstaand
@@ -155,11 +263,14 @@ export function getMonthlyWithdrawal(
   employerPensionStartAge: number,
   woonsituatie: Woonsituatie = 'alleenstaand',
   lijfrenteUitkeringBruto = 0,
-  lijfrenteStartAge = 67
+  lijfrenteStartAge = 67,
+  lijfrenteEindLeeftijd = Infinity,
+  aowVakantiegeld = false
 ): number {
   return getIncomeBreakdown(
     age, desiredNetto, aowNetto, aowStartAge, employerPensionBruto, employerPensionStartAge,
-    woonsituatie, lijfrenteUitkeringBruto, lijfrenteStartAge
+    woonsituatie, lijfrenteUitkeringBruto, lijfrenteStartAge, lijfrenteEindLeeftijd,
+    aowVakantiegeld
   ).fromCapital
 }
 
@@ -211,6 +322,99 @@ function simulateAccumulation(
   return capital
 }
 
+/**
+ * Doorloopt de uitkeringsfase vanaf een gegeven startvermogen en geeft terug wat
+ * het laagste saldo onderweg was. Zelfde recursie als de jaartabel verderop:
+ * eenmalig bedrag aan het begin van het jaar, dan rendement, dan de onttrekking.
+ *
+ * Het laagste saldo is wat telt, niet het eindsaldo. Een eindwaardeberekening zegt
+ * alleen of het geld op de einddatum uitkomt, niet of iedere tussenliggende maand
+ * betaalbaar was. Zie findRequiredCapital() hieronder.
+ */
+function simulateRetirementPath(
+  startCapital: number,
+  yearsInRetirement: number,
+  retirementAge: number,
+  retirementYear: number,
+  realPostAnnual: number,
+  retEventMap: Map<number, number>,
+  withdrawalAtAge: (age: number) => number
+): { minCapital: number; endCapital: number } {
+  let capital = startCapital
+  let minCapital = startCapital
+  const factor = 1 + realPostAnnual / 100
+  // Mid-year-conventie voor de onttrekking, zie de uitkeringslus in
+  // calculatePension(). Moet hier hetzelfde zijn, anders zoekt findRequiredCapital()
+  // naar een doelbedrag dat de jaartabel ernaast niet waarmaakt.
+  const onttrekkingsFactor = Math.sqrt(factor)
+
+  for (let yr = 0; yr < yearsInRetirement; yr++) {
+    const age = retirementAge + yr
+    const event = retEventMap.get(retirementYear + yr) ?? 0
+    capital = (capital + event) * factor - withdrawalAtAge(age) * 12 * onttrekkingsFactor
+    // Ná de onttrekking van dat jaar: dát is het moment waarop de rekening
+    // betaald moet zijn. Vóór de onttrekking meten zou een tekort dat pas in
+    // december ontstaat een jaar te laat zien.
+    if (capital < minCapital) minCapital = capital
+  }
+
+  return { minCapital, endCapital: capital }
+}
+
+/**
+ * Het kleinste startvermogen waarbij het saldo in GEEN ENKEL jaar negatief wordt.
+ *
+ * Hier stond tot september 2026 een contante-waardeberekening die de contante
+ * waarde van latere ontvangsten volledig van het doelbedrag aftrok. Dat is een
+ * eindwaardeberekening en die garandeert niet dat iedere tussentijdse uitgave
+ * betaalbaar is. Het geval uit de audit van 7 september 2026: stoppen op 60,
+ * plannen tot 70, geen vermogen, € 1.000 netto per maand nodig, en over vijf jaar
+ * € 120.000 erven. Het doelbedrag kwam op € 0 uit en de hoofdvergelijking meldde
+ * geen tekort, terwijl de simulatie 0% slaagde. Voor de eerste vijf jaar is
+ * € 60.000 overbrugging nodig.
+ *
+ * Het saldo is een strikt stijgende functie van het startvermogen (de recursie is
+ * lineair, iedere euro extra groeit mee met r^t), dus bisectie vindt hier één
+ * eenduidig antwoord. De bovengrens wordt eerst verdubbelend gezocht: een vaste
+ * bovengrens kan bij een negatief reëel rendement of een grote uitgave in de
+ * uitkeringsfase te laag uitvallen, en dan zou de tool stilzwijgend een te laag
+ * doelbedrag noemen.
+ *
+ * Zonder eenmalige bedragen komt dit exact op de oude contante waarde uit: het
+ * saldo daalt dan monotoon naar nul op de einddatum, dus het laagste saldo ís het
+ * eindsaldo. Dat is vastgelegd in een test.
+ */
+function findRequiredCapital(
+  yearsInRetirement: number,
+  retirementAge: number,
+  retirementYear: number,
+  realPostAnnual: number,
+  retEventMap: Map<number, number>,
+  withdrawalAtAge: (age: number) => number
+): number {
+  const haalbaar = (start: number) => simulateRetirementPath(
+    start, yearsInRetirement, retirementAge, retirementYear,
+    realPostAnnual, retEventMap, withdrawalAtAge
+  ).minCapital >= 0
+
+  if (haalbaar(0)) return 0
+
+  let hi = 1000
+  for (let i = 0; i < 60 && !haalbaar(hi); i++) hi *= 2
+  // Blijft het onhaalbaar, dan is de invoer zo extreem (bijvoorbeeld een reëel
+  // rendement van bijna −100%) dat geen bedrag volstaat. Teruggeven wat we hebben
+  // is dan eerlijker dan doorzoeken met een grens die toch niet werkt.
+  if (!haalbaar(hi)) return hi
+
+  let lo = 0
+  for (let i = 0; i < 60; i++) {
+    const mid = (lo + hi) / 2
+    if (haalbaar(mid)) hi = mid
+    else lo = mid
+  }
+  return hi
+}
+
 // Binary search for required monthly PMT to reach targetCapital
 function findRequiredPMT(
   targetCapital: number,
@@ -233,18 +437,39 @@ function findRequiredPMT(
 
 export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: number }): PensionResult {
   const {
-    currentAge, retirementAge, lifeExpectancy,
+    currentAge, retirementAge: retirementAgeInput, lifeExpectancy,
     currentCapital, monthlyContribution, contributionFrequency,
     returnBeforeRetirement, returnAfterRetirement, inflation,
+    kostenPct = 0, vermogensbelastingPct = 0,
     desiredRetirementIncome, desiredRetirementIncomeType,
     aowMaandBedragNetto, aowStartAge, woonsituatie = 'alleenstaand',
     employerPension, employerPensionStartAge,
     lijfrenteUitkering, lijfrenteStartAge,
+    lijfrenteSoort = 'levenslang', lijfrenteEindLeeftijd = Infinity,
+    aowVakantiegeld = false,
     lifeEvents = [],
   } = inputs
 
-  const realPre = realAnnualReturn(returnBeforeRetirement, inflation)
-  const realPost = realAnnualReturn(returnAfterRetirement, inflation)
+  // Alleen een tijdelijke uitkering heeft een einddatum. Bij levenslang blijft de
+  // uitkering doorlopen tot de planningshorizon.
+  const lijfrenteEinde = lijfrenteSoort === 'tijdelijk' ? lijfrenteEindLeeftijd : Infinity
+
+  // Kosten en vermogensbelasting gaan er als procentpunten af vóórdat de inflatie
+  // eruit wordt gerekend. Staan ze op nul, dan verandert er niets: dat is de stand
+  // van vóór september 2026, toen de tekst iets anders beweerde dan de rekenkern
+  // deed (audit-bevinding 10).
+  const brutoPre = nettoNominaalRendement(returnBeforeRetirement, kostenPct, vermogensbelastingPct)
+  const brutoPost = nettoNominaalRendement(returnAfterRetirement, kostenPct, vermogensbelastingPct)
+  const realPre = realAnnualReturn(brutoPre, inflation)
+  const realPost = realAnnualReturn(brutoPost, inflation)
+
+  // Eén gedeelde lezing van de leeftijden, zodat deze kern en monteCarlo.ts niet
+  // uiteen kunnen lopen bij een combinatie die zichzelf tegenspreekt. Wie zijn
+  // pensioenleeftijd onder zijn huidige leeftijd zet is al met pensioen: de
+  // uitkeringsfase begint dan vandaag en niet in het verleden.
+  const retirementAge = controleerLeeftijden(
+    currentAge, retirementAgeInput, lifeExpectancy
+  ).effectiveRetirementAge
 
   const yearsToRetirement = Math.max(0, retirementAge - currentAge)
   const yearsInRetirement = Math.max(1, lifeExpectancy - retirementAge)
@@ -265,9 +490,16 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
     currentCapital, monthlyPMT, yearsToRetirement, realPre, accEventMap, currentYear
   )
 
-  // Desired netto monthly income
+  // Gewenst netto maandinkomen. Bij een bruto-invoer geldt het belastingregime op
+  // de pensioendatum: wie ná de AOW-leeftijd stopt valt onder de lagere eerste
+  // schijf, wie eerder stopt niet. Zie brutoMaandNaarNettoMaand() voor waarom dit
+  // één conversie is en niet per jaar verschilt.
   const desiredMonthlyNetto = desiredRetirementIncomeType === 'bruto'
-    ? brutoToNetto(desiredRetirementIncome, true)
+    ? brutoMaandNaarNettoMaand(
+        desiredRetirementIncome,
+        retirementAge >= aowStartAge,
+        woonsituatie === 'alleenstaand'
+      )
     : desiredRetirementIncome
 
   const aowMonthlyNetto = aowMaandBedragNetto
@@ -279,15 +511,20 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
   // onttrekking). Anders ligt dit doelbedrag ~1% boven wat de simulatie werkelijk
   // nodig heeft en spreken het KPI-oordeel en de jaartabel elkaar tegen (E9).
   const rPostAnnual = 1 + realPost / 100
-  let requiredCapital = 0
+  const withdrawalAtAge = (age: number) => getMonthlyWithdrawal(
+    age, desiredMonthlyNetto, aowMonthlyNetto, aowStartAge,
+    employerPension, employerPensionStartAge, woonsituatie,
+    lijfrenteUitkering, lijfrenteStartAge, lijfrenteEinde, aowVakantiegeld
+  )
+
+  // Contante waarde van alle onttrekkingen: wat je inkomen op zichzelf kost, nog
+  // zonder de latere eenmalige bedragen. Blijft berekend omdat het scherm en de
+  // export laten zien hoe het doelbedrag is opgebouwd.
+  const onttrekkingsFactor = Math.sqrt(rPostAnnual)
+  let pvWithdrawals = 0
   for (let yr = 0; yr < yearsInRetirement; yr++) {
-    const age = retirementAge + yr
-    const annualWithdrawal = getMonthlyWithdrawal(
-      age, desiredMonthlyNetto, aowMonthlyNetto, aowStartAge,
-      employerPension, employerPensionStartAge, woonsituatie,
-      lijfrenteUitkering, lijfrenteStartAge
-    ) * 12
-    requiredCapital += annualWithdrawal / Math.pow(rPostAnnual, yr + 1)
+    pvWithdrawals += withdrawalAtAge(retirementAge + yr) * 12 * onttrekkingsFactor
+      / Math.pow(rPostAnnual, yr + 1)
   }
 
   // Eenmalige bedragen ná de pensioendatum verlagen (of verhogen) wat je óp die
@@ -320,7 +557,24 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
       pvEventsAfterRetirement += amount / Math.pow(rPostAnnual, yr)
     }
   }
-  requiredCapital -= pvEventsAfterRetirement
+  // Het doelbedrag volgens de eindwaarde: alle onttrekkingen contant gemaakt, minus
+  // wat er later binnenkomt. Dit is wat er tot september 2026 als requiredCapital
+  // uit deze functie kwam, en het is nog steeds het bedrag dat de opbouw op het
+  // scherm verklaart.
+  const requiredCapitalEindwaarde = pvWithdrawals - pvEventsAfterRetirement
+
+  // Het werkelijke doelbedrag: het kleinste startvermogen waarbij het saldo
+  // onderweg nooit negatief wordt. Gelijk aan de eindwaarde zolang er geen
+  // overbrugging nodig is, hoger zodra een ontvangst pas later binnenkomt.
+  const requiredCapital = findRequiredCapital(
+    yearsInRetirement, retirementAge, retirementYear, realPost, retEventMap, withdrawalAtAge
+  )
+
+  // Wat er bovenop de eindwaarde nodig is om de jaren tót die latere ontvangst te
+  // overbruggen. Apart teruggegeven zodat het scherm dit als eigen regel kan tonen
+  // in plaats van het stilzwijgend in het doelbedrag te verwerken: zonder die regel
+  // ziet iemand wél een hoger doelbedrag, maar niet waardoor.
+  const overbruggingsToeslag = Math.max(0, requiredCapital - requiredCapitalEindwaarde)
 
   // Required monthly contribution (binary search, accounts for life events)
   const requiredMonthlyContribution = findRequiredPMT(
@@ -342,7 +596,9 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
       year: calYear,
       capital: Math.max(0, capital),
       phase: 'opbouw',
+      desiredFromCapital: 0,
       incomeFromCapital: 0,
+      shortfall: 0,
       aowIncome: 0,
       employerIncome: 0,
       lijfrenteIncome: 0,
@@ -355,54 +611,103 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
 
   // Retirement phase
   let surplusAtEnd = 0
+  let firstShortfallAge: number | null = null
   for (let yr = 0; yr <= yearsInRetirement; yr++) {
     const age = retirementAge + yr
     const calYear = retirementYear + yr
+    const isLaatsteRij = yr === yearsInRetirement
 
     const { aow, employerPension: emp, lijfrenteUitkering: lijf, fromCapital } = getIncomeBreakdown(
       age, desiredMonthlyNetto, aowMonthlyNetto, aowStartAge,
       employerPension, employerPensionStartAge, woonsituatie,
-      lijfrenteUitkering, lijfrenteStartAge
+      lijfrenteUitkering, lijfrenteStartAge, lijfrenteEinde, aowVakantiegeld
     )
-    // Alleen voor de weergave: is het vermogen op, dan krijgt iemand feitelijk nog
-    // alleen AOW, werkgeverspensioen en lijfrente-/bankspaaruitkering. De
-    // kapitaalmutatie hieronder gebruikt bewust de ónbeperkte fromCapital, anders
-    // stopt de onttrekking zodra de pot leeg is en meet het getoonde tekort iets
-    // anders dan het tekort werkelijk is (A1).
-    const actualFromCapital = capital > 0 ? fromCapital : 0
+
+    // Het eenmalige bedrag van dit jaar komt aan het begin binnen en is dus
+    // beschikbaar voor het inkomen van datzelfde jaar. Het werd hieronder pas
+    // verwerkt nádat de inkomensregel was samengesteld, waardoor een ontvangst van
+    // € 12.000 in januari bij een beginsaldo van € 0 een getoond inkomen uit
+    // vermogen van € 0 opleverde (audit 7 september 2026, bevinding 5).
+    const retEvent = retEventMap.get(calYear) ?? 0
+
+    // De laatste rij is de eindstand op de planningshorizon, geen uitkeringsjaar:
+    // daar vindt geen groei en geen onttrekking meer plaats. Ze toont dus wat er
+    // overblijft plus de vaste bronnen die gewoon doorlopen, en géén onttrekking
+    // uit vermogen. Anders meldt een plan dat op de einddatum precies op nul
+    // uitkomt daar een tekort van een vol maandbedrag, terwijl het gewoon geslaagd
+    // is. Tot september 2026 toonde die rij juist het omgekeerde: bij een
+    // restvermogen stond er een onttrekking die het model nooit heeft uitgevoerd.
+    const gewenstPerMaand = isLaatsteRij ? 0 : fromCapital
+
+    // Wat er dit jaar werkelijk uit vermogen te halen valt, ná het eenmalige bedrag
+    // en de groei van dat jaar. Begrenzen op dat bedrag: dit was een binaire poort
+    // (capital > 0 ? fromCapital : 0), waardoor de tabel in het jaar waarin de pot
+    // leegloopt nog de vólle onttrekking toonde. Bij € 1.000 vermogen en € 1.000
+    // maandbehoefte stond er twaalf maanden lang € 1.000 aan inkomen uit vermogen,
+    // terwijl er één maandbedrag van € 83,33 beschikbaar was.
+    const beschikbaarJaar = Math.max(0, (capital + retEvent) * (1 + realPost / 100))
+    const betaaldPerMaand = Math.min(
+      gewenstPerMaand,
+      beschikbaarJaar / (12 * Math.sqrt(1 + realPost / 100))
+    )
+    const tekortPerMaand = Math.max(0, gewenstPerMaand - betaaldPerMaand)
+
+    if (tekortPerMaand > 0.005 && firstShortfallAge === null) firstShortfallAge = age
 
     yearData.push({
       age,
       year: calYear,
       capital: Math.max(0, capital),
       phase: 'uitkering',
-      incomeFromCapital: actualFromCapital,
+      desiredFromCapital: gewenstPerMaand,
+      incomeFromCapital: betaaldPerMaand,
+      shortfall: tekortPerMaand,
       aowIncome: aow,
       employerIncome: emp,
       lijfrenteIncome: lijf,
-      totalIncome: actualFromCapital + aow + emp + lijf,
+      totalIncome: betaaldPerMaand + aow + emp + lijf,
     })
 
-    if (yr === yearsInRetirement) {
+    if (isLaatsteRij) {
       surplusAtEnd = capital
       break
     }
 
-    // Apply retirement life events at start of year before growth and withdrawal
-    const retEvent = retEventMap.get(calYear) ?? 0
-    capital = (capital + retEvent) * (1 + realPost / 100) - fromCapital * 12
+    // De kapitaalmutatie gebruikt bewust de ónbeperkte fromCapital. Zou de
+    // onttrekking hier op nul worden geklemd zodra de pot leeg is, dan zou
+    // surplusAtEnd altijd nul zijn en zou het KPI-raster geen tekort meer kunnen
+    // tonen. Het saldo loopt dus dóór in het negatieve; alleen de weergave is
+    // begrensd (bevinding A1).
+    // Mid-year-conventie voor de onttrekking, spiegelbeeld van de jaarinleg in
+    // simulateAccumulation(). Een bedrag dat in twaalf maandtermijnen wordt
+    // opgenomen kost aan het einde van het jaar meer dan hetzelfde bedrag ineens
+    // op 31 december, want elke termijn mist het resterende rendement van dat
+    // jaar. De inleg kreeg die correctie al wel, de onttrekking niet.
+    //
+    // Nagerekend op 7 september 2026 met € 1.000 per maand, dertig jaar, 4% reëel:
+    // jaarultimo € 207.504, twaalf maandtermijnen € 211.282, met deze wortelfactor
+    // € 211.614. De benadering neemt 91,2% van het verschil weg en houdt 0,16%
+    // over. Een volledige maandmotor haalt die laatste 0,16% op en kost een
+    // herbouw van beide rekenkernen; dat is bewust niet gedaan (audit 7 september
+    // 2026, bevinding 14).
+    capital = (capital + retEvent) * (1 + realPost / 100)
+      - fromCapital * 12 * Math.sqrt(1 + realPost / 100)
   }
 
   const incomePhases = buildIncomePhases(
     retirementAge, lifeExpectancy,
     desiredMonthlyNetto, aowMonthlyNetto, aowStartAge,
     employerPension, employerPensionStartAge, woonsituatie,
-    lijfrenteUitkering, lijfrenteStartAge
+    lijfrenteUitkering, lijfrenteStartAge, lijfrenteEinde, aowVakantiegeld,
+    yearData
   )
 
   return {
     projectedCapital,
     requiredCapital,
+    requiredCapitalEindwaarde,
+    effectiveRetirementAge: retirementAge,
+    overbruggingsToeslag,
     pvEventsAfterRetirement,
     desiredMonthlyNetto,
     requiredMonthlyContribution,
@@ -411,6 +716,7 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
     yearData,
     incomePhases,
     surplusAtEnd,
+    firstShortfallAge,
   }
 }
 
@@ -424,12 +730,26 @@ function buildIncomePhases(
   empStartAge: number,
   woonsituatie: Woonsituatie,
   lijfrenteUitkeringBruto = 0,
-  lijfrenteStartAge = 67
+  lijfrenteStartAge = 67,
+  lijfrenteEindLeeftijd = Infinity,
+  aowVakantiegeld = false,
+  // Het saldoverloop uit dezelfde berekening. Zonder dit toonde de fasenlijst het
+  // volledige gewenste bedrag uit eigen vermogen, ook voor jaren waarin de pot al
+  // leeg was: het scherm sprak dan de grafiek ernaast tegen (audit 7 september
+  // 2026, bevinding 5, "laat tabel, diagram, fasen en exports dezelfde uitkomst
+  // gebruiken").
+  yearData: YearData[] = []
 ): IncomePhase[] {
   const breakpoints = new Set([retirementAge, lifeExpectancy])
   if (aowStartAge > retirementAge && aowStartAge < lifeExpectancy) breakpoints.add(aowStartAge)
   if (empStartAge > retirementAge && empStartAge < lifeExpectancy) breakpoints.add(empStartAge)
   if (lijfrenteStartAge > retirementAge && lijfrenteStartAge < lifeExpectancy) breakpoints.add(lijfrenteStartAge)
+  // Het einde van een tijdelijke uitkering is een knik in het inkomen en hoort dus
+  // een eigen fase te beginnen (bevinding 9).
+  if (Number.isFinite(lijfrenteEindLeeftijd)
+    && lijfrenteEindLeeftijd > retirementAge && lijfrenteEindLeeftijd < lifeExpectancy) {
+    breakpoints.add(lijfrenteEindLeeftijd)
+  }
 
   const sorted = [...breakpoints].sort((a, b) => a - b)
   const phases: IncomePhase[] = []
@@ -438,18 +758,25 @@ function buildIncomePhases(
     const fromAge = sorted[i]
     const { aow, employerPension: emp, lijfrenteUitkering: lijf, fromCapital } = getIncomeBreakdown(
       fromAge, desiredNetto, aowNetto, aowStartAge, employerPensionBruto, empStartAge,
-      woonsituatie, lijfrenteUitkeringBruto, lijfrenteStartAge
+      woonsituatie, lijfrenteUitkeringBruto, lijfrenteStartAge, lijfrenteEindLeeftijd,
+      aowVakantiegeld
+    )
+
+    const toAge = sorted[i + 1]
+    const eersteTekort = yearData.find(
+      y => y.phase === 'uitkering' && y.age >= fromAge && y.age < toAge && y.shortfall > 0.005
     )
 
     phases.push({
-      label: `Leeftijd ${sorted[i]}–${sorted[i + 1]}`,
+      label: `Leeftijd ${sorted[i]}–${toAge}`,
       fromAge,
-      toAge: sorted[i + 1],
+      toAge,
       incomeFromCapital: fromCapital,
       aow,
       employerPension: emp,
       lijfrenteUitkering: lijf,
       total: fromCapital + aow + emp + lijf,
+      shortfallFromAge: eersteTekort ? eersteTekort.age : null,
     })
   }
 

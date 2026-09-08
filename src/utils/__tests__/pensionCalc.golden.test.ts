@@ -8,7 +8,10 @@
 // (zie AUDIT-fase0-1-feiten.md, bevinding E10) — dat is hier bewust vastgelegd
 // zoals het nu is, niet gecorrigeerd.
 import { describe, it, expect } from 'vitest'
-import { calculatePension, getIncomeBreakdown } from '../pensionCalc'
+import {
+  calculatePension, getIncomeBreakdown, brutoMaandNaarNettoMaand,
+  controleerLeeftijden, aowVakantiegeldFactor,
+} from '../pensionCalc'
 import type { YearData } from '../../types'
 import { SCENARIOS, baseInputs, round } from './fixtures'
 import fixture from './__golden__/pensionCalc.golden.json'
@@ -165,10 +168,24 @@ describe('calculatePension — eenmalig bedrag rond de pensioendatum', () => {
     const voor = uitkomst(2026)  // laatste jaar vóór de pensioendatum: opbouwfase
     const na = uitkomst(2027)    // pensioenjaar zelf: eerste uitkeringsjaar
 
-    // 400.000 × (1,09/1,03 − 1) = € 23.301 aan gemist reëel rendement.
+    // 400.000 × (1,09/1,03 − 1) = € 23.301 aan gemist reëel rendement. Dit is de
+    // kern van deze test en het cijfer is niet veranderd door de bruto-nettofix van
+    // september 2026: het hangt aan het eenmalige bedrag, niet aan het inkomensdoel.
     expect(Math.round(voor.surplus - na.surplus)).toBe(23301)
-    expect(Math.round(voor.surplus)).toBe(122039)
-    expect(Math.round(na.surplus)).toBe(98738)
+    // De absolute ankers schoven wél mee (122.039 en 98.738 vóór die fix). Dit
+    // scenario stopt op leeftijd 49 en gebruikt een bruto inkomensdoel, dus geldt
+    // nu het pre-AOW-regime in plaats van het post-AOW-regime dat de oude
+    // conversie er altijd op losliet. € 5.000 bruto per maand levert samenwonend
+    // vóór de AOW-leeftijd € 3.036,37 netto op in plaats van € 4.107,50: over
+    // € 60.000 is dat € 21.832,22 belasting minus € 1.178,71 algemene
+    // heffingskorting en minus € 2.910 Zvw. Een lager netto doel betekent een
+    // lager benodigd vermogen en dus een hoger overschot.
+    // Bijgesteld op 7 september 2026 toen de onttrekkingen een mid-year-conventie
+    // kregen (audit-bevinding 14). Het benodigd vermogen ging omhoog met exact
+    // sqrt(1 + reëel rendement na pensioen) = sqrt(1,0291262) = 1,0144586:
+    // € 736.730 werd € 747.382. Het overschot daalt met datzelfde bedrag.
+    expect(Math.round(voor.surplus)).toBe(416695)
+    expect(Math.round(na.surplus)).toBe(393394)
   })
 
   it('blijft in beide gevallen een overschot, net als het restkapitaal', () => {
@@ -259,4 +276,338 @@ describe('calculatePension — golden master', () => {
       expect(roundYearRow(r.yearData[r.yearData.length - 1])).toEqual(expected.yearDataLast)
     })
   }
+})
+
+// Bevinding 1 uit de audit van 7 september 2026: het gewenste pensioeninkomen werd
+// als bruto MAANDbedrag rechtstreeks tegen de JAARschijven gelegd, zonder
+// heffingskortingen en zonder Zvw, en altijd onder het post-AOW-regime. Deze tests
+// leggen de handmatig nagerekende uitkomsten vast, niet wat de code toevallig doet.
+describe('brutoMaandNaarNettoMaand — onafhankelijk nagerekend', () => {
+  it('€ 5.000/mnd, alleenstaand, na de AOW-leeftijd', () => {
+    // € 60.000 per jaar.
+    //   belasting  38.883 × 17,85%              =  6.940,6155
+    //            + 21.117 × 37,56%              =  7.931,5452  ->  14.872,1607
+    //   AHK        1.556 − 3,195% × 30.264      =    589,0652
+    //   ouderenkorting  2.067 − 15% × 13.998 < 0 ->      0
+    //   alleenstaandeouderenkorting             =    540
+    //   te betalen 14.872,1607 − 1.129,0652     = 13.743,0955
+    //   Zvw        60.000 × 4,85%               =  2.910
+    //   netto      60.000 − 13.743,0955 − 2.910 = 43.346,9045  ->  € 3.612,24/mnd
+    expect(brutoMaandNaarNettoMaand(5000, true, true)).toBeCloseTo(3612.24, 2)
+  })
+
+  it('€ 5.000/mnd, samenwonend, vóór de AOW-leeftijd', () => {
+    //   belasting  38.883 × 35,75% + 21.117 × 37,56% = 21.832,2170
+    //   AHK        3.115 − 6,398% × 30.264           =  1.178,7076
+    //   netto      60.000 − 20.653,5094 − 2.910      = 36.436,4906 -> € 3.036,37/mnd
+    expect(brutoMaandNaarNettoMaand(5000, false, false)).toBeCloseTo(3036.37, 2)
+  })
+
+  it('rekent niet langer een maandbedrag tegen de jaarschijven af', () => {
+    // De oude conversie gaf 5000 × (1 − 17,85%) = 4.107,50: het maandbedrag viel
+    // altijd in de eerste schijf. Elke uitkomst boven de € 4.000 wijst erop dat
+    // die fout terug is.
+    expect(brutoMaandNaarNettoMaand(5000, true, true)).toBeLessThan(4000)
+  })
+
+  it('geeft nul terug bij nul of negatief', () => {
+    expect(brutoMaandNaarNettoMaand(0, true, true)).toBe(0)
+    expect(brutoMaandNaarNettoMaand(-100, true, true)).toBe(0)
+  })
+
+  it('gebruikt het regime van de pensioendatum, niet altijd post-AOW', () => {
+    // Stoppen op 60 met AOW op 67: de overbruggingsjaren vallen onder het hogere
+    // pre-AOW-tarief, dus hetzelfde brutobedrag levert minder netto op.
+    const vroeg = calculatePension(
+      baseInputs({ retirementAge: 60, desiredRetirementIncomeType: 'bruto' }),
+      { currentYear: 2026 }
+    )
+    const laat = calculatePension(
+      baseInputs({ retirementAge: 67, desiredRetirementIncomeType: 'bruto' }),
+      { currentYear: 2026 }
+    )
+    expect(vroeg.desiredMonthlyNetto).toBeLessThan(laat.desiredMonthlyNetto)
+  })
+})
+
+// Bevinding 2 uit de audit van 7 september 2026. De tool trok de contante waarde
+// van latere ontvangsten volledig van het benodigde startvermogen af. Dat is een
+// eindwaardeberekening: ze zegt of het geld op de einddatum uitkomt, niet of
+// iedere tussenliggende maand betaalbaar was.
+describe('benodigd vermogen — liquiditeit onderweg', () => {
+  // Het geval uit de audit: nu stoppen op 60, plannen tot 70, geen vermogen,
+  // € 1.000 netto per maand nodig, geen andere inkomsten, 0% rendement en
+  // inflatie, en over vijf jaar € 120.000 ontvangen.
+  const overbrugging = baseInputs({
+    currentAge: 60, retirementAge: 60, lifeExpectancy: 70,
+    currentCapital: 0, monthlyContribution: 0,
+    returnBeforeRetirement: 0, returnAfterRetirement: 0, inflation: 0,
+    desiredRetirementIncome: 1000, desiredRetirementIncomeType: 'netto',
+    aowMaandBedragNetto: 0, employerPension: 0, lijfrenteUitkering: 0,
+    lifeEvents: [{ name: 'erfenis', amount: 120000, year: 2031 }],
+  })
+
+  it('vraagt de overbrugging op, niet nul', () => {
+    const r = calculatePension(overbrugging, { currentYear: 2026 })
+    // Vijf jaar × € 12.000 moet je zelf voorschieten voordat de erfenis binnenkomt.
+    // Eén euro minder en het saldo staat in jaar vijf op −1.
+    expect(Math.round(r.requiredCapital)).toBe(60000)
+  })
+
+  it('laat zien waar dat bedrag vandaan komt', () => {
+    const r = calculatePension(overbrugging, { currentYear: 2026 })
+    // Op eindwaarde valt alles tegen elkaar weg: € 120.000 aan onttrekkingen,
+    // € 120.000 aan erfenis. Precies de uitkomst die de audit als misleidend
+    // aanwees, nu zichtbaar als losse regel in plaats van als eindantwoord.
+    expect(Math.round(r.requiredCapitalEindwaarde)).toBe(0)
+    expect(Math.round(r.overbruggingsToeslag)).toBe(60000)
+  })
+
+  it('valt terug op de eindwaarde zodra er niets te overbruggen is', () => {
+    // Zonder eenmalige bedragen daalt het saldo monotoon naar nul op de einddatum:
+    // het laagste saldo ís dan het eindsaldo, dus de zoekmethode en de oude
+    // contante waarde geven hetzelfde antwoord. Dat is de reden dat de zeven
+    // netto-scenario's in de golden master niet zijn verschoven.
+    for (const key of ['1_basis', '5_randgeval_leeg', '7_extreem_18_100']) {
+      const r = calculatePension(SCENARIOS[key as keyof typeof SCENARIOS], { currentYear: 2026 })
+      // toBeCloseTo en niet toBe: de bisectie in findRequiredCapital() convergeert
+      // tot op een fractie van een cent, niet tot op de laatste bit.
+      expect(r.overbruggingsToeslag).toBeCloseTo(0, 4)
+      expect(r.requiredCapital).toBeCloseTo(r.requiredCapitalEindwaarde, 4)
+    }
+  })
+})
+
+// Bevinding 5 uit de audit van 7 september 2026: bij ieder positief beginsaldo
+// toonde de jaartabel het vólle gewenste maandbedrag uit vermogen, zonder te
+// begrenzen op wat er werkelijk stond. En een ontvangst aan het begin van het jaar
+// werd pas verwerkt nádat de inkomensregel was samengesteld.
+describe('jaartabel — toont alleen inkomen dat er werkelijk is', () => {
+  const nu = (over: Parameters<typeof baseInputs>[0] = {}) => baseInputs({
+    currentAge: 60, retirementAge: 60, lifeExpectancy: 70,
+    monthlyContribution: 0,
+    returnBeforeRetirement: 0, returnAfterRetirement: 0, inflation: 0,
+    desiredRetirementIncome: 1000, desiredRetirementIncomeType: 'netto',
+    aowMaandBedragNetto: 0, aowStartAge: 67, employerPension: 0, lijfrenteUitkering: 0,
+    ...over,
+  })
+
+  it('begrenst op het beschikbare saldo in plaats van het volle bedrag te tonen', () => {
+    // € 1.000 vermogen tegenover € 1.000 maandbehoefte. De oude tabel toonde
+    // twaalf maanden € 1.000; er is één maandbedrag van € 83,33 beschikbaar.
+    const r = calculatePension(nu({ currentCapital: 1000 }), { currentYear: 2026 })
+    const eerste = r.yearData.find(y => y.phase === 'uitkering')!
+    expect(eerste.desiredFromCapital).toBeCloseTo(1000, 2)
+    expect(eerste.incomeFromCapital).toBeCloseTo(1000 / 12, 2)
+    expect(eerste.shortfall).toBeCloseTo(1000 - 1000 / 12, 2)
+    expect(eerste.totalIncome).toBeCloseTo(1000 / 12, 2)
+  })
+
+  it('verwerkt een ontvangst aan het begin van het jaar in datzelfde jaar', () => {
+    // € 0 beginsaldo en € 12.000 binnen aan het begin van het jaar. De oude tabel
+    // toonde € 0 inkomen uit vermogen, omdat het bedrag pas ná de inkomensregel
+    // werd bijgeschreven.
+    const r = calculatePension(
+      nu({ currentCapital: 0, lifeEvents: [{ name: 'ontvangst', amount: 12000, year: 2026 }] }),
+      { currentYear: 2026 }
+    )
+    const eerste = r.yearData.find(y => y.phase === 'uitkering')!
+    expect(eerste.incomeFromCapital).toBeCloseTo(1000, 2)
+    expect(eerste.shortfall).toBe(0)
+  })
+
+  it('meldt vanaf welke leeftijd het tekort begint', () => {
+    // € 24.000 dekt precies twee jaar van € 1.000 per maand, daarna is het op.
+    const r = calculatePension(nu({ currentCapital: 24000 }), { currentYear: 2026 })
+    expect(r.firstShortfallAge).toBe(62)
+  })
+
+  it('meldt geen tekort als het plan rondkomt', () => {
+    // € 120.000 dekt precies tien jaar van € 1.000 per maand: op de horizon staat
+    // het saldo op nul en dat is een geslaagd plan, geen tekort.
+    const r = calculatePension(nu({ currentCapital: 120000 }), { currentYear: 2026 })
+    expect(r.firstShortfallAge).toBeNull()
+    expect(r.yearData.filter(y => y.phase === 'uitkering' && y.shortfall > 0.005)).toHaveLength(0)
+  })
+
+  it('meldt ook geen tekort als er ruim genoeg is', () => {
+    const r = calculatePension(nu({ currentCapital: 200000 }), { currentYear: 2026 })
+    expect(r.firstShortfallAge).toBeNull()
+  })
+})
+
+// Bevinding 3 uit de audit van 7 september 2026: de schuifjes lieten combinaties
+// toe die niets betekenen, en de twee rekenkernen gingen daar verschillend mee om.
+describe('controleerLeeftijden', () => {
+  it('wijst de combinatie uit de audit af', () => {
+    // Huidige leeftijd 70, stoppen op 60, eindleeftijd 65. De deterministische kern
+    // liep vanaf leeftijd 60, Monte Carlo liep nul jaren en meldde 100% succes.
+    const c = controleerLeeftijden(70, 60, 65)
+    expect(c.errors).toHaveLength(1)
+    expect(c.errors[0]).toContain('70')
+  })
+
+  it('leest een pensioenleeftijd in het verleden als: al met pensioen', () => {
+    const c = controleerLeeftijden(70, 60, 90)
+    expect(c.errors).toHaveLength(0)
+    expect(c.effectiveRetirementAge).toBe(70)
+    expect(c.notes).toHaveLength(1)
+  })
+
+  it('laat een gewone combinatie met rust', () => {
+    const c = controleerLeeftijden(45, 67, 90)
+    expect(c.errors).toHaveLength(0)
+    expect(c.notes).toHaveLength(0)
+    expect(c.effectiveRetirementAge).toBe(67)
+  })
+
+  it('wijst een horizon op of onder de pensioenleeftijd af', () => {
+    expect(controleerLeeftijden(45, 67, 67).errors).toHaveLength(1)
+    expect(controleerLeeftijden(45, 67, 60).errors).toHaveLength(1)
+  })
+
+  it('laat beide kernen vanaf dezelfde leeftijd rekenen', () => {
+    // Al met pensioen: de uitkeringsfase begint vandaag (70), niet op de ingestelde
+    // pensioenleeftijd (60) die al voorbij is.
+    const r = calculatePension(
+      baseInputs({ currentAge: 70, retirementAge: 60, lifeExpectancy: 90 }),
+      { currentYear: 2026 }
+    )
+    expect(r.yearData[0].age).toBe(70)
+    expect(r.yearData[0].phase).toBe('uitkering')
+    expect(r.yearsToRetirement).toBe(0)
+    expect(r.yearsInRetirement).toBe(20)
+  })
+})
+
+// Bevinding 14 uit de audit van 7 september 2026: de jaarinleg kreeg wel een
+// mid-year-conventie mee, de onttrekking niet. Die rekende alsof het hele
+// jaarbedrag pas op 31 december werd opgenomen.
+describe('onttrekkingen — mid-year-conventie', () => {
+  it('kost een onttrekking meer dan bij opname aan het jaareinde', () => {
+    // € 1.000 per maand, dertig jaar, 4% reëel. Handmatig nagerekend:
+    //   jaarultimo                       € 207.504
+    //   twaalf maandtermijnen (exact)    € 211.282
+    //   met deze wortelfactor            € 211.614
+    // De benadering neemt 91,2% van het verschil weg en houdt 0,16% over.
+    const r = calculatePension(baseInputs({
+      currentAge: 60, retirementAge: 60, lifeExpectancy: 90,
+      currentCapital: 0, monthlyContribution: 0,
+      returnBeforeRetirement: 4, returnAfterRetirement: 4, inflation: 0,
+      desiredRetirementIncome: 1000, desiredRetirementIncomeType: 'netto',
+      aowMaandBedragNetto: 0, aowStartAge: 91, employerPension: 0, lijfrenteUitkering: 0,
+    }), { currentYear: 2026 })
+
+    expect(Math.round(r.requiredCapital)).toBe(211614)
+    // Blijft binnen een half procent van de exacte maandberekening. Loopt dit op,
+    // dan is de wortelfactor eruit gehaald of verkeerd toegepast.
+    expect(Math.abs(r.requiredCapital - 211282) / 211282).toBeLessThan(0.005)
+  })
+})
+
+// Bevinding 9 uit de audit van 7 september 2026: de tool vroeg alleen bedrag en
+// startleeftijd, waarna iedere lijfrente doorliep tot de planningshorizon. Een
+// tijdelijke uitkering van vijf of twintig jaar telde daardoor veel te lang mee.
+describe('lijfrente — levenslang of tijdelijk', () => {
+  const basis = (over: Parameters<typeof baseInputs>[0] = {}) => baseInputs({
+    currentAge: 66, retirementAge: 67, lifeExpectancy: 90,
+    currentCapital: 0, monthlyContribution: 0,
+    returnBeforeRetirement: 0, returnAfterRetirement: 0, inflation: 0,
+    desiredRetirementIncome: 3000, desiredRetirementIncomeType: 'netto',
+    aowMaandBedragNetto: 0, aowStartAge: 99, employerPension: 0,
+    lijfrenteUitkering: 1000, lijfrenteStartAge: 67,
+    ...over,
+  })
+
+  it('laat een levenslange uitkering doorlopen tot de horizon', () => {
+    const r = calculatePension(basis({ lijfrenteSoort: 'levenslang' }), { currentYear: 2026 })
+    const op80 = r.yearData.find(y => y.age === 80)!
+    const op89 = r.yearData.find(y => y.age === 89)!
+    expect(op80.lijfrenteIncome).toBeGreaterThan(0)
+    expect(op89.lijfrenteIncome).toBeGreaterThan(0)
+  })
+
+  it('stopt een tijdelijke uitkering op de opgegeven leeftijd', () => {
+    const r = calculatePension(
+      basis({ lijfrenteSoort: 'tijdelijk', lijfrenteEindLeeftijd: 77 }),
+      { currentYear: 2026 }
+    )
+    expect(r.yearData.find(y => y.age === 76)!.lijfrenteIncome).toBeGreaterThan(0)
+    // Op de einddatum zelf is de uitkering afgelopen: tien jaar vanaf 67 betekent
+    // uitkeringen op 67 tot en met 76.
+    expect(r.yearData.find(y => y.age === 77)!.lijfrenteIncome).toBe(0)
+    expect(r.yearData.find(y => y.age === 85)!.lijfrenteIncome).toBe(0)
+  })
+
+  it('vraagt meer vermogen bij een tijdelijke dan bij een levenslange uitkering', () => {
+    // Dit is waar de fout op uitkwam: een tijdelijke uitkering die tot de horizon
+    // doorliep maakte het plan te rooskleurig.
+    const levenslang = calculatePension(basis({ lijfrenteSoort: 'levenslang' }), { currentYear: 2026 })
+    const tijdelijk = calculatePension(
+      basis({ lijfrenteSoort: 'tijdelijk', lijfrenteEindLeeftijd: 77 }), { currentYear: 2026 })
+    expect(tijdelijk.requiredCapital).toBeGreaterThan(levenslang.requiredCapital)
+  })
+
+  it('geeft het einde van de uitkering een eigen fase', () => {
+    const r = calculatePension(
+      basis({ lijfrenteSoort: 'tijdelijk', lijfrenteEindLeeftijd: 77 }), { currentYear: 2026 })
+    expect(r.incomePhases.some(f => f.fromAge === 77)).toBe(true)
+  })
+
+  it('negeert de einddatum als de uitkering levenslang is', () => {
+    // Het veld blijft in de invoer staan als iemand heen en weer klikt; het mag de
+    // uitkomst dan niet stiekem beïnvloeden.
+    const a = calculatePension(
+      basis({ lijfrenteSoort: 'levenslang', lijfrenteEindLeeftijd: 70 }), { currentYear: 2026 })
+    const b = calculatePension(
+      basis({ lijfrenteSoort: 'levenslang', lijfrenteEindLeeftijd: 95 }), { currentYear: 2026 })
+    expect(a.requiredCapital).toBe(b.requiredCapital)
+  })
+})
+
+// Bevinding 12 uit de audit van 7 september 2026: de kern gebruikt twaalf netto
+// maandbedragen en telde het vakantiegeld niet op, terwijl de SVB dat in mei apart
+// uitkeert. AOW_VAKANTIEGELD_BRUTO_MAAND stond wel in de config, maar werd nergens
+// gebruikt.
+describe('AOW-vakantiegeld', () => {
+  it('verhoogt de AOW met de factor uit de gepubliceerde bedragen', () => {
+    // Alleenstaand: (1.662,64 + 106,55) / 1.662,64 = 1,064086.
+    // Samenwonend:  (1.139,25 +  76,10) / 1.139,25 = 1,066799.
+    expect(aowVakantiegeldFactor('alleenstaand')).toBeCloseTo(1.064086, 5)
+    expect(aowVakantiegeldFactor('samenwonend')).toBeCloseTo(1.066799, 5)
+  })
+
+  it('verhoogt het AOW-inkomen in de jaartabel', () => {
+    const zonder = calculatePension(baseInputs({ aowVakantiegeld: false }), { currentYear: 2026 })
+    const met = calculatePension(baseInputs({ aowVakantiegeld: true }), { currentYear: 2026 })
+    const a = zonder.yearData.find(y => y.age === 70)!
+    const b = met.yearData.find(y => y.age === 70)!
+    expect(b.aowIncome / a.aowIncome).toBeCloseTo(1.064086, 4)
+  })
+
+  it('verlaagt daardoor het benodigde vermogen', () => {
+    // Meer vast inkomen betekent minder uit eigen vermogen. Dit is precies de kant
+    // op die de audit voorspelde: zonder vakantiegeld viel het beschikbare inkomen
+    // te laag uit.
+    const zonder = calculatePension(baseInputs({ aowVakantiegeld: false }), { currentYear: 2026 })
+    const met = calculatePension(baseInputs({ aowVakantiegeld: true }), { currentYear: 2026 })
+    expect(met.requiredCapital).toBeLessThan(zonder.requiredCapital)
+  })
+
+  it('schaalt mee met een gekorte AOW in plaats van een vast bedrag op te tellen', () => {
+    // Wie niet zijn hele leven in Nederland woonde krijgt een lager bedrag, en dan
+    // hoort ook het vakantiegeld lager te zijn.
+    const vol = calculatePension(baseInputs({ aowVakantiegeld: true, aowMaandBedragNetto: 1582 }), { currentYear: 2026 })
+    const half = calculatePension(baseInputs({ aowVakantiegeld: true, aowMaandBedragNetto: 791 }), { currentYear: 2026 })
+    const a = vol.yearData.find(y => y.age === 70)!.aowIncome
+    const b = half.yearData.find(y => y.age === 70)!.aowIncome
+    expect(b / a).toBeCloseTo(0.5, 6)
+  })
+
+  it('verandert niets vóór de AOW-leeftijd', () => {
+    const zonder = calculatePension(baseInputs({ aowVakantiegeld: false, retirementAge: 60 }), { currentYear: 2026 })
+    const met = calculatePension(baseInputs({ aowVakantiegeld: true, retirementAge: 60 }), { currentYear: 2026 })
+    expect(met.yearData.find(y => y.age === 62)!.totalIncome)
+      .toBe(zonder.yearData.find(y => y.age === 62)!.totalIncome)
+  })
 })

@@ -52,7 +52,7 @@ describe('getFormuleTekst() komt overeen met wat calculateJaarruimte() werkelijk
           income: INKOMEN,
           pensioenType: type,
           factorA: type === 'db' ? FACTOR_A : 0,
-          werkgeverspremie: type === 'wtp' ? WERKGEVERSPREMIE : 0,
+          pensioenpremie: type === 'wtp' ? WERKGEVERSPREMIE : 0,
           alIngelegd: 0,
           reserveringsruimteRijen: [],
           clientName: '', adviseurNaam: '', notities: '',

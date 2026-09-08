@@ -1,12 +1,13 @@
 import { track } from '@vercel/analytics'
 import { FileText, Sheet, TrendingUp, LogOut, X, MessageSquare, RotateCcw } from 'lucide-react'
-import type { PensionResult, MonteCarloResult, PensionInputs } from '../../types'
+import type { PensionResult, PensionInputs, BerekeningsSet } from '../../types'
 import { WealthChart } from './WealthChart'
 import { exportToExcel } from '../../utils/exportExcel'
 import { exportToPDF } from '../../utils/exportPDF'
 import { FEEDBACK_URL } from '../../config/site'
 import { FREE_DOWNLOAD_LIMIT, getDownloadCount, incrementDownloadCount } from '../../utils/downloadLimit'
 import { marginaalTarief, aowNettoNaarBruto } from '../../utils/pensionCalc'
+import { modelStempel } from '../../config/modelVersie'
 import { useInstallPrompt } from '../../hooks/useInstallPrompt'
 import { InstallAppButton } from '../InstallAppButton'
 import { useState, useEffect } from 'react'
@@ -16,7 +17,12 @@ const INSTALL_BANNER_DISMISSED_KEY = 'fp_install_banner_dismissed'
 interface Props {
   inputs: PensionInputs
   result: PensionResult
-  mc: MonteCarloResult | null
+  /**
+   * De laatst afgeronde berekening, of null als er nog niet gerekend is. Alles wat
+   * uit de simulatie komt en alles wat geëxporteerd wordt leest hieruit, zodat een
+   * rapport nooit nieuwe invoer met een oude simulatie kan mengen.
+   */
+  berekening: BerekeningsSet | null
   mcStale: boolean
   isCalculating: boolean
   onRunMonteCarlo: () => void
@@ -71,8 +77,24 @@ function MetricCell({
 
 function SuccessGauge({ value, title, subtitle }: { value: number; title: string; subtitle: string }) {
   const color = value >= 80 ? '#29392E' : value >= 60 ? '#9A835B' : '#A85A3C'
-  const oordeel = value >= 80 ? 'Goed' : value >= 60 ? 'Redelijk' : 'Risicovol'
-  const angle = (value / 100) * 180 - 90  // -90° (links) tot +90° (rechts)
+
+  // Geen waardeoordeel meer ("Goed" bij 80%). Een norm van 80% is een adviesnorm
+  // die wij nergens onderbouwen, en bij 80% faalt een op de vijf scenario's. Wat
+  // hier staat is wat het cijfer feitelijk is: het aandeel geslaagde simulaties
+  // (audit 7 september 2026, bevinding 15).
+  const oordeel = value >= 80
+    ? 'van de 2.000 scenario\u2019s haalt dit'
+    : value >= 60
+      ? 'haalt dit; 1 op de 3 niet'
+      : 'haalt dit; de meeste niet'
+
+  // De boog loopt van (10,65) linksonder over de bovenkant naar (110,65)
+  // rechtsonder. In SVG wijst +y omlaag, dus die halve cirkel beslaat 180 tot 360
+  // graden. De naald stond op (value/100)*180 - 90 en liep daarmee 90 graden uit
+  // fase met de boog: bij 0% wees hij recht omhoog, bij 50% naar rechts en bij
+  // 100% recht omlaag, buiten de viewBox van 70 hoog. De cijfers klopten, het
+  // beeld niet (audit 7 september 2026, bevinding 21).
+  const angle = 180 + (Math.min(100, Math.max(0, value)) / 100) * 180
 
   return (
     <div className="card flex flex-col items-center justify-center gap-1 py-4">
@@ -101,7 +123,7 @@ function SuccessGauge({ value, title, subtitle }: { value: number; title: string
       </svg>
       <div className="text-center">
         <span className="font-numeric tabular text-2xl" style={{ color }}>{value.toFixed(1)}%</span>
-        <span className="text-xs text-body block">{oordeel}</span>
+        <span className="text-xs text-body block leading-tight">{oordeel}</span>
       </div>
     </div>
   )
@@ -112,7 +134,8 @@ function nominalIncome(realMonthly: number, inflation: number, yearsFromNow: num
   return realMonthly * Math.pow(1 + inflation / 100, yearsFromNow)
 }
 
-export function ResultsPanel({ inputs, result, mc, mcStale, isCalculating, onRunMonteCarlo, clientName, onCloseSession }: Props) {
+export function ResultsPanel({ inputs, result, berekening, mcStale, isCalculating, onRunMonteCarlo, clientName, onCloseSession }: Props) {
+  const mc = berekening?.mc ?? null
   const [showMonteCarlo, setShowMonteCarlo] = useState(true)
   const [isExportingPdf, setIsExportingPdf] = useState(false)
   const [showInflationDetail, setShowInflationDetail] = useState(false)
@@ -163,24 +186,41 @@ export function ResultsPanel({ inputs, result, mc, mcStale, isCalculating, onRun
   // is gebleven omdat hij beter leest, niet omdat het moet. Een volledige som
   // ("€ 1.042.039 − € 400.000") staat in de PDF- en Excel-export, waar een regel
   // de hele breedte krijgt en niemand hem hoeft af te lezen naast een cijfer.
+  //
+  // Sinds de liquiditeitsfix van september 2026 (audit-bevinding 2) kan het
+  // doelbedrag hóger liggen dan die verrekening: geld dat pas over vijf jaar
+  // binnenkomt betaalt de eerste vijf jaar niet. Die overbrugging krijgt een eigen
+  // onderregel, want anders staat er een doelbedrag van € 60.000 met eronder
+  // "− € 120.000 later" en spreekt het scherm zichzelf tegen.
   const pvLater = result.pvEventsAfterRetirement
+  const overbrugging = result.overbruggingsToeslag
   const benodigdSub =
-    Math.round(pvLater) === 0
-      ? `voor ${inputs.lifeExpectancy - inputs.retirementAge} jaar inkomen`
-      : result.requiredCapital < 0
-        // Het doelbedrag is negatief: wat er later binnenkomt is méér dan alle
-        // onttrekkingen samen. Het getal blijft mét minteken staan, want de drie
-        // andere cellen rekenen ermee — een nette € 0 tonen zou het scherm laten
-        // afwijken van de rekenkern.
-        ? 'later geld dekt alles'
-        : `${pvLater > 0 ? '−' : '+'} ${eurAbs(pvLater)} later`
+    Math.round(overbrugging) > 0
+      ? `incl. ${eurAbs(overbrugging)} overbrugging`
+      : Math.round(pvLater) === 0
+        ? `voor ${inputs.lifeExpectancy - result.effectiveRetirementAge} jaar inkomen`
+        : result.requiredCapital < 0
+          // Het doelbedrag is negatief: wat er later binnenkomt is méér dan alle
+          // onttrekkingen samen. Het getal blijft mét minteken staan, want de drie
+          // andere cellen rekenen ermee — een nette € 0 tonen zou het scherm laten
+          // afwijken van de rekenkern.
+          ? 'later geld dekt alles'
+          : `${pvLater > 0 ? '−' : '+'} ${eurAbs(pvLater)} later`
+
+  // Exporteren kan alleen als er een afgeronde berekening is die nog bij de huidige
+  // invoer hoort. Tot september 2026 mocht het altijd: het bestand kreeg dan de
+  // nieuwe invoer mee met de oude simulatie, of, als er nog nooit gerekend was, een
+  // slagingskans van 0,0% naast "2000 simulaties" (bevindingen 6 en 7). Alleen de
+  // grafiek grijs maken loste dat niet op.
+  const exportKlaar = berekening !== null && !mcStale
+  const exportGeblokkeerd = limitReached || !exportKlaar
 
   const handlePDF = async () => {
-    if (limitReached) return
+    if (exportGeblokkeerd || !berekening) return
     track('download_pdf')
     setIsExportingPdf(true)
     try {
-      await exportToPDF(inputs, result, mc, clientName, 'wealth-chart')
+      await exportToPDF(berekening, clientName, 'wealth-chart')
       setDownloadCount(incrementDownloadCount())
     } finally {
       setIsExportingPdf(false)
@@ -188,9 +228,9 @@ export function ResultsPanel({ inputs, result, mc, mcStale, isCalculating, onRun
   }
 
   const handleExcel = async () => {
-    if (limitReached) return
+    if (exportGeblokkeerd || !berekening) return
     track('download_excel')
-    await exportToExcel(inputs, result, mc ?? { successRate: 0, successRate75: 0, percentileData: [] }, clientName)
+    await exportToExcel(berekening, clientName)
     setDownloadCount(incrementDownloadCount())
   }
 
@@ -254,15 +294,20 @@ export function ResultsPanel({ inputs, result, mc, mcStale, isCalculating, onRun
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h2 className="text-base font-medium text-ink">Pensioenprognose</h2>
-          <p className="text-xs text-body">Alle bedragen in huidige koopkracht (reëel)</p>
+          <p className="text-xs text-body">
+            Alle bedragen in huidige koopkracht (reëel)
+            {berekening && <> · {modelStempel()}</>}
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button onClick={handleExcel} disabled={limitReached}
+          <button onClick={handleExcel} disabled={exportGeblokkeerd}
+            title={!exportKlaar ? 'Klik eerst op Bereken' : undefined}
             className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium bg-transparent text-ink border border-sand hover:bg-warmwhite rounded-[3px] transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
             <Sheet size={14} />
             Download Excel
           </button>
-          <button onClick={handlePDF} disabled={isExportingPdf || limitReached}
+          <button onClick={handlePDF} disabled={isExportingPdf || exportGeblokkeerd}
+            title={!exportKlaar ? 'Klik eerst op Bereken' : undefined}
             className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium bg-ink hover:bg-[#1F2C23] text-warmwhite rounded-[3px] transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
             <FileText size={14} />
             {isExportingPdf ? 'Laden...' : 'Download PDF'}
@@ -297,6 +342,12 @@ export function ResultsPanel({ inputs, result, mc, mcStale, isCalculating, onRun
           )}
           {' '}op als je meer berekeningen wil downloaden.
         </p>
+      ) : !exportKlaar ? (
+        <p className="text-xs text-body">
+          {berekening
+            ? 'Je invoer is gewijzigd. Klik op Bereken, dan kun je het rapport downloaden met de cijfers die je nu ziet.'
+            : 'Klik eerst op Bereken. Daarna kun je het rapport downloaden.'}
+        </p>
       ) : (
         <p className="text-xs text-body">
           Nog {FREE_DOWNLOAD_LIMIT - downloadCount} gratis download{FREE_DOWNLOAD_LIMIT - downloadCount === 1 ? '' : 's'} beschikbaar.
@@ -310,7 +361,7 @@ export function ResultsPanel({ inputs, result, mc, mcStale, isCalculating, onRun
         <MetricCell
           label="Verwacht eindvermogen"
           value={eur(result.projectedCapital)}
-          sub={`bij leeftijd ${inputs.retirementAge}`}
+          sub={`bij leeftijd ${result.effectiveRetirementAge}`}
         />
         <MetricCell
           label="Benodigd eindvermogen"
@@ -337,6 +388,16 @@ export function ResultsPanel({ inputs, result, mc, mcStale, isCalculating, onRun
           <h3 className="text-sm font-medium text-ink">Inkomen per fase</h3>
           <span className="text-xs text-body">Gewenst: {eur(result.desiredMonthlyNetto)}/mnd</span>
         </div>
+        {result.firstShortfallAge !== null && (
+          <div className="rounded-[3px] border border-signal bg-panel p-3 mb-4">
+            <p className="text-xs text-signal leading-relaxed">
+              <strong className="font-medium">Je plan loopt vast op leeftijd {result.firstShortfallAge}.</strong>{' '}
+              Vanaf dat moment kan je gewenste inkomen niet meer volledig uit je vermogen komen en
+              blijft alleen over wat er vast binnenkomt. Wat helpt: later stoppen, meer inleggen,
+              of je gewenste inkomen verlagen.
+            </p>
+          </div>
+        )}
         <div className="space-y-3">
           {result.incomePhases.map((phase, i) => {
             const total = phase.total
@@ -350,6 +411,16 @@ export function ResultsPanel({ inputs, result, mc, mcStale, isCalculating, onRun
                   </span>
                   <span className="font-numeric tabular text-sm text-ink">{eur(total)}/mnd</span>
                 </div>
+                {/* Een fase kan er op papier volledig uitzien terwijl het vermogen
+                    halverwege op is. Zonder deze regel toont de lijst een inkomen
+                    uit eigen vermogen dat de rekenkern vanaf die leeftijd nergens
+                    meer betaalt (audit 7 september 2026, bevinding 5). */}
+                {phase.shortfallFromAge !== null && (
+                  <p className="text-xs text-signal leading-relaxed mb-2">
+                    ⚠ Vanaf leeftijd {phase.shortfallFromAge} is je eigen vermogen op. Het bedrag
+                    hieronder is wat je nodig hebt, niet wat er dan nog binnenkomt.
+                  </p>
+                )}
                 <div className="space-y-1.5">
                   {[
                     { label: 'Eigen vermogen', value: phase.incomeFromCapital, color: '#527898' },
@@ -406,8 +477,8 @@ export function ResultsPanel({ inputs, result, mc, mcStale, isCalculating, onRun
           const yEnd = yRetirement + result.yearsInRetirement
           const milestones = [
             { label: `Nu (leeftijd ${inputs.currentAge})`, age: inputs.currentAge, yearsFromNow: 0 },
-            { label: `Pensionering (leeftijd ${inputs.retirementAge})`, age: inputs.retirementAge, yearsFromNow: yRetirement },
-            ...(result.yearsInRetirement > 4 ? [{ label: `Leeftijd ${inputs.retirementAge + Math.round(result.yearsInRetirement / 2)}`, age: inputs.retirementAge + Math.round(result.yearsInRetirement / 2), yearsFromNow: yMid }] : []),
+            { label: `Pensionering (leeftijd ${result.effectiveRetirementAge})`, age: result.effectiveRetirementAge, yearsFromNow: yRetirement },
+            ...(result.yearsInRetirement > 4 ? [{ label: `Leeftijd ${result.effectiveRetirementAge + Math.round(result.yearsInRetirement / 2)}`, age: result.effectiveRetirementAge + Math.round(result.yearsInRetirement / 2), yearsFromNow: yMid }] : []),
             { label: `Leeftijd ${inputs.lifeExpectancy}`, age: inputs.lifeExpectancy, yearsFromNow: yEnd },
           ]
           return (
@@ -476,7 +547,7 @@ export function ResultsPanel({ inputs, result, mc, mcStale, isCalculating, onRun
             <WealthChart
               result={result}
               mc={mc}
-              retirementAge={inputs.retirementAge}
+              retirementAge={result.effectiveRetirementAge}
               showMonteCarlo={showMonteCarlo}
               lifeEvents={inputs.lifeEvents ?? []}
               currentAge={inputs.currentAge}
@@ -542,8 +613,8 @@ export function ResultsPanel({ inputs, result, mc, mcStale, isCalculating, onRun
         belast. Heb je een lijfrente, banksparen of pensioenbeleggen? Vul de verwachte uitkering
         daarvan in bij "Lijfrente-/bankspaaruitkering" hierboven, niet bij je eigen vermogen: die
         uitkering is namelijk wél belast in box 1, net als je AOW en werkgeverspensioen.
-        Het ingevulde rendement is wat je netto overhoudt: na kosten van beleggen en na belasting in
-        box 3. Je bruto rendement ligt hoger.
+        Het ingevulde rendement is bruto: het verwachte rendement van de portefeuille zelf. Wat je
+        bij kosten en vermogensbelasting invult gaat daar in procentpunten van af.
         We gaan er daarnaast van uit dat je aanvullend pensioen, net als de AOW, volledig met de
         inflatie meestijgt. Voor AOW is dat verdedigbaar, voor een aanvullend pensioen niet:
         indexatie is niet gegarandeerd en kan achterblijven, waardoor je koopkracht na pensionering

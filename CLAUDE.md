@@ -53,7 +53,10 @@ wit, ochtendblauw, zand — weg van het generieke Tailwind-blauw). Volledige doc
 stijl of componenten wijzigt — deze sectie herhaalt de details niet.
 
 Twee fonts naast DM Sans: **Instrument Serif** voor koppen, **Newsreader** (met tabular figures)
-voor alle cijfers/bedragen/KPI-waarden. Bewuste afsplitsing: Instrument Serif zelf heeft geen
+voor alle cijfers/bedragen/KPI-waarden. Alle drie worden **zelf gehost** sinds 8 september 2026
+(`@fontsource-variable/dm-sans`, `@fontsource/instrument-serif`, `@fontsource-variable/newsreader`,
+geïmporteerd in `BaseLayout.astro`). Let op de familienamen: die pakketten heten `DM Sans Variable`
+en `Newsreader Variable`, en `tailwind.config.js` is daarop aangepast. Bewuste afsplitsing: Instrument Serif zelf heeft geen
 tabular figures, waardoor live veranderende getallen zichtbaar sprongen — getest en met Hendrik
 afgestemd.
 
@@ -124,6 +127,23 @@ Opent op **http://localhost:4321** (of de eerstvolgende vrije poort als 4321 bez
 daadwerkelijke `astro dev`-output, ga niet blind uit van 4321). `.claude/launch.json` staat hierop
 ingesteld.
 
+### Releasepoort
+
+`.github/workflows/controle.yml` draait bij elke push en pull request: `tsc --noEmit`,
+`astro check`, `vitest run` en een productiebuild, op een vastgelegde Node-versie. Astro
+compileert met esbuild en meldt typefouten niet, dus die losse `tsc`-stap is de enige die dat
+wel doet. `npm audit` draait niet-blokkerend.
+
+De workflow houdt een kapotte push niet tegen, hij maakt hem zichtbaar. Wil je dat hard maken:
+zet branch protection op `astro-migratie` met deze workflow als verplichte check. Dat is een
+handeling in GitHub die ik niet voor je kan doen.
+
+`vercel.json` zet de beveiligingsheaders (CSP, X-Content-Type-Options, Referrer-Policy,
+X-Frame-Options, Permissions-Policy). De CSP is lokaal getest tegen de productiebuild met een
+testserver die die headers meestuurt: fonts, React-eiland, Monte Carlo en beide exports werken
+zonder één CSP-melding. Wijzig je de CSP, test hem dan opnieuw op die manier en niet alleen op
+`astro dev`, want daar gelden deze headers niet.
+
 ### Update deployen
 ```
 cd C:\Users\schak\financiele-planning
@@ -174,12 +194,15 @@ src/
 ├── types/index.ts                # Alle TypeScript types
 ├── config/
 │   ├── site.ts                   # SITE-object, FEEDBACK_URL
+│   ├── modelVersie.ts            # Modelversie + peildatum fiscale parameters
 │   ├── fiscaleParameters.ts       # GEGENEREERD — Box 1, heffingskortingen, AOW, jaarruimte
 │   └── risicoprofielen.ts         # 5 risicoprofielen
 ├── utils/
 │   ├── pensionCalc.ts             # Kernberekeningen FO-planner
 │   ├── monteCarlo.ts              # Monte Carlo-simulatie
 │   ├── jaarruimte.ts              # Jaarruimteberekeningen
+│   ├── bedrag.ts                  # Nederlandse bedragnotatie, één parser voor alle velden
+│   ├── box3.ts                    # Kosten/vermogensbelasting op het rendement, vervangpunt
 │   ├── exportExcel.ts / exportPDF.ts
 │   └── downloadLimit.ts           # Downloadteller (localStorage)
 ├── components/
@@ -212,6 +235,43 @@ src/
 
 ---
 
+## Externe audit, 7 september 2026
+
+Een externe tester heeft de site doorgelicht op commit `4cc5160` en 28 bevindingen opgeleverd.
+23 daarvan zijn in de code bevestigd en hersteld op branch `audit-herstel-2026-09`. Zie de
+commitberichten daar: elke commit noemt het bevindingsnummer, wat er mis was en hoe de nieuwe
+waarde is nagerekend.
+
+De grootste correcties, kort:
+- Het gewenste bruto pensioeninkomen ging als **maandbedrag door de jaarschijven** en kende geen
+  heffingskortingen en geen Zvw. € 5.000/mnd gaf € 4.107,50 netto in plaats van € 3.612,24; het
+  netto doel lag circa 14% te hoog. Er stonden twee belastingmotoren naast elkaar.
+- Het benodigd vermogen was een **eindwaardeberekening**: een erfenis over vijf jaar verlaagde
+  het doelbedrag vandaag zonder die vijf jaar te overbruggen. Nu een bisectie op het kleinste
+  startvermogen waarbij het saldo nooit negatief wordt.
+- Monte Carlo toetste **negatief vermogen alleen in de uitkeringsfase**.
+- De jaartabel toonde het volle gewenste bedrag ook als de pot leeg was.
+- Export kon **nieuwe invoer met een oude simulatie** mengen, en meldde 0,0% slagingskans zonder
+  dat er ooit gesimuleerd was.
+- De kansmeter wees 90° verkeerd.
+- Reserveringsruimte telde verlopen en dubbele jaren mee; een getypt jaartal maakte het
+  jaarruimtetabblad wit.
+
+Twee bewuste afwijkingen van het auditadvies, met Hendrik afgestemd:
+- **Geen maandelijkse kasstroommotor.** De inleg had al een mid-year-correctie; alleen de
+  onttrekking niet. Eén wortelfactor daarop neemt 91,2% van het verschil weg (€ 211.614 tegen
+  € 211.282 exact maandelijks, bij € 207.504 jaarultimo). Een maandmotor is de duurste ingreep
+  met de kleinste opbrengst.
+- **Geen volledig box 3-model.** Het stelsel beweegt richting heffing over werkelijk rendement.
+  In plaats daarvan invoervelden voor kosten en vermogensbelasting; dat laatste veld start op een
+  schatting uit de gepubliceerde parameters en beweegt mee met het opgegeven vermogen.
+  `src/utils/box3.ts` benoemt zichzelf als vervangpunt; het volledige model staat op de agenda.
+
+Bevinding 18 (Wtp-premie) is op 8 september 2026 door Hendrik beslecht: het gaat om de **totale**
+premie in de werkgeversregeling, dus werkgeversdeel én eigen bijdrage. Het veld heette
+`werkgeverspremie` en vroeg ook alleen daarnaar; dat gaf een te hoge jaarruimte. Hernoemd naar
+`pensioenpremie`, met een migratie voor opgeslagen berekeningen.
+
 ## Bekende openstaande punten (niet opgelost, alleen genoteerd)
 
 - Geen custom analytics-events, alleen kale paginabezoeken (Vercel Web Analytics). Onbekend
@@ -220,6 +280,21 @@ src/
   alleen in de Excel-export.
 - De vijf datatokens uit de herstijling (`data-100/300/500/700`, `sand-deep`, zie
   `DESIGN_SYSTEM.md`) zijn zelf afgeleid en nog niet beoordeeld door Hendriks grafisch ontwerper.
+- **Volledig box 3-model** (auditbevinding 10). Het invoerveld voor vermogensbelasting start nu
+  op een schatting die uit het vermogen en de woonsituatie wordt afgeleid en beweegt daarmee mee
+  tot de gebruiker het zelf invult. Wat nog ontbreekt is een echte jaarlijkse heffing over het
+  actuele vermogen, met vermogensmix, schulden en fiscaal partnerschap. `src/utils/box3.ts` is
+  het vervangpunt. Besluit Hendrik, 8 september 2026: eerst het invulbare veld, het model daarna.
+- **Volatiliteit is nominaal, rendement reëel.** `risicoprofielen.ts` geeft nominale
+  standaardafwijkingen, `monteCarlo.ts` plakt die op een reëel rendement, en inflatie is
+  deterministisch. De auditor noemt dit niet; het is een grotere modelfout dan de
+  lognormaal-omzetting die hij wél noemt (die geeft 12,08% in plaats van 12,00%, verwaarloosbaar).
+- **Geen huishoudmodel.** Eén persoon; samenwonend stuurt alleen het AOW-bedrag en de
+  alleenstaandeouderenkorting. Nu expliciet benoemd in de UI, nog niet opgelost.
+- ~~Lettertypen niet zelf gehost.~~ Opgelost op 8 september 2026. De site laadt geen enkel
+  bestand meer van een derde partij; `font-src` en `style-src` in de CSP staan nu op `'self'`.
+  Nagetrokken tegen de productiebuild: alle drie de families laden vanaf het eigen domein en de
+  tabular figures van Newsreader werken nog ("0" en "1" allebei 22,83px bij 40px).
 
 (Audit 2026-08 heeft nagelopen of de H1 op de FO-planner-pagina nog `sr-only` was, zoals hier
 eerder stond — dat bleek niet meer zo: de H1 is zichtbaar. Dit punt is daarom verwijderd, zie

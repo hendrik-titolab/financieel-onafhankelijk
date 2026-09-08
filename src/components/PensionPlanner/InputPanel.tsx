@@ -1,7 +1,11 @@
 import { useState, useEffect, useRef, useId, Children, isValidElement, cloneElement } from 'react'
+import { parseBedrag, parseBedragBegrensd, formatBedrag } from '../../utils/bedrag'
+import { box3DrukAfgerond } from '../../utils/box3'
+import { aowVakantiegeldFactor } from '../../utils/pensionCalc'
+import { PARAMETER_JAAR } from '../../config/modelVersie'
 import { track } from '@vercel/analytics'
 import { X } from 'lucide-react'
-import type { PensionInputs, IncomeType, ContributionFrequency, LifeEvent, RiskProfile, Woonsituatie } from '../../types'
+import type { PensionInputs, IncomeType, ContributionFrequency, LifeEvent, RiskProfile, Woonsituatie, LijfrenteSoort } from '../../types'
 import { RISICOPROFIELEN, PROFIEL_VOLGORDE } from '../../config/risicoprofielen'
 import { AOW_NETTO } from '../../utils/pensionCalc'
 import { LIJFRENTE } from '../../config/fiscaleParameters'
@@ -59,72 +63,94 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 
-// Zet een getypte bedrag-string om naar een getal, met Nederlandse notatie: een
-// punt als duizendtal-scheiding, een komma als decimaalteken (bijv. "1.234,56").
-// Een <input type="number"> leest een punt zelf altijd als decimaalteken, dus
-// zonder deze functie werd "50.000" (bedoeld: vijftigduizend) stilzwijgend 50 —
-// gevonden tijdens het natrekken van de eenmalige-bedragen-fix hierboven, en
-// van toepassing op ieder bedragveld in de tool, niet alleen dat ene scherm.
-function parseBedrag(raw: string): number {
-  const s = raw.trim()
-  if (s.includes(',')) {
-    // Punten vóór de komma zijn duizendtal-scheidingen, de komma is decimaal.
-    return parseFloat(s.replace(/\./g, '').replace(',', '.'))
-  }
-  // Geen komma: een punt gevolgd door precies 3 cijfers (en dan niets meer, of
-  // weer zo'n groep) is een duizendtal-scheiding — de enige vorm die in het
-  // Nederlands zonder komma voorkomt. Een punt gevolgd door 1-2 cijfers (zoals
-  // "3,5" als iemand toch een punt typt bij een percentage) is een echt
-  // decimaalteken en blijft staan.
-  return parseFloat(s.replace(/\.(?=\d{3}(\D|$))/g, ''))
-}
-
-// Bedragvelden houden de ruwe tekst lokaal bij, zodat een leeg veld leeg mag
-// blijven terwijl je typt. Alleen bij het verlaten van het veld valt een lege
-// of ongeldige invoer terug op 0 — niet meer bij elke toetsaanslag.
-function NumberInput({ id, value, onChange, prefix, suffix, step = 1, min = 0, max }: {
+/**
+ * Bedragveld met Nederlandse notatie.
+ *
+ * Het was een `<input type="number">` met daarachter een eigen parser die punt
+ * als duizendtal en komma als decimaal las. Die twee bijten elkaar: bij
+ * `type="number"` bepaalt de browser zelf wat een geldige waarde is en wat hij
+ * doorgeeft. In de audit van 7 september 2026 werd "50.000" correct 50000, maar
+ * "1.234,56" werd 1.23456 en bleef dat ook na het verlaten van het veld
+ * (bevinding 8).
+ *
+ * Nu een tekstveld met `inputMode="decimal"`: de browser herschrijft niets meer
+ * en parseBedrag() in utils/bedrag.ts is de enige plek waar tekst een getal
+ * wordt. Mobiel geeft `inputMode="decimal"` nog steeds een numeriek toetsenbord.
+ * De spinner-pijltjes vervallen; `step` blijft in de aanroepen staan omdat het
+ * de bedoelde stapgrootte documenteert, maar doet niets meer.
+ *
+ * De ruwe tekst blijft lokaal staan zodat een half ingetypt getal niet onder je
+ * handen wegspringt. Begrenzen en melden gebeurt pas bij het verlaten van het
+ * veld.
+ */
+function NumberInput({ id, value, onChange, prefix, suffix, min = 0, max }: {
   id?: string
   value: number; onChange: (v: number) => void
   prefix?: string; suffix?: string; step?: number; min?: number; max?: number
 }) {
-  const [text, setText] = useState(String(value))
+  const [text, setText] = useState(() => formatBedrag(value))
+  const [melding, setMelding] = useState<string | null>(null)
+  const meldingId = useId()
 
   useEffect(() => {
-    // Alleen synchroniseren als de waarde van buitenaf wijzigt (bijv. profielwissel),
-    // niet bij elke render, anders overschrijft dit het typen. parseBedrag (niet
-    // Number) vergelijken: anders werd "50.000" die al correct als 50000 was
-    // doorgegeven hier alsnog herschreven, want Number("50.000") leest de punt
-    // zelf weer als decimaalteken en ziet dan 50 in plaats van 50000.
-    if (parseBedrag(text) !== value) setText(String(value))
+    // Alleen synchroniseren als de waarde van buitenaf wijzigt (bijv. een
+    // profielwissel), niet bij elke render, anders overschrijft dit het typen.
+    // Vergelijken via de parser en niet via Number(): "50.000" is 50000, maar
+    // Number() leest de punt als decimaalteken en ziet 50.
+    if (parseBedrag(text).waarde !== value) {
+      setText(formatBedrag(value))
+      setMelding(null)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value])
 
-  // Bij het verlaten van het veld wordt de waarde binnen min/max getrokken. Die
-  // twee stonden er wel op het element, maar niets dwong ze af: een rendement van
-  // 99% werd geaccepteerd en leverde een eindvermogen van biljoenen op, zonder
-  // enige melding (bevinding A5). Tijdens het typen gebeurt dit bewust niet, want
-  // dan springt een half ingetypt getal onder je handen weg.
   const commit = (raw: string) => {
-    const parsed = parseBedrag(raw)
-    const next = isNaN(parsed) ? 0 : parsed
-    const begrensd = Math.min(max ?? Infinity, Math.max(min ?? -Infinity, next))
-    setText(String(begrensd))
-    onChange(begrensd)
+    const r = parseBedragBegrensd(raw, min, max)
+    if (r.waarde === null) {
+      // Niet te lezen of leeg. Een leeg veld valt terug op de ondergrens (meestal
+      // 0), zodat de berekening altijd een getal heeft om mee te werken.
+      const terugval = min ?? 0
+      setText(formatBedrag(terugval))
+      setMelding(r.fout)
+      onChange(terugval)
+      return
+    }
+    setText(formatBedrag(r.waarde))
+    setMelding(r.fout)
+    onChange(r.waarde)
   }
 
   return (
-    <div className="relative flex items-center">
-      {prefix && <span className="absolute left-3 text-body text-sm">{prefix}</span>}
-      <input id={id} type="number" value={text} min={min} max={max} step={step}
-        onChange={e => {
-          setText(e.target.value)
-          const parsed = parseBedrag(e.target.value)
-          if (!isNaN(parsed)) onChange(parsed)
-        }}
-        onBlur={e => commit(e.target.value)}
-        onFocus={e => e.target.select()}
-        className={`input-field ${prefix ? 'pl-7' : ''} ${suffix ? 'pr-8' : ''}`} />
-      {suffix && <span className="absolute right-3 text-body text-sm">{suffix}</span>}
+    <div>
+      <div className="relative flex items-center">
+        {prefix && <span className="absolute left-3 text-body text-sm">{prefix}</span>}
+        <input
+          id={id}
+          type="text"
+          inputMode="decimal"
+          autoComplete="off"
+          value={text}
+          aria-invalid={melding !== null}
+          aria-describedby={melding ? meldingId : undefined}
+          onChange={e => {
+            setText(e.target.value)
+            // Tijdens het typen alleen doorgeven wat leesbaar is, en nog niet
+            // begrenzen of klagen. Wie "1.2" typt is onderweg naar "1.234".
+            const r = parseBedrag(e.target.value)
+            if (melding) setMelding(null)
+            if (r.waarde !== null) onChange(r.waarde)
+          }}
+          onBlur={e => commit(e.target.value)}
+          onFocus={e => e.target.select()}
+          className={`input-field ${prefix ? 'pl-7' : ''} ${suffix ? 'pr-8' : ''}`}
+        />
+        {suffix && <span className="absolute right-3 text-body text-sm">{suffix}</span>}
+      </div>
+      {melding && (
+        <p id={meldingId} role="status" className="text-xs text-signal mt-1 leading-relaxed">
+          {melding}
+        </p>
+      )}
     </div>
   )
 }
@@ -170,7 +196,12 @@ function ParametersTab({ inputs, onChange }: Props) {
             browser deze schuifknop zelf vast op zijn min zodra pensioenleeftijd
             erboven uitkomt, wat er hetzelfde uitziet als het ongewenste
             "vanzelf meebewegen" dat hierboven bij handleChange is opgelost. */}
-        <AgeSliderRow label="Levensverwachting" value={inputs.lifeExpectancy}
+        {/* "Levensverwachting" suggereert een voorspelling die dit getal niet is:
+            het is de leeftijd tot waar je wilt dat je geld toereikend is. Wie
+            precies tot zijn statistische levensverwachting plant, heeft per
+            definitie ongeveer de helft kans dat het geld eerder op is (audit
+            7 september 2026, bevinding 16). */}
+        <AgeSliderRow label="Plannen tot leeftijd" value={inputs.lifeExpectancy}
           min={36} max={100}
           onChange={v => onChange({ lifeExpectancy: v })} />
       </Section>
@@ -225,7 +256,22 @@ function ParametersTab({ inputs, onChange }: Props) {
           <NumberInput id={gewenstInkomenId} value={inputs.desiredRetirementIncome}
             onChange={v => onChange({ desiredRetirementIncome: v })}
             prefix="€" suffix="/mnd" step={100} />
-          <p className="text-xs text-body">In koopkracht van vandaag: inflatie wordt automatisch verwerkt</p>
+          <p className="text-xs text-body leading-relaxed">
+            In euro's van vandaag. De planner rekent met rendement ná inflatie, dus dit bedrag
+            houdt zijn koopkracht: € 3.000 nu is over dertig jaar nog steeds € 3.000 aan
+            boodschappen. Het bedrag dat er dan feitelijk op je rekening staat is hoger.
+          </p>
+          {inputs.desiredRetirementIncomeType === 'bruto' && (
+            <p className="text-xs text-body leading-relaxed">
+              We rekenen dit om naar netto met de belastingregels die gelden op je pensioenleeftijd
+              ({inputs.retirementAge} jaar): {inputs.retirementAge >= inputs.aowStartAge
+                ? 'de tarieven en kortingen ná de AOW-leeftijd'
+                : 'de tarieven en kortingen vóór de AOW-leeftijd, want je AOW gaat pas op ' + inputs.aowStartAge + ' jaar in'}
+              , en de situatie {inputs.woonsituatie === 'alleenstaand' ? 'alleenstaand' : 'samenwonend'}.
+              Inclusief heffingskortingen en de bijdrage Zvw. Eén bedrag kan het verschil tussen de
+              jaren vóór en ná je AOW niet uitdrukken; weet je je netto bedrag, kies dan Netto.
+            </p>
+          )}
         </div>
         <Field label="Inflatie">
           <NumberInput value={inputs.inflation}
@@ -240,6 +286,15 @@ function ParametersTab({ inputs, onChange }: Props) {
       <div className="border-t border-line-soft" />
 
       <Section title="Pensioenuitkeringen">
+        {/* Expliciete afbakening. De tool kent geen tweede persoon met eigen
+            pensioen, eigen belasting en eigen leeftijd; woonsituatie stuurt alleen
+            het AOW-bedrag en de alleenstaandeouderenkorting (audit 7 september
+            2026, bevinding 16). */}
+        <p className="text-xs text-body leading-relaxed">
+          Deze berekening gaat over één persoon. Kies je samenwonend, dan past dat je AOW-bedrag
+          en je heffingskortingen aan, maar er wordt geen tweede persoon met een eigen pensioen,
+          eigen leeftijd en eigen belasting doorgerekend.
+        </p>
         {/* Referentie aan je eigen pensioenleeftijd: die staat in de sectie
             "Leeftijd" hierboven, dus zonder deze regel zie je 'm niet meer
             terwijl je AOW en werkgeverspensioen invult — precies waar het
@@ -282,6 +337,24 @@ function ParametersTab({ inputs, onChange }: Props) {
               className="text-data-700 hover:underline">mijnpensioenoverzicht.nl</a>.
             {' '}Heb je niet je hele leven in Nederland gewoond, dan krijg je een lager bedrag.
           </p>
+          {/* Het vakantiegeld keert de SVB in mei apart uit, dus het maandbedrag op
+              een overzicht is exclusief. De rekenkern gebruikte twaalf van die
+              maandbedragen en liet het vakantiegeld vallen, waardoor het
+              beschikbare inkomen structureel te laag uitkwam (audit 7 september
+              2026, bevinding 12). */}
+          <label className="flex items-center gap-2 mt-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={inputs.aowVakantiegeld}
+              onChange={e => onChange({ aowVakantiegeld: e.target.checked })}
+              className="rounded accent-ink" />
+            <span className="text-xs text-body">Vakantiegeld meetellen</span>
+          </label>
+          <p className="text-xs text-body mt-1 leading-relaxed">
+            {inputs.aowVakantiegeld
+              ? `De SVB betaalt het vakantiegeld in mei apart uit, dus het bedrag hierboven is exclusief. Meetellen verhoogt je AOW met ongeveer ${((aowVakantiegeldFactor(inputs.woonsituatie) - 1) * 100).toLocaleString('nl-NL', { maximumFractionDigits: 1 })}%. Zet dit uit als je bedrag het vakantiegeld al bevat.`
+              : 'Het vakantiegeld telt nu niet mee. Je beschikbare inkomen valt daardoor lager uit dan het in werkelijkheid is.'}
+          </p>
         </Field>
         <Field label="AOW ingangsdatum (leeftijd)">
           <NumberInput value={inputs.aowStartAge} onChange={v => onChange({ aowStartAge: v })}
@@ -317,26 +390,62 @@ function ParametersTab({ inputs, onChange }: Props) {
               het opgebouwde bedrag. Dit vermogen is fiscaal beklemd, een vrije opname zoals bij je
               eigen vermogen hierboven kan hier niet. Nog niet bekend? Laat op € 0 staan.
             </p>
-            {/* Zachte waarschuwing, geen blokkade: banksparen/pensioenbeleggen kennen
-                deze wettelijke jaargrens niet, alleen een lijfrente. Vergelijkt tegen
-                de hoogste van de twee grenzen uit art. 3.125 Wet IB 2001, omdat welke
-                van de twee van toepassing is afhangt van de uitkeringsduur — een vraag
-                die dit ene veld bewust niet stelt (zie E1-optie-B). */}
-            {inputs.lijfrenteUitkering * 12 > LIJFRENTE.maxJaaruitkeringOverbruggingslijfrente && (
+            {/* De grens hing hier aan de overbruggingslijfrente (EUR 63.288 per jaar)
+                en werd op élke uitkering losgelaten. Dat klopt tweemaal niet: een
+                levenslange oudedagslijfrente kent helemaal geen jaarmaximum, en
+                voor een tijdelijke oudedagslijfrente geldt een heel ander bedrag
+                (EUR 27.192 in 2026, art. 3.125 lid 1 onderdeel c Wet IB 2001).
+                Sinds september 2026 hangt de grens aan de gekozen productsoort
+                (audit-bevinding 9). Zachte waarschuwing, geen blokkade. */}
+            {inputs.lijfrenteSoort === 'tijdelijk'
+              && inputs.lijfrenteUitkering * 12 > LIJFRENTE.maxJaaruitkeringTijdelijkeOudedagslijfrente && (
               <p className="text-xs text-signal bg-panel border border-signal rounded-[3px] p-2 mt-1 leading-relaxed">
-                ⚠ Dit is hoger dan het wettelijk maximum voor een lijfrente-uitkering
-                (€ {Math.round(LIJFRENTE.maxJaaruitkeringOverbruggingslijfrente / 12).toLocaleString('nl-NL')}/mnd,
-                art. 3.125 Wet IB 2001). Klopt het bedrag? Bij banksparen of pensioenbeleggen geldt
-                deze grens niet.
+                ⚠ Dit is hoger dan het maximum voor een tijdelijke oudedagslijfrente
+                (€ {Math.round(LIJFRENTE.maxJaaruitkeringTijdelijkeOudedagslijfrente / 12).toLocaleString('nl-NL')}/mnd,
+                art. 3.125 lid 1 onderdeel c Wet IB 2001). Klopt het bedrag, of is het een
+                levenslange uitkering? Bij banksparen met een looptijd geldt deze grens niet.
               </p>
             )}
           </Field>
           <div className="mt-2">
+            {/* Productsoort en looptijd. Zonder deze twee liep iedere lijfrente door
+                tot de planningshorizon, ook een uitkering van vijf jaar
+                (audit-bevinding 9). */}
+            {inputs.lijfrenteUitkering > 0 && (
+              <div className="mb-2">
+                <span className="label">Soort uitkering</span>
+                <Toggle value={inputs.lijfrenteSoort}
+                  onChange={v => onChange({ lijfrenteSoort: v as LijfrenteSoort })}
+                  options={[
+                    { value: 'levenslang', label: 'Levenslang' },
+                    { value: 'tijdelijk', label: 'Tijdelijk' },
+                  ]} />
+                <p className="text-xs text-body leading-relaxed mt-1">
+                  {inputs.lijfrenteSoort === 'levenslang'
+                    ? 'Loopt door tot het einde van je planning. Zo werkt een levenslange oudedagslijfrente bij een verzekeraar.'
+                    : 'Stopt op de leeftijd die je hieronder invult. Zo werkt een uitkering vanaf een lijfrenterekening bij een bank, of een tijdelijke oudedagslijfrente.'}
+                </p>
+              </div>
+            )}
             <Field label="Lijfrente-/bankspaaruitkering ingang (leeftijd)">
               <NumberInput value={inputs.lijfrenteStartAge}
                 onChange={v => onChange({ lijfrenteStartAge: v })}
                 suffix="jr" step={1} min={55} max={75} />
             </Field>
+            {inputs.lijfrenteUitkering > 0 && inputs.lijfrenteSoort === 'tijdelijk' && (
+              <div className="mt-2">
+                <Field label="Uitkering stopt op (leeftijd)">
+                  <NumberInput value={inputs.lijfrenteEindLeeftijd}
+                    onChange={v => onChange({ lijfrenteEindLeeftijd: v })}
+                    suffix="jr" step={1} min={inputs.lijfrenteStartAge + 1} max={100} />
+                  <p className="text-xs text-body leading-relaxed mt-1">
+                    {inputs.lijfrenteEindLeeftijd > inputs.lijfrenteStartAge
+                      ? `Dat is ${inputs.lijfrenteEindLeeftijd - inputs.lijfrenteStartAge} jaar uitkering. Staat op je polis of op de prognose van je aanbieder.`
+                      : 'De einddatum moet na de ingangsdatum liggen.'}
+                  </p>
+                </Field>
+              </div>
+            )}
             <p className="text-xs text-body mt-1">
               Te vinden op de prognose van je aanbieder of via{' '}
               <a href="https://www.mijnpensioenoverzicht.nl" target="_blank" rel="noopener noreferrer"
@@ -376,12 +485,24 @@ function RisicoprofielSection({ inputs, onChange }: Props) {
     })
   }
 
+  // Wat box 3 bij dit vermogen ongeveer kost, uitgedrukt in procentpunten van het
+  // rendement. Berekend uit de gepubliceerde parameters, niet uit een vast getal.
+  // Afgerond op één decimaal, precies zoals het in het veld staat.
+  const box3Schatting = box3DrukAfgerond(inputs.currentCapital, inputs.woonsituatie)
+  const box3Afwijkend = inputs.vermogensbelastingHandmatig
+    && Math.abs(box3Schatting - inputs.vermogensbelastingPct) > 0.049
+
   return (
     <Section title="Risicoprofiel">
+      {/* Deze tekst zei tot september 2026 dat de rendementen al netto waren, na
+          kosten en na box 3, terwijl risicoprofielen.ts diezelfde getallen als
+          nominaal documenteert en de rekenkern nergens iets aftrok. De slotzin
+          adviseerde bovendien een profiel defensiever te kiezen, wat diezelfde
+          correctie dubbel zou tellen (audit 7 september 2026, bevinding 10). */}
       <p className="text-xs text-body leading-relaxed">
-        De rendementen hieronder zijn netto: wat je overhoudt na kosten van beleggen en na
-        belasting in box 3. Je bruto beleggingsrendement ligt hoger. Wil je zelf al rekenen met
-        rendement ná kosten en belasting, schuif dan een profiel op naar defensiever.
+        De rendementen hieronder zijn bruto: het verwachte rendement van de portefeuille, vóór
+        kosten en vóór belasting. Wat je daarvan overhoudt vul je hieronder in bij kosten en
+        vermogensbelasting.
       </p>
       {!inputs.useCustomReturns && (
         <div className="space-y-2">
@@ -453,6 +574,79 @@ function RisicoprofielSection({ inputs, onChange }: Props) {
           </p>
         </div>
       )}
+
+      {/* Kosten en vermogensbelasting, apart van het brutorendement. Bewust twee
+          velden en geen ingebouwde berekening: het box 3-stelsel beweegt richting
+          heffing over werkelijk rendement, en een volledig model daarvoor is bij
+          invoering opnieuw fout. De schatting hiernaast komt wel uit de
+          gepubliceerde parameters, zie utils/box3.ts. */}
+      <div className="border-t border-line-soft pt-3 space-y-3">
+        <p className="text-xs text-body leading-relaxed">
+          Wat er van dat brutorendement af gaat. Laat je beide op 0 staan, dan rekent de tool
+          zonder kosten en zonder vermogensbelasting, en valt de uitkomst dus gunstiger uit dan
+          in werkelijkheid.
+        </p>
+
+        <Field label="Kosten van beleggen">
+          <NumberInput value={inputs.kostenPct}
+            onChange={v => onChange({ kostenPct: v })} suffix="%" step={0.1} min={0} max={5} />
+          <p className="text-xs text-body leading-relaxed mt-1">
+            Fondskosten en platformkosten samen, per jaar. Staat op je overzicht als lopende
+            kosten of TER.
+          </p>
+        </Field>
+
+        <Field label="Vermogensbelasting (box 3)">
+          {/* Het veld begint op de schatting die bij het opgegeven vermogen hoort en
+              beweegt daarmee mee, tot je het zelf aanpast. Een vast getal kan hier
+              niet kloppen: de druk loopt op met de omvang van het vermogen. */}
+          <NumberInput value={inputs.vermogensbelastingPct}
+            onChange={v => onChange({ vermogensbelastingPct: v, vermogensbelastingHandmatig: true })}
+            suffix="%" step={0.1} min={0} max={5} />
+          <div className="text-xs text-body leading-relaxed mt-1 space-y-1">
+            {inputs.vermogensbelastingHandmatig ? (
+              <>
+                <p>
+                  Je hebt dit zelf ingevuld. Bij een vermogen van
+                  € {Math.round(inputs.currentCapital).toLocaleString('nl-NL')} en je woonsituatie
+                  komt onze schatting voor {PARAMETER_JAAR} uit op{' '}
+                  <strong className="font-medium text-ink">
+                    {box3Schatting.toLocaleString('nl-NL', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%
+                  </strong>.
+                </p>
+                {box3Afwijkend && (
+                  <button
+                    type="button"
+                    onClick={() => onChange({
+                      vermogensbelastingPct: box3Schatting,
+                      vermogensbelastingHandmatig: false,
+                    })}
+                    className="underline font-medium text-data-700 hover:text-ink"
+                  >
+                    Terug naar de schatting
+                  </button>
+                )}
+              </>
+            ) : (
+              <p>
+                Geschat op basis van je vermogen van
+                € {Math.round(inputs.currentCapital).toLocaleString('nl-NL')} en je woonsituatie,
+                met de percentages van {PARAMETER_JAAR}. Past dit bedrag zich aan, dan past dit
+                percentage mee. Vul je zelf iets in, dan blijft dat staan.
+              </p>
+            )}
+            <p>
+              De druk loopt op met de omvang van je vermogen, doordat het heffingsvrije deel een
+              steeds kleiner aandeel wordt: bij een ton ongeveer 0,9%, bij een miljoen ruim 2%.
+              Voor spaargeld ligt hij lager dan voor beleggingen.
+            </p>
+            <p>
+              Een vereenvoudiging: de heffing wordt niet elk jaar opnieuw over je actuele vermogen
+              berekend, en de verdeling tussen sparen, beleggen en schulden telt niet mee.
+            </p>
+          </div>
+        </Field>
+      </div>
     </Section>
   )
 }
@@ -494,7 +688,16 @@ function EenmaligeBedragenSection({ inputs, onChange }: Props) {
   // in de lijst en in de optelling bleef staan (bevinding A22).
   const laatsteJaar = currentYear + Math.max(0, inputs.lifeExpectancy - inputs.currentAge) - 1
 
-  const isFilled = (r: DraftEvent) => r.amount !== '' && parseBedrag(r.amount) !== 0
+  // Het bedrag van een regel als getal, of null als het veld leeg of onleesbaar
+  // is. parseBedrag geeft sinds september 2026 een uitkomst mét foutmelding terug
+  // (audit-bevinding 8); deze helper houdt de rest van deze sectie leesbaar.
+  const bedragVan = (r: DraftEvent): number | null => parseBedrag(r.amount).waarde
+  const foutVan = (r: DraftEvent): string | null => parseBedrag(r.amount).fout
+
+  const isFilled = (r: DraftEvent) => {
+    const v = bedragVan(r)
+    return v !== null && v !== 0
+  }
 
   const buitenLooptijd = (r: DraftEvent) =>
     isFilled(r) && r.year !== '' && !isNaN(Number(r.year)) &&
@@ -510,9 +713,9 @@ function EenmaligeBedragenSection({ inputs, onChange }: Props) {
     // sessie: "als ik het jaartal invul, springt tekort steeds terug").
     const timeoutId = setTimeout(() => {
       const valid: LifeEvent[] = rows
-        .filter(r => r.amount && r.year && !isNaN(parseBedrag(r.amount)) && parseBedrag(r.amount) !== 0 && !isNaN(Number(r.year)))
+        .filter(r => r.year !== '' && !isNaN(Number(r.year)) && isFilled(r))
         .filter(r => !buitenLooptijd(r))
-        .map(r => ({ name: r.name.trim() || '—', amount: parseBedrag(r.amount), year: Number(r.year) }))
+        .map(r => ({ name: r.name.trim() || '—', amount: bedragVan(r) as number, year: Number(r.year) }))
       onChange({ lifeEvents: valid })
     }, 300)
     return () => clearTimeout(timeoutId)
@@ -542,8 +745,10 @@ function EenmaligeBedragenSection({ inputs, onChange }: Props) {
 
   const validCount = (inputs.lifeEvents ?? []).length
   const teltMee = (r: DraftEvent) => isFilled(r) && !buitenLooptijd(r)
-  const totaalBij = rows.filter(r => teltMee(r) && parseBedrag(r.amount) > 0).reduce((s, r) => s + parseBedrag(r.amount), 0)
-  const totaalAf = rows.filter(r => teltMee(r) && parseBedrag(r.amount) < 0).reduce((s, r) => s + Math.abs(parseBedrag(r.amount)), 0)
+  const totaalBij = rows.filter(r => teltMee(r) && (bedragVan(r) ?? 0) > 0)
+    .reduce((s, r) => s + (bedragVan(r) ?? 0), 0)
+  const totaalAf = rows.filter(r => teltMee(r) && (bedragVan(r) ?? 0) < 0)
+    .reduce((s, r) => s + Math.abs(bedragVan(r) ?? 0), 0)
 
   return (
     <Section title={`Eenmalige bedragen${validCount > 0 ? ` (${validCount})` : ''}`}>
@@ -555,23 +760,27 @@ function EenmaligeBedragenSection({ inputs, onChange }: Props) {
         {rows.map((row, i) => {
           const isLast = i === rows.length - 1
           const isDraft = isLast && !isFilled(row)
-          const isExpense = parseBedrag(row.amount) < 0
+          const isExpense = (bedragVan(row) ?? 0) < 0
           return (
             <div key={row.id} className={`space-y-1 ${isDraft ? 'opacity-50' : ''}`}>
               <input type="text" value={row.name} placeholder="Omschrijving (optioneel)"
                 onChange={e => handleChange(i, 'name', e.target.value)}
                 className="input-field text-sm" />
               <div className="flex gap-1.5 items-center">
+                {/* Tekstveld met inputMode decimal, net als NumberInput hierboven:
+                    een type="number" laat de browser de tekst herschrijven vóórdat
+                    de parser hem ziet (audit-bevinding 8). */}
                 <div className="flex-[2] relative flex items-center">
                   <span className="absolute left-3 text-body text-sm">€</span>
-                  <input type="number" value={row.amount} step={500}
+                  <input type="text" inputMode="decimal" autoComplete="off" value={row.amount}
                     placeholder="Bedrag (− = afschrijving)"
+                    aria-invalid={foutVan(row) !== null}
                     onChange={e => handleChange(i, 'amount', e.target.value)}
-                    className={`input-field pl-7 text-sm ${isExpense ? 'text-signal' : (!isDraft && row.amount ? 'text-ink' : '')}`} />
+                    className={`input-field pl-7 text-sm ${foutVan(row) ? 'border-signal' : ''} ${isExpense ? 'text-signal' : (!isDraft && row.amount ? 'text-ink' : '')}`} />
                 </div>
                 <div className="w-20 flex-shrink-0">
-                  <input type="number" value={row.year} min={currentYear} max={laatsteJaar}
-                    step={1} placeholder="Jaar"
+                  <input type="text" inputMode="numeric" autoComplete="off" value={row.year}
+                    placeholder="Jaar"
                     onChange={e => handleChange(i, 'year', e.target.value)}
                     className={`input-field text-center text-sm ${buitenLooptijd(row) ? 'border-signal text-signal' : ''}`} />
                 </div>
@@ -579,6 +788,9 @@ function EenmaligeBedragenSection({ inputs, onChange }: Props) {
                   ? <button onClick={() => handleDelete(i)} className="flex-shrink-0 p-1.5 text-body hover:text-signal hover:bg-canvas rounded-[3px] transition-colors"><X size={13} /></button>
                   : <div className="w-7 flex-shrink-0" />}
               </div>
+              {foutVan(row) && (
+                <p role="status" className="text-xs text-signal leading-relaxed">{foutVan(row)}</p>
+              )}
               {buitenLooptijd(row) && (
                 <p className="text-xs text-signal leading-relaxed">
                   Dit jaar valt buiten de looptijd van de berekening ({currentYear} tot en met {laatsteJaar}).

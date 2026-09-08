@@ -14,6 +14,11 @@ export function baseInputs(overrides: Partial<PensionInputs> = {}): PensionInput
     returnBeforeRetirement: 6,
     returnAfterRetirement: 4,
     inflation: 2.5,
+    kostenPct: 0,
+    // Nul in de fixtures, zodat de golden master over de rekenfixes gaat en niet
+    // ook over de box 3-schatting. De tool zelf start wél met een schatting.
+    vermogensbelastingPct: 0,
+    vermogensbelastingHandmatig: true,
     currentIncome: 80000,
     currentIncomeType: 'bruto',
     desiredRetirementIncome: 5000,
@@ -24,10 +29,15 @@ export function baseInputs(overrides: Partial<PensionInputs> = {}): PensionInput
     woonsituatie: 'alleenstaand',
     aowMaandBedragNetto: 1558,
     aowStartAge: 67,
+    // Uit in de fixtures, zodat de golden master over de bruto-nettofix gaat en
+    // niet ook nog over deze wijziging. Er is een aparte test voor.
+    aowVakantiegeld: false,
     employerPension: 0,
     employerPensionStartAge: 67,
     lijfrenteUitkering: 0,
     lijfrenteStartAge: 67,
+    lijfrenteSoort: 'levenslang',
+    lijfrenteEindLeeftijd: 87,
     lifeEvents: [],
     volatilityPre: 12,
     volatilityPost: 8,

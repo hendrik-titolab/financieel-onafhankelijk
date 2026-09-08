@@ -1,7 +1,13 @@
 import { useState, useEffect } from 'react'
 import { Trash2, Plus, ChevronDown, ChevronUp, Info, AlertTriangle } from 'lucide-react'
 import type { JaarruimteInputs, JaarruimteResult, SavedJaarruimte, ReserveringsruimteRij, PensioenType } from '../../types'
-import { calculateJaarruimte, getAvailableYears, getJaarruimteParamsNote, isPreWtp, berekenJaarruimteEenvoudig, getOudsteParameterJaar, getFormuleTekst } from '../../utils/jaarruimte'
+import {
+  calculateJaarruimte, getAvailableYears, getJaarruimteParamsNote, isPreWtp,
+  berekenJaarruimteEenvoudig, getOudsteParameterJaar, getFormuleTekst,
+  controleerJaarruimteInvoer, terugkijktermijn, oudsteReserveringsjaar,
+} from '../../utils/jaarruimte'
+import { PARAMETER_JAAR, PARAMETER_PEILDATUM, modelStempel } from '../../config/modelVersie'
+import { parseBedrag, formatBedrag } from '../../utils/bedrag'
 
 const STORAGE_KEY = 'jaarruimte_berekeningen'
 
@@ -10,14 +16,40 @@ const STORAGE_KEY = 'jaarruimte_berekeningen'
 // aantal regels als de ondergrens van het jaarveld. Die twee liepen uiteen: het
 // jaarveld stond op X−11, waardoor er een jaar te kiezen was dat niet meetelt en
 // waarvoor bovendien geen fiscale parameters bestaan.
-const MAX_RESERVERING_RIJEN = 10
+// Hoeveel regels onbenutte ruimte er hoogstens zijn, en welk jaar het oudste is.
+// Dit was een vaste tien, terwijl de reserveringsruimte tot en met 2022 zeven jaar
+// terugkeek en pas vanaf 2023 tien. Voor belastingjaar 2021 en 2022 liet het
+// scherm daardoor drie jaren te veel toe (audit 7 september 2026, bevinding 17).
+// Nooit verder terug dan de parametertabel reikt.
+function maxRijen(baseYear: number): number {
+  return Math.min(
+    terugkijktermijn(baseYear),
+    Math.max(0, baseYear - getOudsteParameterJaar())
+  )
+}
+
+function oudsteToegestaneJaar(baseYear: number): number {
+  return Math.max(oudsteReserveringsjaar(baseYear), getOudsteParameterJaar())
+}
+
+// Het lopende belastingjaar, begrensd op wat de parametertabel kent. Stond hard
+// op 2025 terwijl de pagina "Jaarruimte berekenen 2026" heet en we in 2026 zitten:
+// wie niets aanpaste rekende het verkeerde jaar door (audit 7 september 2026,
+// bevinding 20). Bij een jaarwisseling zonder nieuwe parameters valt dit terug op
+// het laatste jaar dat we wél kennen, in plaats van op een jaar dat een Error
+// oplevert.
+function standaardBelastingjaar(): number {
+  const jaren = getAvailableYears()
+  const nu = new Date().getFullYear()
+  return jaren.includes(nu) ? nu : Math.max(...jaren)
+}
 
 const DEFAULT_INPUTS: JaarruimteInputs = {
-  year: 2025,
+  year: standaardBelastingjaar(),
   income: 75000,
   pensioenType: 'geen',
   factorA: 0,
-  werkgeverspremie: 0,
+  pensioenpremie: 0,
   alIngelegd: 0,
   reserveringsruimteRijen: [],
   clientName: '',
@@ -172,7 +204,7 @@ function ReserveringsruimteDirect({ rijen, onChange, baseYear }: ReserveringProp
     const updated = newRows[index]
     const isLast = index === newRows.length - 1
     const isFilled = updated.bedrag && Number(updated.bedrag) > 0
-    if (isLast && isFilled && newRows.length < MAX_RESERVERING_RIJEN) {
+    if (isLast && isFilled && newRows.length < maxRijen(baseYear)) {
       newRows.push({ jaar: String(Number(updated.jaar) - 1), bedrag: '' })
     }
     setRows(newRows)
@@ -202,7 +234,7 @@ function ReserveringsruimteDirect({ rijen, onChange, baseYear }: ReserveringProp
         return (
           <div key={i} className={`flex gap-1.5 items-center ${isDraft ? 'opacity-50' : ''}`}>
             <div className="flex-1">
-              <input type="number" value={row.jaar} min={Math.max(baseYear - MAX_RESERVERING_RIJEN, getOudsteParameterJaar())} max={baseYear - 1} step={1}
+              <input type="number" value={row.jaar} min={oudsteToegestaneJaar(baseYear)} max={baseYear - 1} step={1}
                 placeholder="Jaar" onChange={e => handleChange(i, 'jaar', e.target.value)}
                 className="input-field text-center text-sm" />
             </div>
@@ -231,20 +263,20 @@ function ReserveringsruimteBerekenen({ onChange, baseYear }: ReserveringProps) {
     inkomen: string
     pensioenType: PensioenType
     factorA: string
-    werkgeverspremie: string
+    pensioenpremie: string
     ingelegd: string
     open: boolean
   }
 
   const [kaarten, setKaarten] = useState<JaarKaart[]>([
-    { jaar: baseYear - 1, inkomen: '', pensioenType: 'geen', factorA: '', werkgeverspremie: '', ingelegd: '', open: true },
+    { jaar: baseYear - 1, inkomen: '', pensioenType: 'geen', factorA: '', pensioenpremie: '', ingelegd: '', open: true },
   ])
 
   // Bereken jaarruimte en onbenut voor een kaart
   const bereken = (k: JaarKaart) => {
     const ink = Number(k.inkomen)
     if (!k.inkomen || isNaN(ink)) return { jaarruimte: null, onbenut: null }
-    const jr = berekenJaarruimteEenvoudig(k.jaar, ink, k.pensioenType, Number(k.factorA) || 0, Number(k.werkgeverspremie) || 0)
+    const jr = berekenJaarruimteEenvoudig(k.jaar, ink, k.pensioenType, Number(k.factorA) || 0, Number(k.pensioenpremie) || 0)
     const ing = Number(k.ingelegd) || 0
     return { jaarruimte: jr, onbenut: Math.max(0, jr - ing) }
   }
@@ -262,11 +294,11 @@ function ReserveringsruimteBerekenen({ onChange, baseYear }: ReserveringProps) {
     setKaarten(prev => prev.map((k, idx) => idx === i ? { ...k, ...patch } : k))
 
   const voegJaarToe = () => {
-    if (kaarten.length >= MAX_RESERVERING_RIJEN) return
+    if (kaarten.length >= maxRijen(baseYear)) return
     const vorigeJaar = kaarten[kaarten.length - 1].jaar - 1
     setKaarten(prev => [
       ...prev.map(k => ({ ...k, open: false })),
-      { jaar: vorigeJaar, inkomen: '', pensioenType: 'geen', factorA: '', werkgeverspremie: '', ingelegd: '', open: true },
+      { jaar: vorigeJaar, inkomen: '', pensioenType: 'geen', factorA: '', pensioenpremie: '', ingelegd: '', open: true },
     ])
   }
 
@@ -322,7 +354,7 @@ function ReserveringsruimteBerekenen({ onChange, baseYear }: ReserveringProps) {
                 {/* Jaar aanpassen */}
                 <div>
                   <label className="label text-xs">Belastingjaar</label>
-                  <input type="number" value={k.jaar} min={Math.max(baseYear - MAX_RESERVERING_RIJEN, getOudsteParameterJaar())} max={baseYear - 1} step={1}
+                  <input type="number" value={k.jaar} min={oudsteToegestaneJaar(baseYear)} max={baseYear - 1} step={1}
                     onChange={e => update(i, { jaar: parseInt(e.target.value) || k.jaar })}
                     className="input-field text-sm w-24" />
                 </div>
@@ -369,14 +401,14 @@ function ReserveringsruimteBerekenen({ onChange, baseYear }: ReserveringProps) {
                   </div>
                 )}
 
-                {/* Werkgeverspremie (alleen bij Wtp) */}
+                {/* Totale pensioenpremie (alleen bij Wtp), zie het hoofdveld verderop. */}
                 {k.pensioenType === 'wtp' && (
                   <div>
-                    <label className="label text-xs">Werkgeverspremie {k.jaar - 1}</label>
+                    <label className="label text-xs">Totale pensioenpremie {k.jaar - 1}</label>
                     <div className="relative flex items-center">
                       <span className="absolute left-3 text-body text-sm">€</span>
-                      <input type="number" value={k.werkgeverspremie} min={0} step={100} placeholder="0"
-                        onChange={e => update(i, { werkgeverspremie: e.target.value })}
+                      <input type="number" value={k.pensioenpremie} min={0} step={100} placeholder="0"
+                        onChange={e => update(i, { pensioenpremie: e.target.value })}
                         className="input-field pl-7 text-sm" />
                     </div>
                   </div>
@@ -419,7 +451,7 @@ function ReserveringsruimteBerekenen({ onChange, baseYear }: ReserveringProps) {
       })}
 
       {/* Voeg jaar toe knop */}
-      {kaarten.length < MAX_RESERVERING_RIJEN && (
+      {kaarten.length < maxRijen(baseYear) && (
         <button onClick={voegJaarToe}
           className="w-full flex items-center justify-center gap-1.5 py-2 text-xs text-data-700 hover:text-ink border border-dashed border-line hover:border-ink rounded-[3px] transition-colors">
           <Plus size={12} /> Voeg vorig jaar toe
@@ -431,9 +463,8 @@ function ReserveringsruimteBerekenen({ onChange, baseYear }: ReserveringProps) {
 
 // Wrapper met modus-keuze bovenaan
 function ReserveringsruimteSectie({ rijen, onChange, baseYear }: ReserveringProps) {
-  const [modus, setModus] = useState<Reserveringsmodus>(
-    rijen.length > 0 ? 'direct' : 'direct'
-  )
+  // Was een ternary met twee keer dezelfde uitkomst, dus een dode conditie.
+  const [modus, setModus] = useState<Reserveringsmodus>('direct')
 
   return (
     <div className="space-y-3">
@@ -471,6 +502,11 @@ function X({ size }: { size: number }) {
 export function JaarruimteTab() {
   const [inputs, setInputs] = useState<JaarruimteInputs>(DEFAULT_INPUTS)
   const [saved, setSaved] = useState<SavedJaarruimte[]>([])
+  // Ruwe tekst van het premieveld, zodat Nederlandse notatie ("65.000") blijft
+  // staan terwijl je typt. Zelfde reden als NumberInput in de FO-planner: een
+  // type="number" laat de browser de tekst herschrijven vóórdat de parser hem
+  // ziet (audit-bevinding 8).
+  const [premieTekst, setPremieTekst] = useState(() => formatBedrag(DEFAULT_INPUTS.pensioenpremie))
 
   useEffect(() => {
     try {
@@ -483,7 +519,13 @@ export function JaarruimteTab() {
           inputs: {
             ...s.inputs,
             pensioenType: (s.inputs as JaarruimteInputs).pensioenType ?? ('db' as PensioenType),
-            werkgeverspremie: (s.inputs as JaarruimteInputs).werkgeverspremie ?? 0,
+            // Heette tot september 2026 pensioenpremie. Opgeslagen berekeningen
+            // van vóór die wijziging blijven zo leesbaar. Let op: die bedragen
+            // bevatten alleen het werkgeversdeel, dus de jaarruimte die er destijds
+            // uit kwam kan te hoog zijn geweest.
+            pensioenpremie: (s.inputs as JaarruimteInputs).pensioenpremie
+              ?? (s.inputs as unknown as { pensioenpremie?: number }).pensioenpremie
+              ?? 0,
             alIngelegd: s.inputs.alIngelegd ?? 0,
             reserveringsruimteRijen: s.inputs.reserveringsruimteRijen ?? [],
           },
@@ -500,9 +542,20 @@ export function JaarruimteTab() {
     } catch { /* ignore */ }
   }, [])
 
-  const result: JaarruimteResult = calculateJaarruimte(inputs)
+  // Eerst toetsen, dan pas rekenen. calculateJaarruimte() gooit een Error bij een
+  // onbekend jaar en werd hier onbeschermd tijdens de render aangeroepen, terwijl
+  // de min/max op het jaarveld niet werden afgedwongen: een getypt jaartal buiten
+  // de tabel maakte het hele tabblad wit (audit 7 september 2026, bevinding 17).
+  const controle = controleerJaarruimteInvoer(inputs)
+  const result: JaarruimteResult | null = controle.errors.length === 0
+    ? calculateJaarruimte(inputs)
+    : null
 
   const handleSave = () => {
+    if (!result) {
+      alert('Los eerst de meldingen in het formulier op.')
+      return
+    }
     if (!inputs.clientName.trim()) {
       alert('Vul een klantnaam in om de berekening op te slaan.')
       return
@@ -530,12 +583,20 @@ export function JaarruimteTab() {
 
   const handleLoad = (item: SavedJaarruimte) => {
     setInputs({ ...item.inputs })
+    // Het premieveld houdt zijn eigen tekst bij; zonder deze regel blijft daar het
+    // bedrag van de vorige berekening staan.
+    setPremieTekst(formatBedrag(item.inputs.pensioenpremie ?? 0))
   }
 
   const set = <K extends keyof JaarruimteInputs>(k: K, v: JaarruimteInputs[K]) =>
     setInputs(prev => ({ ...prev, [k]: v }))
 
-  const is2026 = inputs.year >= 2026
+  // De parameters van het gekozen jaar zijn definitief zodra dat belastingjaar is
+  // begonnen en de cijfers gepubliceerd zijn. 2026 stond als "geschat" gemarkeerd
+  // terwijl we in september 2026 zitten en die cijfers er allang zijn (audit
+  // 7 september 2026, bevinding 20). Nu afgeleid van het parameterjaar in
+  // config/modelVersie.ts in plaats van van een jaartal in de code.
+  const parametersVoorlopig = inputs.year > PARAMETER_JAAR
 
   return (
     <div className="flex flex-col lg:flex-row gap-5 lg:gap-6">
@@ -552,14 +613,17 @@ export function JaarruimteTab() {
               className="input-field"
             >
               {getAvailableYears().map(y => (
-                <option key={y} value={y}>{y}{y >= 2026 ? ' (geschat)' : ''}</option>
+                <option key={y} value={y}>{y}{y > PARAMETER_JAAR ? ' (geschat)' : ''}</option>
               ))}
             </select>
-            {is2026 && (
-              <p className="text-xs text-signal mt-1">
-                2026 parameters zijn geschat. Controleer belastingdienst.nl.
-              </p>
-            )}
+            <p className="text-xs text-body mt-1 leading-relaxed">
+              {parametersVoorlopig
+                ? `De cijfers voor ${inputs.year} zijn een schatting op basis van indexatie. Controleer ze op belastingdienst.nl voordat je hierop adviseert.`
+                : `Franchise, maximum premie-inkomen en opbouwpercentage voor ${inputs.year} zijn definitief vastgesteld (peildatum ${PARAMETER_PEILDATUM}).`}
+            </p>
+            {controle.waarschuwingen.map((w, i) => (
+              <p key={i} className="text-xs text-body mt-1 leading-relaxed">{w}</p>
+            ))}
           </div>
 
           {/* Tot en met 2022 hing het plafond van de reserveringsruimte af van de
@@ -647,8 +711,13 @@ export function JaarruimteTab() {
                 </button>
               ))}
             </div>
+            {/* "aftrek is EUR 0" werd gelezen als: geen lijfrenteaftrek. Bedoeld is
+                dat er niets van de jaarruimte af gaat (audit-bevinding 20). */}
             {inputs.pensioenType === 'geen' && (
-              <p className="text-xs text-body mt-1.5">Geen werkgeverspensioen (bijv. ZZP): aftrek is €0.</p>
+              <p className="text-xs text-body mt-1.5">
+                Geen pensioenopbouw om van je jaarruimte af te trekken. Je jaarruimte is dan het
+                volle percentage van je premiegrondslag.
+              </p>
             )}
             {inputs.pensioenType === 'db' && (
               <p className="text-xs text-body mt-1.5">
@@ -683,22 +752,45 @@ export function JaarruimteTab() {
             </div>
           )}
 
-          {/* Werkgeverspremie — alleen zichtbaar bij Wtp */}
+          {/* Totale pensioenpremie — alleen zichtbaar bij Wtp.
+              Vroeg tot september 2026 alleen naar het werkgeversdeel. Dat is te
+              weinig: het bedrag dat de jaarruimte vermindert is de totale inleg in
+              de regeling, dus inclusief eigen bijdrage (audit-bevinding 18). Wie
+              alleen het werkgeversdeel invulde kreeg een te hoge jaarruimte. */}
           {inputs.pensioenType === 'wtp' && (
             <div>
-              <label className="label">Werkgeverspremie ingelegde {inputs.year - 1}</label>
+              <label className="label">Totale pensioenpremie over {inputs.year - 1}</label>
               <div className="relative flex items-center">
                 <span className="absolute left-3 text-body text-sm">€</span>
                 <input
-                  type="number"
-                  value={inputs.werkgeverspremie}
-                  min={0} step={100}
-                  onChange={e => set('werkgeverspremie', parseFloat(e.target.value) || 0)}
+                  type="text"
+                  inputMode="decimal"
+                  autoComplete="off"
+                  value={premieTekst}
+                  onChange={e => {
+                    setPremieTekst(e.target.value)
+                    const r = parseBedrag(e.target.value)
+                    if (r.waarde !== null) set('pensioenpremie', r.waarde)
+                  }}
+                  onBlur={e => {
+                    const r = parseBedrag(e.target.value)
+                    const v = r.waarde !== null && r.waarde >= 0 ? r.waarde : 0
+                    setPremieTekst(formatBedrag(v))
+                    set('pensioenpremie', v)
+                  }}
                   className="input-field pl-7"
                 />
               </div>
-              <p className="text-xs text-body mt-1">
-                Bron: jaaroverzicht pensioenuitvoerder {inputs.year - 1}, totale premie ingelegde door werkgever.
+              <p className="text-xs text-body mt-1 leading-relaxed">
+                <strong className="font-medium text-ink">Werkgeversdeel én je eigen bijdrage samen.</strong>{' '}
+                Alleen het werkgeversdeel invullen geeft een te hoge jaarruimte, en dus een
+                aftrek die je niet mag nemen.
+              </p>
+              <p className="text-xs text-body mt-1 leading-relaxed">
+                Bron: je UPO of jaaroverzicht van de pensioenuitvoerder over {inputs.year - 1}. Staat je
+                eigen bijdrage daar niet op, kijk dan op je jaaropgave of salarisstrook van december.
+                Let op het opbouwjaar en niet op het jaar waarin het UPO is verstuurd: dat kan
+                verschillen.
               </p>
             </div>
           )}
@@ -751,7 +843,22 @@ export function JaarruimteTab() {
 
       {/* Right: Results + Saved */}
       <div className="flex-1 space-y-5">
-        {/* Results */}
+        {/* Results — alleen bij een invoer die iets betekent. Een uitkomst tonen
+            die op een verlopen jaar of een dubbel jaartal rust is in het
+            Wft-domein erger dan geen uitkomst (audit-bevinding 17). */}
+        {!result ? (
+          <div className="card space-y-2">
+            <h3 className="text-sm font-medium text-ink">Deze invoer kan zo niet</h3>
+            <ul className="space-y-1">
+              {controle.errors.map((e, i) => (
+                <li key={i} className="text-sm text-signal leading-relaxed">{e}</li>
+              ))}
+            </ul>
+            <p className="text-xs text-body leading-relaxed pt-1">
+              Pas de gemarkeerde velden aan, dan verschijnt de berekening weer.
+            </p>
+          </div>
+        ) : (
         <div className="card space-y-3">
           <h3 className="text-sm font-medium text-ink">Resultaat {inputs.year}</h3>
 
@@ -791,12 +898,27 @@ export function JaarruimteTab() {
             {getJaarruimteParamsNote(inputs.year)}
           </InfoBox>
 
-          {is2026 && (
+          {parametersVoorlopig && (
             <WarningBox>
-              De 2026-parameters zijn schattingen op basis van indexatie. Controleer de definitieve bedragen op belastingdienst.nl voordat je de klant adviseert.
+              De parameters voor {inputs.year} zijn schattingen op basis van indexatie. Controleer de
+              definitieve bedragen op belastingdienst.nl voordat je de klant adviseert.
             </WarningBox>
           )}
+
+          <p className="text-xs text-body leading-relaxed">
+            Het belastingvoordeel is een schatting: belasting zonder aftrek min belasting met aftrek,
+            met de schijven en heffingskortingen van {PARAMETER_JAAR} en een verwacht inkomen van{' '}
+            {eur(inputs.aftrekjaarInkomen ?? inputs.income)} in het aftrekjaar. Geen definitief bedrag.
+            Deze berekening is educatief en indicatief, geen persoonlijk financieel advies.
+          </p>
+          {/* Modelversie en peildatum in beeld. Een gecachete offline versie draagt
+              zo zijn eigen versienummer mee, en een uitgebracht advies blijft terug
+              te vinden (audit 7 september 2026, bevindingen 6 en 26). */}
+          <p className="text-xs text-body">
+            {modelStempel()} · parameters nagelopen op {PARAMETER_PEILDATUM}
+          </p>
         </div>
+        )}
 
         {/* Saved calculations */}
         <div className="card space-y-3">

@@ -1,5 +1,6 @@
 import type { PensionInputs, MonteCarloResult, PercentilePoint } from '../types'
-import { brutoToNetto, getMonthlyWithdrawal } from './pensionCalc'
+import { brutoMaandNaarNettoMaand, getMonthlyWithdrawal, controleerLeeftijden } from './pensionCalc'
+import { nettoNominaalRendement } from './box3'
 
 export const N_SIMULATIONS = 2000
 
@@ -42,18 +43,31 @@ function realReturn(nominal: number, inflation: number): number {
 export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number; currentYear?: number }): MonteCarloResult {
   const rng = opts?.rng ?? Math.random
   const {
-    currentAge, retirementAge, lifeExpectancy,
+    currentAge, retirementAge: retirementAgeInput, lifeExpectancy,
     currentCapital, monthlyContribution, contributionFrequency,
     returnBeforeRetirement, returnAfterRetirement, inflation,
+    kostenPct = 0, vermogensbelastingPct = 0,
     desiredRetirementIncome, desiredRetirementIncomeType,
     aowMaandBedragNetto, aowStartAge, woonsituatie = 'alleenstaand',
     employerPension, employerPensionStartAge,
     lijfrenteUitkering, lijfrenteStartAge,
+    lijfrenteSoort = 'levenslang', lijfrenteEindLeeftijd = Infinity,
+    aowVakantiegeld = false,
     lifeEvents = [],
     volatilityPre, volatilityPost,
   } = inputs
 
+  // Dezelfde lezing van de leeftijden als calculatePension(). Die twee liepen
+  // uiteen bij een combinatie die zichzelf tegenspreekt: bij huidige leeftijd 70,
+  // stoppen op 60 en eindleeftijd 65 liep de deterministische kern vanaf leeftijd
+  // 60 door terwijl deze lus nul jaren doorliep en 100% slagingskans meldde
+  // (audit 7 september 2026, bevinding 3).
+  const retirementAge = controleerLeeftijden(
+    currentAge, retirementAgeInput, lifeExpectancy
+  ).effectiveRetirementAge
+
   const aowMonthlyNetto = aowMaandBedragNetto
+  const lijfrenteEinde = lijfrenteSoort === 'tijdelijk' ? lijfrenteEindLeeftijd : Infinity
 
   const currentYear = opts?.currentYear ?? new Date().getFullYear()
   // Eén kaart over de hele looptijd, opbouw- én uitkeringsfase. Was tot augustus
@@ -66,12 +80,23 @@ export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number
       eventMap.set(e.year, (eventMap.get(e.year) ?? 0) + e.amount)
     }
   }
+  // Zelfde conversie als calculatePension(): via de volledige belastingmotor, met
+  // het regime dat op de pensioendatum geldt. Stond hier los van de deterministische
+  // kern met een eigen maandbedrag-tegen-jaarschijven-conversie, waardoor beide
+  // kernen van een ander netto doelinkomen uitgingen.
   const desiredNetto = desiredRetirementIncomeType === 'bruto'
-    ? brutoToNetto(desiredRetirementIncome, true)
+    ? brutoMaandNaarNettoMaand(
+        desiredRetirementIncome,
+        retirementAge >= aowStartAge,
+        woonsituatie === 'alleenstaand'
+      )
     : desiredRetirementIncome
 
-  const realPre = realReturn(returnBeforeRetirement, inflation)
-  const realPost = realReturn(returnAfterRetirement, inflation)
+  // Zelfde aftrek als in pensionCalc.ts, zie daar.
+  const realPre = realReturn(
+    nettoNominaalRendement(returnBeforeRetirement, kostenPct, vermogensbelastingPct), inflation)
+  const realPost = realReturn(
+    nettoNominaalRendement(returnAfterRetirement, kostenPct, vermogensbelastingPct), inflation)
   const monthlyPMT = contributionFrequency === 'jaarlijks'
     ? monthlyContribution / 12
     : monthlyContribution
@@ -121,7 +146,7 @@ export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number
         const withdrawal = getMonthlyWithdrawal(
           age, desiredNetto, aowMonthlyNetto, aowStartAge,
           employerPension, employerPensionStartAge, woonsituatie,
-          lijfrenteUitkering, lijfrenteStartAge
+          lijfrenteUitkering, lijfrenteStartAge, lijfrenteEinde, aowVakantiegeld
         ) * 12
         // 75% income scenario: client accepts 25% lower total income
         // getMonthlyWithdrawal handles phase-aware tax: fixed income (AOW + emp + lijfrente)
@@ -129,13 +154,27 @@ export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number
         const withdrawal75 = getMonthlyWithdrawal(
           age, desiredNetto * 0.75, aowMonthlyNetto, aowStartAge,
           employerPension, employerPensionStartAge, woonsituatie,
-          lijfrenteUitkering, lijfrenteStartAge
+          lijfrenteUitkering, lijfrenteStartAge, lijfrenteEinde, aowVakantiegeld
         ) * 12
-        capital   = (capital   + event) * (1 + r) - withdrawal
-        capital75 = (capital75 + event) * (1 + r) - withdrawal75
-        if (capital   < 0) everNegative   = true
-        if (capital75 < 0) everNegative75 = true
+        // Mid-year-conventie voor de onttrekking, zelfde wortelfactor en zelfde
+        // reden als bij de jaarinleg hierboven en als in pensionCalc.ts. Zonder
+        // deze factor rekende de simulatie alsof het hele jaarbedrag pas op
+        // 31 december werd opgenomen, terwijl de inleg wél maandelijks was.
+        const groeifactorOpname = Math.sqrt(1 + r)
+        capital   = (capital   + event) * (1 + r) - withdrawal   * groeifactorOpname
+        capital75 = (capital75 + event) * (1 + r) - withdrawal75 * groeifactorOpname
       }
+
+      // Liquiditeitstoets voor élk jaar, ook in de opbouwfase. Stond tot september
+      // 2026 binnen de uitkeringstak hierboven, waardoor een uitgave die de pot
+      // vóór de pensioendatum onder nul duwde niet als mislukking telde: de pot
+      // dook negatief, groeide daarna gewoon door en het pad heette geslaagd.
+      // Het geval uit de audit van 7 september 2026: geen vermogen, nu € 10.000
+      // uitgeven, volgend jaar € 20.000 ontvangen, geen rendement en geen
+      // inkomensdoel gaf 100% succes, terwijl de eerste uitgave nergens
+      // gefinancierd werd (bevinding 4).
+      if (capital   < 0) everNegative   = true
+      if (capital75 < 0) everNegative75 = true
     }
     capitalByAge[totalYears][sim] = Math.max(0, capital)
     if (!everNegative)   successCount++

@@ -1,4 +1,24 @@
 ---
+// Lettertypen vanaf onze eigen server, niet van Google Fonts.
+//
+// Tot 8 september 2026 haalde de browser DM Sans, Instrument Serif en Newsreader
+// bij fonts.googleapis.com en fonts.gstatic.com op. Google zag daarbij het
+// IP-adres van elke bezoeker en welke pagina hij opvroeg, op élke pagina, ook als
+// die bezoeker verder niets deed. Dat is een doorgifte aan een derde partij waar
+// de bezoeker niet om vroeg, en de privacypagina beweerde het tegenovergestelde
+// (audit 7 september 2026, bevinding 27).
+//
+// Vite bundelt deze CSS en zet de woff2-bestanden met een hash in /_astro/, dus ze
+// worden vanaf het eigen domein geserveerd en kunnen oneindig gecachet worden.
+//
+// Welke bestanden: dezelfde assen als de oude Google-aanvraag. DM Sans en
+// Newsreader met de optical-size-as (opsz), Instrument Serif alleen regular. De
+// familienamen van deze pakketten heten "... Variable"; tailwind.config.js is
+// daarop aangepast. Zie ook DESIGN_SYSTEM.md over waarom Newsreader de cijfers
+// zet en niet Instrument Serif.
+import '@fontsource-variable/dm-sans/opsz.css'
+import '@fontsource/instrument-serif/400.css'
+import '@fontsource-variable/newsreader/opsz.css'
 import '../index.css'
 import Header from '../components/Header.astro'
 import Footer from '../components/Footer.astro'
@@ -70,13 +90,6 @@ const schemas = [organizationSchema(), websiteSchema(), ...jsonLd]
     <meta name="apple-mobile-web-app-title" content="BenIkFO" />
     <meta name="mobile-web-app-capable" content="yes" />
     <link rel="manifest" href="/manifest.webmanifest" />
-
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500&family=Instrument+Serif&family=Newsreader:opsz@6..72&display=swap"
-      rel="stylesheet"
-    />
 
     {schemas.map((s) => <script type="application/ld+json" set:html={JSON.stringify(s)} />)}
 

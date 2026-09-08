@@ -12,6 +12,16 @@ export interface LifeEvent {
 
 export type Woonsituatie = 'alleenstaand' | 'samenwonend'
 
+/**
+ * Levenslang verzekerd of tijdelijk (bancair of verzekerd).
+ *
+ * Het verschil is fiscaal en praktisch relevant: een levenslange
+ * oudedagslijfrente loopt tot overlijden en kent geen jaarmaximum, een tijdelijke
+ * oudedagslijfrente loopt een afgesproken aantal jaren en kent dat wel
+ * (art. 3.125 lid 1 onderdeel c Wet IB 2001).
+ */
+export type LijfrenteSoort = 'levenslang' | 'tijdelijk'
+
 export interface PensionInputs {
   currentAge: number
   retirementAge: number
@@ -21,9 +31,43 @@ export interface PensionInputs {
   monthlyContribution: number
   contributionFrequency: ContributionFrequency
 
-  returnBeforeRetirement: number  // nominal annual %
-  returnAfterRetirement: number   // nominal annual %
+  returnBeforeRetirement: number  // nominal annual %, BRUTO: voor kosten en belasting
+  returnAfterRetirement: number   // nominal annual %, BRUTO: voor kosten en belasting
   inflation: number               // annual %
+
+  /**
+   * Lopende kosten van beleggen, in procentpunten van het rendement.
+   *
+   * De rendementen hierboven zijn bruto. Tot september 2026 zei de UI dat ze
+   * "netto na kosten en box 3" waren terwijl er nergens iets werd afgetrokken en
+   * risicoprofielen.ts diezelfde getallen als nominaal documenteert (audit
+   * 7 september 2026, bevinding 10). Standaard 0, zodat een bestaande berekening
+   * dezelfde uitkomst houdt en de gebruiker zelf kiest wat hij invult.
+   */
+  kostenPct: number
+  /**
+   * Vermogensbelasting (box 3), in procentpunten van het rendement.
+   *
+   * Bewust een invoerveld en geen berekening: het box 3-stelsel beweegt richting
+   * heffing over werkelijk rendement, en een volledig model daarvoor bouwen levert
+   * een fiscale motor op die bij invoering opnieuw fout is. utils/box3.ts rekent
+   * wel een schatting voor bij het opgegeven vermogen, en is het vervangpunt voor
+   * het volledige model.
+   */
+  vermogensbelastingPct: number
+  /**
+   * Of de gebruiker de vermogensbelasting zelf heeft ingevuld.
+   *
+   * Staat dit op false, dan volgt vermogensbelastingPct automatisch de schatting
+   * die utils/box3.ts uit het opgegeven vermogen en de woonsituatie afleidt. Zodra
+   * iemand het veld zelf aanpast gaat de vlag op true en blijft zijn waarde staan.
+   *
+   * Reden: een vast getal kan niet kloppen, want de druk loopt op met de omvang
+   * van het vermogen. Zonder deze automatiek zou de gebruiker bij elke wijziging
+   * van zijn vermogen zelf moeten herrekenen, of blijven zitten met een percentage
+   * dat niet meer bij zijn situatie past.
+   */
+  vermogensbelastingHandmatig: boolean
 
   currentIncome: number
   currentIncomeType: IncomeType
@@ -33,6 +77,16 @@ export interface PensionInputs {
   // Bepaalt de standaard AOW-bedragen én of de alleenstaandeouderenkorting geldt.
   woonsituatie: Woonsituatie
   aowMaandBedragNetto: number  // net monthly AOW amount (find on mijnpensioenoverzicht.nl)
+  /**
+   * Of het AOW-vakantiegeld meetelt.
+   *
+   * De SVB keert het in mei apart uit, dus het maandbedrag op je overzicht is
+   * exclusief. De rekenkern gebruikte twaalf van die maandbedragen en liet het
+   * vakantiegeld vallen, waardoor het beschikbare inkomen structureel circa 6,4%
+   * te laag uitkwam (audit 7 september 2026, bevinding 12). Standaard aan; uit
+   * zetten hoort alleen als het ingevulde bedrag het al bevat.
+   */
+  aowVakantiegeld: boolean
   aowStartAge: number         // age at which AOW kicks in
   employerPension: number     // gross monthly (bruto/maand)
   employerPensionStartAge: number  // age at which employer pension kicks in (default 67, see UPO)
@@ -43,6 +97,24 @@ export interface PensionInputs {
   // als werkgeverspensioen hierboven (E1-optie-B).
   lijfrenteUitkering: number        // gross monthly (bruto/maand)
   lijfrenteStartAge: number         // age at which the lijfrente-/bankspaaruitkering starts
+  /**
+   * Levenslang of tijdelijk.
+   *
+   * De tool kende dit onderscheid niet: iedere lijfrente liep door tot de
+   * planningshorizon, waardoor een tijdelijke uitkering van vijf of twintig jaar
+   * veel te lang meetelde. Bovendien werd elke uitkering getoetst aan de grens
+   * voor een overbruggingslijfrente (EUR 63.288), terwijl een levenslange
+   * oudedagslijfrente helemaal geen jaarmaximum kent en voor een tijdelijke
+   * oudedagslijfrente een heel ander bedrag geldt (audit 7 september 2026,
+   * bevinding 9).
+   */
+  lijfrenteSoort: LijfrenteSoort
+  /**
+   * Leeftijd waarop een tijdelijke uitkering stopt. Alleen van betekenis bij
+   * lijfrenteSoort 'tijdelijk'; bij 'levenslang' loopt de uitkering door tot de
+   * planningshorizon.
+   */
+  lijfrenteEindLeeftijd: number
 
   lifeEvents: LifeEvent[]  // named events: schenking, woningaankoop, erfenis…
 
@@ -58,11 +130,17 @@ export interface YearData {
   year: number
   capital: number
   phase: 'opbouw' | 'uitkering'
-  // Income breakdown for this year
+  // Income breakdown for this year, alles netto per maand.
+  /** Wat er dit jaar uit eigen vermogen nódig was om het inkomensdoel te halen. */
+  desiredFromCapital: number
+  /** Wat er werkelijk uit vermogen betaald kon worden. Nooit meer dan er staat. */
   incomeFromCapital: number
+  /** Het ongedekte deel: desiredFromCapital − incomeFromCapital. Nul als het lukt. */
+  shortfall: number
   aowIncome: number
   employerIncome: number
   lijfrenteIncome: number
+  /** incomeFromCapital + de drie vaste bronnen. Wat er werkelijk binnenkomt. */
   totalIncome: number
 }
 
@@ -70,16 +148,59 @@ export interface IncomePhase {
   label: string
   fromAge: number
   toAge: number
+  /**
+   * Het bedrag dat in deze fase uit eigen vermogen nódig is. Of dat ook betaald
+   * kan worden zegt shortfallFromAge: deze fasenlijst is een weergave van het
+   * inkomensplan, niet van het saldoverloop.
+   */
   incomeFromCapital: number
   aow: number
   employerPension: number
   lijfrenteUitkering: number
   total: number
+  /**
+   * De eerste leeftijd binnen deze fase waarop het vermogen het gewenste bedrag
+   * niet meer kan opbrengen, of null als de fase volledig gedekt is. Afgeleid uit
+   * dezelfde yearData als de grafiek, zodat de fasenlijst geen inkomen kan tonen
+   * dat de rekenkern nergens betaalt.
+   */
+  shortfallFromAge: number | null
 }
 
 export interface PensionResult {
   projectedCapital: number
+  /**
+   * Het kleinste vermogen op de pensioendatum waarbij het saldo in geen enkel jaar
+   * negatief wordt. Was tot september 2026 een zuivere eindwaardeberekening, die
+   * niet zag dat een erfenis over vijf jaar de eerste vijf jaar niet betaalt
+   * (audit 7 september 2026, bevinding 2).
+   */
   requiredCapital: number
+  /**
+   * Hetzelfde doelbedrag volgens alleen de eindwaarde: contante waarde van de
+   * onttrekkingen minus pvEventsAfterRetirement. Verklaart de opbouw op het scherm
+   * en in de export. Gelijk aan requiredCapital zolang er niets te overbruggen is.
+   */
+  requiredCapitalEindwaarde: number
+  /**
+   * De leeftijd waarop de uitkeringsfase feitelijk begint. Gelijk aan de ingestelde
+   * pensioenleeftijd, behalve wanneer iemand die al voorbij is: dan begint de
+   * uitkeringsfase vandaag. Het scherm en de exports labelen hierop, zodat er geen
+   * "bij leeftijd 60" boven een berekening staat die vanaf 70 loopt.
+   */
+  effectiveRetirementAge: number
+  /**
+   * Wat er bovenop requiredCapitalEindwaarde nodig is om de jaren te overbruggen
+   * tot een later bedrag binnenkomt. Nul als de eindwaarde al toereikend is.
+   */
+  overbruggingsToeslag: number
+  /**
+   * De leeftijd waarop het inkomensdoel voor het eerst niet meer volledig uit
+   * vermogen betaald kan worden, of null als dat niet gebeurt. "Wanneer ontstaat
+   * het eerste tekort" is voor een adviesgesprek een bruikbaarder antwoord dan
+   * alleen een bedrag aan het eind.
+   */
+  firstShortfallAge: number | null
   // Contante waarde, op de pensioendatum, van de eenmalige bedragen ná die datum.
   // Positief = geld dat later binnenkomt en dus verlaagt wat je óp de pensioendatum
   // nodig hebt. requiredCapital hierboven is hier al mee verrekend; wat je inkomen
@@ -124,14 +245,37 @@ export type PensioenType = 'geen' | 'db' | 'wtp'
 export interface JaarruimteInputs {
   year: number
   income: number
-  pensioenType: PensioenType   // geen / traditioneel DB (factor A) / Wtp (werkgeverspremie)
+  pensioenType: PensioenType   // geen / traditioneel DB (factor A) / Wtp (pensioenpremie)
   factorA: number              // DB-regeling: pensioenaangroei van UPO (t-1), in €/jaar
-  werkgeverspremie: number     // Wtp-regeling: door werkgever ingelegde premie in t-1
+  /**
+   * Wtp-regeling: de TOTALE premie die in t-1 in de werkgeversregeling is gestort,
+   * dus werkgeversdeel én eigen bijdrage samen.
+   *
+   * Heette werkgeverspremie en het scherm vroeg ook alleen naar het werkgeversdeel.
+   * Dat is te weinig: het bedrag dat de jaarruimte vermindert is de totale inleg in
+   * de regeling (audit 7 september 2026, bevinding 18; bevestigd door Hendrik op
+   * 8 september 2026). Wie alleen het werkgeversdeel invulde kreeg een te hoge
+   * jaarruimte en dus een te hoge aftrek.
+   *
+   * De veldnaam is meeveranderd omdat een naam die het tegenovergestelde zegt van
+   * wat er bedoeld wordt precies de fout is die hier gemaakt werd. Opgeslagen
+   * berekeningen met de oude naam worden bij het inlezen omgezet.
+   */
+  pensioenpremie: number
   alIngelegd: number           // already deposited in lijfrente this year
   reserveringsruimteRijen: ReserveringsruimteRij[]  // up to 10 past years, progressive UI
   // Alleen nodig bij belastingjaar 2021 of 2022. Het plafond van de
   // reserveringsruimte hing toen af van de leeftijd op 1 januari van dat jaar.
   geboortedatum?: string       // ISO, bijv. '1964-08-15'
+  /**
+   * Verwacht belastbaar inkomen in het jaar waarin je de lijfrentepremie aftrekt.
+   *
+   * De jaarruimte zelf rekent met het inkomen van het vóórafgaande jaar (art. 3.127
+   * lid 1 Wet IB 2001), maar het belastingvoordeel valt in het aftrekjaar. Die twee
+   * hoeven niet gelijk te zijn. Blijft dit leeg, dan valt de schatting terug op
+   * `income` en zegt de UI dat erbij (audit 7 september 2026, bevinding 19).
+   */
+  aftrekjaarInkomen?: number
   clientName: string
   adviseurNaam: string
   notities: string
@@ -161,4 +305,29 @@ export interface SavedJaarruimte {
   inputs: JaarruimteInputs
   result: JaarruimteResult
   notities: string
+}
+
+/**
+ * Eén afgeronde berekening: de invoer, beide uitkomsten en waar ze vandaan komen.
+ *
+ * Tot september 2026 kon een export twee verschillende berekeningen door elkaar
+ * halen. De deterministische uitkomst werd bij elke toetsaanslag opnieuw berekend,
+ * de Monte Carlo-uitkomst alleen op knopdruk, en exporteren mocht altijd. Een
+ * Excel-bestand bevatte dan een invoertab met € 50.000 vermogen naast een Monte
+ * Carlo-tab die op € 100.000 begon: aantoonbaar verschillende scenario's in één
+ * rapport (audit 7 september 2026, bevinding 6).
+ *
+ * Deze set wordt vastgelegd op het moment van rekenen en daarna niet meer
+ * aangeraakt. De export leest uitsluitend hieruit.
+ */
+export interface BerekeningsSet {
+  inputs: PensionInputs
+  result: PensionResult
+  mc: MonteCarloResult
+  /** Wanneer er gerekend is, als ISO-string. */
+  peildatum: string
+  /** Versie van de rekenmodellen, zie config/modelVersie.ts. */
+  modelVersie: string
+  /** Belastingjaar van de gebruikte fiscale parameters. */
+  parameterJaar: number
 }

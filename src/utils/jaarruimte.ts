@@ -1,8 +1,10 @@
 import type { JaarruimteInputs, JaarruimteResult, PensioenType } from '../types'
 import {
-  JAARRUIMTE_PARAMS, BOX1_PRE_AOW, JAARRUIMTE_BELASTINGJAREN,
-  RESERVERINGSRUIMTE_PCT_VOOR_2023,
+  JAARRUIMTE_PARAMS, JAARRUIMTE_BELASTINGJAREN,
+  RESERVERINGSRUIMTE_PCT_VOOR_2023, RESERVERINGSRUIMTE_TERUGKIJK,
 } from '../config/fiscaleParameters'
+import { belastingBox1 } from './brutoNetto'
+import { PARAMETER_JAAR } from '../config/modelVersie'
 
 // Alle fiscale parameters komen uit src/config/fiscaleParameters.ts
 // !! Alleen dát bestand aanpassen bij een kwartaalcheck !!
@@ -96,17 +98,120 @@ export function berekenJaarruimteEenvoudig(
   inkomen: number,
   pensioenType: PensioenType,
   factorA: number,
-  werkgeverspremie: number,
+  pensioenpremie: number,
 ): number {
   const p = getParams(jaar)
   const base = Math.max(0, Math.min(inkomen, p.maxInkomen) - p.franchise)
   if (pensioenType === 'db')  return Math.max(0, p.percentage * base - p.factorMultiplier * factorA)
-  if (pensioenType === 'wtp') return Math.max(0, p.percentage * base - werkgeverspremie)
+  if (pensioenType === 'wtp') return Math.max(0, p.percentage * base - pensioenpremie)
   return Math.max(0, p.percentage * base)
 }
 
+/**
+ * Hoeveel jaar de reserveringsruimte terugkijkt voor een gegeven belastingjaar.
+ *
+ * Tot en met 2022 zeven jaar, vanaf 2023 tien. RESERVERINGSRUIMTE_TERUGKIJK stond
+ * al in fiscaleParameters.ts maar werd nergens geimporteerd: het scherm hanteerde
+ * een vaste tien, waardoor de tool voor belastingjaar 2021 en 2022 drie jaren te
+ * veel meetelde (audit 7 september 2026, bevinding 17).
+ */
+export function terugkijktermijn(jaar: number): number {
+  return jaar >= 2023 ? RESERVERINGSRUIMTE_TERUGKIJK.vanaf2023 : RESERVERINGSRUIMTE_TERUGKIJK.voor2023
+}
+
+/** Het oudste jaar dat voor een gegeven belastingjaar nog binnen de termijn valt. */
+export function oudsteReserveringsjaar(jaar: number): number {
+  return jaar - terugkijktermijn(jaar)
+}
+
+export interface JaarruimteControle {
+  /** Blokkerend: hiermee mag geen uitkomst worden getoond. */
+  errors: string[]
+  /** Niet blokkerend, maar de gebruiker moet het weten. */
+  waarschuwingen: string[]
+}
+
+/**
+ * Toetst de invoer voordat er gerekend wordt.
+ *
+ * calculateJaarruimte() werd onbeschermd tijdens de render aangeroepen terwijl
+ * getParams() een Error gooit bij een onbekend jaar, en de min/max op het
+ * jaarveld werden niet afgedwongen. Een getypt jaartal buiten de tabel maakte het
+ * hele tabblad wit. Daarnaast telde de kern positieve rijen op zonder te kijken
+ * naar jaarbereik of dubbele jaren (audit 7 september 2026, bevinding 17).
+ */
+export function controleerJaarruimteInvoer(inputs: JaarruimteInputs): JaarruimteControle {
+  const errors: string[] = []
+  const waarschuwingen: string[] = []
+
+  if (!JAARRUIMTE_BELASTINGJAREN.includes(inputs.year)) {
+    errors.push(
+      `Voor belastingjaar ${inputs.year} rekent deze tool niet. Kies een jaar tussen ` +
+      `${Math.min(...JAARRUIMTE_BELASTINGJAREN)} en ${Math.max(...JAARRUIMTE_BELASTINGJAREN)}.`
+    )
+    // Zonder een geldig jaar hebben de controles hieronder geen betekenis.
+    return { errors, waarschuwingen }
+  }
+
+  const getal = (v: number) => Number.isFinite(v)
+
+  if (!getal(inputs.income) || inputs.income < 0) {
+    errors.push('Vul een inkomen in van nul of hoger.')
+  }
+  if (inputs.pensioenType === 'db' && (!getal(inputs.factorA) || inputs.factorA < 0)) {
+    errors.push('Vul een factor A in van nul of hoger.')
+  }
+  if (inputs.pensioenType === 'wtp' && (!getal(inputs.pensioenpremie) || inputs.pensioenpremie < 0)) {
+    errors.push('Vul een totale pensioenpremie in van nul of hoger.')
+  }
+  if (!getal(inputs.alIngelegd) || inputs.alIngelegd < 0) {
+    errors.push('Vul een reeds ingelegd bedrag in van nul of hoger.')
+  }
+
+  const oudste = oudsteReserveringsjaar(inputs.year)
+  const gezien = new Set<number>()
+
+  for (const rij of inputs.reserveringsruimteRijen) {
+    if (rij.onbenutBedrag === 0) continue
+
+    if (!getal(rij.onbenutBedrag) || rij.onbenutBedrag < 0) {
+      errors.push(`Onbenutte ruimte over ${rij.jaar}: vul een bedrag van nul of hoger in.`)
+      continue
+    }
+    if (!getal(rij.jaar)) {
+      errors.push('Vul bij elke regel onbenutte ruimte een jaartal in.')
+      continue
+    }
+    if (rij.jaar < oudste || rij.jaar > inputs.year - 1) {
+      errors.push(
+        `Het jaar ${rij.jaar} telt niet mee voor belastingjaar ${inputs.year}. ` +
+        `De reserveringsruimte kijkt ${terugkijktermijn(inputs.year)} jaar terug: ` +
+        `${oudste} tot en met ${inputs.year - 1}.`
+      )
+      continue
+    }
+    if (gezien.has(rij.jaar)) {
+      errors.push(`Het jaar ${rij.jaar} staat er twee keer in. Tel die bedragen bij elkaar op.`)
+      continue
+    }
+    gezien.add(rij.jaar)
+  }
+
+  // De belastingschijven in fiscaleParameters.ts zijn er voor een jaar. Voor een
+  // ander aftrekjaar is het geschatte voordeel dus een benadering, en dat hoort
+  // de gebruiker te weten in plaats van te moeten raden.
+  if (inputs.year !== PARAMETER_JAAR) {
+    waarschuwingen.push(
+      `Het geschatte belastingvoordeel rekent met de schijven en heffingskortingen van ` +
+      `${PARAMETER_JAAR}. Voor aftrekjaar ${inputs.year} is dat een benadering.`
+    )
+  }
+
+  return { errors, waarschuwingen }
+}
+
 export function calculateJaarruimte(inputs: JaarruimteInputs): JaarruimteResult {
-  const { year, income, pensioenType, factorA, werkgeverspremie, alIngelegd, reserveringsruimteRijen } = inputs
+  const { year, income, pensioenType, factorA, pensioenpremie, alIngelegd, reserveringsruimteRijen } = inputs
   const p = getParams(year)
 
   const effectiveIncome = Math.min(income, p.maxInkomen)
@@ -115,12 +220,13 @@ export function calculateJaarruimte(inputs: JaarruimteInputs): JaarruimteResult 
   // Jaarruimte formula depends on pension type:
   // - geen:  30% (or 13.3% pre-2023) × grondslag, no deduction
   // - db:    percentage × grondslag − factorMultiplier × factorA
-  // - wtp:   percentage × grondslag − werkgeverspremie (employer contribution replaces factor A)
+  // - wtp:   percentage × grondslag − pensioenpremie (de totale inleg in de
+  //          werkgeversregeling, werkgeversdeel én eigen bijdrage, vervangt factor A)
   let jaarruimte: number
   if (pensioenType === 'db') {
     jaarruimte = Math.max(0, p.percentage * base - p.factorMultiplier * factorA)
   } else if (pensioenType === 'wtp') {
-    jaarruimte = Math.max(0, p.percentage * base - (werkgeverspremie ?? 0))
+    jaarruimte = Math.max(0, p.percentage * base - (pensioenpremie ?? 0))
   } else {
     // geen pensioenregeling
     jaarruimte = Math.max(0, p.percentage * base)
@@ -134,7 +240,19 @@ export function calculateJaarruimte(inputs: JaarruimteInputs): JaarruimteResult 
   // Het plafond wordt pas opgevraagd als er iets af te toppen valt. Voor de jaren
   // tot en met 2022 bestaat er namelijk geen enkel plafond, en dan moet de
   // jaarruimte zelf nog gewoon te berekenen zijn.
-  const teVerdelen = reserveringsruimteRijen.filter(r => r.onbenutBedrag > 0)
+  // Alleen jaren binnen de terugkijktermijn, en elk jaar hoogstens een keer. De
+  // kern telde eerder alle positieve rijen op: bij belastingjaar 2026 telde een
+  // rij uit 2015 gewoon mee, en hetzelfde jaar twee keer invullen verdubbelde de
+  // ruimte (audit 7 september 2026, bevinding 17).
+  const oudsteJaar = oudsteReserveringsjaar(year)
+  const gezieneJaren = new Set<number>()
+  const teVerdelen = reserveringsruimteRijen.filter(r => {
+    if (!(r.onbenutBedrag > 0) || !Number.isFinite(r.onbenutBedrag)) return false
+    if (!Number.isFinite(r.jaar) || r.jaar < oudsteJaar || r.jaar > year - 1) return false
+    if (gezieneJaren.has(r.jaar)) return false
+    gezieneJaren.add(r.jaar)
+    return true
+  })
   const plafond = bepaalPlafond(year, base, inputs.geboortedatum)
   let beschikbareReserveringsruimte = 0
   if (teVerdelen.length > 0) {
@@ -151,13 +269,35 @@ export function calculateJaarruimte(inputs: JaarruimteInputs): JaarruimteResult 
   const totaalBeschikbaar = jaarruimte + beschikbareReserveringsruimte
   const nogTeDoen = Math.max(0, totaalBeschikbaar - (alIngelegd ?? 0))
 
-  // Marginaal belastingtarief (pre-AOW schijven uit centrale config).
-  // Het belastingvoordeel = hoeveel belasting je bespaart door de lijfrenteaftrek.
-  let belastingTarief: number
-  if (income > BOX1_PRE_AOW.schijf2Grens) belastingTarief = BOX1_PRE_AOW.schijf3Tarief
-  else if (income > BOX1_PRE_AOW.schijf1Grens) belastingTarief = BOX1_PRE_AOW.schijf2Tarief
-  else belastingTarief = BOX1_PRE_AOW.schijf1Tarief
-  const belastingVoordeel = nogTeDoen * belastingTarief
+  // Belastingvoordeel als echte verschilberekening: belasting zonder aftrek min
+  // belasting met aftrek.
+  //
+  // Hier stond een vlak marginaal tarief over de hele aftrek. Bij EUR 80.000
+  // inkomen en EUR 20.000 aftrek rekende dat 49,5% over het volle bedrag, terwijl
+  // de aftrek het inkomen door de schijfgrens van EUR 78.426 heen duwt en het
+  // grootste deel dus tegen 37,56% valt. Dat overschatte het voordeel (audit
+  // 7 september 2026, bevinding 19).
+  //
+  // Het inkomen van het aftrekjaar mag apart worden opgegeven. Is dat niet
+  // ingevuld, dan valt het terug op het inkomen uit de jaarruimteberekening, dat
+  // van het voorafgaande jaar is. Dat is een aanname en de UI benoemt hem.
+  //
+  // arbeidsinkomen blijft op het inkomen vóór aftrek staan: een lijfrentepremie is
+  // een uitgave voor inkomensvoorziening en verlaagt het belastbaar inkomen, maar
+  // niet het arbeidsinkomen waarover de arbeidskorting loopt. De algemene
+  // heffingskorting bouwt wél af over het lagere inkomen, en dat effect zit hier
+  // dus in.
+  const aftrekInkomen = inputs.aftrekjaarInkomen ?? income
+  const voorAftrek = belastingBox1(Math.max(0, aftrekInkomen), {
+    pastAow: false, arbeidsinkomen: Math.max(0, aftrekInkomen),
+  })
+  const naAftrek = belastingBox1(Math.max(0, aftrekInkomen - nogTeDoen), {
+    pastAow: false, arbeidsinkomen: Math.max(0, aftrekInkomen),
+  })
+  const belastingVoordeel = Math.max(0, voorAftrek.teBetalen - naAftrek.teBetalen)
+  // Het effectieve tarief over déze aftrek, niet een schijftarief. Bij een aftrek
+  // die twee schijven doorkruist ligt dit er ergens tussenin.
+  const belastingTarief = nogTeDoen > 0 ? belastingVoordeel / nogTeDoen : 0
 
   return {
     jaarruimte,
@@ -208,7 +348,7 @@ const nl = (n: number) => n.toLocaleString('nl-NL')
 export function getFormuleTekst(year: number, pensioenType: PensioenType = 'db'): string {
   const p = getParams(year)
   const pct = `${nl(p.percentage * 100)}%`
-  if (pensioenType === 'wtp') return `${pct} × grondslag − werkgeverspremie`
+  if (pensioenType === 'wtp') return `${pct} × grondslag − pensioenpremie`
   if (pensioenType === 'geen') return `${pct} × grondslag`
   return `${pct} × grondslag − ${nl(p.factorMultiplier)} × factor A`
 }

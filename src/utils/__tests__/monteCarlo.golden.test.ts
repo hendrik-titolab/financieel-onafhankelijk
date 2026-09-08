@@ -13,7 +13,7 @@
 import { describe, it, expect } from 'vitest'
 import { runMonteCarlo } from '../monteCarlo'
 import { makeRng } from '../rng'
-import { SCENARIOS, round } from './fixtures'
+import { SCENARIOS, baseInputs, round } from './fixtures'
 import fixture from './__golden__/monteCarlo.golden.json'
 
 const CASES = ['1_basis', '4_negatief_bedrag_na_pensioendatum'] as const
@@ -59,5 +59,42 @@ describe('runMonteCarlo — golden master', () => {
       r.percentileData.find(p => p.age === age)!.p50
     expect(p50(withEvent, 74)).toBeCloseTo(p50(withoutEvent, 74), 6)
     expect(p50(withEvent, 76)).toBeLessThan(p50(withoutEvent, 76))
+  })
+})
+
+// Bevinding 4 uit de audit van 7 september 2026: de controle op negatief vermogen
+// stond binnen de uitkeringstak, dus alleen ná de pensioendatum. Een uitgave die
+// de pot in de opbouwfase onder nul duwde telde niet als mislukking; de pot dook
+// negatief, groeide daarna gewoon door en het pad heette geslaagd.
+describe('runMonteCarlo — liquiditeit in de opbouwfase', () => {
+  // Het geval uit de audit: geen vermogen, nu € 10.000 uitgeven, volgend jaar
+  // € 20.000 ontvangen, geen rendement en geen inkomensdoel. Er is nergens
+  // gemodelleerd waarmee die eerste uitgave betaald wordt.
+  const ongedekteUitgave = baseInputs({
+    currentCapital: 0, monthlyContribution: 0,
+    returnBeforeRetirement: 0, returnAfterRetirement: 0, inflation: 0,
+    volatilityPre: 0, volatilityPost: 0,
+    desiredRetirementIncome: 0, desiredRetirementIncomeType: 'netto',
+    aowMaandBedragNetto: 0, employerPension: 0, lijfrenteUitkering: 0,
+    lifeEvents: [
+      { name: 'uitgave', amount: -10000, year: 2026 },
+      { name: 'ontvangst', amount: 20000, year: 2027 },
+    ],
+  })
+
+  it('telt een ongedekte uitgave vóór de pensioendatum als mislukking', () => {
+    const mc = runMonteCarlo(ongedekteUitgave, { rng: makeRng(12345), currentYear: 2026 })
+    expect(mc.successRate).toBe(0)
+    expect(mc.successRate75).toBe(0)
+  })
+
+  it('slaagt wel zodra de uitgave gedekt is', () => {
+    // Zelfde scenario, maar het geld staat er al. Dit bewijst dat het bovenstaande
+    // resultaat aan de dekking ligt en niet aan de uitgave zelf.
+    const mc = runMonteCarlo(
+      { ...ongedekteUitgave, currentCapital: 10000 },
+      { rng: makeRng(12345), currentYear: 2026 }
+    )
+    expect(mc.successRate).toBe(100)
   })
 })
