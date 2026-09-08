@@ -6,7 +6,7 @@ import {
   berekenJaarruimteEenvoudig, getOudsteParameterJaar, getFormuleTekst,
   controleerJaarruimteInvoer, terugkijktermijn, oudsteReserveringsjaar,
 } from '../../utils/jaarruimte'
-import { PARAMETER_JAAR, PARAMETER_PEILDATUM } from '../../config/modelVersie'
+import { PARAMETER_JAAR, PARAMETER_PEILDATUM, modelStempel } from '../../config/modelVersie'
 
 const STORAGE_KEY = 'jaarruimte_berekeningen'
 
@@ -874,6 +874,12 @@ export function JaarruimteTab() {
             met de schijven en heffingskortingen van {PARAMETER_JAAR} en een verwacht inkomen van{' '}
             {eur(inputs.aftrekjaarInkomen ?? inputs.income)} in het aftrekjaar. Geen definitief bedrag.
             Deze berekening is educatief en indicatief, geen persoonlijk financieel advies.
+          </p>
+          {/* Modelversie en peildatum in beeld. Een gecachete offline versie draagt
+              zo zijn eigen versienummer mee, en een uitgebracht advies blijft terug
+              te vinden (audit 7 september 2026, bevindingen 6 en 26). */}
+          <p className="text-xs text-body">
+            {modelStempel()} · parameters nagelopen op {PARAMETER_PEILDATUM}
           </p>
         </div>
         )}
