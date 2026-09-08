@@ -29,6 +29,9 @@ const DEFAULT_INPUTS: PensionInputs = {
   woonsituatie: 'alleenstaand',
   aowMaandBedragNetto: 1582,  // alleenstaand netto met heffingskorting, SVB per 1 juli 2026
   aowStartAge: 67,
+  // Standaard aan: de SVB keert het vakantiegeld in mei apart uit, dus het
+  // maandbedrag op iemands overzicht is exclusief.
+  aowVakantiegeld: true,
   employerPension: 0,
   employerPensionStartAge: 67,
   lijfrenteUitkering: 0,

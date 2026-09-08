@@ -26,6 +26,9 @@ export function baseInputs(overrides: Partial<PensionInputs> = {}): PensionInput
     woonsituatie: 'alleenstaand',
     aowMaandBedragNetto: 1558,
     aowStartAge: 67,
+    // Uit in de fixtures, zodat de golden master over de bruto-nettofix gaat en
+    // niet ook nog over deze wijziging. Er is een aparte test voor.
+    aowVakantiegeld: false,
     employerPension: 0,
     employerPensionStartAge: 67,
     lijfrenteUitkering: 0,

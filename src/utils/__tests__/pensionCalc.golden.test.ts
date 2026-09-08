@@ -8,7 +8,10 @@
 // (zie AUDIT-fase0-1-feiten.md, bevinding E10) — dat is hier bewust vastgelegd
 // zoals het nu is, niet gecorrigeerd.
 import { describe, it, expect } from 'vitest'
-import { calculatePension, getIncomeBreakdown, brutoMaandNaarNettoMaand, controleerLeeftijden } from '../pensionCalc'
+import {
+  calculatePension, getIncomeBreakdown, brutoMaandNaarNettoMaand,
+  controleerLeeftijden, aowVakantiegeldFactor,
+} from '../pensionCalc'
 import type { YearData } from '../../types'
 import { SCENARIOS, baseInputs, round } from './fixtures'
 import fixture from './__golden__/pensionCalc.golden.json'
@@ -559,5 +562,52 @@ describe('lijfrente — levenslang of tijdelijk', () => {
     const b = calculatePension(
       basis({ lijfrenteSoort: 'levenslang', lijfrenteEindLeeftijd: 95 }), { currentYear: 2026 })
     expect(a.requiredCapital).toBe(b.requiredCapital)
+  })
+})
+
+// Bevinding 12 uit de audit van 7 september 2026: de kern gebruikt twaalf netto
+// maandbedragen en telde het vakantiegeld niet op, terwijl de SVB dat in mei apart
+// uitkeert. AOW_VAKANTIEGELD_BRUTO_MAAND stond wel in de config, maar werd nergens
+// gebruikt.
+describe('AOW-vakantiegeld', () => {
+  it('verhoogt de AOW met de factor uit de gepubliceerde bedragen', () => {
+    // Alleenstaand: (1.662,64 + 106,55) / 1.662,64 = 1,064086.
+    // Samenwonend:  (1.139,25 +  76,10) / 1.139,25 = 1,066799.
+    expect(aowVakantiegeldFactor('alleenstaand')).toBeCloseTo(1.064086, 5)
+    expect(aowVakantiegeldFactor('samenwonend')).toBeCloseTo(1.066799, 5)
+  })
+
+  it('verhoogt het AOW-inkomen in de jaartabel', () => {
+    const zonder = calculatePension(baseInputs({ aowVakantiegeld: false }), { currentYear: 2026 })
+    const met = calculatePension(baseInputs({ aowVakantiegeld: true }), { currentYear: 2026 })
+    const a = zonder.yearData.find(y => y.age === 70)!
+    const b = met.yearData.find(y => y.age === 70)!
+    expect(b.aowIncome / a.aowIncome).toBeCloseTo(1.064086, 4)
+  })
+
+  it('verlaagt daardoor het benodigde vermogen', () => {
+    // Meer vast inkomen betekent minder uit eigen vermogen. Dit is precies de kant
+    // op die de audit voorspelde: zonder vakantiegeld viel het beschikbare inkomen
+    // te laag uit.
+    const zonder = calculatePension(baseInputs({ aowVakantiegeld: false }), { currentYear: 2026 })
+    const met = calculatePension(baseInputs({ aowVakantiegeld: true }), { currentYear: 2026 })
+    expect(met.requiredCapital).toBeLessThan(zonder.requiredCapital)
+  })
+
+  it('schaalt mee met een gekorte AOW in plaats van een vast bedrag op te tellen', () => {
+    // Wie niet zijn hele leven in Nederland woonde krijgt een lager bedrag, en dan
+    // hoort ook het vakantiegeld lager te zijn.
+    const vol = calculatePension(baseInputs({ aowVakantiegeld: true, aowMaandBedragNetto: 1582 }), { currentYear: 2026 })
+    const half = calculatePension(baseInputs({ aowVakantiegeld: true, aowMaandBedragNetto: 791 }), { currentYear: 2026 })
+    const a = vol.yearData.find(y => y.age === 70)!.aowIncome
+    const b = half.yearData.find(y => y.age === 70)!.aowIncome
+    expect(b / a).toBeCloseTo(0.5, 6)
+  })
+
+  it('verandert niets vóór de AOW-leeftijd', () => {
+    const zonder = calculatePension(baseInputs({ aowVakantiegeld: false, retirementAge: 60 }), { currentYear: 2026 })
+    const met = calculatePension(baseInputs({ aowVakantiegeld: true, retirementAge: 60 }), { currentYear: 2026 })
+    expect(met.yearData.find(y => y.age === 62)!.totalIncome)
+      .toBe(zonder.yearData.find(y => y.age === 62)!.totalIncome)
   })
 })

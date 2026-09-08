@@ -1,5 +1,5 @@
 import type { PensionInputs, PensionResult, YearData, IncomePhase, LifeEvent, Woonsituatie } from '../types'
-import { AOW_NETTO_MAAND, ZVW } from '../config/fiscaleParameters'
+import { AOW_NETTO_MAAND, AOW_BRUTO_MAAND, AOW_VAKANTIEGELD_BRUTO_MAAND, ZVW } from '../config/fiscaleParameters'
 import { belastingBox1 } from './brutoNetto'
 import { nettoNominaalRendement } from './box3'
 
@@ -93,6 +93,34 @@ export function aowNettoNaarBruto(nettoMaand: number): number {
   return nettoMaand / (1 - ZVW.lageBijdrage)
 }
 
+/**
+ * Met hoeveel het AOW-jaarinkomen omhoog gaat als je het vakantiegeld meetelt.
+ *
+ * De SVB keert het vakantiegeld in mei apart uit; het maandbedrag dat mensen op
+ * hun overzicht zien is exclusief. De rekenkern gebruikte twaalf van die
+ * maandbedragen en liet het vakantiegeld dus vallen, waardoor het beschikbare
+ * inkomen structureel te laag uitkwam (audit 7 september 2026, bevinding 12).
+ * AOW_VAKANTIEGELD_BRUTO_MAAND stond al in de config maar werd nergens gebruikt.
+ *
+ * Als factor en niet als vast bedrag, zodat een gekorte AOW (wie niet zijn hele
+ * leven in Nederland woonde) evenredig meeschaalt in plaats van er een volledig
+ * vakantiegeld bovenop te krijgen.
+ *
+ * Over alleen een AOW-uitkering is de loonheffing nul, dus netto en bruto schalen
+ * met dezelfde factor. Zodra er aanvullend pensioen bij komt belast
+ * getIncomeBreakdown() het totaal, inclusief dit deel, tegen het juiste marginale
+ * tarief.
+ *
+ * Alleenstaand: (1.662,64 + 106,55) / 1.662,64 = 1,064086.
+ * Samenwonend:  (1.139,25 +  76,10) / 1.139,25 = 1,066799.
+ */
+export function aowVakantiegeldFactor(woonsituatie: Woonsituatie): number {
+  const bruto = AOW_BRUTO_MAAND[woonsituatie]
+  const vakantiegeld = AOW_VAKANTIEGELD_BRUTO_MAAND[woonsituatie]
+  if (!(bruto > 0)) return 1
+  return (bruto + vakantiegeld) / bruto
+}
+
 /** Bijdrage Zvw over een jaarinkomen, afgetopt op het maximumbijdrage-inkomen. */
 function zvwBijdrage(brutoJaar: number): number {
   return Math.min(Math.max(0, brutoJaar), ZVW.maximumBijdrageInkomen) * ZVW.lageBijdrage
@@ -170,12 +198,23 @@ export function getIncomeBreakdown(
   lijfrenteStartAge = 67,
   // Einde van een tijdelijke uitkering. Oneindig betekent levenslang, en dat is de
   // default zodat elke bestaande aanroep zich gedraagt zoals voorheen.
-  lijfrenteEindLeeftijd = Infinity
+  lijfrenteEindLeeftijd = Infinity,
+  // Of het AOW-vakantiegeld meetelt. Default false zodat een losse aanroep zich
+  // gedraagt als voorheen; calculatePension en runMonteCarlo geven de keuze van de
+  // gebruiker door.
+  aowVakantiegeld = false
 ): MaandInkomenVerdeling {
   const pastAow = age >= aowStartAge
   const alleenstaand = woonsituatie === 'alleenstaand'
 
-  const aow = pastAow ? aowNetto : 0
+  // Het vakantiegeld verhoogt zowel het bruto- als het nettobedrag met dezelfde
+  // factor, zie aowVakantiegeldFactor() hierboven. Uitgedrukt per maand, want de
+  // rest van deze functie rekent in maandbedragen: het bedrag komt in mei binnen,
+  // maar over een jaar gemeten telt het gewoon mee.
+  const vg = pastAow && aowVakantiegeld ? aowVakantiegeldFactor(woonsituatie) : 1
+  const aowNettoMetVg = aowNetto * vg
+
+  const aow = pastAow ? aowNettoMetVg : 0
   const heeftPensioen = age >= employerPensionStartAge
   // Een tijdelijke uitkering stopt. Tot september 2026 liep iedere lijfrente door
   // tot de planningshorizon, ook een uitkering van vijf jaar (bevinding 9).
@@ -192,11 +231,11 @@ export function getIncomeBreakdown(
   // lijfrente is willekeurig gekozen (er is geen fiscaal correcte manier om een
   // gedeelde korting-afbouw over twee gelijktijdige bronnen te verdelen), niet
   // fiscaal betekenisvol.
-  const aowBrutoJaar = pastAow ? aowNettoNaarBruto(aowNetto) * 12 : 0
+  const aowBrutoJaar = pastAow ? aowNettoNaarBruto(aowNettoMetVg) * 12 : 0
   const pensioenBrutoJaar = heeftPensioen ? employerPensionBruto * 12 : 0
   const lijfrenteBrutoJaar = heeftLijfrente ? lijfrenteUitkeringBruto * 12 : 0
 
-  const nettoAowJaar = pastAow ? aowNetto * 12 : 0
+  const nettoAowJaar = pastAow ? aowNettoMetVg * 12 : 0
   const nettoAowPensioenJaar = nettoJaarinkomen(aowBrutoJaar + pensioenBrutoJaar, pastAow, alleenstaand)
   const nettoAowPensioenLijfrenteJaar = nettoJaarinkomen(
     aowBrutoJaar + pensioenBrutoJaar + lijfrenteBrutoJaar, pastAow, alleenstaand
@@ -225,11 +264,13 @@ export function getMonthlyWithdrawal(
   woonsituatie: Woonsituatie = 'alleenstaand',
   lijfrenteUitkeringBruto = 0,
   lijfrenteStartAge = 67,
-  lijfrenteEindLeeftijd = Infinity
+  lijfrenteEindLeeftijd = Infinity,
+  aowVakantiegeld = false
 ): number {
   return getIncomeBreakdown(
     age, desiredNetto, aowNetto, aowStartAge, employerPensionBruto, employerPensionStartAge,
-    woonsituatie, lijfrenteUitkeringBruto, lijfrenteStartAge, lijfrenteEindLeeftijd
+    woonsituatie, lijfrenteUitkeringBruto, lijfrenteStartAge, lijfrenteEindLeeftijd,
+    aowVakantiegeld
   ).fromCapital
 }
 
@@ -405,6 +446,7 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
     employerPension, employerPensionStartAge,
     lijfrenteUitkering, lijfrenteStartAge,
     lijfrenteSoort = 'levenslang', lijfrenteEindLeeftijd = Infinity,
+    aowVakantiegeld = false,
     lifeEvents = [],
   } = inputs
 
@@ -472,7 +514,7 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
   const withdrawalAtAge = (age: number) => getMonthlyWithdrawal(
     age, desiredMonthlyNetto, aowMonthlyNetto, aowStartAge,
     employerPension, employerPensionStartAge, woonsituatie,
-    lijfrenteUitkering, lijfrenteStartAge, lijfrenteEinde
+    lijfrenteUitkering, lijfrenteStartAge, lijfrenteEinde, aowVakantiegeld
   )
 
   // Contante waarde van alle onttrekkingen: wat je inkomen op zichzelf kost, nog
@@ -578,7 +620,7 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
     const { aow, employerPension: emp, lijfrenteUitkering: lijf, fromCapital } = getIncomeBreakdown(
       age, desiredMonthlyNetto, aowMonthlyNetto, aowStartAge,
       employerPension, employerPensionStartAge, woonsituatie,
-      lijfrenteUitkering, lijfrenteStartAge, lijfrenteEinde
+      lijfrenteUitkering, lijfrenteStartAge, lijfrenteEinde, aowVakantiegeld
     )
 
     // Het eenmalige bedrag van dit jaar komt aan het begin binnen en is dus
@@ -656,7 +698,7 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
     retirementAge, lifeExpectancy,
     desiredMonthlyNetto, aowMonthlyNetto, aowStartAge,
     employerPension, employerPensionStartAge, woonsituatie,
-    lijfrenteUitkering, lijfrenteStartAge, lijfrenteEinde,
+    lijfrenteUitkering, lijfrenteStartAge, lijfrenteEinde, aowVakantiegeld,
     yearData
   )
 
@@ -690,6 +732,7 @@ function buildIncomePhases(
   lijfrenteUitkeringBruto = 0,
   lijfrenteStartAge = 67,
   lijfrenteEindLeeftijd = Infinity,
+  aowVakantiegeld = false,
   // Het saldoverloop uit dezelfde berekening. Zonder dit toonde de fasenlijst het
   // volledige gewenste bedrag uit eigen vermogen, ook voor jaren waarin de pot al
   // leeg was: het scherm sprak dan de grafiek ernaast tegen (audit 7 september
@@ -715,7 +758,8 @@ function buildIncomePhases(
     const fromAge = sorted[i]
     const { aow, employerPension: emp, lijfrenteUitkering: lijf, fromCapital } = getIncomeBreakdown(
       fromAge, desiredNetto, aowNetto, aowStartAge, employerPensionBruto, empStartAge,
-      woonsituatie, lijfrenteUitkeringBruto, lijfrenteStartAge, lijfrenteEindLeeftijd
+      woonsituatie, lijfrenteUitkeringBruto, lijfrenteStartAge, lijfrenteEindLeeftijd,
+      aowVakantiegeld
     )
 
     const toAge = sorted[i + 1]

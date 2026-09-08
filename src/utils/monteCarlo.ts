@@ -52,6 +52,7 @@ export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number
     employerPension, employerPensionStartAge,
     lijfrenteUitkering, lijfrenteStartAge,
     lijfrenteSoort = 'levenslang', lijfrenteEindLeeftijd = Infinity,
+    aowVakantiegeld = false,
     lifeEvents = [],
     volatilityPre, volatilityPost,
   } = inputs
@@ -145,7 +146,7 @@ export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number
         const withdrawal = getMonthlyWithdrawal(
           age, desiredNetto, aowMonthlyNetto, aowStartAge,
           employerPension, employerPensionStartAge, woonsituatie,
-          lijfrenteUitkering, lijfrenteStartAge, lijfrenteEinde
+          lijfrenteUitkering, lijfrenteStartAge, lijfrenteEinde, aowVakantiegeld
         ) * 12
         // 75% income scenario: client accepts 25% lower total income
         // getMonthlyWithdrawal handles phase-aware tax: fixed income (AOW + emp + lijfrente)
@@ -153,7 +154,7 @@ export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number
         const withdrawal75 = getMonthlyWithdrawal(
           age, desiredNetto * 0.75, aowMonthlyNetto, aowStartAge,
           employerPension, employerPensionStartAge, woonsituatie,
-          lijfrenteUitkering, lijfrenteStartAge, lijfrenteEinde
+          lijfrenteUitkering, lijfrenteStartAge, lijfrenteEinde, aowVakantiegeld
         ) * 12
         // Mid-year-conventie voor de onttrekking, zelfde wortelfactor en zelfde
         // reden als bij de jaarinleg hierboven en als in pensionCalc.ts. Zonder

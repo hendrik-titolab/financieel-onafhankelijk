@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useId, Children, isValidElement, cloneElement } from 'react'
 import { parseBedrag, parseBedragBegrensd, formatBedrag } from '../../utils/bedrag'
 import { geschatteBox3Druk } from '../../utils/box3'
+import { aowVakantiegeldFactor } from '../../utils/pensionCalc'
 import { PARAMETER_JAAR } from '../../config/modelVersie'
 import { track } from '@vercel/analytics'
 import { X } from 'lucide-react'
@@ -195,7 +196,12 @@ function ParametersTab({ inputs, onChange }: Props) {
             browser deze schuifknop zelf vast op zijn min zodra pensioenleeftijd
             erboven uitkomt, wat er hetzelfde uitziet als het ongewenste
             "vanzelf meebewegen" dat hierboven bij handleChange is opgelost. */}
-        <AgeSliderRow label="Levensverwachting" value={inputs.lifeExpectancy}
+        {/* "Levensverwachting" suggereert een voorspelling die dit getal niet is:
+            het is de leeftijd tot waar je wilt dat je geld toereikend is. Wie
+            precies tot zijn statistische levensverwachting plant, heeft per
+            definitie ongeveer de helft kans dat het geld eerder op is (audit
+            7 september 2026, bevinding 16). */}
+        <AgeSliderRow label="Plannen tot leeftijd" value={inputs.lifeExpectancy}
           min={36} max={100}
           onChange={v => onChange({ lifeExpectancy: v })} />
       </Section>
@@ -250,7 +256,11 @@ function ParametersTab({ inputs, onChange }: Props) {
           <NumberInput id={gewenstInkomenId} value={inputs.desiredRetirementIncome}
             onChange={v => onChange({ desiredRetirementIncome: v })}
             prefix="€" suffix="/mnd" step={100} />
-          <p className="text-xs text-body">In koopkracht van vandaag: inflatie wordt automatisch verwerkt</p>
+          <p className="text-xs text-body leading-relaxed">
+            In euro's van vandaag. De planner rekent met rendement ná inflatie, dus dit bedrag
+            houdt zijn koopkracht: € 3.000 nu is over dertig jaar nog steeds € 3.000 aan
+            boodschappen. Het bedrag dat er dan feitelijk op je rekening staat is hoger.
+          </p>
           {inputs.desiredRetirementIncomeType === 'bruto' && (
             <p className="text-xs text-body leading-relaxed">
               We rekenen dit om naar netto met de belastingregels die gelden op je pensioenleeftijd
@@ -276,6 +286,15 @@ function ParametersTab({ inputs, onChange }: Props) {
       <div className="border-t border-line-soft" />
 
       <Section title="Pensioenuitkeringen">
+        {/* Expliciete afbakening. De tool kent geen tweede persoon met eigen
+            pensioen, eigen belasting en eigen leeftijd; woonsituatie stuurt alleen
+            het AOW-bedrag en de alleenstaandeouderenkorting (audit 7 september
+            2026, bevinding 16). */}
+        <p className="text-xs text-body leading-relaxed">
+          Deze berekening gaat over één persoon. Kies je samenwonend, dan past dat je AOW-bedrag
+          en je heffingskortingen aan, maar er wordt geen tweede persoon met een eigen pensioen,
+          eigen leeftijd en eigen belasting doorgerekend.
+        </p>
         {/* Referentie aan je eigen pensioenleeftijd: die staat in de sectie
             "Leeftijd" hierboven, dus zonder deze regel zie je 'm niet meer
             terwijl je AOW en werkgeverspensioen invult — precies waar het
@@ -317,6 +336,24 @@ function ParametersTab({ inputs, onChange }: Props) {
             <a href="https://www.mijnpensioenoverzicht.nl" target="_blank" rel="noopener noreferrer"
               className="text-data-700 hover:underline">mijnpensioenoverzicht.nl</a>.
             {' '}Heb je niet je hele leven in Nederland gewoond, dan krijg je een lager bedrag.
+          </p>
+          {/* Het vakantiegeld keert de SVB in mei apart uit, dus het maandbedrag op
+              een overzicht is exclusief. De rekenkern gebruikte twaalf van die
+              maandbedragen en liet het vakantiegeld vallen, waardoor het
+              beschikbare inkomen structureel te laag uitkwam (audit 7 september
+              2026, bevinding 12). */}
+          <label className="flex items-center gap-2 mt-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={inputs.aowVakantiegeld}
+              onChange={e => onChange({ aowVakantiegeld: e.target.checked })}
+              className="rounded accent-ink" />
+            <span className="text-xs text-body">Vakantiegeld meetellen</span>
+          </label>
+          <p className="text-xs text-body mt-1 leading-relaxed">
+            {inputs.aowVakantiegeld
+              ? `De SVB betaalt het vakantiegeld in mei apart uit, dus het bedrag hierboven is exclusief. Meetellen verhoogt je AOW met ongeveer ${((aowVakantiegeldFactor(inputs.woonsituatie) - 1) * 100).toLocaleString('nl-NL', { maximumFractionDigits: 1 })}%. Zet dit uit als je bedrag het vakantiegeld al bevat.`
+              : 'Het vakantiegeld telt nu niet mee. Je beschikbare inkomen valt daardoor lager uit dan het in werkelijkheid is.'}
           </p>
         </Field>
         <Field label="AOW ingangsdatum (leeftijd)">

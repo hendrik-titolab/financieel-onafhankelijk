@@ -64,6 +64,16 @@ export interface PensionInputs {
   // Bepaalt de standaard AOW-bedragen én of de alleenstaandeouderenkorting geldt.
   woonsituatie: Woonsituatie
   aowMaandBedragNetto: number  // net monthly AOW amount (find on mijnpensioenoverzicht.nl)
+  /**
+   * Of het AOW-vakantiegeld meetelt.
+   *
+   * De SVB keert het in mei apart uit, dus het maandbedrag op je overzicht is
+   * exclusief. De rekenkern gebruikte twaalf van die maandbedragen en liet het
+   * vakantiegeld vallen, waardoor het beschikbare inkomen structureel circa 6,4%
+   * te laag uitkwam (audit 7 september 2026, bevinding 12). Standaard aan; uit
+   * zetten hoort alleen als het ingevulde bedrag het al bevat.
+   */
+  aowVakantiegeld: boolean
   aowStartAge: number         // age at which AOW kicks in
   employerPension: number     // gross monthly (bruto/maand)
   employerPensionStartAge: number  // age at which employer pension kicks in (default 67, see UPO)

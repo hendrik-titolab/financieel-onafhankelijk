@@ -51,7 +51,7 @@ export async function exportToExcel(berekening: BerekeningsSet, clientName: stri
     ['LEEFTIJD', ''],
     ['Huidige leeftijd', inputs.currentAge],
     ['Pensioenleeftijd', inputs.retirementAge],
-    ['Levensverwachting', inputs.lifeExpectancy],
+    ['Plannen tot leeftijd', inputs.lifeExpectancy],
     ['', ''],
     ['VERMOGEN & INLEG', ''],
     ['Huidig vermogen', inputs.currentCapital],
