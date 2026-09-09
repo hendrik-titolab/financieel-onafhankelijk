@@ -82,24 +82,28 @@ export interface PensionInputs {
   /**
    * Vermogensbelasting (box 3), in procentpunten van het rendement.
    *
-   * Bewust een invoerveld en geen berekening: het box 3-stelsel beweegt richting
-   * heffing over werkelijk rendement, en een volledig model daarvoor bouwen levert
-   * een fiscale motor op die bij invoering opnieuw fout is. utils/box3.ts rekent
-   * wel een schatting voor bij het opgegeven vermogen, en is het vervangpunt voor
-   * het volledige model.
+   * Doet alleen iets als vermogensbelastingHandmatig true is. Staat die op false,
+   * dan rekent de kern de heffing per jaar uit over het dán actuele vermogen en
+   * blijft dit veld ongebruikt; het houdt dan wel de schatting bij het opgegeven
+   * vermogen vast, zodat overschakelen naar handmatig met een zinnig getal begint.
    */
   vermogensbelastingPct: number
   /**
-   * Of de gebruiker de vermogensbelasting zelf heeft ingevuld.
+   * Welke van de twee box 3-routes de rekenkern volgt.
    *
-   * Staat dit op false, dan volgt vermogensbelastingPct automatisch de schatting
-   * die utils/box3.ts uit het opgegeven vermogen en de woonsituatie afleidt. Zodra
-   * iemand het veld zelf aanpast gaat de vlag op true en blijft zijn waarde staan.
+   * false: de heffing wordt elk jaar opnieuw berekend over het vermogen van dát
+   * jaar en gaat in euro's van het saldo af. Dit is sinds september 2026 de
+   * standaard in de tool, en het antwoord op openstaand punt 2 uit de audit van
+   * 7 september 2026: één vast percentage over de hele looptijd kan niet kloppen,
+   * want door het heffingsvrije vermogen loopt de druk op met de omvang van het
+   * vermogen (ongeveer 0,9 procentpunt bij een ton, ruim 2,0 bij een miljoen).
    *
-   * Reden: een vast getal kan niet kloppen, want de druk loopt op met de omvang
-   * van het vermogen. Zonder deze automatiek zou de gebruiker bij elke wijziging
-   * van zijn vermogen zelf moeten herrekenen, of blijven zitten met een percentage
-   * dat niet meer bij zijn situatie past.
+   * true: de gebruiker vult zelf een vast percentage in, dat als procentpunten van
+   * het rendement af gaat. Dat was tot september 2026 de enige route.
+   *
+   * Nooit allebei: staat deze vlag op false, dan doet vermogensbelastingPct niets.
+   * De default in de testfixtures is bewust true met 0%, zodat de golden values van
+   * vóór deze wijziging onveranderd blijven.
    */
   vermogensbelastingHandmatig: boolean
 

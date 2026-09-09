@@ -314,11 +314,19 @@ premie in de werkgeversregeling, dus werkgeversdeel én eigen bijdrage. Het veld
   alleen in de Excel-export.
 - De vijf datatokens uit de herstijling (`data-100/300/500/700`, `sand-deep`, zie
   `DESIGN_SYSTEM.md`) zijn zelf afgeleid en nog niet beoordeeld door Hendriks grafisch ontwerper.
-- **Volledig box 3-model** (auditbevinding 10). Het invoerveld voor vermogensbelasting start nu
-  op een schatting die uit het vermogen en de woonsituatie wordt afgeleid en beweegt daarmee mee
-  tot de gebruiker het zelf invult. Wat nog ontbreekt is een echte jaarlijkse heffing over het
-  actuele vermogen, met vermogensmix, schulden en fiscaal partnerschap. `src/utils/box3.ts` is
-  het vervangpunt. Besluit Hendrik, 8 september 2026: eerst het invulbare veld, het model daarna.
+- ~~**Volledig box 3-model** (auditbevinding 10).~~ Grotendeels opgelost op 9 september 2026. De
+  planner rekent de heffing nu per jaar uit over het dán actuele vermogen, in beide rekenkernen en
+  in beide Monte Carlo-paden. `vermogensbelastingHandmatig` schakelt tussen "reken het uit" en "ik
+  vul zelf een percentage in"; het percentage doet niets zodra de heffing aanstaat.
+
+  Wat bewust niet meegaat, en in de UI ook zo benoemd staat: het vermogen telt volledig als
+  beleggingen (de planner kent geen vermogensmix, wie vooral spaart betaalt minder), en er zijn
+  geen schulden. Fiscaal partnerschap gaat wél mee, via `woonsituatie`.
+
+  Twee dingen om te weten bij een volgende wijziging. De heffing gaat over het saldo aan het begin
+  van het jaar, want box 3 kent één peildatum. En de contante-waardeopbouw van het doelbedrag op
+  het scherm (`requiredCapitalEindwaarde`) kent de heffing niet, dus die sluit niet meer tot op de
+  euro aan op `requiredCapital`; dat laatste komt uit de simulatie en klopt wel.
 - **Inflatie is deterministisch.** Eén vast percentage voor de hele looptijd, dus de
   bandbreedte in de grafiek toont niet het risico dat de inflatie zelf tegenvalt, en evenmin de
   correlatie tussen inflatie en rendement. Dat is het deel dat blijft liggen.
