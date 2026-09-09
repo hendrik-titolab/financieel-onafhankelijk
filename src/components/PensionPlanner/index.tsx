@@ -131,10 +131,11 @@ export function PensionPlanner({ clientName, onCloseSession }: Props) {
     setMcStale(mcPrev => mcPrev || true)
   }, [])
 
-  // Zolang de gebruiker de vermogensbelasting niet zelf heeft ingevuld, volgt die
-  // de schatting bij het opgegeven vermogen. Verhoog je je vermogen van een ton
-  // naar een miljoen, dan loopt de druk mee van 0,9% naar 2,0% zonder dat je daar
-  // zelf aan hoeft te denken. Zodra je het veld aanraakt blijft jouw waarde staan.
+  // Zolang box 3 per jaar wordt uitgerekend, houdt dit veld de schatting bij het
+  // opgegeven vermogen vast. Het percentage doet dan niets in de berekening, maar
+  // het staat wél klaar met een zinnig getal voor wie overschakelt naar "ik vul
+  // zelf een percentage in". Zonder dit begint dat veld op een waarde die bij een
+  // heel ander vermogen hoorde.
   useEffect(() => {
     if (inputs.vermogensbelastingHandmatig) return
     const schatting = box3DrukAfgerond(inputs.currentCapital, inputs.woonsituatie)

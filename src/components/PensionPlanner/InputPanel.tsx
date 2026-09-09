@@ -662,16 +662,18 @@ function RisicoprofielSection({ inputs, onChange }: Props) {
         </div>
       )}
 
-      {/* Kosten en vermogensbelasting, apart van het brutorendement. Bewust twee
-          velden en geen ingebouwde berekening: het box 3-stelsel beweegt richting
-          heffing over werkelijk rendement, en een volledig model daarvoor is bij
-          invoering opnieuw fout. De schatting hiernaast komt wel uit de
-          gepubliceerde parameters, zie utils/box3.ts. */}
+      {/* Kosten en vermogensbelasting, apart van het brutorendement.
+          Box 3 kent sinds september 2026 twee routes. Standaard rekent de tool de
+          heffing elk jaar opnieuw uit over het vermogen van dát jaar, want door het
+          heffingsvrije vermogen loopt de druk op met de omvang van het vermogen en
+          kan één percentage over de hele looptijd niet kloppen. Wie een eigen
+          percentage invult schakelt over op de tweede route en houdt dat getal.
+          Zie utils/box3.ts en de uitleg in pensionCalc.ts. */}
       <div className="border-t border-line-soft pt-3 space-y-3">
         <p className="text-xs text-body leading-relaxed">
-          Wat er van dat brutorendement af gaat. Laat je beide op 0 staan, dan rekent de tool
-          zonder kosten en zonder vermogensbelasting, en valt de uitkomst dus gunstiger uit dan
-          in werkelijkheid.
+          Wat er van dat brutorendement af gaat. De kosten vul je zelf in; box 3 rekent de tool
+          standaard elk jaar voor je uit. Zet je de kosten op 0, dan valt de uitkomst gunstiger
+          uit dan in werkelijkheid.
         </p>
 
         <Field label="Kosten van beleggen">
@@ -684,52 +686,59 @@ function RisicoprofielSection({ inputs, onChange }: Props) {
         </Field>
 
         <Field label="Vermogensbelasting (box 3)">
-          {/* Het veld begint op de schatting die bij het opgegeven vermogen hoort en
-              beweegt daarmee mee, tot je het zelf aanpast. Een vast getal kan hier
-              niet kloppen: de druk loopt op met de omvang van het vermogen. */}
-          <NumberInput value={inputs.vermogensbelastingPct}
-            onChange={v => onChange({ vermogensbelastingPct: v, vermogensbelastingHandmatig: true })}
-            suffix="%" step={0.1} min={0} max={5} />
+          <select
+            value={inputs.vermogensbelastingHandmatig ? 'zelf' : 'berekenen'}
+            onChange={e => onChange({ vermogensbelastingHandmatig: e.target.value === 'zelf' })}
+            className="input-field"
+            aria-label="Hoe wordt box 3 meegerekend"
+          >
+            <option value="berekenen">Elk jaar uitrekenen over mijn vermogen</option>
+            <option value="zelf">Ik vul zelf een percentage in</option>
+          </select>
+
+          {inputs.vermogensbelastingHandmatig && (
+            <div className="mt-2">
+              <NumberInput value={inputs.vermogensbelastingPct}
+                onChange={v => onChange({ vermogensbelastingPct: v })}
+                suffix="%" step={0.1} min={0} max={5} />
+            </div>
+          )}
+
           <div className="text-xs text-body leading-relaxed mt-1 space-y-1">
             {inputs.vermogensbelastingHandmatig ? (
               <>
                 <p>
-                  Je hebt dit zelf ingevuld. Bij een vermogen van
+                  Je vult zelf een vast percentage in, dat de hele looptijd van je rendement af
+                  gaat. Bij een vermogen van
                   € {Math.round(inputs.currentCapital).toLocaleString('nl-NL')} en je woonsituatie
-                  komt onze schatting voor {PARAMETER_JAAR} uit op{' '}
+                  hoort daar voor {PARAMETER_JAAR}{' '}
                   <strong className="font-medium text-ink">
                     {box3Schatting.toLocaleString('nl-NL', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%
-                  </strong>.
+                  </strong> bij. Let op: dat percentage past bij je vermogen van vandaag, niet bij
+                  het vermogen dat je straks hebt.
                 </p>
                 {box3Afwijkend && (
                   <button
                     type="button"
-                    onClick={() => onChange({
-                      vermogensbelastingPct: box3Schatting,
-                      vermogensbelastingHandmatig: false,
-                    })}
+                    onClick={() => onChange({ vermogensbelastingPct: box3Schatting })}
                     className="underline font-medium text-data-700 hover:text-ink"
                   >
-                    Terug naar de schatting
+                    Neem {box3Schatting.toLocaleString('nl-NL', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}% over
                   </button>
                 )}
               </>
             ) : (
               <p>
-                Geschat op basis van je vermogen van
-                € {Math.round(inputs.currentCapital).toLocaleString('nl-NL')} en je woonsituatie,
-                met de percentages van {PARAMETER_JAAR}. Past dit bedrag zich aan, dan past dit
-                percentage mee. Vul je zelf iets in, dan blijft dat staan.
+                De heffing wordt elk jaar opnieuw berekend over het vermogen van dát jaar, met de
+                percentages van {PARAMETER_JAAR} en je woonsituatie. Dat is nauwkeuriger dan één
+                vast percentage, want de druk loopt op met de omvang van je vermogen: bij een ton
+                ongeveer 0,9%, bij een miljoen ruim 2%.
               </p>
             )}
             <p>
-              De druk loopt op met de omvang van je vermogen, doordat het heffingsvrije deel een
-              steeds kleiner aandeel wordt: bij een ton ongeveer 0,9%, bij een miljoen ruim 2%.
-              Voor spaargeld ligt hij lager dan voor beleggingen.
-            </p>
-            <p>
-              Een vereenvoudiging: de heffing wordt niet elk jaar opnieuw over je actuele vermogen
-              berekend, en de verdeling tussen sparen, beleggen en schulden telt niet mee.
+              Twee vereenvoudigingen: je vermogen telt volledig mee als beleggingen, dus wie
+              vooral spaart betaalt in werkelijkheid minder. En het heffingsvrije vermogen loopt
+              mee met de inflatie, zoals dat nu ook gebeurt.
             </p>
           </div>
         </Field>

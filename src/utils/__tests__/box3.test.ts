@@ -8,6 +8,7 @@ import {
   box3Forfait, werkelijkRendement, werkelijkRendementDirect, box3Vergelijking,
 } from '../box3'
 import { calculatePension } from '../pensionCalc'
+import { runMonteCarlo } from '../monteCarlo'
 import { baseInputs } from './fixtures'
 
 describe('box3HeffingPerJaar — nagerekend met de parameters van 2026', () => {
@@ -568,4 +569,117 @@ describe('artikel 5.26, derde lid: de schuldendrempel geldt niet bij het tegenbe
     expect(met.aftrekbareSchulden).toBe(0)
     expect(met.belasting).toBe(zonder.belasting)
   })
+})
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * Box 3 per jaar in de FO-planner
+ * ══════════════════════════════════════════════════════════════════════════
+ *
+ * Openstaand punt 2 uit de audit van 7 september 2026: de planner trok een vast
+ * percentage van het rendement af over de hele looptijd. Dat kan niet kloppen,
+ * want door het heffingsvrije vermogen loopt de druk op met de omvang van het
+ * vermogen. Sinds september 2026 schakelt vermogensbelastingHandmatig tussen
+ * "reken het per jaar uit" (false) en "ik vul zelf een percentage in" (true).
+ *
+ * De fixtures staan op true met 0%, zodat alle golden values van vóór deze
+ * wijziging onveranderd blijven. Dat is geen toeval maar de reden dat die twee
+ * velden daar expliciet staan.
+ */
+describe('box 3 per jaar in de planner', () => {
+  it('haalt de heffing van het vermogen af zodra hij aanstaat', () => {
+    const zonder = calculatePension(baseInputs(), { currentYear: 2026 })
+    const met = calculatePension(
+      baseInputs({ vermogensbelastingHandmatig: false }), { currentYear: 2026 })
+    expect(met.projectedCapital).toBeLessThan(zonder.projectedCapital)
+  })
+
+  it('heft niets zolang het vermogen onder de vrijstelling blijft', () => {
+    // Reëel rendement nul en geen inleg, dus het vermogen blijft op € 40.000
+    // staan. Dat is minder dan de vrijstelling van € 59.357, dus de uitkomst
+    // moet gelijk zijn aan die zonder heffing. Zo niet, dan wordt er ergens over
+    // de volle grondslag geheven in plaats van over het deel erboven.
+    const invoer = {
+      currentCapital: 40_000, monthlyContribution: 0,
+      returnBeforeRetirement: 2.5, returnAfterRetirement: 2.5, inflation: 2.5,
+    }
+    const zonder = calculatePension(baseInputs(invoer), { currentYear: 2026 })
+    const met = calculatePension(
+      baseInputs({ ...invoer, vermogensbelastingHandmatig: false }), { currentYear: 2026 })
+    expect(met.projectedCapital).toBeCloseTo(zonder.projectedCapital, 6)
+
+    // Het benodigde vermogen verandert wél, en dat hoort zo: dat is het bedrag
+    // dat het gewenste inkomen moet dragen, en dat ligt hier rond een miljoen.
+    // Daar heft box 3 gewoon. Alleen het opgebouwde vermogen blijft onder de
+    // vrijstelling.
+    expect(met.requiredCapital).toBeGreaterThan(zonder.requiredCapital)
+  })
+
+  it('drukt zwaarder dan het vaste percentage dat bij het STARTvermogen hoort', () => {
+    // Dit is de kern van de auditbevinding. Bij € 100.000 is de geschatte druk
+    // 0,9 procentpunt, en met dat percentage rekende de planner de hele looptijd
+    // door. Het vermogen groeit in dit scenario naar het meervoudige daarvan, en
+    // dan is de werkelijke druk hoger. Wie met het startpercentage rekent komt
+    // dus te gunstig uit.
+    const vastPercentage = calculatePension(
+      baseInputs({
+        vermogensbelastingHandmatig: true,
+        vermogensbelastingPct: box3DrukAfgerond(100_000, 'alleenstaand'),
+      }), { currentYear: 2026 })
+    const perJaar = calculatePension(
+      baseInputs({ vermogensbelastingHandmatig: false }), { currentYear: 2026 })
+    expect(perJaar.projectedCapital).toBeLessThan(vastPercentage.projectedCapital)
+  })
+
+  it('verhoogt het benodigde vermogen, want de heffing loopt in de uitkeringsfase door', () => {
+    const zonder = calculatePension(baseInputs(), { currentYear: 2026 })
+    const met = calculatePension(
+      baseInputs({ vermogensbelastingHandmatig: false }), { currentYear: 2026 })
+    expect(met.requiredCapital).toBeGreaterThan(zonder.requiredCapital)
+  })
+
+  it('telt niet dubbel: het ingevulde percentage doet niets zodra de heffing aanstaat', () => {
+    // Anders zou iemand die eerst zelf 1,9% invulde en daarna overschakelt naar
+    // "reken het uit" allebei betalen.
+    const a = calculatePension(
+      baseInputs({ vermogensbelastingHandmatig: false, vermogensbelastingPct: 0 }),
+      { currentYear: 2026 })
+    const b = calculatePension(
+      baseInputs({ vermogensbelastingHandmatig: false, vermogensbelastingPct: 1.9 }),
+      { currentYear: 2026 })
+    expect(b.projectedCapital).toBe(a.projectedCapital)
+  })
+
+  it('werkt ook in Monte Carlo, en verlaagt daar de slagingskans', () => {
+    const rng = () => 0.5 // vaste trekking, dan is het verschil alleen de heffing
+    const zonder = runMonteCarlo(baseInputs(), { rng, currentYear: 2026 })
+    const met = runMonteCarlo(
+      baseInputs({ vermogensbelastingHandmatig: false }), { rng, currentYear: 2026 })
+    expect(met.successRate).toBeLessThanOrEqual(zonder.successRate)
+  })
+})
+
+describe('planner en rekentool rekenen met dezelfde fiscale logica', () => {
+  // box3HeffingPerJaar() rondt bewust niet af op hele euro's: een projectie van
+  // veertig jaar is geen aanslag, en per jaar afronden zou er een systematische
+  // afwijking in leggen. De rekentool op /tools/box3 rondt wél af, want die moet
+  // hetzelfde bedrag geven als de Belastingdienst. Deze toets bewaakt dat het
+  // verschil daartoe beperkt blijft en dat de twee niet echt uiteenlopen.
+  // De afwijking komt van het afkappen van het aandeel op twee decimalen en
+  // schaalt dus mee met het vermogen. Een vaste marge in euro's zou bij een
+  // groot vermogen ten onrechte omvallen; vandaar een relatieve grens.
+  const gevallen = [100_000, 250_000, 600_000, 1_000_000, 2_500_000]
+  for (const vermogen of gevallen) {
+    it(`wijkt alleen door afronding af bij EUR ${vermogen}`, () => {
+      const planner = box3HeffingPerJaar(vermogen, 'alleenstaand')
+      const tool = box3Forfait({
+        jaar: 2026, fiscaalPartner: false,
+        banktegoeden: 0, beleggingen: vermogen, overigeBezittingen: 0, schulden: 0,
+      }).belasting
+      // Twee bronnen van verschil, en geen andere: het afronden naar hele euro's
+      // (hooguit een euro) en het afkappen van het aandeel op twee decimalen
+      // (hooguit een promille van het bedrag). Wordt dit ooit groter, dan rekenen
+      // de planner en de rekentool niet meer met dezelfde fiscale logica.
+      expect(Math.abs(planner - tool)).toBeLessThan(1 + tool * 0.001)
+    })
+  }
 })

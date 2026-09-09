@@ -1,7 +1,7 @@
 import type { PensionInputs, MonteCarloResult, PercentilePoint } from '../types'
 import { brutoMaandNaarNettoMaand, getMonthlyWithdrawal, controleerLeeftijden } from './pensionCalc'
 import type { HuishoudInvoer } from './pensionCalc'
-import { nettoNominaalRendement } from './box3'
+import { nettoNominaalRendement, box3HeffingPerJaar } from './box3'
 
 export const N_SIMULATIONS = 2000
 
@@ -77,7 +77,7 @@ export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number
     currentAge, retirementAge: retirementAgeInput, lifeExpectancy,
     currentCapital, monthlyContribution, contributionFrequency,
     returnBeforeRetirement, returnAfterRetirement, inflation,
-    kostenPct = 0, vermogensbelastingPct = 0,
+    kostenPct = 0, vermogensbelastingPct = 0, vermogensbelastingHandmatig = true,
     desiredRetirementIncome, desiredRetirementIncomeType,
     aowMaandBedragNetto, aowStartAge, woonsituatie = 'alleenstaand',
     employerPension, employerPensionStartAge,
@@ -124,11 +124,18 @@ export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number
       )
     : desiredRetirementIncome
 
-  // Zelfde aftrek als in pensionCalc.ts, zie daar.
+  // Zelfde twee routes voor box 3 als in pensionCalc.ts, zie de uitleg daar. Of
+  // het percentage van het rendement af gaat, of de heffing gaat per jaar in
+  // euro's van het saldo af. Nooit allebei.
+  const belastingViaPercentage = vermogensbelastingHandmatig ? vermogensbelastingPct : 0
+  const heffing = vermogensbelastingHandmatig
+    ? () => 0
+    : (vermogenBeginJaar: number) => box3HeffingPerJaar(vermogenBeginJaar, woonsituatie)
+
   const realPre = realReturn(
-    nettoNominaalRendement(returnBeforeRetirement, kostenPct, vermogensbelastingPct), inflation)
+    nettoNominaalRendement(returnBeforeRetirement, kostenPct, belastingViaPercentage), inflation)
   const realPost = realReturn(
-    nettoNominaalRendement(returnAfterRetirement, kostenPct, vermogensbelastingPct), inflation)
+    nettoNominaalRendement(returnAfterRetirement, kostenPct, belastingViaPercentage), inflation)
 
   const volPre = reeleVolatiliteit(volatilityPre, inflation)
   const volPost = reeleVolatiliteit(volatilityPost, inflation)
@@ -201,8 +208,14 @@ export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number
         // sampleAnnualReturn), dus 1+r is altijd positief en de wortel is
         // altijd reëel.
         const groeifactorInleg = Math.sqrt(1 + r)
-        capital   = (capital   + event) * (1 + r) + monthlyPMT * 12 * groeifactorInleg
-        capital75 = (capital75 + event) * (1 + r) + monthlyPMT * 12 * groeifactorInleg
+        // De heffing gaat over het saldo aan het begin van het jaar, zelfde
+        // peildatumconventie als in pensionCalc.ts. Beide paden krijgen hun eigen
+        // heffing, want ze hebben een verschillend vermogen: het 75%-pad houdt
+        // meer over en betaalt dus meer.
+        const beginSaldo   = capital   + event
+        const beginSaldo75 = capital75 + event
+        capital   = beginSaldo   * (1 + r) + monthlyPMT * 12 * groeifactorInleg - heffing(beginSaldo)
+        capital75 = beginSaldo75 * (1 + r) + monthlyPMT * 12 * groeifactorInleg - heffing(beginSaldo75)
       } else {
         const r = sampleAnnualReturn(realPost, volPost, rng)
         // Full income scenario
@@ -216,8 +229,10 @@ export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number
         // deze factor rekende de simulatie alsof het hele jaarbedrag pas op
         // 31 december werd opgenomen, terwijl de inleg wél maandelijks was.
         const groeifactorOpname = Math.sqrt(1 + r)
-        capital   = (capital   + event) * (1 + r) - withdrawal   * groeifactorOpname
-        capital75 = (capital75 + event) * (1 + r) - withdrawal75 * groeifactorOpname
+        const beginSaldo   = capital   + event
+        const beginSaldo75 = capital75 + event
+        capital   = beginSaldo   * (1 + r) - withdrawal   * groeifactorOpname - heffing(beginSaldo)
+        capital75 = beginSaldo75 * (1 + r) - withdrawal75 * groeifactorOpname - heffing(beginSaldo75)
       }
 
       // Liquiditeitstoets voor élk jaar, ook in de opbouwfase. Stond tot september

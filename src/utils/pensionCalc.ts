@@ -1,7 +1,7 @@
 import type { PensionInputs, PensionResult, YearData, IncomePhase, LifeEvent, Woonsituatie } from '../types'
 import { AOW_NETTO_MAAND, AOW_BRUTO_MAAND, AOW_VAKANTIEGELD_BRUTO_MAAND, ZVW } from '../config/fiscaleParameters'
 import { belastingBox1 } from './brutoNetto'
-import { nettoNominaalRendement } from './box3'
+import { nettoNominaalRendement, box3HeffingPerJaar } from './box3'
 
 // AOW netto maandbedragen — uit centrale config (fiscaleParameters.ts)
 export const AOW_NETTO = {
@@ -365,7 +365,8 @@ function simulateAccumulation(
   yearsToRetirement: number,
   realReturnAnnual: number,
   eventMap: Map<number, number>,
-  startCalendarYear: number
+  startCalendarYear: number,
+  heffing: (vermogenBeginJaar: number) => number = () => 0
 ): number {
   let capital = startCapital
   const annualFactor = 1 + realReturnAnnual / 100
@@ -373,7 +374,13 @@ function simulateAccumulation(
   for (let yr = 0; yr < yearsToRetirement; yr++) {
     const calYear = startCalendarYear + yr
     const event = eventMap.get(calYear) ?? 0
-    capital = (capital + event) * annualFactor + monthlyPMT * 12 * Math.sqrt(annualFactor)
+    // Box 3 kent één peildatum: 1 januari. De heffing gaat dus over het saldo aan
+    // het begin van het jaar, inclusief een eenmalig bedrag dat volgens de
+    // conventie hierboven ook aan het begin van het jaar binnenkomt. Afgetrokken
+    // ná de groei, want de aanslag komt pas in het jaar erna.
+    const beginSaldo = capital + event
+    capital = beginSaldo * annualFactor + monthlyPMT * 12 * Math.sqrt(annualFactor)
+      - heffing(beginSaldo)
   }
   return capital
 }
@@ -394,7 +401,8 @@ function simulateRetirementPath(
   retirementYear: number,
   realPostAnnual: number,
   retEventMap: Map<number, number>,
-  withdrawalAtAge: (age: number) => number
+  withdrawalAtAge: (age: number) => number,
+  heffing: (vermogenBeginJaar: number) => number = () => 0
 ): { minCapital: number; endCapital: number } {
   let capital = startCapital
   let minCapital = startCapital
@@ -407,7 +415,9 @@ function simulateRetirementPath(
   for (let yr = 0; yr < yearsInRetirement; yr++) {
     const age = retirementAge + yr
     const event = retEventMap.get(retirementYear + yr) ?? 0
-    capital = (capital + event) * factor - withdrawalAtAge(age) * 12 * onttrekkingsFactor
+    const beginSaldo = capital + event
+    capital = beginSaldo * factor - withdrawalAtAge(age) * 12 * onttrekkingsFactor
+      - heffing(beginSaldo)
     // Ná de onttrekking van dat jaar: dát is het moment waarop de rekening
     // betaald moet zijn. Vóór de onttrekking meten zou een tekort dat pas in
     // december ontstaat een jaar te laat zien.
@@ -429,9 +439,12 @@ function simulateRetirementPath(
  * geen tekort, terwijl de simulatie 0% slaagde. Voor de eerste vijf jaar is
  * € 60.000 overbrugging nodig.
  *
- * Het saldo is een strikt stijgende functie van het startvermogen (de recursie is
- * lineair, iedere euro extra groeit mee met r^t), dus bisectie vindt hier één
- * eenduidig antwoord. De bovengrens wordt eerst verdubbelend gezocht: een vaste
+ * Het saldo is een strikt stijgende functie van het startvermogen, dus bisectie
+ * vindt hier één eenduidig antwoord. Zonder box 3-heffing is de recursie lineair:
+ * iedere euro extra groeit mee met r^t. Mét heffing is ze stuksgewijs lineair,
+ * maar nog steeds strikt stijgend: boven de vrijstelling levert een euro extra
+ * (1 + r) − 2,16% op, en dat is positief bij elk realistisch rendement. De
+ * bisectie blijft dus geldig. De bovengrens wordt eerst verdubbelend gezocht: een vaste
  * bovengrens kan bij een negatief reëel rendement of een grote uitgave in de
  * uitkeringsfase te laag uitvallen, en dan zou de tool stilzwijgend een te laag
  * doelbedrag noemen.
@@ -446,11 +459,12 @@ function findRequiredCapital(
   retirementYear: number,
   realPostAnnual: number,
   retEventMap: Map<number, number>,
-  withdrawalAtAge: (age: number) => number
+  withdrawalAtAge: (age: number) => number,
+  heffing: (vermogenBeginJaar: number) => number = () => 0
 ): number {
   const haalbaar = (start: number) => simulateRetirementPath(
     start, yearsInRetirement, retirementAge, retirementYear,
-    realPostAnnual, retEventMap, withdrawalAtAge
+    realPostAnnual, retEventMap, withdrawalAtAge, heffing
   ).minCapital >= 0
 
   if (haalbaar(0)) return 0
@@ -478,13 +492,15 @@ function findRequiredPMT(
   yearsToRetirement: number,
   realReturnAnnual: number,
   eventMap: Map<number, number>,
-  startCalendarYear: number
+  startCalendarYear: number,
+  heffing: (vermogenBeginJaar: number) => number = () => 0
 ): number {
   if (yearsToRetirement <= 0) return 0
   let lo = -50000, hi = 200000
   for (let i = 0; i < 60; i++) {
     const mid = (lo + hi) / 2
-    const cap = simulateAccumulation(startCapital, mid, yearsToRetirement, realReturnAnnual, eventMap, startCalendarYear)
+    const cap = simulateAccumulation(
+      startCapital, mid, yearsToRetirement, realReturnAnnual, eventMap, startCalendarYear, heffing)
     if (cap < targetCapital) lo = mid
     else hi = mid
   }
@@ -496,7 +512,7 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
     currentAge, retirementAge: retirementAgeInput, lifeExpectancy,
     currentCapital, monthlyContribution, contributionFrequency,
     returnBeforeRetirement, returnAfterRetirement, inflation,
-    kostenPct = 0, vermogensbelastingPct = 0,
+    kostenPct = 0, vermogensbelastingPct = 0, vermogensbelastingHandmatig = true,
     desiredRetirementIncome, desiredRetirementIncomeType,
     aowMaandBedragNetto, aowStartAge, woonsituatie = 'alleenstaand',
     employerPension, employerPensionStartAge,
@@ -511,12 +527,37 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
   // uitkering doorlopen tot de planningshorizon.
   const lijfrenteEinde = lijfrenteSoort === 'tijdelijk' ? lijfrenteEindLeeftijd : Infinity
 
-  // Kosten en vermogensbelasting gaan er als procentpunten af vóórdat de inflatie
-  // eruit wordt gerekend. Staan ze op nul, dan verandert er niets: dat is de stand
-  // van vóór september 2026, toen de tekst iets anders beweerde dan de rekenkern
-  // deed (audit-bevinding 10).
-  const brutoPre = nettoNominaalRendement(returnBeforeRetirement, kostenPct, vermogensbelastingPct)
-  const brutoPost = nettoNominaalRendement(returnAfterRetirement, kostenPct, vermogensbelastingPct)
+  // Twee routes voor box 3, en precies één ervan is actief.
+  //
+  // vermogensbelastingHandmatig = true: de gebruiker vult zelf een percentage in,
+  // dat gaat er als procentpunten van het rendement af. Dat was tot september 2026
+  // de enige route (audit-bevinding 10).
+  //
+  // vermogensbelastingHandmatig = false: de heffing wordt per jaar uitgerekend over
+  // het dán actuele vermogen en gaat in euro's van het saldo af. Dat is wat de
+  // audit vroeg: een vast percentage over de hele looptijd kan niet kloppen, want
+  // door het heffingsvrije vermogen loopt de druk op met de omvang van het
+  // vermogen. Bij € 100.000 is het ongeveer 0,9 procentpunt, bij € 1.000.000 ruim
+  // 2,0, en een plan dat van de eerste naar de tweede groeit zit er met één
+  // percentage per definitie naast.
+  //
+  // Twee aannames, allebei bewust:
+  //
+  // 1. Het hele vermogen telt als beleggingen (forfait 6,00%), niet als spaargeld.
+  //    De planner kent geen vermogensmix. Wie vooral spaart betaalt minder dan hier
+  //    staat. Zie box3HeffingPerJaar().
+  // 2. Het heffingsvrije vermogen wordt jaarlijks geïndexeerd en is in reële euro's
+  //    dus constant. Deze rekenkern werkt in euro's van vandaag; zonder die aanname
+  //    zou de vrijstelling gedurende de looptijd langzaam verdampen. De heffing
+  //    zelf is inflatieneutraal: 6% × 36% is 2,16% van het vermogen, en dat
+  //    percentage is in reële en nominale euro's hetzelfde.
+  const belastingViaPercentage = vermogensbelastingHandmatig ? vermogensbelastingPct : 0
+  const heffing = vermogensbelastingHandmatig
+    ? () => 0
+    : (vermogenBeginJaar: number) => box3HeffingPerJaar(vermogenBeginJaar, woonsituatie)
+
+  const brutoPre = nettoNominaalRendement(returnBeforeRetirement, kostenPct, belastingViaPercentage)
+  const brutoPost = nettoNominaalRendement(returnAfterRetirement, kostenPct, belastingViaPercentage)
   const realPre = realAnnualReturn(brutoPre, inflation)
   const realPost = realAnnualReturn(brutoPost, inflation)
 
@@ -544,7 +585,7 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
 
   // Projected capital at retirement (year-by-year with life events)
   const projectedCapital = simulateAccumulation(
-    currentCapital, monthlyPMT, yearsToRetirement, realPre, accEventMap, currentYear
+    currentCapital, monthlyPMT, yearsToRetirement, realPre, accEventMap, currentYear, heffing
   )
 
   // Gewenst netto maandinkomen. Bij een bruto-invoer geldt het belastingregime op
@@ -650,13 +691,20 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
   // wat er later binnenkomt. Dit is wat er tot september 2026 als requiredCapital
   // uit deze functie kwam, en het is nog steeds het bedrag dat de opbouw op het
   // scherm verklaart.
+  //
+  // Let op: deze contante waarde rekent met één vast rendement en kent de
+  // box 3-heffing niet. Zodra die heffing aanstaat is dit dus een benadering, en
+  // ligt het echte doelbedrag eronder in de simulatie hieronder. Dat is geen fout
+  // in de uitkomst (requiredCapital komt uit findRequiredCapital en niet hieruit),
+  // maar de opbouw op het scherm sluit dan niet meer tot op de euro aan.
   const requiredCapitalEindwaarde = pvWithdrawals - pvEventsAfterRetirement
 
   // Het werkelijke doelbedrag: het kleinste startvermogen waarbij het saldo
   // onderweg nooit negatief wordt. Gelijk aan de eindwaarde zolang er geen
   // overbrugging nodig is, hoger zodra een ontvangst pas later binnenkomt.
   const requiredCapital = findRequiredCapital(
-    yearsInRetirement, retirementAge, retirementYear, realPost, retEventMap, withdrawalAtAge
+    yearsInRetirement, retirementAge, retirementYear, realPost, retEventMap, withdrawalAtAge,
+    heffing
   )
 
   // Wat er bovenop de eindwaarde nodig is om de jaren tót die latere ontvangst te
@@ -667,7 +715,7 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
 
   // Required monthly contribution (binary search, accounts for life events)
   const requiredMonthlyContribution = findRequiredPMT(
-    requiredCapital, currentCapital, yearsToRetirement, realPre, accEventMap, currentYear
+    requiredCapital, currentCapital, yearsToRetirement, realPre, accEventMap, currentYear, heffing
   )
 
   // --- Year-by-year simulation for chart & table ---
@@ -695,7 +743,11 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
     })
 
     // Mid-year-conventie voor de jaarinleg, zie simulateAccumulation hierboven.
-    capital = (capital + event) * (1 + realPre / 100) + monthlyPMT * 12 * Math.sqrt(1 + realPre / 100)
+    // De box 3-heffing gaat over het saldo aan het begin van het jaar, net als
+    // daar, anders loopt de tabel uit de pas met de KPI erboven.
+    const beginSaldo = capital + event
+    capital = beginSaldo * (1 + realPre / 100) + monthlyPMT * 12 * Math.sqrt(1 + realPre / 100)
+      - heffing(beginSaldo)
   }
 
   // Retirement phase
@@ -776,8 +828,10 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
     // over. Een volledige maandmotor haalt die laatste 0,16% op en kost een
     // herbouw van beide rekenkernen; dat is bewust niet gedaan (audit 7 september
     // 2026, bevinding 14).
-    capital = (capital + retEvent) * (1 + realPost / 100)
+    const beginSaldoUitkering = capital + retEvent
+    capital = beginSaldoUitkering * (1 + realPost / 100)
       - fromCapital * 12 * Math.sqrt(1 + realPost / 100)
+      - heffing(beginSaldoUitkering)
   }
 
   // Knikpunten in het inkomen: elke ingangsdatum en elk einde van een uitkering
