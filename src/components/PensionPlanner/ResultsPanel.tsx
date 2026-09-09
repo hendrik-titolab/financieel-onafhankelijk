@@ -612,7 +612,10 @@ export function ResultsPanel({ inputs, result, berekening, mcStale, isCalculatin
         Je eigen vermogen behandelen we als vrij belegd vermogen in box 3: een opname daaruit is niet
         belast. Heb je een lijfrente, banksparen of pensioenbeleggen? Vul de verwachte uitkering
         daarvan in bij "Lijfrente-/bankspaaruitkering" hierboven, niet bij je eigen vermogen: die
-        uitkering is namelijk wél belast in box 1, net als je AOW en werkgeverspensioen.
+        uitkering is namelijk wél belast in box 1, net als je AOW en werkgeverspensioen. Geld in je
+        eigen BV hoort er ook niet bij: dat valt in box 2, er gaat geen box 3-heffing overheen, maar
+        een uitkering naar privé is wél belast. Deze tool rekent dat niet uit, dus reken hier alleen
+        met vermogen dat je vrij en onbelast kunt opnemen.
         Het ingevulde rendement is bruto: het verwachte rendement van de portefeuille zelf. De
         kosten die je invult gaan daar in procentpunten van af. De box 3-heffing wordt standaard
         elk jaar apart berekend over het vermogen van dát jaar en van het saldo afgehaald, tenzij

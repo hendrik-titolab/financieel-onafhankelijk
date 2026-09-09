@@ -212,10 +212,20 @@ function ParametersTab({ inputs, onChange }: Props) {
         <Field label="Huidig vermogen">
           <NumberInput value={inputs.currentCapital} onChange={v => onChange({ currentCapital: v })}
             prefix="€" step={1000} />
+          {/* Box 2 werd hier tot 9 september 2026 niet genoemd, terwijl de tool zich
+              op DGA's richt. Sinds de planner box 3 zelf uitrekent is dat een groter
+              risico dan het was: wie zijn BV-vermogen hier invult kreeg er stilzwijgend
+              box 3 over, én een onttrekking die de tool als onbelast behandelt.
+
+              De eigen woning staat er bewust niet bij (besluit Hendrik, 9 september
+              2026): niemand vult zijn huis in als vermogen, en zou dat ook niet moeten.
+              Komt er bij een verhuizing overwaarde vrij, dan hoort die als eenmalig
+              bedrag in het tweede tabblad. Dat staat daar nu ook als voorbeeld. */}
           <p className="text-xs text-body leading-relaxed mt-1">
             Vul hier je vrij belegde vermogen in (box 3). Lijfrente, banksparen en pensioenbeleggen
             kun je beter niet meetellen: opnames daaruit zijn belast als inkomen in box 1, en daar
-            rekent deze tool niet mee.
+            rekent deze tool niet mee. Geld in je eigen BV hoort hier evenmin: dat valt in box 2 en
+            komt alleen belast naar privé.
           </p>
         </Field>
         <div className="space-y-1">
@@ -850,7 +860,8 @@ function EenmaligeBedragenSection({ inputs, onChange }: Props) {
     <Section title={`Eenmalige bedragen${validCount > 0 ? ` (${validCount})` : ''}`}>
       <p className="text-xs text-body -mt-1 leading-relaxed">
         Een erfenis, verbouwing, extra inleg of opname: eenmalige bedragen die je vermogen op
-        een bepaald jaar raken. Positief is een bijschrijving, negatief een afschrijving.
+        een bepaald jaar raken. Ook de overwaarde die vrijkomt als je je huis verkoopt en kleiner
+        gaat wonen hoort hier. Positief is een bijschrijving, negatief een afschrijving.
       </p>
       <div className="space-y-3">
         {rows.map((row, i) => {
