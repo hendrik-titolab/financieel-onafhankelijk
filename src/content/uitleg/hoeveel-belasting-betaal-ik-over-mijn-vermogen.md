@@ -1,10 +1,10 @@
 ---
 titel: "Hoeveel belasting betaal ik over mijn vermogen?"
 beschrijving: "De Belastingdienst rekent met een vast rendement dat je misschien nooit gehaald hebt. Zo werkt de belasting over je spaargeld en beleggingen in 2026, en wanneer het loont om je werkelijke rendement door te geven."
-samenvatting: "Over je spaargeld en beleggingen betaal je belasting in box 3. De Belastingdienst gaat daarbij uit van een vast rendement: in 2026 is dat 1,28% over bank- en spaartegoeden en 6,00% over beleggingen en overige bezittingen. Daar betaal je 36% belasting over, en over de eerste € 59.357 per persoon betaal je niets. Was je werkelijke rendement lager, dan mag je dat aantonen en telt het werkelijke bedrag. Bij dat werkelijke rendement vervalt wel de vrijstelling, waardoor het voor spaarders bijna nooit gunstiger uitpakt."
+samenvatting: "Over je spaargeld en beleggingen betaal je belasting in box 3. De Belastingdienst gaat daarbij uit van een vast rendement: in 2026 is dat 1,28% over bank- en spaartegoeden en 6,00% over beleggingen en overige bezittingen. Daar betaal je 36% belasting over, en over de eerste € 59.357 per persoon betaal je niets. Was je werkelijke rendement lager, dan mag je dat aantonen en wordt de belasting geheven op het werkelijke bedrag aan rendement. Bij dat werkelijke rendement vervalt wel de vrijstelling. Doordat de vrijstelling wegvalt, levert de berekening over het werkelijk rendement voor spaarders zelden een lagere belasting op."
 pillar: "wat-is-financiele-onafhankelijkheid"
 volgorde: 7
-bijgewerkt: "2026-09-08"
+bijgewerkt: "2026-09-09"
 tool:
   label: "Bereken je box 3-belasting"
   href: "/tools/box3/"
@@ -14,7 +14,7 @@ faq:
   - vraag: "Wat is de tegenbewijsregeling?"
     antwoord: "Sinds 1 juli 2025 mag je aantonen dat je werkelijke rendement lager was dan het bedrag waar de Belastingdienst mee rekent. Is dat zo, dan wordt de belasting over je werkelijke rendement berekend. De regeling staat in artikel 5.25 van de Wet inkomstenbelasting 2001 en komt voort uit uitspraken van de Hoge Raad."
   - vraag: "Telt koerswinst mee die ik nog niet verzilverd heb?"
-    antwoord: "Ja. Bij het werkelijke rendement telt de waardestijging van je bezittingen mee, ook als je niets verkocht hebt. Papieren winst is dus belast. Een papieren verlies verlaagt je rendement net zo goed."
+    antwoord: "Ja. Bij het werkelijke rendement telt de waardestijging van je bezittingen mee, ook als je niets verkocht hebt. Papieren winst is dus belast. Een papieren verlies verlaagt je rendement net zo goed. Dit geldt voor alle beleggingen, dus ook voor vastgoed, crypto en grondstoffen zoals goud."
   - vraag: "Mag ik mijn kosten aftrekken?"
     antwoord: "Nee, op één uitzondering na. Aan- en verkoopkosten, beheerkosten en onderhoud van een tweede woning mag je niet aftrekken. Rente die je betaalt over een schuld in box 3 wel."
   - vraag: "Wat gebeurt er als mijn rendement negatief was?"
@@ -32,11 +32,15 @@ bronnen:
     url: "https://www.rijksoverheid.nl/onderwerpen/inkomstenbelasting/box-3"
   - titel: "Eerste Kamer: wetsvoorstel 36748, Wet werkelijk rendement box 3"
     url: "https://www.eerstekamer.nl/wetsvoorstel/36748_wet_werkelijk_rendement_box"
+  - titel: "Nextens: Prinsjesdag 2026 brengt uitstel box 3 (1 september 2026, op basis van uitgelekte stukken)"
+    url: "https://www.nextens.nl/fiscaal-nieuws/cat2/prinsjesdag-2026-brengt-uitstel-box-3-en-aanpassingen-in-sociale-zekerheid/"
+  - titel: "Taxence: Prinsjesdag 2026, box 3 mogelijk on hold (1 september 2026)"
+    url: "https://www.taxence.nl/nieuws/prinsjesdag-2026-box-3-mogelijk-on-hold-lastenverzwaring-voor-hogere-inkomens/"
 ---
 
-De Belastingdienst weet niet wat jouw beleggingen hebben opgeleverd. Hij vraagt er ook niet naar. Toch staat er elk jaar een bedrag op je aanslag voor de belasting over je spaargeld en beleggingen, box 3 in belastingtaal.
+De Belastingdienst weet niet wat jouw beleggingen hebben opgeleverd. Bij de aangifte hoef je het ook niet op te geven. Toch staat er elk jaar een bedrag op je aanslag voor de belasting over je spaargeld en beleggingen, box 3 in belastingtaal.
 
-Dat komt doordat de wet uitgaat van een rendement dat je verondersteld wordt te halen. Haalde je meer, dan houd je het verschil. Haalde je minder, dan betaal je over geld dat je nooit hebt gezien. Precies daarover procedeerden belastingbetalers jarenlang, en met succes.
+Dat komt doordat de wet uitgaat van een rendement dat je verondersteld wordt te halen. Verdiende je in werkelijkheid meer op je vermogen dan het veronderstelde rendement? Dat maakt voor de te betalen belasting niet uit. Maar was je rendement minder? Dan kan het als oneerlijk worden gezien: belasting betalen over rendement dat je niet hebt ontvangen. Precies daarover procedeerden belastingbetalers jarenlang, en met succes.
 
 ## Met welk rendement rekent de Belastingdienst?
 
@@ -64,17 +68,17 @@ Dat is 1,3% van het vermogen, elk jaar opnieuw. Bij een belegging die 6% doet is
 
 Je zou verwachten dat het heffingsvrije vermogen gewoon van je vermogen af gaat. Zo werkt het niet.
 
-De Belastingdienst rekent het heffingsvrije vermogen om naar een percentage van je totale vermogen, en dat percentage gaat vervolgens over je hele veronderstelde rendement heen. In het voorbeeld hierboven: € 240.643 van € 300.000 is 80,21%, en dus wordt 80,21% van die € 13.280 belast.
+De Belastingdienst rekent het heffingsvrije vermogen om naar een percentage van je totale vermogen, en dat percentage gaat vervolgens over je hele veronderstelde rendement heen. In het voorbeeld hierboven: € 240.643 van € 300.000 is 80,21%, en dus wordt 80,21% van die € 13.280 belast. De methode wordt op de website van de Belastingdienst stap voor stap uitgelegd.
 
 Het verschil lijkt klein, maar het zit hem in de verdeling. Die 80,21% drukt óók op het spaardeel, waar je rendement al laag is. Wie zijn vermogen op de spaarrekening laat staan, betaalt via deze stap mee aan het hogere percentage van zijn beleggingen. Hoe schever je vermogen verdeeld is, hoe vreemder dat uitpakt.
 
 ## Sinds 2025 mag je bewijzen dat je minder verdiende
 
-De Hoge Raad oordeelde in het Kerstarrest van december 2021 en opnieuw in juni 2024 dat deze manier van heffen mensen benadeelt die minder verdienen dan het veronderstelde rendement. Sinds 1 juli 2025 staat de uitweg in de wet: je mag aantonen dat je werkelijke rendement lager was, en dan telt dat werkelijke bedrag.
+De Hoge Raad oordeelde in het Kerstarrest van december 2021 en opnieuw in juni 2024 dat deze manier van heffen mensen benadeelt die minder verdienen dan het veronderstelde rendement. Sinds 1 juli 2025 staat de uitweg in de wet: je mag aantonen dat je werkelijke rendement lager was, en dan telt dat werkelijke bedrag aan rendement voor de bepaling van de te heffen belasting.
 
 Terug naar dezelfde persoon met € 300.000. Stel dat de beurs tegenzat: de beleggingen zakken van € 200.000 naar € 190.000 en het spaargeld levert € 1.500 rente op. Het werkelijke rendement is dan € 1.500 min € 10.000 koersverlies, oftewel € 8.500 negatief. Dat wordt op nul gezet, en de aanslag gaat van € 3.834 naar nul.
 
-Dat is een echte besparing. Alleen komt hij minder vaak voor dan je denkt.
+Dat is een echte besparing. Soms een uitkomst, maar vaak valt de tegenbewijsregeling voor mensen met vermogen toch tegen.
 
 ## Waarom tegenbewijs voor spaarders bijna nooit helpt
 
@@ -90,6 +94,8 @@ Drie dingen die anders uitpakken dan de meeste mensen verwachten.
 
 **Waardestijging telt mee, ook zonder verkoop.** Staan je aandelen op 31 december hoger dan op 1 januari, dan is dat verschil rendement. Ook als je niets verkocht hebt en er geen euro naar je rekening ging. Je rekent daarbij met je bezittingen min je schulden, en bijstortingen tellen niet mee als rendement, opnames niet als verlies.
 
+Let op: dit geldt ook voor vastgoed. Steeg de waarde van een tweede woning? Dan heb je op dit deel van je vermogen een positief rendement behaald, dat mede bepaalt wat het werkelijke rendement op je gehele vermogen was.
+
 **Kosten mag je niet aftrekken.** Aankoopkosten, beheerkosten, onderhoud van een tweede woning: allemaal niet. Eén uitzondering: rente die je betaalt over een schuld in box 3. Die geldt niet als kostenpost maar als negatieve opbrengst, en gaat dus wel van je rendement af. De drempel van € 3.800 die bij het forfait op je schulden zit, geldt hier niet: de rente telt voor het volle bedrag.
 
 **Een verliesjaar levert niets op voor later.** Een negatief rendement wordt op nul gezet. Je betaalt dat jaar niets, maar je neemt het verlies niet mee naar een jaar waarin het wel goed ging.
@@ -102,8 +108,8 @@ Je kunt met de [box 3-rekentool](/tools/box3/) allebei de berekeningen naast elk
 
 ## Verandert het stelsel in 2028?
 
-Het kabinet wil vanaf 1 januari 2028 heffen over het rendement dat je werkelijk hebt gemaakt, in plaats van over een verondersteld rendement. Zo ver is het nog niet. De Tweede Kamer nam het wetsvoorstel op 12 februari 2026 aan, maar in de Eerste Kamer is de stemming uitgesteld tot na de behandeling van aangekondigde wijzigingen. Het staat dus nog niet in het Staatsblad, en de invoeringsdatum wordt pas bij koninklijk besluit vastgesteld.
+Het kabinet wil vanaf 1 januari 2028 heffen over het rendement dat je werkelijk hebt gemaakt, in plaats van over een verondersteld rendement. Zo ver is het nog niet. De Tweede Kamer nam het wetsvoorstel op 12 februari 2026 aan, maar in de Eerste Kamer is de stemming uitgesteld tot na de behandeling van aangekondigde wijzigingen. In de onderhandelingen rondom Prinsjesdag 2026 ziet het ernaar uit dat de invoering van het nieuwe stelsel pas in 2029 plaatsvindt. Pas als de nieuwe wet in het Staatsblad wordt gepubliceerd, kan de invoeringsdatum bij koninklijk besluit worden vastgesteld.
 
-Tot die tijd blijft het huidige stelsel gelden, met de tegenbewijsregeling ernaast. Dat is de merkwaardige situatie waar we nu in zitten: een heffing die de rechter afkeurde, aangevuld met een noodklep, in afwachting van een opvolger die er nog niet is.
+Tot die tijd blijft het huidige stelsel gelden, met de tegenbewijsregeling ernaast. Dat is de merkwaardige situatie waar we nu in zitten: een heffing die de rechter afkeurde, aangevuld met een tijdelijke oplossing, in afwachting van een opvolger die er nog niet is.
 
-Wie een besparing verwacht van dat nieuwe stelsel, moet even doorlezen. Belasting over je werkelijke rendement is eerlijker, niet lager. In een goed beursjaar betaal je er meer mee dan nu.
+Levert dat nieuwe stelsel dan lagere belastingen op voor mensen met vermogen? Nee. Belasting over je werkelijke rendement is in de basis eerlijker, niet lager. In een goed beursjaar betaal je bij belasting over werkelijk rendement meer belasting dan nu over het veronderstelde rendement.
