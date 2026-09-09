@@ -32,10 +32,10 @@ bronnen:
     url: "https://www.rijksoverheid.nl/onderwerpen/inkomstenbelasting/box-3"
   - titel: "Eerste Kamer: wetsvoorstel 36748, Wet werkelijk rendement box 3"
     url: "https://www.eerstekamer.nl/wetsvoorstel/36748_wet_werkelijk_rendement_box"
-  - titel: "Nextens: Prinsjesdag 2026 brengt uitstel box 3 (1 september 2026, op basis van uitgelekte stukken)"
-    url: "https://www.nextens.nl/fiscaal-nieuws/cat2/prinsjesdag-2026-brengt-uitstel-box-3-en-aanpassingen-in-sociale-zekerheid/"
-  - titel: "Taxence: Prinsjesdag 2026, box 3 mogelijk on hold (1 september 2026)"
-    url: "https://www.taxence.nl/nieuws/prinsjesdag-2026-box-3-mogelijk-on-hold-lastenverzwaring-voor-hogere-inkomens/"
+  - titel: "Het Financieele Dagblad, 1 september 2026: Coalitie stelt besluit box 3 uit, en dat kan miljarden kosten"
+    url: "https://fd.nl/politiek/1610811/prinsjesdagstukken-gelekt-minder-bezuinigingen-onduidelijkheid-box-3"
+  - titel: "NOS: onduidelijkheid over box 3 blijft, coalitie wil wetsvoorstel vooruitschuiven"
+    url: "https://nos.nl/artikel/2629305-onduidelijkheid-over-box-3-blijft-coalitie-wil-wetsvoorstel-vooruitschuiven"
 ---
 
 De Belastingdienst weet niet wat jouw beleggingen hebben opgeleverd. Bij de aangifte hoef je het ook niet op te geven. Toch staat er elk jaar een bedrag op je aanslag voor de belasting over je spaargeld en beleggingen, box 3 in belastingtaal.
@@ -108,8 +108,10 @@ Je kunt met de [box 3-rekentool](/tools/box3/) allebei de berekeningen naast elk
 
 ## Verandert het stelsel in 2028?
 
-Het kabinet wil vanaf 1 januari 2028 heffen over het rendement dat je werkelijk hebt gemaakt, in plaats van over een verondersteld rendement. Zo ver is het nog niet. De Tweede Kamer nam het wetsvoorstel op 12 februari 2026 aan, maar in de Eerste Kamer is de stemming uitgesteld tot na de behandeling van aangekondigde wijzigingen. In de onderhandelingen rondom Prinsjesdag 2026 ziet het ernaar uit dat de invoering van het nieuwe stelsel pas in 2029 plaatsvindt. Pas als de nieuwe wet in het Staatsblad wordt gepubliceerd, kan de invoeringsdatum bij koninklijk besluit worden vastgesteld.
+Het kabinet wilde vanaf 1 januari 2028 heffen over het rendement dat je werkelijk hebt gemaakt, in plaats van over een verondersteld rendement. Zo ver is het niet gekomen. De Tweede Kamer nam het wetsvoorstel op 12 februari 2026 aan, maar in de Eerste Kamer is de stemming uitgesteld.
+
+In de onderhandelingen rondom Prinsjesdag 2026 is besloten het voorstel voorlopig te laten liggen. Het blijft in de Eerste Kamer, maar wordt niet behandeld, en de coalitie legt de vraag hoe box 3 er dan wél uit moet zien voor aan werkgevers en vakbonden. Vooral de VVD wil een heffing waarbij je pas betaalt als je je winst hebt verzilverd, dus niet over een waardestijging die alleen op papier bestaat. Elk jaar dat het uitstel duurt kost de schatkist bijna € 2,5 miljard, en dat begint te tellen vanaf 2028. Pas als een nieuwe wet in het Staatsblad wordt gepubliceerd, kan de invoeringsdatum bij koninklijk besluit worden vastgesteld.
 
 Tot die tijd blijft het huidige stelsel gelden, met de tegenbewijsregeling ernaast. Dat is de merkwaardige situatie waar we nu in zitten: een heffing die de rechter afkeurde, aangevuld met een tijdelijke oplossing, in afwachting van een opvolger die er nog niet is.
 
-Levert dat nieuwe stelsel dan lagere belastingen op voor mensen met vermogen? Nee. Belasting over je werkelijke rendement is in de basis eerlijker, niet lager. In een goed beursjaar betaal je bij belasting over werkelijk rendement meer belasting dan nu over het veronderstelde rendement.
+Levert dat nieuwe stelsel dan lagere belastingen op voor mensen met vermogen? Dat hangt af van welk stelsel het wordt. Belasting over je werkelijke rendement is in de basis eerlijker, niet lager: in een goed beursjaar betaal je er meer mee dan nu over het veronderstelde rendement. Wordt het een heffing die pas aangrijpt als je verkoopt, dan verschuift vooral het moment waarop je betaalt.
