@@ -337,17 +337,17 @@ export function Box3Tool() {
               <Veld
                 label="Bezittingen min schulden op 1 januari"
                 htmlFor="waardebegin"
-                help="Het saldo, dus alles samen en je box 3-schulden eraf. Ook wat je niet verkocht hebt telt mee."
+                help="Het saldo, dus alles samen en je box 3-schulden eraf. Ook wat je niet verkocht hebt telt mee. Een negatief saldo (meer schuld dan bezit) mag."
               >
-                <BedragVeld id="waardebegin" value={waardeBegin} onChange={setWaardeBegin} max={100_000_000} />
+                <BedragVeld id="waardebegin" value={waardeBegin} onChange={setWaardeBegin} min={-100_000_000} max={100_000_000} />
               </Veld>
 
               <Veld
                 label="Bezittingen min schulden op 31 december"
                 htmlFor="waardeeind"
-                help="Ongerealiseerde waardestijging telt mee. Papieren winst is dus belast."
+                help="Ongerealiseerde waardestijging telt mee. Papieren winst is dus belast. Een negatief saldo (meer schuld dan bezit) mag."
               >
-                <BedragVeld id="waardeeind" value={waardeEind} onChange={setWaardeEind} max={100_000_000} />
+                <BedragVeld id="waardeeind" value={waardeEind} onChange={setWaardeEind} min={-100_000_000} max={100_000_000} />
               </Veld>
 
               <Veld
