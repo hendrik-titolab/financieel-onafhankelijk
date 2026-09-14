@@ -357,4 +357,4 @@ premie in de werkgeversregeling, dus werkgeversdeel én eigen bijdrage. Het veld
 
 (Audit 2026-08 heeft nagelopen of de H1 op de FO-planner-pagina nog `sr-only` was, zoals hier
 eerder stond — dat bleek niet meer zo: de H1 is zichtbaar. Dit punt is daarom verwijderd, zie
-`AUDIT-2026-08-bevindingen.md`, C3.)
+`docs/archief/AUDIT-2026-08-bevindingen.md`, C3.)

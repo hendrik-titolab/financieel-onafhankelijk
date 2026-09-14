@@ -5,7 +5,7 @@
 // bedoeling, controleer de nieuwe waarde inhoudelijk en werk de fixture bij.
 //
 // Kanttekening bij scenario 2 en 6: requiredMonthlyContribution kan negatief zijn
-// (zie AUDIT-fase0-1-feiten.md, bevinding E10) — dat is hier bewust vastgelegd
+// (zie docs/archief/AUDIT-fase0-1-feiten.md, bevinding E10) — dat is hier bewust vastgelegd
 // zoals het nu is, niet gecorrigeerd.
 import { describe, it, expect } from 'vitest'
 import {

@@ -42,7 +42,7 @@ in `CLAUDE.md` horen fiscale cijfers in de bron thuis en niet in de code:
 ### Wat er in die bron bij moet, vóórdat er code komt
 
 1. **De toerekeningsformule van forfaitair voordeel naar belastbaar bedrag.** Dit staat al als
-   open punt onder `box3._ontbreekt` en is genoemd in `HANDOFF-volgende-week.md`. Zonder dit kan
+   open punt onder `box3._ontbreekt` en is genoemd in `docs/archief/HANDOFF-volgende-week.md`. Zonder dit kan
    de tool niet af: je kunt wel het forfaitaire voordeel per categorie berekenen, maar niet wat er
    uiteindelijk belast wordt.
 2. **De schuldendrempel.**
@@ -54,7 +54,7 @@ in `CLAUDE.md` horen fiscale cijfers in de bron thuis en niet in de code:
 ## Wat er al klaarstaat
 
 **`src/config/fiscaleParameters.ts`**, blok `BOX3`, met bron in
-`AUDIT-fase2-externe-bronnen.md` sectie 3 (Belastingdienst, geraadpleegd 12 augustus 2026):
+`docs/archief/AUDIT-fase2-externe-bronnen.md` sectie 3 (Belastingdienst, geraadpleegd 12 augustus 2026):
 
 ```ts
 export const BOX3 = {
