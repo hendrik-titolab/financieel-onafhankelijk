@@ -33,6 +33,11 @@ jobs:
       - name: Afhankelijkheden installeren
         run: npm ci
 
+      - name: Astro-types genereren
+        # tsc heeft de door Astro gegenereerde types nodig (astro:content).
+        # Zonder deze stap faalde de typecontrole in CI op elke run.
+        run: npx astro sync
+
       - name: Typecontrole
         # Los van de build. Astro's build compileert met esbuild en meldt
         # typefouten niet; dit is de enige stap die dat wel doet.
