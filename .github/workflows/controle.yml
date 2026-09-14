@@ -25,9 +25,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           # Vastgelegd in plaats van "latest": een Node-wissel mag een rekenuitkomst
-          # nooit stilzwijgend veranderen. Sluit aan op de engines-eis in
-          # package.json.
-          node-version: '20'
+          # nooit stilzwijgend veranderen.
+          # Was '20', gelijk aan de engines-eis in package.json (>=18.20.8). Die eis
+          # bleek zelf achterhaald: Astro 7.2.0 (sinds 10 augustus 2026 in gebruik)
+          # vereist Node >=22.12.0 en weigert te draaien op 20. Dat kwam pas nu aan
+          # het licht, omdat de workflow altijd al eerder vastliep (zie hierboven).
+          # package.json's engines-veld is nog niet bijgewerkt, zie het slotbericht.
+          node-version: '22'
           cache: npm
 
       - name: Afhankelijkheden installeren
