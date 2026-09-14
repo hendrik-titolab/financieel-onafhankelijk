@@ -222,5 +222,33 @@
       "employerIncome": 0,
       "totalIncome": 1558
     }
+  },
+  "9_partner": {
+    "projectedCapital": 404654,
+    "requiredCapital": 76529,
+    "desiredMonthlyNetto": 5000,
+    "requiredMonthlyContribution": -340,
+    "surplusAtEnd": 458307,
+    "yearDataLength": 46,
+    "yearDataFirst": {
+      "age": 45,
+      "year": 2026,
+      "phase": "opbouw",
+      "capital": 100000,
+      "incomeFromCapital": 0,
+      "aowIncome": 0,
+      "employerIncome": 0,
+      "totalIncome": 0
+    },
+    "yearDataLast": {
+      "age": 90,
+      "year": 2071,
+      "phase": "uitkering",
+      "capital": 458307,
+      "incomeFromCapital": 0,
+      "aowIncome": 2168,
+      "employerIncome": 2506,
+      "totalIncome": 4674
+    }
   }
 }

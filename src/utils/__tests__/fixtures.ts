@@ -75,6 +75,26 @@ export const SCENARIOS: Record<string, PensionInputs> = {
   '6_al_gepensioneerd': baseInputs({ currentAge: 67, retirementAge: 67 }),
   '7_extreem_18_100': baseInputs({ currentAge: 18, lifeExpectancy: 100 }),
   '8_bruto_gewenst_inkomen': baseInputs({ desiredRetirementIncomeType: 'bruto' }),
+  // Beide partners symmetrisch: elk € 1.084 AOW + € 1.500 werkgeverspensioen, beiden
+  // vanaf 67 (zelfde leeftijd als de hoofdpersoon, dus geen kalenderverschil dat de
+  // uitkomst zou beïnvloeden — dat wordt al apart getest). Bewust gelijk aan het
+  // scenario in pensionCalc.golden.test.ts ("partner — apart belast, niet opgeteld"),
+  // waar € 2.336,91 per persoon / € 4.673,82 huishouden al onafhankelijk is
+  // nagerekend, zodat dit scenario tegen een bekend anker te controleren is.
+  '9_partner': baseInputs({
+    woonsituatie: 'samenwonend',
+    aowMaandBedragNetto: 1084,
+    employerPension: 1500,
+    employerPensionStartAge: 67,
+    partner: {
+      actief: true,
+      leeftijd: 45,
+      aowMaandBedragNetto: 1084,
+      aowStartAge: 67,
+      employerPension: 1500,
+      employerPensionStartAge: 67,
+    },
+  }),
 }
 
 export function round(v: number, dec = 0): number {

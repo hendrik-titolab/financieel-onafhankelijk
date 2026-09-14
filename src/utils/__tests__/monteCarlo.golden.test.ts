@@ -16,7 +16,7 @@ import { makeRng } from '../rng'
 import { SCENARIOS, baseInputs, round } from './fixtures'
 import fixture from './__golden__/monteCarlo.golden.json'
 
-const CASES = ['1_basis', '4_negatief_bedrag_na_pensioendatum'] as const
+const CASES = ['1_basis', '4_negatief_bedrag_na_pensioendatum', '9_partner'] as const
 
 describe('runMonteCarlo — golden master', () => {
   for (const key of CASES) {
@@ -36,6 +36,19 @@ describe('runMonteCarlo — golden master', () => {
       expect(pick(mc.percentileData[mc.percentileData.length - 1])).toEqual(expected.percentileLast)
     })
   }
+
+  it('partner: neemt het tweede inkomen daadwerkelijk mee in de simulatie', () => {
+    // Testdekkingsgat uit de audit van 14 september 2026: calculatePension() had
+    // al een golden test met partner (pensionCalc.golden.test.ts), runMonteCarlo()
+    // geen enkele. Zonder deze test zou een toekomstige sessie de partner uit de
+    // Monte Carlo-kant kunnen laten vallen (het E7-patroon: twee rekenkernen die
+    // uit elkaar lopen) zonder dat iets faalt. Scenario 9 heeft symmetrisch dubbel
+    // AOW + pensioen t.o.v. scenario 1, dus de slagingskans moet merkbaar hoger
+    // uitvallen als de partner echt meetelt.
+    const zonder = runMonteCarlo(SCENARIOS['1_basis'], { rng: makeRng(12345), currentYear: 2026 })
+    const met = runMonteCarlo(SCENARIOS['9_partner'], { rng: makeRng(12345), currentYear: 2026 })
+    expect(met.successRate).toBeGreaterThan(zonder.successRate)
+  })
 
   it('determinisme: twee runs met dezelfde seed zijn identiek', () => {
     const a = runMonteCarlo(SCENARIOS['1_basis'], { rng: makeRng(12345), currentYear: 2026 })
