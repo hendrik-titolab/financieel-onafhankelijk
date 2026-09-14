@@ -326,6 +326,12 @@ golden tests die een bevroren 2026-snapshot gebruiken. Per jaar aparte referenti
 met gepubliceerde voorbeelden, zoals `box3.test.ts` dat al doet. Dit raakt de hele
 rekenkern: eerst een plan, dan bouwen.
 
+**De "eerst een plan"-helft is klaar: `PLAN-wp9-belastingmotor-per-jaar.md`** (geschreven
+14 september 2026). Bevat de volledige afhankelijkhedenanalyse, doelstructuur met
+aanbeveling, functiesignaturen per bestand, faseringsplan (elke fase los groen en
+committable) en zes openstaande ontwerpvragen voor Hendrik. Een bouw-sessie begint daar,
+niet hier opnieuw.
+
 ### WP10. Wachters tegen veroudering
 
 - Een test die waarschuwt (niet faalt) als de datum in `volgendeControle` uit de
