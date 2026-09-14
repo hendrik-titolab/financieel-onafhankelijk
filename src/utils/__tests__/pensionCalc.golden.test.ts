@@ -409,6 +409,37 @@ describe('benodigd vermogen — liquiditeit onderweg', () => {
       expect(r.requiredCapital).toBeCloseTo(r.requiredCapitalEindwaarde, 4)
     }
   })
+
+  // Bevinding uit de review vóór push, 14 september 2026: requiredCapitalEindwaarde
+  // (de contante-waardeformule) kent de box 3-heffing niet, requiredCapital (de
+  // bisectie) sinds vermogensbelastingHandmatig:false wél. Zonder de fix hieronder
+  // schreef overbruggingsToeslag dat hele box 3-verschil toe aan "overbrugging",
+  // ook zonder dat er een echte overbruggingsperiode is (in dit scenario voorheen
+  // ten onrechte € 202.569).
+  it('rekent het box 3-verschil niet tot overbrugging als er niets te overbruggen is', () => {
+    const r = calculatePension(
+      baseInputs({ vermogensbelastingHandmatig: false }),
+      { currentYear: 2026 }
+    )
+    // retirementAge, aowStartAge, employerPensionStartAge en lijfrenteStartAge staan
+    // in baseInputs() allemaal op 67: geen enkele inkomstenbron start later dan de
+    // pensioendatum, dus er ís geen overbruggingsperiode.
+    expect(r.overbruggingsToeslag).toBe(0)
+    // Het onderliggende verschil bestaat wél (dat is precies het punt: box 3 zit in
+    // requiredCapital maar niet in requiredCapitalEindwaarde) — het hoort alleen niet
+    // "overbrugging" genoemd te worden.
+    expect(r.requiredCapital).toBeGreaterThan(r.requiredCapitalEindwaarde)
+  })
+
+  it('blijft een echte overbruggingsperiode correct tonen, ook met box 3 aan', () => {
+    const r = calculatePension(
+      baseInputs({ vermogensbelastingHandmatig: false, retirementAge: 60 }),
+      { currentYear: 2026 }
+    )
+    // Nu wél 7 jaar overbrugging (pensioen op 60, AOW/werkgeverspensioen/lijfrente
+    // op 67): de fix mag een echte overbrugging niet laten verdwijnen.
+    expect(r.overbruggingsToeslag).toBeGreaterThan(0)
+  })
 })
 
 // Bevinding 5 uit de audit van 7 september 2026: bij ieder positief beginsaldo

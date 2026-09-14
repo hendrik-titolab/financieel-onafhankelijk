@@ -10,7 +10,9 @@
  * Ophogen bij elke wijziging die een uitkomst verandert. Niet bij tekst of opmaak.
  */
 // 2026.09.2: box 3 per jaar in de planner, partner apart belast, reële volatiliteit (8 en 9 september 2026).
-export const MODEL_VERSIE = '2026.09.2'
+// 2026.09.3: overbruggingsToeslag telt het box 3-verschil niet meer mee als er geen
+// echte overbruggingsperiode is (14 september 2026).
+export const MODEL_VERSIE = '2026.09.3'
 
 /** Belastingjaar waarop fiscaleParameters.ts is gebaseerd. */
 export const PARAMETER_JAAR = 2026

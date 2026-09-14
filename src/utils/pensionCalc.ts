@@ -711,7 +711,23 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
   // overbruggen. Apart teruggegeven zodat het scherm dit als eigen regel kan tonen
   // in plaats van het stilzwijgend in het doelbedrag te verwerken: zonder die regel
   // ziet iemand wél een hoger doelbedrag, maar niet waardoor.
-  const overbruggingsToeslag = Math.max(0, requiredCapital - requiredCapitalEindwaarde)
+  //
+  // Alleen een echte overbrugging telt mee: is er geen enkele periode waarin nog
+  // geen inkomstenbron (eigen of partner) loopt, dan is requiredCapital > eindwaarde
+  // uitsluitend het gevolg van de box 3-heffing die requiredCapitalEindwaarde (regel
+  // 700 hierboven) niet kent — dat is geen overbrugging en mag niet zo genoemd
+  // worden in het scherm of de export (bevinding review 14 september 2026). Zelfde
+  // ingangsleeftijden-vergelijking als de waarschuwing in InputPanel.tsx.
+  const ingangsleeftijden = [aowStartAge, employerPensionStartAge, lijfrenteStartAge]
+  if (partnerActief && partner) {
+    const leeftijdsverschilPartner = partner.leeftijd - currentAge
+    ingangsleeftijden.push(partner.aowStartAge - leeftijdsverschilPartner)
+    ingangsleeftijden.push(partner.employerPensionStartAge - leeftijdsverschilPartner)
+  }
+  const heeftOverbruggingsperiode = retirementAge < Math.min(...ingangsleeftijden)
+  const overbruggingsToeslag = heeftOverbruggingsperiode
+    ? Math.max(0, requiredCapital - requiredCapitalEindwaarde)
+    : 0
 
   // Required monthly contribution (binary search, accounts for life events)
   const requiredMonthlyContribution = findRequiredPMT(
