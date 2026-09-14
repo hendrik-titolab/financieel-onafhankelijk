@@ -1,4 +1,4 @@
-import type { PensionInputs, PensionResult, YearData, IncomePhase, LifeEvent, Woonsituatie } from '../types'
+import type { PensionInputs, PensionResult, YearData, IncomePhase, LifeEvent, Woonsituatie, PartnerGegevens } from '../types'
 import { AOW_NETTO_MAAND, AOW_BRUTO_MAAND, AOW_VAKANTIEGELD_BRUTO_MAAND, ZVW } from '../config/fiscaleParameters'
 import { belastingBox1 } from './brutoNetto'
 import { nettoNominaalRendement, box3HeffingPerJaar } from './box3'
@@ -129,6 +129,64 @@ export interface HuishoudInvoer {
   partner?: PersoonInvoer | null
   woonsituatie?: Woonsituatie
   aowVakantiegeld?: boolean
+}
+
+/**
+ * Alles wat huishoudOp() nodig heeft, op één leeftijd na (die verschilt per
+ * aanroep binnen de jaar-voor-jaar-lus). Was tot 14 september 2026 een losse,
+ * bijna-identieke closure in zowel calculatePension() als runMonteCarlo(): het
+ * commentaar in beide bestanden zei al "zodat ze niet uiteen kunnen lopen", maar
+ * de code zelf was toch gekopieerd. Nu één gedeelde functie, hier en in
+ * monteCarlo.ts geïmporteerd (bevinding review 14 september 2026).
+ */
+export interface HuishoudOpParams {
+  woonsituatie: Woonsituatie
+  aowVakantiegeld: boolean
+  currentAge: number
+  aowMonthlyNetto: number
+  aowStartAge: number
+  employerPension: number
+  employerPensionStartAge: number
+  lijfrenteUitkering: number
+  lijfrenteStartAge: number
+  lijfrenteEinde: number
+  partnerActief: boolean
+  partner?: PartnerGegevens
+}
+
+/**
+ * Stelt het huishouden samen op een gegeven leeftijd van de hoofdpersoon. De
+ * leeftijd van de partner loopt mee met de kalender, niet met die van de
+ * hoofdpersoon: een partner die drie jaar jonger is, krijgt zijn AOW drie
+ * kalenderjaren later. Vandaar het verschil ten opzichte van p.currentAge.
+ */
+export function huishoudOp(p: HuishoudOpParams, age: number, netto: number): HuishoudInvoer {
+  return {
+    desiredNetto: netto,
+    woonsituatie: p.woonsituatie,
+    aowVakantiegeld: p.aowVakantiegeld,
+    persoon: {
+      age,
+      aowNetto: p.aowMonthlyNetto,
+      aowStartAge: p.aowStartAge,
+      employerPensionBruto: p.employerPension,
+      employerPensionStartAge: p.employerPensionStartAge,
+      lijfrenteUitkeringBruto: p.lijfrenteUitkering,
+      lijfrenteStartAge: p.lijfrenteStartAge,
+      lijfrenteEindLeeftijd: p.lijfrenteEinde,
+    },
+    partner: p.partnerActief && p.partner
+      ? {
+          age: p.partner.leeftijd + (age - p.currentAge),
+          aowNetto: p.partner.aowMaandBedragNetto,
+          aowStartAge: p.partner.aowStartAge,
+          employerPensionBruto: p.partner.employerPension,
+          employerPensionStartAge: p.partner.employerPensionStartAge,
+          // Geen lijfrente voor de partner. Dat veld hoort bij persoon 1; zie
+          // CLAUDE.md bij de openstaande punten.
+        }
+      : null,
+  }
 }
 
 /**
@@ -612,40 +670,18 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
 
   // Eén plek die het huishouden op een gegeven leeftijd samenstelt. De jaartabel,
   // de fasenlijst en de contante waarde gebruiken alle drie deze functie, zodat ze
-  // niet uiteen kunnen lopen.
-  //
-  // De leeftijd van de partner loopt mee met de kalender, niet met die van de
-  // hoofdpersoon: een partner die drie jaar jonger is, krijgt zijn AOW drie
-  // kalenderjaren later. Vandaar het verschil ten opzichte van currentAge.
+  // niet uiteen kunnen lopen. Zelfde gedeelde huishoudOp() als monteCarlo.ts.
   const partnerActief = Boolean(partner?.actief)
-  const huishoudOp = (age: number, netto = desiredMonthlyNetto): HuishoudInvoer => ({
-    desiredNetto: netto,
-    woonsituatie,
-    aowVakantiegeld,
-    persoon: {
-      age,
-      aowNetto: aowMonthlyNetto,
-      aowStartAge,
-      employerPensionBruto: employerPension,
-      employerPensionStartAge,
-      lijfrenteUitkeringBruto: lijfrenteUitkering,
-      lijfrenteStartAge,
-      lijfrenteEindLeeftijd: lijfrenteEinde,
-    },
-    partner: partnerActief && partner
-      ? {
-          age: partner.leeftijd + (age - currentAge),
-          aowNetto: partner.aowMaandBedragNetto,
-          aowStartAge: partner.aowStartAge,
-          employerPensionBruto: partner.employerPension,
-          employerPensionStartAge: partner.employerPensionStartAge,
-          // Geen lijfrente voor de partner. Dat veld hoort bij persoon 1; zie
-          // CLAUDE.md bij de openstaande punten.
-        }
-      : null,
-  })
+  const huishoudOpParams: HuishoudOpParams = {
+    woonsituatie, aowVakantiegeld, currentAge,
+    aowMonthlyNetto, aowStartAge,
+    employerPension, employerPensionStartAge,
+    lijfrenteUitkering, lijfrenteStartAge, lijfrenteEinde,
+    partnerActief, partner,
+  }
 
-  const withdrawalAtAge = (age: number) => getMonthlyWithdrawal(huishoudOp(age))
+  const withdrawalAtAge = (age: number) =>
+    getMonthlyWithdrawal(huishoudOp(huishoudOpParams, age, desiredMonthlyNetto))
 
   // Contante waarde van alle onttrekkingen: wat je inkomen op zichzelf kost, nog
   // zonder de latere eenmalige bedragen. Blijft berekend omdat het scherm en de
@@ -775,7 +811,7 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
     const isLaatsteRij = yr === yearsInRetirement
 
     const { aow, employerPension: emp, lijfrenteUitkering: lijf, fromCapital } =
-      getIncomeBreakdown(huishoudOp(age))
+      getIncomeBreakdown(huishoudOp(huishoudOpParams, age, desiredMonthlyNetto))
 
     // Het eenmalige bedrag van dit jaar komt aan het begin binnen en is dus
     // beschikbaar voor het inkomen van datzelfde jaar. Het werd hieronder pas
@@ -866,7 +902,9 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
   ]
 
   const incomePhases = buildIncomePhases(
-    retirementAge, lifeExpectancy, knikpunten, huishoudOp, yearData
+    retirementAge, lifeExpectancy, knikpunten,
+    (age: number) => huishoudOp(huishoudOpParams, age, desiredMonthlyNetto),
+    yearData
   )
 
   return {

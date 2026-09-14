@@ -1,6 +1,6 @@
 import type { PensionInputs, MonteCarloResult, PercentilePoint } from '../types'
-import { brutoMaandNaarNettoMaand, getMonthlyWithdrawal, controleerLeeftijden } from './pensionCalc'
-import type { HuishoudInvoer } from './pensionCalc'
+import { brutoMaandNaarNettoMaand, getMonthlyWithdrawal, controleerLeeftijden, huishoudOp } from './pensionCalc'
+import type { HuishoudOpParams } from './pensionCalc'
 import { nettoNominaalRendement, box3HeffingPerJaar } from './box3'
 
 export const N_SIMULATIONS = 2000
@@ -140,33 +140,17 @@ export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number
   const volPre = reeleVolatiliteit(volatilityPre, inflation)
   const volPost = reeleVolatiliteit(volatilityPost, inflation)
 
-  // Zelfde samenstelling als in pensionCalc.ts, zodat beide kernen hetzelfde
-  // huishouden doorrekenen. De leeftijd van de partner loopt mee met de kalender.
+  // Zelfde gedeelde huishoudOp() als pensionCalc.ts, zodat beide kernen hetzelfde
+  // huishouden doorrekenen (was tot 14 september 2026 een eigen, bijna-identieke
+  // kopie hier).
   const partnerActief = Boolean(partner?.actief)
-  const huishoudOp = (age: number, netto: number): HuishoudInvoer => ({
-    desiredNetto: netto,
-    woonsituatie,
-    aowVakantiegeld,
-    persoon: {
-      age,
-      aowNetto: aowMonthlyNetto,
-      aowStartAge,
-      employerPensionBruto: employerPension,
-      employerPensionStartAge,
-      lijfrenteUitkeringBruto: lijfrenteUitkering,
-      lijfrenteStartAge,
-      lijfrenteEindLeeftijd: lijfrenteEinde,
-    },
-    partner: partnerActief && partner
-      ? {
-          age: partner.leeftijd + (age - currentAge),
-          aowNetto: partner.aowMaandBedragNetto,
-          aowStartAge: partner.aowStartAge,
-          employerPensionBruto: partner.employerPension,
-          employerPensionStartAge: partner.employerPensionStartAge,
-        }
-      : null,
-  })
+  const huishoudOpParams: HuishoudOpParams = {
+    woonsituatie, aowVakantiegeld, currentAge,
+    aowMonthlyNetto, aowStartAge,
+    employerPension, employerPensionStartAge,
+    lijfrenteUitkering, lijfrenteStartAge, lijfrenteEinde,
+    partnerActief, partner,
+  }
   const monthlyPMT = contributionFrequency === 'jaarlijks'
     ? monthlyContribution / 12
     : monthlyContribution
@@ -219,11 +203,11 @@ export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number
       } else {
         const r = sampleAnnualReturn(realPost, volPost, rng)
         // Full income scenario
-        const withdrawal = getMonthlyWithdrawal(huishoudOp(age, desiredNetto)) * 12
+        const withdrawal = getMonthlyWithdrawal(huishoudOp(huishoudOpParams, age, desiredNetto)) * 12
         // 75% income scenario: client accepts 25% lower total income
         // getMonthlyWithdrawal handles phase-aware tax: fixed income (AOW + emp + lijfrente)
         // already covers part of the 75% threshold, so the capital withdrawal is reduced accordingly.
-        const withdrawal75 = getMonthlyWithdrawal(huishoudOp(age, desiredNetto * 0.75)) * 12
+        const withdrawal75 = getMonthlyWithdrawal(huishoudOp(huishoudOpParams, age, desiredNetto * 0.75)) * 12
         // Mid-year-conventie voor de onttrekking, zelfde wortelfactor en zelfde
         // reden als bij de jaarinleg hierboven en als in pensionCalc.ts. Zonder
         // deze factor rekende de simulatie alsof het hele jaarbedrag pas op
