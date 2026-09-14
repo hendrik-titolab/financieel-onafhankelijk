@@ -6,7 +6,7 @@
  * Bron:      C:/Users/schak/Documents/Fiscale bron/fiscale-cijfers.json
  * Genereren: node genereer.mjs   (in die map)
  *
- * Versie 2026.1 · bijgewerkt 2026-08-13
+ * Versie 2026.1 · bijgewerkt 2026-09-08
  * Volgende controle: oktober/november 2026, zodra de Belastingdienst de cijfers voor 2027 publiceert
  *
  * Waarden met een ⚠️ wijken af van wat de bron zegt. Die staan bewust nog op de

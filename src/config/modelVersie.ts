@@ -9,7 +9,8 @@
  *
  * Ophogen bij elke wijziging die een uitkomst verandert. Niet bij tekst of opmaak.
  */
-export const MODEL_VERSIE = '2026.09.1'
+// 2026.09.2: box 3 per jaar in de planner, partner apart belast, reële volatiliteit (8 en 9 september 2026).
+export const MODEL_VERSIE = '2026.09.2'
 
 /** Belastingjaar waarop fiscaleParameters.ts is gebaseerd. */
 export const PARAMETER_JAAR = 2026
