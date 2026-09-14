@@ -550,11 +550,24 @@ function ParametersTab({ inputs, onChange }: Props) {
             </p>
           </div>
         </div>
-        {inputs.retirementAge < Math.min(inputs.aowStartAge, inputs.employerPensionStartAge, inputs.lijfrenteStartAge) && (
-          <p className="text-xs text-signal bg-panel border border-signal rounded-[3px] p-2 leading-relaxed">
-            ⚠ Overbruggingsperiode van {Math.min(inputs.aowStartAge, inputs.employerPensionStartAge, inputs.lijfrenteStartAge) - inputs.retirementAge} jaar: eigen vermogen dekt het volledige inkomen.
-          </p>
-        )}
+        {(() => {
+          // Eigen ingangsleeftijden, plus die van de partner (omgerekend naar de
+          // leeftijd van de hoofdpersoon, zelfde formule als de knikpunten in
+          // pensionCalc.ts), anders mist deze waarschuwing een overbruggingsperiode
+          // die alleen door het verschil met de partner ontstaat.
+          const ingangsleeftijden = [inputs.aowStartAge, inputs.employerPensionStartAge, inputs.lijfrenteStartAge]
+          if (inputs.partner.actief) {
+            const leeftijdsverschil = inputs.partner.leeftijd - inputs.currentAge
+            ingangsleeftijden.push(inputs.partner.aowStartAge - leeftijdsverschil)
+            ingangsleeftijden.push(inputs.partner.employerPensionStartAge - leeftijdsverschil)
+          }
+          const eersteEigenInkomen = Math.min(...ingangsleeftijden)
+          return inputs.retirementAge < eersteEigenInkomen && (
+            <p className="text-xs text-signal bg-panel border border-signal rounded-[3px] p-2 leading-relaxed">
+              ⚠ Overbruggingsperiode van {eersteEigenInkomen - inputs.retirementAge} jaar: eigen vermogen dekt het volledige inkomen.
+            </p>
+          )
+        })()}
       </Section>
 
       <div className="border-t border-line-soft" />
