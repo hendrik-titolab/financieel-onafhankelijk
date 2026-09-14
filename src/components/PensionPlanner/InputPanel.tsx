@@ -83,7 +83,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
  * handen wegspringt. Begrenzen en melden gebeurt pas bij het verlaten van het
  * veld.
  */
-function NumberInput({ id, value, onChange, prefix, suffix, min = 0, max }: {
+export function NumberInput({ id, value, onChange, prefix, suffix, min = 0, max }: {
   id?: string
   value: number; onChange: (v: number) => void
   prefix?: string; suffix?: string; step?: number; min?: number; max?: number

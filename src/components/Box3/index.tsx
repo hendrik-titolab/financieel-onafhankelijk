@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Info, Scale } from 'lucide-react'
 import {
   box3Vergelijking,
@@ -7,8 +7,10 @@ import {
   type WerkelijkRendementInvoer,
 } from '../../utils/box3'
 import { BOX3_JAREN, BOX3_JAREN_IN_TOOL } from '../../config/fiscaleParameters'
-import { parseBedrag, parseBedragBegrensd, formatBedrag } from '../../utils/bedrag'
 import { modelStempel } from '../../config/modelVersie'
+// Gedeeld met de FO-planner, zie InputPanel.tsx: was hier een bijna-identieke
+// eigen kopie (BedragVeld), tot de code-review van 14 september 2026.
+import { NumberInput } from '../PensionPlanner/InputPanel'
 
 // ---- Presentatie-helpers (NL-notatie) ----
 
@@ -19,71 +21,8 @@ const pct = (n: number, dec = 2): string =>
   n.toLocaleString('nl-NL', { minimumFractionDigits: dec, maximumFractionDigits: dec }) + '%'
 
 // ---- Invoervelden ----
-
-/**
- * Tekstveld met Nederlandse bedragnotatie.
- *
- * Zelfde opzet als in de FO-planner (audit-bevinding 8): een `type="number"` laat
- * de browser bepalen wat "1.234,56" betekent en dat verschilt per browser. Hier is
- * parseBedrag() de enige plek waar tekst een getal wordt. De ruwe tekst blijft
- * lokaal staan zodat een half getypt bedrag niet onder je handen wegspringt.
- */
-function BedragVeld({ id, value, onChange, min = 0, max }: {
-  id: string
-  value: number
-  onChange: (v: number) => void
-  min?: number
-  max?: number
-}) {
-  const [tekst, setTekst] = useState(() => formatBedrag(value))
-  const [melding, setMelding] = useState<string | null>(null)
-  const meldingId = useId()
-
-  useEffect(() => {
-    if (parseBedrag(tekst).waarde !== value) {
-      setTekst(formatBedrag(value))
-      setMelding(null)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value])
-
-  return (
-    <div>
-      <div className="relative flex items-center">
-        <span className="absolute left-3 text-body text-sm">€</span>
-        <input
-          id={id}
-          type="text"
-          inputMode="decimal"
-          autoComplete="off"
-          value={tekst}
-          aria-invalid={melding !== null}
-          aria-describedby={melding ? meldingId : undefined}
-          onChange={e => {
-            setTekst(e.target.value)
-            const r = parseBedrag(e.target.value)
-            if (melding) setMelding(null)
-            if (r.waarde !== null) onChange(r.waarde)
-          }}
-          onBlur={e => {
-            const r = parseBedragBegrensd(e.target.value, min, max)
-            const w = r.waarde ?? min
-            setTekst(formatBedrag(w))
-            setMelding(r.fout)
-            onChange(w)
-          }}
-          onFocus={e => e.target.select()}
-          className="input-field pl-7"
-        />
-      </div>
-      {melding && (
-        <p id={meldingId} role="status" className="text-xs text-signal mt-1 leading-relaxed">
-          {melding}
-        </p>
-      )}
-    </div>
-  )
-}
+// Bedragveld met Nederlandse notatie: zie NumberInput in
+// ../PensionPlanner/InputPanel.tsx, hier hergebruikt met prefix="€".
 
 function Veld({ label, htmlFor, help, children }: {
   label: string; htmlFor: string; help?: string; children: React.ReactNode
@@ -205,7 +144,7 @@ export function Box3Tool() {
             htmlFor="banktegoeden"
             help={`Eigen forfait: ${pct(p.forfaitairRendement.spaargeld * 100)} in ${jaar}.`}
           >
-            <BedragVeld id="banktegoeden" value={banktegoeden} onChange={setBanktegoeden} max={100_000_000} />
+            <NumberInput prefix="€" id="banktegoeden" value={banktegoeden} onChange={setBanktegoeden} max={100_000_000} />
           </Veld>
 
           <Veld
@@ -213,7 +152,7 @@ export function Box3Tool() {
             htmlFor="beleggingen"
             help={`Aandelen, obligaties, fondsen, crypto. Forfait ${pct(p.forfaitairRendement.beleggingen * 100)}.`}
           >
-            <BedragVeld id="beleggingen" value={beleggingen} onChange={setBeleggingen} max={100_000_000} />
+            <NumberInput prefix="€" id="beleggingen" value={beleggingen} onChange={setBeleggingen} max={100_000_000} />
           </Veld>
 
           <Veld
@@ -221,7 +160,7 @@ export function Box3Tool() {
             htmlFor="overig"
             help="Tweede woning, verhuurd vastgoed, vorderingen. Hetzelfde forfait als beleggingen."
           >
-            <BedragVeld id="overig" value={overigeBezittingen} onChange={setOverigeBezittingen} max={100_000_000} />
+            <NumberInput prefix="€" id="overig" value={overigeBezittingen} onChange={setOverigeBezittingen} max={100_000_000} />
           </Veld>
 
           <Veld
@@ -229,7 +168,7 @@ export function Box3Tool() {
             htmlFor="schulden"
             help={`De eerste ${eur(fiscaalPartner ? p.schuldendrempel.fiscaalPartnersSamen : p.schuldendrempel.alleenstaand)} telt niet mee. Een hypotheek op je eigen woning hoort hier niet bij, die zit in box 1.`}
           >
-            <BedragVeld id="schulden" value={schulden} onChange={setSchulden} max={100_000_000} />
+            <NumberInput prefix="€" id="schulden" value={schulden} onChange={setSchulden} max={100_000_000} />
           </Veld>
         </div>
       </div>
@@ -306,7 +245,7 @@ export function Box3Tool() {
                 htmlFor="werkelijkzelf"
                 help="Ontvangen rente, dividend en huur plus de waardeontwikkeling, min betaalde rente over een box 3-schuld. Een negatief bedrag mag: dat wordt op € 0 gezet."
               >
-                <BedragVeld
+                <NumberInput prefix="€"
                   id="werkelijkzelf"
                   value={werkelijkZelf}
                   onChange={setWerkelijkZelf}
@@ -323,7 +262,7 @@ export function Box3Tool() {
                 htmlFor="regulier"
                 help="Alles wat je dat jaar daadwerkelijk hebt ontvangen."
               >
-                <BedragVeld id="regulier" value={reguliereVoordelen} onChange={setReguliereVoordelen} max={100_000_000} />
+                <NumberInput prefix="€" id="regulier" value={reguliereVoordelen} onChange={setReguliereVoordelen} max={100_000_000} />
               </Veld>
 
               <Veld
@@ -331,7 +270,7 @@ export function Box3Tool() {
                 htmlFor="renteschuld"
                 help="Deze telt wel mee, als negatieve opbrengst. Gewone kosten zoals aan- en verkoopkosten of onderhoud niet."
               >
-                <BedragVeld id="renteschuld" value={renteSchulden} onChange={setRenteSchulden} max={100_000_000} />
+                <NumberInput prefix="€" id="renteschuld" value={renteSchulden} onChange={setRenteSchulden} max={100_000_000} />
               </Veld>
 
               <Veld
@@ -339,7 +278,7 @@ export function Box3Tool() {
                 htmlFor="waardebegin"
                 help="Het saldo, dus alles samen en je box 3-schulden eraf. Ook wat je niet verkocht hebt telt mee. Een negatief saldo (meer schuld dan bezit) mag."
               >
-                <BedragVeld id="waardebegin" value={waardeBegin} onChange={setWaardeBegin} min={-100_000_000} max={100_000_000} />
+                <NumberInput prefix="€" id="waardebegin" value={waardeBegin} onChange={setWaardeBegin} min={-100_000_000} max={100_000_000} />
               </Veld>
 
               <Veld
@@ -347,7 +286,7 @@ export function Box3Tool() {
                 htmlFor="waardeeind"
                 help="Ongerealiseerde waardestijging telt mee. Papieren winst is dus belast. Een negatief saldo (meer schuld dan bezit) mag."
               >
-                <BedragVeld id="waardeeind" value={waardeEind} onChange={setWaardeEind} min={-100_000_000} max={100_000_000} />
+                <NumberInput prefix="€" id="waardeeind" value={waardeEind} onChange={setWaardeEind} min={-100_000_000} max={100_000_000} />
               </Veld>
 
               <Veld
@@ -355,7 +294,7 @@ export function Box3Tool() {
                 htmlFor="aankopen"
                 help="Gaat eraf: een storting is geen rendement."
               >
-                <BedragVeld id="aankopen" value={aankopen} onChange={setAankopen} max={100_000_000} />
+                <NumberInput prefix="€" id="aankopen" value={aankopen} onChange={setAankopen} max={100_000_000} />
               </Veld>
 
               <Veld
@@ -363,7 +302,7 @@ export function Box3Tool() {
                 htmlFor="verkopen"
                 help="Gaat erbij: anders lijkt een opname op verlies."
               >
-                <BedragVeld id="verkopen" value={verkopen} onChange={setVerkopen} max={100_000_000} />
+                <NumberInput prefix="€" id="verkopen" value={verkopen} onChange={setVerkopen} max={100_000_000} />
               </Veld>
             </div>
             )}
