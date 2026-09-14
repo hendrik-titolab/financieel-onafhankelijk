@@ -92,8 +92,8 @@ Vergelijk `src/components/Jaarruimte/index.tsx`: 945 regels, mét opslag en vali
 
 Concreet:
 
-1. `src/components/Box3/index.tsx` — de tool.
-2. `src/pages/tools/box3.astro` — circa 50 regels, kopieer de opzet van
+1. `src/components/Box3/index.tsx`: de tool.
+2. `src/pages/tools/box3.astro` (circa 50 regels): kopieer de opzet van
    `src/pages/tools/jaarruimte.astro`: `title`/`description`, een `faq`-array, `articleSchema` +
    `faqSchema` + `breadcrumbSchema` uit `src/lib/seo.ts`, en het eiland met `client:only="react"`.
    Zet wél een `canonical`, dat doen `jaarruimte.astro` en `inflatie.astro` allebei niet.
