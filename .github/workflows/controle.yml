@@ -21,6 +21,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Volledige geschiedenis nodig voor de versiecheck hieronder, die de PR
+          # vergelijkt met de basisbranch (git diff met '...' vereist een gedeelde
+          # voorouder, die een ondiepe clone niet heeft).
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -49,6 +54,12 @@ jobs:
 
       - name: Astro-controle
         run: npm run check
+
+      - name: Versiecheck
+        # Alleen zinvol op een PR: vergelijkt met de basisbranch. Zie
+        # scripts/check-modelversie.mjs voor de reden.
+        if: github.event_name == 'pull_request'
+        run: node scripts/check-modelversie.mjs
 
       - name: Tests
         # Bevat de golden masters, de fiscale referentiegevallen en de
