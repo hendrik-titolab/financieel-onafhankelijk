@@ -5,7 +5,7 @@ import { aowVakantiegeldFactor } from '../../utils/pensionCalc'
 import { PARAMETER_JAAR } from '../../config/modelVersie'
 import { track } from '@vercel/analytics'
 import { X } from 'lucide-react'
-import type { PensionInputs, IncomeType, ContributionFrequency, LifeEvent, RiskProfile, Woonsituatie, LijfrenteSoort } from '../../types'
+import type { PensionInputs, PensionResult, IncomeType, ContributionFrequency, LifeEvent, RiskProfile, Woonsituatie, LijfrenteSoort } from '../../types'
 import { RISICOPROFIELEN, PROFIEL_VOLGORDE } from '../../config/risicoprofielen'
 import { AOW_NETTO } from '../../utils/pensionCalc'
 import { LIJFRENTE } from '../../config/fiscaleParameters'
@@ -15,6 +15,10 @@ const MAX_ROWS = 20
 interface Props {
   inputs: PensionInputs
   onChange: (updates: Partial<PensionInputs>) => void
+  // Optioneel: nog niet beschikbaar zolang de invoer ongeldig is (zie isGeldig in
+  // PensionPlanner/index.tsx). De overbruggingswaarschuwing hieronder valt in dat
+  // geval terug op niets tonen in plaats van zelf te herberekenen.
+  result?: PensionResult | null
 }
 
 // ---- Shared UI primitives ----
@@ -178,7 +182,7 @@ function AgeSliderRow({ label, value, min, max, onChange }: {
 
 // ---- Parameters tab ----
 
-function ParametersTab({ inputs, onChange }: Props) {
+function ParametersTab({ inputs, onChange, result }: Props) {
   // Losse velden buiten Field om (met een Toggle ernaast in plaats van alleen
   // een hint-paragraaf) hebben elk hun eigen stabiele id nodig, om dezelfde
   // reden als in Field hierboven.
@@ -560,24 +564,14 @@ function ParametersTab({ inputs, onChange }: Props) {
             </p>
           </div>
         </div>
-        {(() => {
-          // Eigen ingangsleeftijden, plus die van de partner (omgerekend naar de
-          // leeftijd van de hoofdpersoon, zelfde formule als de knikpunten in
-          // pensionCalc.ts), anders mist deze waarschuwing een overbruggingsperiode
-          // die alleen door het verschil met de partner ontstaat.
-          const ingangsleeftijden = [inputs.aowStartAge, inputs.employerPensionStartAge, inputs.lijfrenteStartAge]
-          if (inputs.partner.actief) {
-            const leeftijdsverschil = inputs.partner.leeftijd - inputs.currentAge
-            ingangsleeftijden.push(inputs.partner.aowStartAge - leeftijdsverschil)
-            ingangsleeftijden.push(inputs.partner.employerPensionStartAge - leeftijdsverschil)
-          }
-          const eersteEigenInkomen = Math.min(...ingangsleeftijden)
-          return inputs.retirementAge < eersteEigenInkomen && (
-            <p className="text-xs text-signal bg-panel border border-signal rounded-[3px] p-2 leading-relaxed">
-              ⚠ Overbruggingsperiode van {eersteEigenInkomen - inputs.retirementAge} jaar: eigen vermogen dekt het volledige inkomen.
-            </p>
-          )
-        })()}
+        {/* overbruggingsJaren komt uit het resultaat (pensionCalc.ts), niet uit een
+            eigen herberekening hier: dezelfde ingangsleeftijden-vergelijking stond
+            tot 14 september 2026 dubbel in de code, zie de toelichting daar. */}
+        {result && result.overbruggingsJaren > 0 && (
+          <p className="text-xs text-signal bg-panel border border-signal rounded-[3px] p-2 leading-relaxed">
+            ⚠ Overbruggingsperiode van {result.overbruggingsJaren} jaar: eigen vermogen dekt het volledige inkomen.
+          </p>
+        )}
       </Section>
 
       <div className="border-t border-line-soft" />
@@ -961,7 +955,7 @@ function EventsTab({ inputs, onChange }: Props) {
 
 type PanelTab = 'parameters' | 'events'
 
-export function InputPanel({ inputs, onChange }: Props) {
+export function InputPanel({ inputs, onChange, result }: Props) {
   const [tab, setTab] = useState<PanelTab>('parameters')
 
   const eventCount = inputs.lifeEvents?.length ?? 0
@@ -989,7 +983,7 @@ export function InputPanel({ inputs, onChange }: Props) {
         ))}
       </div>
 
-      {tab === 'parameters' && <ParametersTab inputs={inputs} onChange={onChange} />}
+      {tab === 'parameters' && <ParametersTab inputs={inputs} onChange={onChange} result={result} />}
       {tab === 'events'     && <EventsTab     inputs={inputs} onChange={onChange} />}
     </div>
   )

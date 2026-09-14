@@ -223,7 +223,14 @@ export interface PensionResult {
   /**
    * Hetzelfde doelbedrag volgens alleen de eindwaarde: contante waarde van de
    * onttrekkingen minus pvEventsAfterRetirement. Verklaart de opbouw op het scherm
-   * en in de export. Gelijk aan requiredCapital zolang er niets te overbruggen is.
+   * en in de export.
+   *
+   * Niet meer gelijk aan requiredCapital zodra er niets te overbruggen is: deze
+   * formule kent de box 3-heffing niet, requiredCapital sinds september 2026 wel
+   * (vermogensbelastingHandmatig:false). Een verschil tussen deze twee kan dus
+   * zowel van een echte overbrugging komen als van box 3 alleen — zie
+   * overbruggingsToeslag hieronder voor hoe dat uit elkaar wordt gehouden
+   * (bevinding review 14 september 2026).
    */
   requiredCapitalEindwaarde: number
   /**
@@ -235,9 +242,20 @@ export interface PensionResult {
   effectiveRetirementAge: number
   /**
    * Wat er bovenop requiredCapitalEindwaarde nodig is om de jaren te overbruggen
-   * tot een later bedrag binnenkomt. Nul als de eindwaarde al toereikend is.
+   * tot een later bedrag binnenkomt. Nul als er geen echte overbruggingsperiode is
+   * (zie overbruggingsJaren) — ook als requiredCapital en requiredCapitalEindwaarde
+   * dan nog uit elkaar liggen door het box 3-verschil hierboven. Dat verschil heet
+   * dan geen overbrugging, want dat is het niet.
    */
   overbruggingsToeslag: number
+  /**
+   * Aantal jaar tussen de pensioendatum en de eerste eigen inkomstenbron (AOW,
+   * werkgeverspensioen, lijfrente, of de partner-equivalenten). Nul als er geen
+   * overbruggingsperiode is. Los van overbruggingsToeslag teruggegeven zodat het
+   * scherm "X jaar" kan tonen zonder de ingangsleeftijden-vergelijking zelf over
+   * te doen (bevinding review 14 september 2026).
+   */
+  overbruggingsJaren: number
   /**
    * De leeftijd waarop het inkomensdoel voor het eerst niet meer volledig uit
    * vermogen betaald kan worden, of null als dat niet gebeurt. "Wanneer ontstaat

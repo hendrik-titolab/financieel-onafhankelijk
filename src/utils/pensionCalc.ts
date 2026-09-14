@@ -752,15 +752,22 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
   // geen inkomstenbron (eigen of partner) loopt, dan is requiredCapital > eindwaarde
   // uitsluitend het gevolg van de box 3-heffing die requiredCapitalEindwaarde (regel
   // 700 hierboven) niet kent — dat is geen overbrugging en mag niet zo genoemd
-  // worden in het scherm of de export (bevinding review 14 september 2026). Zelfde
-  // ingangsleeftijden-vergelijking als de waarschuwing in InputPanel.tsx.
+  // worden in het scherm of de export (bevinding review 14 september 2026).
+  //
+  // Dit is de ENIGE plek die deze vergelijking maakt. InputPanel.tsx toonde tot
+  // 14 september 2026 een eigen, losse kopie van precies deze berekening (om de
+  // waarschuwing te tonen vóórdat er een result is) — nu leest het scherm
+  // overbruggingsJaren hieronder uit het resultaat, dezelfde reden als bij
+  // huishoudOp: niet twee plekken die uiteen kunnen lopen.
   const ingangsleeftijden = [aowStartAge, employerPensionStartAge, lijfrenteStartAge]
   if (partnerActief && partner) {
     const leeftijdsverschilPartner = partner.leeftijd - currentAge
     ingangsleeftijden.push(partner.aowStartAge - leeftijdsverschilPartner)
     ingangsleeftijden.push(partner.employerPensionStartAge - leeftijdsverschilPartner)
   }
-  const heeftOverbruggingsperiode = retirementAge < Math.min(...ingangsleeftijden)
+  const eersteEigenInkomen = Math.min(...ingangsleeftijden)
+  const heeftOverbruggingsperiode = retirementAge < eersteEigenInkomen
+  const overbruggingsJaren = heeftOverbruggingsperiode ? eersteEigenInkomen - retirementAge : 0
   const overbruggingsToeslag = heeftOverbruggingsperiode
     ? Math.max(0, requiredCapital - requiredCapitalEindwaarde)
     : 0
@@ -913,6 +920,7 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
     requiredCapitalEindwaarde,
     effectiveRetirementAge: retirementAge,
     overbruggingsToeslag,
+    overbruggingsJaren,
     pvEventsAfterRetirement,
     desiredMonthlyNetto,
     requiredMonthlyContribution,

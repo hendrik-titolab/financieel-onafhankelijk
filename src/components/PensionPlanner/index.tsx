@@ -196,7 +196,7 @@ export function PensionPlanner({ clientName, onCloseSession }: Props) {
         <div className="card !p-0 flex flex-col max-h-[75vh] lg:max-h-[calc(100vh-140px)] overflow-hidden">
           <div ref={scrollAreaRef} className="relative flex-1 min-h-0 overflow-y-auto visible-scrollbar p-4">
             <h2 className="text-sm font-medium text-ink mb-4">Invoer</h2>
-            <InputPanel inputs={inputs} onChange={handleChange} />
+            <InputPanel inputs={inputs} onChange={handleChange} result={result} />
             {showScrollHint && (
               // position:absolute (niet in de content-flow) zodat de plek
               // waar dit landt niet afhangt van de zichtbare paneelhoogte —
