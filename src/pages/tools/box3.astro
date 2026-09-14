@@ -2,16 +2,20 @@
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import { Box3Tool } from '../../components/Box3'
 import { articleSchema, faqSchema, breadcrumbSchema } from '../../lib/seo'
+import { BOX3_JAREN } from '../../config/fiscaleParameters'
+import { PARAMETER_JAAR } from '../../config/modelVersie'
 
 const title = 'Box 3 berekenen 2026 | Hoeveel belasting betaal je over je vermogen?'
 const description =
   'Bereken gratis je box 3-belasting voor 2025 of 2026. Forfait én tegenbewijs naast elkaar: zie of je werkelijke rendement gunstiger uitpakt dan de forfaitaire berekening.'
 
+const b = BOX3_JAREN[PARAMETER_JAAR as keyof typeof BOX3_JAREN]
+
 const faq = [
   {
     vraag: 'Hoeveel belasting betaal ik over mijn spaargeld en beleggingen?',
     antwoord:
-      'De Belastingdienst gaat uit van een vast rendement per soort vermogen en heft daar 36% over. In 2026 is dat 1,28% voor bank- en spaartegoeden en 6,00% voor beleggingen en overige bezittingen. Over de eerste € 59.357 per persoon betaal je niets. Wat je werkelijk verdiend hebt maakt voor die berekening niet uit, tenzij je gebruikmaakt van de tegenbewijsregeling.',
+      `De Belastingdienst gaat uit van een vast rendement per soort vermogen en heft daar ${Math.round(b.tarief * 100)}% over. In ${PARAMETER_JAAR} is dat ${(b.forfaitairRendement.spaargeld * 100).toLocaleString('nl-NL', { minimumFractionDigits: 2 })}% voor bank- en spaartegoeden en ${(b.forfaitairRendement.beleggingen * 100).toLocaleString('nl-NL', { minimumFractionDigits: 2 })}% voor beleggingen en overige bezittingen. Over de eerste € ${b.heffingsvrijVermogen.alleenstaand.toLocaleString('nl-NL')} per persoon betaal je niets. Wat je werkelijk verdiend hebt maakt voor die berekening niet uit, tenzij je gebruikmaakt van de tegenbewijsregeling.`,
   },
   {
     vraag: 'Wat is de tegenbewijsregeling in box 3?',

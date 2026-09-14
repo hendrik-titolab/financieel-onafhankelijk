@@ -6,6 +6,7 @@ import { calculatePension, controleerLeeftijden } from '../../utils/pensionCalc'
 import { runMonteCarlo } from '../../utils/monteCarlo'
 import { MODEL_VERSIE, PARAMETER_JAAR } from '../../config/modelVersie'
 import { box3DrukAfgerond } from '../../utils/box3'
+import { AOW_NETTO } from '../../utils/pensionCalc'
 import { InputPanel } from './InputPanel'
 import { ResultsPanel } from './ResultsPanel'
 
@@ -34,7 +35,7 @@ const DEFAULT_INPUTS: PensionInputs = {
   desiredRetirementIncome: 5000,
   desiredRetirementIncomeType: 'bruto',
   woonsituatie: 'alleenstaand',
-  aowMaandBedragNetto: 1582,  // alleenstaand netto met heffingskorting, SVB per 1 juli 2026
+  aowMaandBedragNetto: AOW_NETTO.alleenstaand,  // uit de fiscale config
   aowStartAge: 67,
   // Standaard aan: de SVB keert het vakantiegeld in mei apart uit, dus het
   // maandbedrag op iemands overzicht is exclusief.
@@ -44,7 +45,7 @@ const DEFAULT_INPUTS: PensionInputs = {
   partner: {
     actief: false,
     leeftijd: 40,
-    aowMaandBedragNetto: 1084,
+    aowMaandBedragNetto: AOW_NETTO.samenwonend,
     aowStartAge: 67,
     employerPension: 0,
     employerPensionStartAge: 67,
