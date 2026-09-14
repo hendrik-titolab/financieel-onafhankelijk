@@ -11,7 +11,8 @@
 
 import { execSync } from 'node:child_process'
 
-const base = process.env.GITHUB_BASE_REF ? `origin/${process.env.GITHUB_BASE_REF}` : 'origin/astro-migratie'
+const baseBranch = process.env.GITHUB_BASE_REF || 'astro-migratie'
+const base = `origin/${baseBranch}`
 
 // Rekenkern: bestanden die een rekenuitkomst kunnen veranderen. Config/documentatie/
 // UI-tekst staat hier bewust niet in, ook al gebruikt die de uitkomsten.
@@ -26,7 +27,22 @@ const WATCHED = [
 const WATCHED_PREFIX = 'src/utils/__tests__/__golden__/'
 const VERSION_FILE = 'src/config/modelVersie.ts'
 
-function changedFiles(baseRef) {
+function changedFiles(baseRef, branchName) {
+  // actions/checkout op een pull_request-event fetcht standaard alleen de PR-ref
+  // zelf; ook met fetch-depth: 0 bestaat 'origin/<basisbranch>' dan niet altijd als
+  // lokale ref (bevestigd: eerste CI-run op deze PR faalde hierop met "unknown
+  // revision"). Expliciet ophalen maakt het script onafhankelijk van wat de
+  // workflow YAML daaromtrent wel of niet al deed.
+  // Geen --depth hier: de workflow haalt de PR-ref al met fetch-depth: 0 op, dus de
+  // voorouder-commits van de basisbranch zitten meestal al lokaal. Een ondiepe fetch
+  // van alleen de tip zou een losstaande geschiedenis kunnen geven waar '...'
+  // hieronder geen gemeenschappelijke voorouder in vindt.
+  try {
+    execSync(`git fetch origin ${branchName}`, { stdio: 'pipe' })
+  } catch (e) {
+    console.error(`Kon ${branchName} niet ophalen van origin, ga door met wat er al lokaal is.`)
+    console.error(e.stderr?.toString() ?? String(e))
+  }
   const out = execSync(`git diff --name-only ${baseRef}...HEAD`, { encoding: 'utf8' })
   return out
     .split('\n')
@@ -34,7 +50,7 @@ function changedFiles(baseRef) {
     .filter(Boolean)
 }
 
-const files = changedFiles(base)
+const files = changedFiles(base, baseBranch)
 const touchedWatched = files.filter(f => WATCHED.includes(f) || f.startsWith(WATCHED_PREFIX))
 const touchedVersion = files.includes(VERSION_FILE)
 
