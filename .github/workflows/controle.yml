@@ -22,12 +22,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          # Volledige geschiedenis alleen nodig op een PR, voor de versiecheck
-          # hieronder (die vergelijkt met de basisbranch; git diff met '...'
-          # vereist een gedeelde voorouder, die een ondiepe clone niet heeft).
-          # Op een gewone push/workflow_dispatch gebruikt niets deze geschiedenis,
-          # dus daar blijft het de standaard ondiepe clone.
-          fetch-depth: ${{ github.event_name == 'pull_request' && 0 || 1 }}
+          # Volledige geschiedenis nodig voor de versiecheck hieronder, die de PR
+          # vergelijkt met de basisbranch (git diff met '...' vereist een gedeelde
+          # voorouder, die een ondiepe clone niet heeft).
+          #
+          # Was eerder conditioneel (alleen 0 op een pull_request, anders de
+          # standaard ondiepe clone) als kleine efficiencywinst. Teruggedraaid: de
+          # GitHub Actions-expressie `cond && 0 || 1` gaf altijd 1, ook op een PR,
+          # want Actions behandelt 0 als "falsy" — dus de rechterkant van `||`
+          # won altijd, ongeacht `cond`. Dat brak de versiecheck op de eerste
+          # echte PR-run (bevinding 14 september 2026: eerst "unknown revision",
+          # daarna "no merge base"). Een kleine checkout-optimalisatie is de
+          # complexiteit en het risico van deze klasse fout niet waard.
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
