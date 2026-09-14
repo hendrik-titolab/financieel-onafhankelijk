@@ -336,7 +336,17 @@ function ParametersTab({ inputs, onChange }: Props) {
                   partner: {
                     ...inputs.partner,
                     actief: samen,
-                    leeftijd: inputs.partner.leeftijd || inputs.currentAge,
+                    // Was eerder `inputs.partner.leeftijd || inputs.currentAge`. De
+                    // default-partnerleeftijd (40, zie DEFAULT_INPUTS.partner in
+                    // index.tsx) is toevallig gelijk aan de default-hoofdleeftijd,
+                    // dus die falsy-fallback kon in de praktijk nooit afvuren: wie
+                    // eerst de eigen leeftijd wijzigt en dan pas samenwonend
+                    // aanzet, kreeg alsnog een partner van 40 (bevinding review
+                    // 14 september 2026). Nu expliciet: alleen syncen zolang de
+                    // partnerleeftijd nog op die ongewijzigde default staat, zodat
+                    // een al eerder handmatig ingevulde leeftijd nooit overschreven
+                    // wordt.
+                    leeftijd: inputs.partner.leeftijd === 40 ? inputs.currentAge : inputs.partner.leeftijd,
                     aowMaandBedragNetto: AOW_NETTO.samenwonend,
                   },
                 })
