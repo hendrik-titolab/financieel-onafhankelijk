@@ -1,4 +1,4 @@
-import type { PensionInputs, PensionResult, YearData, IncomePhase, LifeEvent, Woonsituatie, PartnerGegevens } from '../types'
+import type { PensionInputs, PensionResult, YearData, IncomePhase, PersoonInkomen, LifeEvent, Woonsituatie, PartnerGegevens } from '../types'
 import { AOW_NETTO_MAAND, AOW_BRUTO_MAAND, AOW_VAKANTIEGELD_BRUTO_MAAND, ZVW } from '../config/fiscaleParameters'
 import { belastingBox1 } from './brutoNetto'
 import { nettoNominaalRendement, box3HeffingPerJaar } from './box3'
@@ -81,13 +81,6 @@ export interface MaandInkomenVerdeling {
   partner: PersoonInkomen | null
 }
 
-/** Wat één persoon netto per maand aan vaste bronnen ontvangt. */
-export interface PersoonInkomen {
-  aow: number
-  employerPension: number
-  lijfrenteUitkering: number
-  totaal: number
-}
 
 /** De inkomensgegevens van één persoon op een gegeven leeftijd. */
 export interface PersoonInvoer {
@@ -963,7 +956,7 @@ function buildIncomePhases(
 
   for (let i = 0; i < sorted.length - 1; i++) {
     const fromAge = sorted[i]
-    const { aow, employerPension: emp, lijfrenteUitkering: lijf, fromCapital } =
+    const { aow, employerPension: emp, lijfrenteUitkering: lijf, fromCapital, partner } =
       getIncomeBreakdown(huishoudOp(fromAge))
 
     const toAge = sorted[i + 1]
@@ -980,6 +973,11 @@ function buildIncomePhases(
       employerPension: emp,
       lijfrenteUitkering: lijf,
       total: fromCapital + aow + emp + lijf,
+      // getIncomeBreakdown() berekent dit al per persoon apart (box 1 is
+      // individueel). Tot 15 september 2026 werd het hier weggegooid, waardoor
+      // het scherm en de exports bij een meerekenende partner één opgeteld
+      // AOW-bedrag toonden zonder te laten zien van wie het kwam.
+      partner,
       shortfallFromAge: eersteTekort ? eersteTekort.age : null,
     })
   }

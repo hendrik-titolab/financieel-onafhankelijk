@@ -188,6 +188,19 @@ export interface YearData {
   totalIncome: number
 }
 
+/**
+ * Wat één persoon netto per maand aan vaste uitkeringen ontvangt. Stond tot
+ * 15 september 2026 in pensionCalc.ts; hierheen verplaatst toen IncomePhase het
+ * partnerdeel ging meedragen, anders zou types/index.ts uit de rekenkern moeten
+ * importeren en die importeert zelf al uit dit bestand.
+ */
+export interface PersoonInkomen {
+  aow: number
+  employerPension: number
+  lijfrenteUitkering: number
+  totaal: number
+}
+
 export interface IncomePhase {
   label: string
   fromAge: number
@@ -202,6 +215,17 @@ export interface IncomePhase {
   employerPension: number
   lijfrenteUitkering: number
   total: number
+  /**
+   * Het deel van de drie bronnen hierboven dat van de partner komt, of null als
+   * er geen partner meerekent. Alleen voor weergave: de bedragen hierboven zijn
+   * al inclusief dit deel, dus nooit bij elkaar optellen.
+   *
+   * incomeFromCapital heeft bewust geen tegenhanger. Box 1 is individueel, dus
+   * AOW en pensioen zijn per persoon toe te rekenen; het vermogen is dat niet,
+   * dat geldt in dit model voor het huishouden samen (zie CLAUDE.md,
+   * "Huishoudmodel is er half").
+   */
+  partner: PersoonInkomen | null
   /**
    * De eerste leeftijd binnen deze fase waarop het vermogen het gewenste bedrag
    * niet meer kan opbrengen, of null als de fase volledig gedekt is. Afgeleid uit

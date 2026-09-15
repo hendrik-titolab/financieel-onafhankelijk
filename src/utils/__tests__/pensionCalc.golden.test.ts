@@ -786,4 +786,40 @@ describe('partner — apart belast, niet opgeteld', () => {
     const opPartnerAow = r.yearData.find(y => y.age === 70)!
     expect(opPartnerAow.aowIncome).toBeCloseTo(2168, 0)
   })
+
+  it('draagt het partnerdeel mee in de fasenlijst', () => {
+    // getIncomeBreakdown() splitste dit al uit, maar buildIncomePhases() gooide
+    // het weg: scherm en exports toonden één opgeteld AOW-bedrag zonder te laten
+    // zien van wie het kwam (15 september 2026). Zelfde scenario als hierboven,
+    // partner drie jaar jonger, zodat de twee AOW-data uit elkaar liggen.
+    const r = calculatePension(baseInputs({
+      currentAge: 60, retirementAge: 60, lifeExpectancy: 90,
+      woonsituatie: 'samenwonend', aowMaandBedragNetto: 1084, aowStartAge: 67,
+      employerPension: 0, lijfrenteUitkering: 0,
+      partner: {
+        actief: true, leeftijd: 57, aowMaandBedragNetto: 1084, aowStartAge: 67,
+        employerPension: 0, employerPensionStartAge: 67,
+      },
+    }), { currentYear: 2026 })
+
+    // Fase vanaf 67: eigen AOW loopt, die van de partner nog niet. Precies het
+    // geval waarvoor de uitsplitsing bestaat.
+    const eigenAowFase = r.incomePhases.find(f => f.fromAge === 67)!
+    expect(eigenAowFase.aow).toBeCloseTo(1084, 0)
+    expect(eigenAowFase.partner).not.toBeNull()
+    expect(eigenAowFase.partner!.aow).toBe(0)
+
+    // Fase vanaf 70: beide AOW's lopen, de helft komt van de partner.
+    const beideAowFase = r.incomePhases.find(f => f.fromAge === 70)!
+    expect(beideAowFase.aow).toBeCloseTo(2168, 0)
+    expect(beideAowFase.partner!.aow).toBeCloseTo(1084, 0)
+    // Het partnerdeel zit al in phase.aow, dus nooit bij elkaar optellen.
+    expect(beideAowFase.partner!.totaal).toBeLessThanOrEqual(beideAowFase.total)
+  })
+
+  it('laat het partnerdeel leeg als er geen partner meerekent', () => {
+    const r = calculatePension(baseInputs(), { currentYear: 2026 })
+    expect(r.incomePhases.length).toBeGreaterThan(0)
+    expect(r.incomePhases.every(f => f.partner === null)).toBe(true)
+  })
 })

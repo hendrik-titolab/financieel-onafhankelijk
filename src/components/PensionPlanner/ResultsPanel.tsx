@@ -402,6 +402,13 @@ export function ResultsPanel({ inputs, result, berekening, mcStale, isCalculatin
           {result.incomePhases.map((phase, i) => {
             const total = phase.total
             const isGap = phase.aow === 0 && phase.employerPension === 0 && phase.lijfrenteUitkering === 0
+            // De drie bronregels hieronder zijn bij een meerekenende partner het
+            // totaal van twee apart belaste personen. Zonder deze splitsing is
+            // niet te zien van wie welk deel komt, terwijl dat juist stuurt: de
+            // partner kan een andere AOW- en pensioendatum hebben.
+            const vastTotaal = phase.aow + phase.employerPension + phase.lijfrenteUitkering
+            const vanPartner = phase.partner?.totaal ?? 0
+            const vanJou = Math.max(0, vastTotaal - vanPartner)
             return (
               <div key={i} className={`rounded-[3px] p-3 border ${isGap ? 'border-signal bg-panel' : 'border-line-soft bg-canvas'}`}>
                 <div className="flex justify-between items-center mb-2">
@@ -441,6 +448,13 @@ export function ResultsPanel({ inputs, result, berekening, mcStale, isCalculatin
                     </div>
                   ))}
                 </div>
+                {phase.partner !== null && vastTotaal > 0 && (
+                  <p className="text-xs text-body leading-relaxed mt-2">
+                    Vaste uitkeringen: <span className="font-numeric tabular">{eur(vanJou)}</span> van
+                    jou, <span className="font-numeric tabular">{eur(vanPartner)}</span> van je
+                    partner. Het eigen vermogen geldt voor jullie samen.
+                  </p>
+                )}
               </div>
             )
           })}
