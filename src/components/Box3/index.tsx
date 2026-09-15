@@ -7,7 +7,7 @@ import {
   type WerkelijkRendementInvoer,
 } from '../../utils/box3'
 import { BOX3_JAREN, BOX3_JAREN_IN_TOOL } from '../../config/fiscaleParameters'
-import { modelStempel } from '../../config/modelVersie'
+import { modelStempel, PARAMETER_JAAR } from '../../config/modelVersie'
 // Gedeeld met de FO-planner, zie InputPanel.tsx: was hier een bijna-identieke
 // eigen kopie (BedragVeld), tot de code-review van 14 september 2026.
 import { NumberInput } from '../PensionPlanner/InputPanel'
@@ -61,10 +61,18 @@ function Rij({ label, value, highlight, gedempt }: {
 // rekenkern niet kent (bevinding review 14 september 2026).
 const BESCHIKBARE_JAREN = BOX3_JAREN_IN_TOOL.filter((j): j is Box3Jaar => j in BOX3_JAREN)
 
+// Het jaar waarop de tool opent. Stond als los getal 2026 in de useState, waardoor
+// de tool na een jaarwisseling zou blijven openen op een jaar dat niet meer het
+// actuele is, ook als de cijfers er allang zijn. Nu het parameterjaar, en anders
+// het laatste jaar dat de tool werkelijk kan rekenen (WP9).
+const STANDAARDJAAR: Box3Jaar =
+  BESCHIKBARE_JAREN.find(j => j === PARAMETER_JAAR)
+  ?? BESCHIKBARE_JAREN[BESCHIKBARE_JAREN.length - 1]
+
 // ---- Hoofdcomponent ----
 
 export function Box3Tool() {
-  const [jaar, setJaar] = useState<Box3Jaar>(2026)
+  const [jaar, setJaar] = useState<Box3Jaar>(STANDAARDJAAR)
   const [fiscaalPartner, setFiscaalPartner] = useState(false)
 
   const [banktegoeden, setBanktegoeden] = useState(80_000)
