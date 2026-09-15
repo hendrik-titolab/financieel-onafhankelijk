@@ -218,9 +218,18 @@ export function box3Forfait(invoer: Box3Invoer): Box3ForfaitUitkomst {
   const grondslagSparenEnBeleggen = Math.max(0, rendementsgrondslag - heffingsvrijVermogen)
 
   // Stap 4 tot en met 6, per persoon.
-  const deel1 = personen === 2
-    ? Math.min(1, Math.max(0, invoer.verdelingPersoon1 ?? 0.5))
-    : 1
+  //
+  // NaN glipt door ?? heen, want dat vangt alleen null en undefined af. Math.max(0, NaN)
+  // is NaN, en vanaf daar is elke vermenigvuldiging eronder ook NaN: grondslag,
+  // aandeelPct, voordeel en uiteindelijk de belasting. Het scherm toont dan geen fout
+  // maar "€ NaN" (bevinding review 14 september 2026). Een verdeling die geen getal is
+  // bevat geen informatie, dus terugvallen op de helft, net als bij een weggelaten
+  // waarde. ±Infinity houdt wél richting en blijft daarom gewoon geklemd op 0 of 1.
+  const opgegevenDeel = invoer.verdelingPersoon1
+  const bruikbaarDeel = typeof opgegevenDeel === 'number' && !Number.isNaN(opgegevenDeel)
+    ? opgegevenDeel
+    : 0.5
+  const deel1 = personen === 2 ? Math.min(1, Math.max(0, bruikbaarDeel)) : 1
   const delen = personen === 2 ? [deel1, 1 - deel1] : [1]
 
   const perPersoon = delen.map(deel => {

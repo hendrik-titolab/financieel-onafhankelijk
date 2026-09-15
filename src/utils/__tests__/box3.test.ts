@@ -9,6 +9,7 @@ import {
 } from '../box3'
 import { calculatePension } from '../pensionCalc'
 import { runMonteCarlo } from '../monteCarlo'
+import { BOX3_JAREN, BOX3_JAREN_IN_TOOL } from '../../config/fiscaleParameters'
 import { baseInputs } from './fixtures'
 
 describe('box3HeffingPerJaar — nagerekend met de parameters van 2026', () => {
@@ -242,6 +243,56 @@ describe('box3Forfait — de vijf rekenvoorbeelden van de Belastingdienst, 2026'
     expect(r.perPersoon[0].belasting).toBe(4_973)
     expect(r.perPersoon[1].belasting).toBe(0)
     expect(r.belasting).toBe(4_973)
+  })
+})
+
+describe('box3Forfait — een onbruikbare verdeling maakt de uitkomst niet stuk', () => {
+  const basis = {
+    jaar: 2026 as const, fiscaalPartner: true,
+    banktegoeden: 100_000, beleggingen: 200_000, overigeBezittingen: 0, schulden: 0,
+  }
+
+  it('behandelt NaN als een weggelaten verdeling', () => {
+    // ?? vangt alleen null en undefined. NaN glipte erdoor en werd via
+    // Math.max(0, NaN) doorgegeven aan grondslag, aandeelPct, voordeel en de
+    // belasting: het scherm toonde dan "EUR NaN" zonder foutmelding.
+    const metNaN = box3Forfait({ ...basis, verdelingPersoon1: Number.NaN })
+    const zonder = box3Forfait(basis)
+
+    expect(Number.isNaN(metNaN.belasting)).toBe(false)
+    expect(metNaN.belasting).toBe(zonder.belasting)
+    expect(metNaN.perPersoon[0].grondslag).toBe(zonder.perPersoon[0].grondslag)
+  })
+
+  it('laat een geldige verdeling ongemoeid', () => {
+    // De reparatie hierboven mag geen enkele bestaande uitkomst verschuiven.
+    for (const deel of [0, 0.25, 0.5, 1]) {
+      const r = box3Forfait({ ...basis, verdelingPersoon1: deel })
+      expect(Number.isNaN(r.belasting)).toBe(false)
+      expect(r.perPersoon[0].grondslag).toBeCloseTo(r.grondslagSparenEnBeleggen * deel, 6)
+    }
+  })
+
+  it('klemt een verdeling buiten 0 tot 1 net als voorheen', () => {
+    expect(box3Forfait({ ...basis, verdelingPersoon1: 5 }).perPersoon[0].grondslag)
+      .toBe(box3Forfait({ ...basis, verdelingPersoon1: 1 }).perPersoon[0].grondslag)
+    expect(box3Forfait({ ...basis, verdelingPersoon1: -5 }).perPersoon[0].grondslag)
+      .toBe(box3Forfait({ ...basis, verdelingPersoon1: 0 }).perPersoon[0].grondslag)
+  })
+})
+
+describe('BOX3_JAREN_IN_TOOL — de twee jarenlijsten in de config lopen niet uiteen', () => {
+  it('heeft voor elk aangeboden jaar ook werkelijk cijfers', () => {
+    // fiscale-cijfers.json houdt twee losse velden bij: de jaren met cijfers en de
+    // jaren die de tool aanbiedt. Raken die uit de pas, dan is BOX3_JAREN[jaar]
+    // undefined en klapt de box 3-tool op een wit scherm. De select filtert daar
+    // sinds 15 september 2026 op, maar dat is de verdediging; dit is de melding
+    // bij de bron, zodat een jaarwisseling die de twee uit elkaar trekt hier al
+    // opvalt en niet pas in het scherm.
+    for (const jaar of BOX3_JAREN_IN_TOOL) {
+      expect(BOX3_JAREN, `jaar ${jaar} wordt aangeboden maar heeft geen cijfers`)
+        .toHaveProperty(String(jaar))
+    }
   })
 })
 

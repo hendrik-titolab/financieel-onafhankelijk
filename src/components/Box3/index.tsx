@@ -51,6 +51,16 @@ function Rij({ label, value, highlight, gedempt }: {
   )
 }
 
+// De jaren die de tool aanbiedt, doorsneden met de jaren waarvoor de rekenkern
+// werkelijk cijfers heeft. Dat zijn in de gegenereerde config twee losse lijsten
+// (fiscale-cijfers.json heeft er aparte velden voor, zie genereer.mjs): biedt
+// BOX3_JAREN_IN_TOOL ooit een jaar aan dat in BOX3_JAREN ontbreekt, dan is
+// BOX3_JAREN[jaar] undefined en klapt de tool op de eerstvolgende p.-lezing met
+// een wit scherm. De `as Box3Jaar`-cast die bij de select stond verborg dat voor
+// de compiler. Hier gefilterd, zodat de select geen jaar kan tonen dat de
+// rekenkern niet kent (bevinding review 14 september 2026).
+const BESCHIKBARE_JAREN = BOX3_JAREN_IN_TOOL.filter((j): j is Box3Jaar => j in BOX3_JAREN)
+
 // ---- Hoofdcomponent ----
 
 export function Box3Tool() {
@@ -112,10 +122,17 @@ export function Box3Tool() {
             <select
               id="jaar"
               value={jaar}
-              onChange={e => setJaar(Number(e.target.value) as Box3Jaar)}
+              onChange={e => {
+                // Geen cast: de waarde uit het DOM-event wordt getoetst aan de
+                // lijst hierboven. Staat hij er niet in, dan blijft het huidige
+                // jaar staan in plaats van dat er een onbekend jaar doorglipt.
+                const gekozen = Number(e.target.value)
+                const geldig = BESCHIKBARE_JAREN.find(j => j === gekozen)
+                if (geldig !== undefined) setJaar(geldig)
+              }}
               className="input-field"
             >
-              {BOX3_JAREN_IN_TOOL.map(j => (
+              {BESCHIKBARE_JAREN.map(j => (
                 <option key={j} value={j}>{j}</option>
               ))}
             </select>
