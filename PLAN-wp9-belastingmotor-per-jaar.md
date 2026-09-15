@@ -1,12 +1,29 @@
 # Implementatieplan WP9: belastingmotor per jaar
 
-**Status:** planningsdocument, geschreven 14 september 2026. Geen code aangeraakt. Dit is
-de "eerst een plan"-helft van WP9 uit `HANDOFF-borging-2026-09.md`. De "dan bouwen"-helft
-is een aparte, nog te plannen sessie (zie sectie 7, realistische omvang).
+**Status:** planningsdocument, geschreven 14 september 2026. Op 15 september is het deel
+uitgevoerd dat geen van de zes vragen in sectie 8 vooruitloopt; zie de voortgangstabel
+hieronder. De rest wacht op antwoord op die vragen.
 
 Gebaseerd op onderzoek van de rekenkern op 14 september 2026, branch `vervolg-2026-09`.
 Bestand:regel-verwijzingen hieronder zijn een momentopname van die dag; controleer ze
 opnieuw als er intussen aan de rekenkern is gewerkt.
+
+---
+
+## Voortgang (bijgewerkt 15 september 2026)
+
+| Onderdeel | Staat |
+|---|---|
+| **Fase 1, `box3.ts`** | **Klaar.** De drie FO-plannerfuncties lezen `BOX3_JAREN[belastingjaar]` in plaats van het platte `BOX3`. Default `PARAMETER_JAAR`, dat een letterlijk type is, dus `tsc` toetst zelf of dat jaar cijfers heeft. 18 testaanroepen expliciet gemaakt, 3 tests erbij die bewijzen dat het jaar doorwerkt. Geen rekenuitkomst veranderd, vooraf gecontroleerd dat `BOX3` en `BOX3_JAREN[2026]` gelijk zijn. |
+| **Twee hardgecodeerde jaartallen** | **Klaar.** `P.jaar` in `brutoNetto.ts` en de startwaarde van de box 3-tool komen van `PARAMETER_JAAR`, met terugval op het laatste jaar dat de tool kan rekenen. Beide stonden als los getal 2026 terwijl de cijfers eronder uit de config komen. |
+| **Bronbewaking in `genereer.mjs`** | **Klaar** (andere repo). De generator stopt nu als een tool een jaar aanbiedt zonder cijfers, als `belastingjaar` geen box 3-blok heeft, of als `PARAMETER_JAAR` in `modelVersie.ts` niet meeloopt met de bron. Dat laatste was het onbewaakte synchronisatiepunt uit sectie 4.3. |
+| **Fase 0, 2, 3, 4, 5** | **Wacht op vraag 1 en 2.** Alles hierin bouwt op de structuur `FISCAAL`, en hoe die eruitziet is de eerste keuze. |
+| **Fase 6, opruimen** | **Wacht op vraag 6.** Wel alvast een feit: het platte `BOX3` wordt sinds fase 1 door geen enkel bestand meer geïmporteerd. Het staat er nog, bewust, zolang vraag 6 open is. |
+| **Fase 7, UI** | **Wacht op vraag 4.** Het jaarlabel is gerepareerd; een echte jaarselector voor de bruto-nettotool is de keuze die openstaat. |
+
+Wat hier bewust **niet** is gedaan: geen `FISCAAL`-structuur, geen `belastingjaar` op
+`belastingBox1`, `pensionCalc` of `monteCarlo`, geen veld op `SavedJaarruimte`. Dat zijn
+allemaal onderdelen waarvan de vorm afhangt van een antwoord in sectie 8.
 
 ---
 
@@ -497,6 +514,28 @@ elke aanbeveling is een voorstel, geen stille aanname.
    maar dan alleen voor jaren buiten `FISCAAL`'s daadwerkelijke dekking in plaats van
    voor elk jaar ongelijk aan `PARAMETER_JAAR`. Dat is strikt eerlijker dan de huidige
    tekst, zonder nieuw historisch onderzoek te vereisen.
+
+   **Uitgezocht op 15 september 2026, zodat deze keuze op feiten rust:**
+
+   - In `fiscale-cijfers.json` zijn `box1`, `heffingskortingenPreAow`,
+     `heffingskortingenPostAow`, `zvw`, `aow` en `lijfrente` alle zes nog **platte
+     blokken met alleen de cijfers van 2026**. Er is dus geen historisch materiaal dat
+     alleen maar hoeft te worden omgezet: de derde optie is echt nieuw opzoekwerk.
+   - Eén belastingjaar bestaat uit **58 losse getallen** in die zes blokken (box1 10,
+     kortingen pre-AOW 13, kortingen post-AOW 18, zvw 3, aow 9, lijfrente 5). Voor
+     2021 tot en met 2025 gaat het dus om circa **290 cijfers**, elk met bronvermelding,
+     in Wft-gebied. Dat is geen bijzaak van een bouwsessie maar een eigen opdracht.
+   - Hoe erg de benadering vandaag is, is deels bekend: het gecombineerde tarief in de
+     eerste schijf was 35,82% in 2025 en is 35,75% in 2026, dus 0,07 procentpunt
+     verschil tussen twee opeenvolgende jaren
+     ([Belastingdienst, voorlopige aanslag 2026](https://www.belastingdienst.nl/wps/wcm/connect/nl/voorlopige-aanslag/content/voorlopige-aanslag-tarieven-en-heffingskortingen)).
+     Voor 2021 t/m 2023 is dat niet nagezocht; die cijfers staan niet in de bron en
+     mogen niet geschat worden. Wat de afwijking over vijf jaar oploopt is dus nog
+     onbekend, en dat is zelf een argument om de waarschuwing eerlijk te houden.
+   - Ter controle meegenomen: het tarief in de config (`schijf1Tarief: 0.3575`, grens
+     `38_883`) komt exact overeen met wat de Belastingdienst voor 2026 publiceert.
+
+   Dit verandert de aanbeveling niet, maar maakt wel scherp wat optie 3 kost.
 4. **`P` in `brutoNetto.ts` en de Bruto-Netto-tool**: voor WP9 alleen `P.jaar` laten
    meebewegen met `PARAMETER_JAAR`, of bij deze gelegenheid ook een echte jaarselector
    bouwen (zoals Box3 al heeft)? **Aanbeveling**: alleen het label repareren nu; een
