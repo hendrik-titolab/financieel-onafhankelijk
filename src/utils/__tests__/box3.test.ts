@@ -10,6 +10,7 @@ import {
 import { calculatePension } from '../pensionCalc'
 import { runMonteCarlo } from '../monteCarlo'
 import { BOX3_JAREN, BOX3_JAREN_IN_TOOL } from '../../config/fiscaleParameters'
+import { PARAMETER_JAAR } from '../../config/modelVersie'
 import { baseInputs } from './fixtures'
 
 describe('box3HeffingPerJaar — nagerekend met de parameters van 2026', () => {
@@ -23,18 +24,47 @@ describe('box3HeffingPerJaar — nagerekend met de parameters van 2026', () => {
   ]
   for (const [vermogen, verwacht] of gevallen) {
     it(`EUR ${vermogen} geeft EUR ${verwacht}`, () => {
-      expect(Math.round(box3HeffingPerJaar(vermogen, 'alleenstaand'))).toBe(verwacht)
+      expect(Math.round(box3HeffingPerJaar(vermogen, 'alleenstaand', 2026))).toBe(verwacht)
     })
   }
 
   it('heft niets onder het heffingsvrije vermogen', () => {
-    expect(box3HeffingPerJaar(59357, 'alleenstaand')).toBe(0)
-    expect(box3HeffingPerJaar(0, 'alleenstaand')).toBe(0)
+    expect(box3HeffingPerJaar(59357, 'alleenstaand', 2026)).toBe(0)
+    expect(box3HeffingPerJaar(0, 'alleenstaand', 2026)).toBe(0)
   })
 
   it('gebruikt de hogere vrijstelling voor fiscaal partners', () => {
-    expect(box3HeffingPerJaar(100000, 'samenwonend'))
-      .toBeLessThan(box3HeffingPerJaar(100000, 'alleenstaand'))
+    expect(box3HeffingPerJaar(100000, 'samenwonend', 2026))
+      .toBeLessThan(box3HeffingPerJaar(100000, 'alleenstaand', 2026))
+  })
+})
+
+describe('box3HeffingPerJaar — het belastingjaar werkt echt door', () => {
+  // WP9, fase 1: deze functie las het platte BOX3-object en kende dus maar één
+  // jaar. Nu leest hij BOX3_JAREN[belastingjaar]. Zonder deze toets zou een
+  // genegeerde parameter niet opvallen: alle andere tests draaien op 2026 en
+  // blijven ook groen als het jaar nergens aankomt.
+  it('rekent 2025 met de cijfers van 2025', () => {
+    // Met de hand nagerekend: heffingsvrij EUR 57.684, forfait beleggingen 5,88%,
+    // tarief 36%. (100.000 - 57.684) x 5,88% x 36% = 895,745088.
+    expect(box3HeffingPerJaar(100_000, 'alleenstaand', 2025)).toBeCloseTo(895.745088, 6)
+    // 2026 heeft een hoger heffingsvrij vermogen (59.357) maar ook een hoger
+    // forfait (6,00%). Per saldo betaal je over hetzelfde vermogen iets minder.
+    expect(box3HeffingPerJaar(100_000, 'alleenstaand', 2026)).toBeCloseTo(877.888800, 6)
+  })
+
+  it('valt zonder jaar terug op het parameterjaar', () => {
+    expect(box3HeffingPerJaar(100_000, 'alleenstaand'))
+      .toBe(box3HeffingPerJaar(100_000, 'alleenstaand', PARAMETER_JAAR))
+  })
+
+  it('geeft het jaar door vanuit de twee afgeleide functies', () => {
+    expect(geschatteBox3Druk(100_000, 'alleenstaand', 2025)).toBeCloseTo(0.895745, 5)
+    expect(geschatteBox3Druk(100_000, 'alleenstaand', 2026)).toBeCloseTo(0.877889, 5)
+    // Op één decimaal vallen beide jaren toevallig op 0,9. Dat is geen fout maar
+    // precies waarom de toets hierboven op de onafgeronde waarde kijkt.
+    expect(box3DrukAfgerond(100_000, 'alleenstaand', 2025)).toBe(0.9)
+    expect(box3DrukAfgerond(100_000, 'alleenstaand', 2026)).toBe(0.9)
   })
 })
 
@@ -43,16 +73,16 @@ describe('geschatteBox3Druk', () => {
     // Precies waarom één vast percentage niet voor iedereen kan kloppen, wat de
     // kern van de auditbevinding was: hetzelfde profiel kan voor EUR 40.000
     // spaargeld en EUR 2 miljoen beleggingen niet dezelfde belastingdruk zijn.
-    const klein = geschatteBox3Druk(100000, 'alleenstaand')
-    const groot = geschatteBox3Druk(1000000, 'alleenstaand')
+    const klein = geschatteBox3Druk(100000, 'alleenstaand', 2026)
+    const groot = geschatteBox3Druk(1000000, 'alleenstaand', 2026)
     expect(klein).toBeCloseTo(0.88, 1)
     expect(groot).toBeCloseTo(2.03, 1)
     expect(groot).toBeGreaterThan(klein)
   })
 
   it('geeft nul bij geen vermogen', () => {
-    expect(geschatteBox3Druk(0, 'alleenstaand')).toBe(0)
-    expect(geschatteBox3Druk(-100, 'alleenstaand')).toBe(0)
+    expect(geschatteBox3Druk(0, 'alleenstaand', 2026)).toBe(0)
+    expect(geschatteBox3Druk(-100, 'alleenstaand', 2026)).toBe(0)
   })
 })
 
@@ -115,31 +145,31 @@ describe('box3DrukAfgerond — wat er in het invoerveld komt', () => {
   ]
   for (const [vermogen, verwacht] of gevallen) {
     it(`EUR ${vermogen} geeft ${verwacht}%`, () => {
-      expect(box3DrukAfgerond(vermogen, 'alleenstaand')).toBe(verwacht)
+      expect(box3DrukAfgerond(vermogen, 'alleenstaand', 2026)).toBe(verwacht)
     })
   }
 
   it('geeft nul onder het heffingsvrije vermogen', () => {
-    expect(box3DrukAfgerond(50000, 'alleenstaand')).toBe(0)
+    expect(box3DrukAfgerond(50000, 'alleenstaand', 2026)).toBe(0)
   })
 
   it('rondt af op één decimaal, gelijk aan wat het veld toont', () => {
     // Als deze twee uit elkaar lopen blijft de knop "terug naar de schatting"
     // staan terwijl het veld al de schatting toont.
-    const v = box3DrukAfgerond(600000, 'alleenstaand')
+    const v = box3DrukAfgerond(600000, 'alleenstaand', 2026)
     expect(v).toBe(Math.round(v * 10) / 10)
   })
 
   it('is lager voor fiscaal partners bij hetzelfde vermogen', () => {
-    expect(box3DrukAfgerond(300000, 'samenwonend'))
-      .toBeLessThan(box3DrukAfgerond(300000, 'alleenstaand'))
+    expect(box3DrukAfgerond(300000, 'samenwonend', 2026))
+      .toBeLessThan(box3DrukAfgerond(300000, 'alleenstaand', 2026))
   })
 
   it('scheelt merkbaar tussen een ton en een miljoen', () => {
     // De kern van waarom een vast percentage hier niet kan: meer dan een
     // verdubbeling van de druk over dit bereik.
-    expect(box3DrukAfgerond(1000000, 'alleenstaand'))
-      .toBeGreaterThan(box3DrukAfgerond(100000, 'alleenstaand') * 2)
+    expect(box3DrukAfgerond(1000000, 'alleenstaand', 2026))
+      .toBeGreaterThan(box3DrukAfgerond(100000, 'alleenstaand', 2026) * 2)
   })
 })
 
@@ -674,7 +704,7 @@ describe('box 3 per jaar in de planner', () => {
     const vastPercentage = calculatePension(
       baseInputs({
         vermogensbelastingHandmatig: true,
-        vermogensbelastingPct: box3DrukAfgerond(100_000, 'alleenstaand'),
+        vermogensbelastingPct: box3DrukAfgerond(100_000, 'alleenstaand', 2026),
       }), { currentYear: 2026 })
     const perJaar = calculatePension(
       baseInputs({ vermogensbelastingHandmatig: false }), { currentYear: 2026 })
@@ -721,7 +751,7 @@ describe('planner en rekentool rekenen met dezelfde fiscale logica', () => {
   const gevallen = [100_000, 250_000, 600_000, 1_000_000, 2_500_000]
   for (const vermogen of gevallen) {
     it(`wijkt alleen door afronding af bij EUR ${vermogen}`, () => {
-      const planner = box3HeffingPerJaar(vermogen, 'alleenstaand')
+      const planner = box3HeffingPerJaar(vermogen, 'alleenstaand', 2026)
       const tool = box3Forfait({
         jaar: 2026, fiscaalPartner: false,
         banktegoeden: 0, beleggingen: vermogen, overigeBezittingen: 0, schulden: 0,

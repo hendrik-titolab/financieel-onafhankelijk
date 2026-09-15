@@ -1,4 +1,9 @@
-import { BOX3, BOX3_JAREN, BOX3_TOEREKENING } from '../config/fiscaleParameters'
+import { BOX3_JAREN, BOX3_TOEREKENING } from '../config/fiscaleParameters'
+// PARAMETER_JAAR is een letterlijk type (2026), geen number, dus tsc toetst zelf dat
+// het parameterjaar een blok heeft in BOX3_JAREN. Loopt het ooit vooruit op de
+// cijfers, dan valt de typecontrole om in plaats van dat er een undefined-lookup
+// doorglipt. Aan de bronkant bewaakt genereer.mjs hetzelfde (WP9, fase 1).
+import { PARAMETER_JAAR } from '../config/modelVersie'
 import type { Woonsituatie } from '../types'
 
 /**
@@ -30,17 +35,31 @@ import type { Woonsituatie } from '../types'
  * monteCarlo.ts kennen alleen nettoNominaalRendement() hieronder.
  */
 
-/** Box 3-heffing over een vermogen in een jaar, in euro's. */
-export function box3HeffingPerJaar(vermogen: number, woonsituatie: Woonsituatie): number {
+/**
+ * Box 3-heffing over een vermogen in een jaar, in euro's.
+ *
+ * Het belastingjaar kiest WELK gepubliceerd jaar als tariefanker dient, niet welk
+ * kalenderjaar er gesimuleerd wordt. De planner loopt tientallen jaren vooruit
+ * (2026 tot 2090 is normaal) en voor die jaren bestaan geen gepubliceerde
+ * tarieven; de projectie houdt bewust één jaar vast, zie de toelichting bij het
+ * heffingsvrije vermogen in pensionCalc.ts. Deze functie las tot 15 september 2026
+ * het platte BOX3-object, dat de generator toch al afleidt uit
+ * BOX3_JAREN[belastingjaar]: nu rechtstreeks uit de per-jaar-structuur, zodat er
+ * één plek is waar de box 3-cijfers vandaan komen (WP9, fase 1).
+ */
+export function box3HeffingPerJaar(
+  vermogen: number, woonsituatie: Woonsituatie, belastingjaar: Box3Jaar = PARAMETER_JAAR,
+): number {
+  const p = BOX3_JAREN[belastingjaar]
   const vrij = woonsituatie === 'samenwonend'
-    ? BOX3.heffingsvrijVermogen.fiscaalPartnersSamen
-    : BOX3.heffingsvrijVermogen.alleenstaand
+    ? p.heffingsvrijVermogen.fiscaalPartnersSamen
+    : p.heffingsvrijVermogen.alleenstaand
 
   const grondslag = Math.max(0, vermogen - vrij)
   // Het forfait voor beleggingen, niet dat voor spaargeld: de planner gaat uit van
   // vrij belegd vermogen. Wie vooral spaart betaalt minder, en zal deze schatting
   // dus naar beneden bijstellen.
-  return grondslag * BOX3.forfaitairRendement.beleggingen * BOX3.tarief
+  return grondslag * p.forfaitairRendement.beleggingen * p.tarief
 }
 
 /**
@@ -52,9 +71,11 @@ export function box3HeffingPerJaar(vermogen: number, woonsituatie: Woonsituatie)
  * 2,0. Vandaar een invoerveld met deze schatting ernaast, en geen vast getal in
  * de code.
  */
-export function geschatteBox3Druk(vermogen: number, woonsituatie: Woonsituatie): number {
+export function geschatteBox3Druk(
+  vermogen: number, woonsituatie: Woonsituatie, belastingjaar: Box3Jaar = PARAMETER_JAAR,
+): number {
   if (vermogen <= 0) return 0
-  return (box3HeffingPerJaar(vermogen, woonsituatie) / vermogen) * 100
+  return (box3HeffingPerJaar(vermogen, woonsituatie, belastingjaar) / vermogen) * 100
 }
 
 /**
@@ -65,8 +86,10 @@ export function geschatteBox3Druk(vermogen: number, woonsituatie: Woonsituatie):
  * gebruiken. Anders staat er 1,9 in het veld terwijl de code met 1,94666 vergelijkt
  * en de knop "schatting overnemen" nooit verdwijnt.
  */
-export function box3DrukAfgerond(vermogen: number, woonsituatie: Woonsituatie): number {
-  return Math.round(geschatteBox3Druk(vermogen, woonsituatie) * 10) / 10
+export function box3DrukAfgerond(
+  vermogen: number, woonsituatie: Woonsituatie, belastingjaar: Box3Jaar = PARAMETER_JAAR,
+): number {
+  return Math.round(geschatteBox3Druk(vermogen, woonsituatie, belastingjaar) * 10) / 10
 }
 
 /**
