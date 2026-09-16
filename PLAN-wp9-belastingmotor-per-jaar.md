@@ -1,8 +1,8 @@
 # Implementatieplan WP9: belastingmotor per jaar
 
-**Status:** planningsdocument, geschreven 14 september 2026. Op 15 september is het deel
-uitgevoerd dat geen van de zes vragen in sectie 8 vooruitloopt; zie de voortgangstabel
-hieronder. De rest wacht op antwoord op die vragen.
+**Status:** afgerond. Geschreven 14 september 2026, alle zes vragen uit sectie 8
+beantwoord op 16 september, zie de voortgangstabel hieronder. Fase 4 en 5 zijn met
+Hendriks akkoord bewust komen te vervallen; fase 6 wacht op een echte jaargrens.
 
 Gebaseerd op onderzoek van de rekenkern op 14 september 2026, branch `vervolg-2026-09`.
 Bestand:regel-verwijzingen hieronder zijn een momentopname van die dag; controleer ze
@@ -25,7 +25,7 @@ versieveld toevoegen, en opruimen pas na een jaargrens.
 | **Fase 2, `brutoNetto.ts`** | **Klaar.** `belastingBox1()` neemt een `belastingjaar`, standaard `PARAMETER_JAAR`. Geen uitkomst veranderd. |
 | **Fase 3, `jaarruimte.ts`** | **Klaar.** Het belastingvoordeel wordt geschat met het tarief van het aftrekjaar. Dit verandert wel uitkomsten, zie hieronder. `MODEL_VERSIE` naar 2026.09.4. |
 | **Vraag 5, opslag** | **Klaar.** Een opgeslagen jaarruimteberekening draagt model en parameterjaar mee en toont ze. |
-| **Fase 4 en 5, `pensionCalc` en `monteCarlo`** | **Niet gedaan, en dat is een voorstel om ze te laten.** Zie de afweging hieronder. |
+| **Fase 4 en 5, `pensionCalc` en `monteCarlo`** | **Bewust niet gedaan.** Hendrik ging op 16 september akkoord met het voorstel om ze te laten liggen. Zie de afweging hieronder; de notitie in `pensionCalc.ts` stond er al. |
 | **Fase 6, opruimen** | **Wacht op een jaargrens**, zoals afgesproken bij vraag 6. Het platte `BOX3` wordt al nergens meer geïmporteerd. |
 | **Fase 7, jaarselector bruto-netto** | **Vervalt.** Bij vraag 4 gekozen voor alleen het label; dat is klaar. |
 
@@ -53,7 +53,8 @@ levert een leesbare fout op, geen stille terugval.
 
 ### Waarom fase 4 en 5 beter kunnen blijven liggen
 
-Dit is een voorstel, geen besluit, want het wijkt af van het plan.
+**Besloten.** Dit wijkt af van het oorspronkelijke plan; Hendrik ging op 16 september
+akkoord met onderstaande afweging.
 
 De planner heeft geen jaarkeuze in de UI en krijgt die volgens dit plan ook niet.
 Hij projecteert bovendien tientallen jaren vooruit op één vast tariefanker, en er is
@@ -69,9 +70,10 @@ halve migratie die dit plan bij `box3.ts` zelf aanwijst als probleem: het oogt
 jaarbewust en is het niet. Liever geen parameter dan een parameter die de helft van
 de berekening niet raakt.
 
-Voorstel: fase 4 en 5 pas oppakken als er een aanleiding is, namelijk een jaarkeuze
-in de planner-UI of Zvw- en AOW-cijfers per jaar in de bron. Tot die tijd een notitie
-in `pensionCalc.ts` dat de planner bewust op `PARAMETER_JAAR` rekent.
+Fase 4 en 5 pas oppakken als er een aanleiding is, namelijk een jaarkeuze in de
+planner-UI of Zvw- en AOW-cijfers per jaar in de bron. Tot die tijd staat er in
+`pensionCalc.ts`, direct boven `calculatePension()`, een notitie dat de planner
+bewust op `PARAMETER_JAAR` rekent en waarom.
 
 ---
 
