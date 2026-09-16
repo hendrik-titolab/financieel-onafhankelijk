@@ -558,6 +558,24 @@ function findRequiredPMT(
   return hi
 }
 
+/**
+ * De FO-planner rekent bewust op één belastingjaar: PARAMETER_JAAR, via de
+ * standaardwaarden van belastingBox1() en box3HeffingPerJaar().
+ *
+ * Dat is geen vergeten stap in WP9 maar een keuze. De planner projecteert
+ * tientallen jaren vooruit en voor die jaren bestaan geen gepubliceerde tarieven;
+ * voor zo'n projectie wil je altijd de meest actuele cijfers, niet een ouder jaar.
+ *
+ * Een belastingjaar-parameter zou hier bovendien misleidend zijn zolang ZVW en
+ * AOW_*_MAAND niet per jaar in de bron staan: hij zou alleen de box 1-helft sturen
+ * en de Zvw- en AOW-helft stil op het huidige jaar laten. Precies de halve
+ * migratie die box3.ts tot september 2026 had. Zie PLAN-wp9-belastingmotor-per-jaar.md,
+ * "Waarom fase 4 en 5 beter kunnen blijven liggen".
+ *
+ * currentYear hieronder is het KALENDERjaar voor de tijdlijn van de simulatie
+ * (wanneer is "nu"), niet het belastingjaar voor de tarieven. Die twee niet door
+ * elkaar halen.
+ */
 export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: number }): PensionResult {
   const {
     currentAge, retirementAge: retirementAgeInput, lifeExpectancy,
