@@ -907,7 +907,7 @@ export function JaarruimteTab() {
 
           <p className="text-xs text-body leading-relaxed">
             Het belastingvoordeel is een schatting: belasting zonder aftrek min belasting met aftrek,
-            met de schijven en heffingskortingen van {PARAMETER_JAAR} en een verwacht inkomen van{' '}
+            met de schijven en heffingskortingen van {inputs.year} en een verwacht inkomen van{' '}
             {eur(inputs.aftrekjaarInkomen ?? inputs.income)} in het aftrekjaar. Geen definitief bedrag.
             Deze berekening is educatief en indicatief, geen persoonlijk financieel advies.
           </p>
