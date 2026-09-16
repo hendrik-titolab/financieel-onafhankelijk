@@ -18,6 +18,7 @@
 // AOW-leeftijd. Zodra er een post-AOW-variant komt, hoort daar een eigen set bij.
 import { describe, it, expect } from 'vitest'
 import { brutoNaarNetto, nettoNaarBruto, belastingBox1 } from '../brutoNetto'
+import { PARAMETER_JAAR } from '../../config/modelVersie'
 import { BOX1_POST_AOW, HEFFINGSKORTING_POST_AOW } from '../../config/fiscaleParameters'
 import { round } from './fixtures'
 import fixture from './__golden__/brutoNetto.golden.json'
@@ -167,5 +168,55 @@ describe('belastingBox1 — eigenschappen', () => {
     const r = belastingBox1(18000, { pastAow: true, arbeidsinkomen: 0 })
     expect(r.teBetalen).toBe(0)
     expect(r.nettoJaar).toBe(18000)
+  })
+})
+
+// WP9: belastingBox1() kende tot 16 september 2026 maar één jaar, wat er toevallig
+// in fiscaleParameters.ts stond. Nu kiest de aanroeper het belastingjaar. Zonder
+// deze tests blijft een genegeerde parameter onzichtbaar, want alle tests hierboven
+// draaien op het parameterjaar en blijven ook groen als het jaar nergens aankomt.
+describe('belastingBox1 — het belastingjaar werkt door', () => {
+  it('rekent 2023 met de schijven van 2023', () => {
+    // Met de hand nagerekend uit de gepubliceerde cijfers van 2023: eerste schijf
+    // 36,93% tot EUR 73.031, algemene heffingskorting EUR 3.070 met 6,095% afbouw
+    // vanaf EUR 22.660, arbeidskorting EUR 5.052 met 6,51% afbouw vanaf EUR 37.691.
+    //   bruto belasting 70.000 x 36,93%                = 25.851,00
+    //   ahk             3.070 - 6,095% x 47.340        =    184,63
+    //   ak              5.052 - 6,51%  x 32.309        =  2.948,68
+    //   te betalen      25.851,00 - 3.133,31           = 22.717,69
+    const r = belastingBox1(70_000, { pastAow: false, belastingjaar: 2023 })
+    expect(r.belastingBruto).toBeCloseTo(25_851.00, 2)
+    expect(r.ahk).toBeCloseTo(184.63, 2)
+    expect(r.ak).toBeCloseTo(2_948.68, 2)
+    expect(r.teBetalen).toBeCloseTo(22_717.69, 2)
+  })
+
+  it('geeft per jaar een andere uitkomst bij hetzelfde inkomen', () => {
+    const perJaar = [2021, 2022, 2023, 2024, 2025, 2026]
+      .map(jaar => belastingBox1(70_000, { pastAow: false, belastingjaar: jaar }).teBetalen)
+    // Zes jaren, zes verschillende bedragen. Waren ze gelijk, dan kwam het jaar niet aan.
+    expect(new Set(perJaar.map(x => Math.round(x))).size).toBe(6)
+  })
+
+  it('valt zonder jaar terug op het parameterjaar', () => {
+    expect(belastingBox1(70_000, { pastAow: false }).teBetalen)
+      .toBe(belastingBox1(70_000, { pastAow: false, belastingjaar: PARAMETER_JAAR }).teBetalen)
+    expect(brutoNaarNetto(70_000).nettoJaar).toBe(brutoNaarNetto(70_000, PARAMETER_JAAR).nettoJaar)
+  })
+
+  it('weigert een jaar waarvoor geen cijfers bestaan', () => {
+    // Liever een leesbare fout dan stil terugvallen op een ander jaar: een bedrag
+    // dat met de verkeerde schijven is berekend ziet er verder normaal uit.
+    expect(() => belastingBox1(70_000, { pastAow: false, belastingjaar: 2015 }))
+      .toThrow(/Geen fiscale cijfers bekend voor belastingjaar 2015/)
+  })
+
+  it('weigert de cijfers van na de AOW-leeftijd voor een jaar dat ze niet heeft', () => {
+    // Alleen het huidige jaar heeft postAow-cijfers, zie _dekking in
+    // fiscale-cijfers.json. Vragen om 2023 na de AOW-leeftijd hoort te stoppen.
+    expect(() => belastingBox1(30_000, { pastAow: true, belastingjaar: 2023 }))
+      .toThrow(/alleen de cijfers van vóór de AOW-leeftijd/)
+    expect(() => belastingBox1(30_000, { pastAow: true, belastingjaar: PARAMETER_JAAR }))
+      .not.toThrow()
   })
 })
