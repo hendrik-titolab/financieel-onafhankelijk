@@ -5,7 +5,7 @@
 // bedoeling, controleer de nieuwe waarde inhoudelijk en werk de fixture bij.
 //
 // Kanttekening bij scenario 2 en 6: requiredMonthlyContribution kan negatief zijn
-// (zie AUDIT-fase0-1-feiten.md, bevinding E10) — dat is hier bewust vastgelegd
+// (zie docs/archief/AUDIT-fase0-1-feiten.md, bevinding E10) — dat is hier bewust vastgelegd
 // zoals het nu is, niet gecorrigeerd.
 import { describe, it, expect } from 'vitest'
 import {
@@ -40,7 +40,14 @@ describe('getIncomeBreakdown — AOW en pensioen stapelen', () => {
 
   const breakdown = (pensioenBrutoMnd: number, aowNetto = AOW_NETTO_MND,
                      woonsituatie: 'alleenstaand' | 'samenwonend' = 'alleenstaand') =>
-    getIncomeBreakdown(NA_AOW, 5000, aowNetto, 67, pensioenBrutoMnd, 65, woonsituatie)
+    getIncomeBreakdown({
+      desiredNetto: 5000,
+      woonsituatie,
+      persoon: {
+        age: NA_AOW, aowNetto, aowStartAge: 67,
+        employerPensionBruto: pensioenBrutoMnd, employerPensionStartAge: 65,
+      },
+    })
 
   // Zelfcontrole op de hele keten. De AOW wordt gebruteerd, belast en weer netto
   // gemaakt; er hoort precies weer uit te komen wat erin ging. Lukt dat niet, dan
@@ -89,8 +96,15 @@ describe('getIncomeBreakdown — AOW en pensioen stapelen', () => {
 
   it('rekent vóór de AOW-leeftijd met de tarieven van vóór de AOW-leeftijd', () => {
     // Leeftijd 65: pensioen loopt al, AOW nog niet.
-    const voor = getIncomeBreakdown(65, 5000, AOW_NETTO_MND, 67, 2500, 65)
-    const na   = getIncomeBreakdown(70, 5000, AOW_NETTO_MND, 67, 2500, 65)
+    const opLeeftijd = (age: number) => getIncomeBreakdown({
+      desiredNetto: 5000,
+      persoon: {
+        age, aowNetto: AOW_NETTO_MND, aowStartAge: 67,
+        employerPensionBruto: 2500, employerPensionStartAge: 65,
+      },
+    })
+    const voor = opLeeftijd(65)
+    const na   = opLeeftijd(70)
     expect(voor.aow).toBe(0)
     // Zonder AOW-premievrijstelling is het tarief hoger, dus houdt hij minder over
     // dan hetzelfde pensioen ná de AOW-leeftijd zou opleveren als het alleen stond.
@@ -112,9 +126,14 @@ describe('getIncomeBreakdown — lijfrente stapelt bovenop AOW en werkgeverspens
   const NA_AOW = 70
 
   it('drie bronnen tegelijk, alleenstaand: hand-nagerekend', () => {
-    const r = getIncomeBreakdown(
-      NA_AOW, 5000, AOW_NETTO_MND, 67, 800, 65, 'alleenstaand', 500, 65
-    )
+    const r = getIncomeBreakdown({
+      desiredNetto: 5000,
+      persoon: {
+        age: NA_AOW, aowNetto: AOW_NETTO_MND, aowStartAge: 67,
+        employerPensionBruto: 800, employerPensionStartAge: 65,
+        lijfrenteUitkeringBruto: 500, lijfrenteStartAge: 65,
+      },
+    })
     expect(r.aow).toBe(AOW_NETTO_MND)
     expect(Math.round(r.employerPension)).toBe(669)
     expect(Math.round(r.lijfrenteUitkering)).toBe(371)
@@ -122,18 +141,32 @@ describe('getIncomeBreakdown — lijfrente stapelt bovenop AOW en werkgeverspens
   })
 
   it('nul zolang de lijfrente-ingangsleeftijd nog niet bereikt is', () => {
-    const nogNiet = getIncomeBreakdown(60, 5000, AOW_NETTO_MND, 67, 800, 65, 'alleenstaand', 500, 65)
+    const nogNiet = getIncomeBreakdown({
+      desiredNetto: 5000,
+      persoon: {
+        age: 60, aowNetto: AOW_NETTO_MND, aowStartAge: 67,
+        employerPensionBruto: 800, employerPensionStartAge: 65,
+        lijfrenteUitkeringBruto: 500, lijfrenteStartAge: 65,
+      },
+    })
     expect(nogNiet.lijfrenteUitkering).toBe(0)
   })
 
-  it('bestaande aanroepen zonder de twee nieuwe argumenten blijven exact hetzelfde gedrag geven', () => {
-    // Reden dat de nieuwe parameters achteraan zijn toegevoegd met een default in
-    // plaats van tussen de bestaande argumenten: dit moet blijven werken zonder dat
-    // een van de aanroepen elders in de codebase hoefde te wijzigen.
-    const zonder = getIncomeBreakdown(NA_AOW, 5000, AOW_NETTO_MND, 67, 800, 65, 'alleenstaand')
+  it('geen lijfrente opgeven geeft hetzelfde als een lijfrente van nul', () => {
+    const basis = {
+      desiredNetto: 5000,
+      persoon: {
+        age: NA_AOW, aowNetto: AOW_NETTO_MND, aowStartAge: 67,
+        employerPensionBruto: 800, employerPensionStartAge: 65,
+      },
+    }
+    const zonder = getIncomeBreakdown(basis)
     expect(zonder.lijfrenteUitkering).toBe(0)
     expect(round(zonder.employerPension)).toBe(round(
-      getIncomeBreakdown(NA_AOW, 5000, AOW_NETTO_MND, 67, 800, 65, 'alleenstaand', 0, 67).employerPension
+      getIncomeBreakdown({
+        ...basis,
+        persoon: { ...basis.persoon, lijfrenteUitkeringBruto: 0, lijfrenteStartAge: 67 },
+      }).employerPension
     ))
   })
 })
@@ -376,6 +409,37 @@ describe('benodigd vermogen — liquiditeit onderweg', () => {
       expect(r.requiredCapital).toBeCloseTo(r.requiredCapitalEindwaarde, 4)
     }
   })
+
+  // Bevinding uit de review vóór push, 14 september 2026: requiredCapitalEindwaarde
+  // (de contante-waardeformule) kent de box 3-heffing niet, requiredCapital (de
+  // bisectie) sinds vermogensbelastingHandmatig:false wél. Zonder de fix hieronder
+  // schreef overbruggingsToeslag dat hele box 3-verschil toe aan "overbrugging",
+  // ook zonder dat er een echte overbruggingsperiode is (in dit scenario voorheen
+  // ten onrechte € 202.569).
+  it('rekent het box 3-verschil niet tot overbrugging als er niets te overbruggen is', () => {
+    const r = calculatePension(
+      baseInputs({ vermogensbelastingHandmatig: false }),
+      { currentYear: 2026 }
+    )
+    // retirementAge, aowStartAge, employerPensionStartAge en lijfrenteStartAge staan
+    // in baseInputs() allemaal op 67: geen enkele inkomstenbron start later dan de
+    // pensioendatum, dus er ís geen overbruggingsperiode.
+    expect(r.overbruggingsToeslag).toBe(0)
+    // Het onderliggende verschil bestaat wél (dat is precies het punt: box 3 zit in
+    // requiredCapital maar niet in requiredCapitalEindwaarde) — het hoort alleen niet
+    // "overbrugging" genoemd te worden.
+    expect(r.requiredCapital).toBeGreaterThan(r.requiredCapitalEindwaarde)
+  })
+
+  it('blijft een echte overbruggingsperiode correct tonen, ook met box 3 aan', () => {
+    const r = calculatePension(
+      baseInputs({ vermogensbelastingHandmatig: false, retirementAge: 60 }),
+      { currentYear: 2026 }
+    )
+    // Nu wél 7 jaar overbrugging (pensioen op 60, AOW/werkgeverspensioen/lijfrente
+    // op 67): de fix mag een echte overbrugging niet laten verdwijnen.
+    expect(r.overbruggingsToeslag).toBeGreaterThan(0)
+  })
 })
 
 // Bevinding 5 uit de audit van 7 september 2026: bij ieder positief beginsaldo
@@ -609,5 +673,153 @@ describe('AOW-vakantiegeld', () => {
     const met = calculatePension(baseInputs({ aowVakantiegeld: true, retirementAge: 60 }), { currentYear: 2026 })
     expect(met.yearData.find(y => y.age === 62)!.totalIncome)
       .toBe(zonder.yearData.find(y => y.age === 62)!.totalIncome)
+  })
+})
+
+// Bevinding 16 uit de audit van 7 september 2026: de tool rekende één persoon.
+// De inkomstenbelasting in box 1 is individueel, dus voor een stel gaat dat op
+// twee manieren mis. Alleen je eigen AOW invullen laat de helft van het vaste
+// inkomen weg; de opgetelde AOW in één veld zetten belast dat als het inkomen van
+// één persoon, met hogere schijven en één set heffingskortingen.
+describe('partner — apart belast, niet opgeteld', () => {
+  // Twee partners, elk € 1.084 AOW netto en € 1.500 werkgeverspensioen bruto per
+  // maand, allebei ruim voorbij de AOW-leeftijd. Handmatig nagerekend met de
+  // parameters van 2026, vóórdat deze test is geschreven:
+  //
+  //   AOW bruto      1.084 / (1 − 4,85%)              = 1.139,2538/mnd
+  //   bruto per jaar (1.139,2538 + 1.500) × 12        = 31.671,05
+  //   belasting      31.671,05 × 17,85%               =  5.653,28
+  //   AHK            1.556 − 3,195% × 1.935,05        =  1.494,18
+  //   ouderenkorting vlak tot 46.002                  =  2.067,00
+  //   te betalen     5.653,28 − 3.561,18              =  2.092,11
+  //   Zvw            31.671,05 × 4,85%                =  1.536,05
+  //   netto          31.671,05 − 2.092,11 − 1.536,05  = 28.042,90/jr = 2.336,91/mnd
+  //   samen                                                            4.673,82/mnd
+  const PERSOON = {
+    age: 70, aowNetto: 1084, aowStartAge: 67,
+    employerPensionBruto: 1500, employerPensionStartAge: 67,
+  }
+
+  it('telt twee apart belaste personen bij elkaar op', () => {
+    const r = getIncomeBreakdown({
+      desiredNetto: 6000,
+      woonsituatie: 'samenwonend',
+      persoon: PERSOON,
+      partner: { ...PERSOON },
+    })
+    expect(r.aow).toBeCloseTo(2168, 6)
+    expect(r.aow + r.employerPension).toBeCloseTo(4673.82, 1)
+    expect(r.partner).not.toBeNull()
+    expect(r.partner!.totaal).toBeCloseTo(2336.91, 1)
+  })
+
+  it('is fors hoger dan alles in één veld optellen', () => {
+    // Wat een gebruiker vóór september 2026 wel moest doen: beide AOW-uitkeringen
+    // en beide pensioenen in de velden van één persoon. Handmatig nagerekend:
+    //   bruto per jaar  (2.168 / 0,9515 + 3.000) × 12 = 63.342,09
+    //   belasting       38.883 × 17,85% + 24.459,09 × 37,56% = 16.127,45
+    //   AHK             1.556 − 3,195% × 33.606,09  =    482,29
+    //   ouderenkorting  boven 59.782, volledig afgebouwd =  0
+    //   Zvw             63.342,09 × 4,85%           =  3.072,09
+    //   netto                                        44.624,84/jr = 3.718,74/mnd
+    const samengeteld = getIncomeBreakdown({
+      desiredNetto: 6000,
+      woonsituatie: 'samenwonend',
+      persoon: {
+        age: 70, aowNetto: 2168, aowStartAge: 67,
+        employerPensionBruto: 3000, employerPensionStartAge: 67,
+      },
+    })
+    expect(samengeteld.aow + samengeteld.employerPension).toBeCloseTo(3718.74, 1)
+
+    const apart = getIncomeBreakdown({
+      desiredNetto: 6000,
+      woonsituatie: 'samenwonend',
+      persoon: PERSOON,
+      partner: { ...PERSOON },
+    })
+    // € 955 per maand verschil, ruim een kwart. Dat komt doordat één persoon door
+    // de tweede schijf schuift en zijn ouderenkorting volledig afbouwt, terwijl
+    // twee personen elk onder die grenzen blijven.
+    const verschil = (apart.aow + apart.employerPension) - (samengeteld.aow + samengeteld.employerPension)
+    expect(verschil).toBeCloseTo(955.08, 1)
+  })
+
+  it('verlaagt wat er uit eigen vermogen moet komen', () => {
+    const zonder = getIncomeBreakdown({
+      desiredNetto: 6000, woonsituatie: 'samenwonend', persoon: PERSOON,
+    })
+    const met = getIncomeBreakdown({
+      desiredNetto: 6000, woonsituatie: 'samenwonend', persoon: PERSOON, partner: { ...PERSOON },
+    })
+    expect(met.fromCapital).toBeLessThan(zonder.fromCapital)
+    expect(met.fromCapital).toBeCloseTo(6000 - 4673.82, 1)
+  })
+
+  it('geeft zonder partner exact dezelfde uitkomst als voorheen', () => {
+    // De reden dat geen enkele golden-waarde is verschoven door het partnermodel.
+    const a = calculatePension(baseInputs(), { currentYear: 2026 })
+    const b = calculatePension(
+      baseInputs({ partner: { actief: false, leeftijd: 45, aowMaandBedragNetto: 1084, aowStartAge: 67, employerPension: 9999, employerPensionStartAge: 67 } }),
+      { currentYear: 2026 }
+    )
+    expect(b.requiredCapital).toBe(a.requiredCapital)
+    expect(b.projectedCapital).toBe(a.projectedCapital)
+  })
+
+  it('laat de leeftijd van de partner met de kalender meelopen', () => {
+    // Een partner die drie jaar jonger is, krijgt zijn AOW drie kalenderjaren later.
+    const r = calculatePension(baseInputs({
+      currentAge: 60, retirementAge: 60, lifeExpectancy: 90,
+      woonsituatie: 'samenwonend', aowMaandBedragNetto: 1084, aowStartAge: 67,
+      employerPension: 0, lijfrenteUitkering: 0,
+      partner: {
+        actief: true, leeftijd: 57, aowMaandBedragNetto: 1084, aowStartAge: 67,
+        employerPension: 0, employerPensionStartAge: 67,
+      },
+    }), { currentYear: 2026 })
+
+    // Hoofdpersoon is 67 als hij 67 is; de partner is dan pas 64 en krijgt nog niets.
+    const opEigenAow = r.yearData.find(y => y.age === 67)!
+    expect(opEigenAow.aowIncome).toBeCloseTo(1084, 0)
+    // Drie jaar later is de partner ook 67 en verdubbelt het AOW-inkomen.
+    const opPartnerAow = r.yearData.find(y => y.age === 70)!
+    expect(opPartnerAow.aowIncome).toBeCloseTo(2168, 0)
+  })
+
+  it('draagt het partnerdeel mee in de fasenlijst', () => {
+    // getIncomeBreakdown() splitste dit al uit, maar buildIncomePhases() gooide
+    // het weg: scherm en exports toonden één opgeteld AOW-bedrag zonder te laten
+    // zien van wie het kwam (15 september 2026). Zelfde scenario als hierboven,
+    // partner drie jaar jonger, zodat de twee AOW-data uit elkaar liggen.
+    const r = calculatePension(baseInputs({
+      currentAge: 60, retirementAge: 60, lifeExpectancy: 90,
+      woonsituatie: 'samenwonend', aowMaandBedragNetto: 1084, aowStartAge: 67,
+      employerPension: 0, lijfrenteUitkering: 0,
+      partner: {
+        actief: true, leeftijd: 57, aowMaandBedragNetto: 1084, aowStartAge: 67,
+        employerPension: 0, employerPensionStartAge: 67,
+      },
+    }), { currentYear: 2026 })
+
+    // Fase vanaf 67: eigen AOW loopt, die van de partner nog niet. Precies het
+    // geval waarvoor de uitsplitsing bestaat.
+    const eigenAowFase = r.incomePhases.find(f => f.fromAge === 67)!
+    expect(eigenAowFase.aow).toBeCloseTo(1084, 0)
+    expect(eigenAowFase.partner).not.toBeNull()
+    expect(eigenAowFase.partner!.aow).toBe(0)
+
+    // Fase vanaf 70: beide AOW's lopen, de helft komt van de partner.
+    const beideAowFase = r.incomePhases.find(f => f.fromAge === 70)!
+    expect(beideAowFase.aow).toBeCloseTo(2168, 0)
+    expect(beideAowFase.partner!.aow).toBeCloseTo(1084, 0)
+    // Het partnerdeel zit al in phase.aow, dus nooit bij elkaar optellen.
+    expect(beideAowFase.partner!.totaal).toBeLessThanOrEqual(beideAowFase.total)
+  })
+
+  it('laat het partnerdeel leeg als er geen partner meerekent', () => {
+    const r = calculatePension(baseInputs(), { currentYear: 2026 })
+    expect(r.incomePhases.length).toBeGreaterThan(0)
+    expect(r.incomePhases.every(f => f.partner === null)).toBe(true)
   })
 })

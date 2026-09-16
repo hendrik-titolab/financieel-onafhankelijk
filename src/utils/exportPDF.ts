@@ -132,6 +132,23 @@ export async function exportToPDF(
     ]
     pdf.text(delen.join('   '), margin + 4, y + 3.5)
     y += 5
+    // De bronbedragen hierboven zijn bij een meerekenende partner het totaal van
+    // twee apart belaste personen. Hier staat welk deel van de partner komt, in
+    // de PDF wél per bron: anders dan in het smalle invoerscherm is daar ruimte
+    // voor. Eigen vermogen blijft ongesplitst, dat is van het huishouden samen.
+    if (phase.partner !== null && phase.partner.totaal > 0) {
+      const p = phase.partner
+      const partnerDelen = [
+        ...(p.aow > 0 ? [`AOW: ${eur(p.aow)}`] : []),
+        ...(p.employerPension > 0 ? [`Werkgever: ${eur(p.employerPension)}`] : []),
+        ...(p.lijfrenteUitkering > 0 ? [`Lijfrente: ${eur(p.lijfrenteUitkering)}`] : []),
+      ]
+      pdf.text(
+        `Waarvan van de partner: ${eur(p.totaal)}   (${partnerDelen.join('   ')})`,
+        margin + 4, y + 3.5
+      )
+      y += 5
+    }
     // Een fase kan er compleet uitzien terwijl het vermogen halverwege op is.
     // Zonder deze regel leest het rapport een inkomen uit eigen vermogen dat de
     // rekenkern vanaf die leeftijd nergens meer betaalt (bevinding 5).
@@ -227,6 +244,9 @@ export async function exportToPDF(
     `Rendement voor pensioen: ${pct(inputs.returnBeforeRetirement)} nominaal | Na pensioen: ${pct(inputs.returnAfterRetirement)} | Inflatie: ${pct(inputs.inflation)} | Volatiliteit: ${pct(inputs.volatilityPre)} / ${pct(inputs.volatilityPost)}`,
     `${inlegLabel}: ${eur(inputs.monthlyContribution)} | Huidig vermogen: ${eur(inputs.currentCapital)}`,
     `Lijfrente-/bankspaaruitkering: ${eur(inputs.lijfrenteUitkering)}/mnd bruto vanaf ${inputs.lijfrenteStartAge} jr | AOW: ${eur(inputs.aowMaandBedragNetto)}/mnd netto`,
+    inputs.partner?.actief
+      ? `Partner (apart belast): nu ${inputs.partner.leeftijd} jr | AOW ${eur(inputs.partner.aowMaandBedragNetto)}/mnd netto vanaf ${inputs.partner.aowStartAge} jr | werkgeverspensioen ${eur(inputs.partner.employerPension)}/mnd bruto vanaf ${inputs.partner.employerPensionStartAge} jr`
+      : 'Partner: niet meegerekend, deze berekening gaat over een persoon',
     eenmalige.length > 0
       ? `Eenmalige bedragen: ${eenmalige.map(e => `${e.name || 'zonder naam'} ${eur(e.amount)} in ${e.year}`).join(' | ')}`
       : 'Eenmalige bedragen: geen',

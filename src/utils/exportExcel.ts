@@ -85,6 +85,20 @@ export async function exportToExcel(berekening: BerekeningsSet, clientName: stri
     ['Lijfrente-/bankspaaruitkering (bruto/maand)', inputs.lijfrenteUitkering],
     ['Lijfrente-/bankspaaruitkering ingangsdatum (leeftijd)', inputs.lijfrenteStartAge],
     ['', ''],
+    // Zonder deze regels is een dossier met partner niet te reproduceren: je ziet
+    // wel een hoger vast inkomen, maar niet waar het vandaan komt.
+    ['PARTNER', ''],
+    ...(inputs.partner?.actief
+      ? [
+          ['Partner meegerekend', 'ja, apart belast'],
+          ['Leeftijd partner nu', inputs.partner.leeftijd],
+          ['AOW partner netto per maand', inputs.partner.aowMaandBedragNetto],
+          ['AOW partner ingangsdatum (leeftijd)', inputs.partner.aowStartAge],
+          ['Werkgeverspensioen partner (bruto/maand)', inputs.partner.employerPension],
+          ['Werkgeverspensioen partner ingangsdatum (leeftijd)', inputs.partner.employerPensionStartAge],
+        ]
+      : [['Partner meegerekend', 'nee, berekening voor één persoon']]),
+    ['', ''],
     ['LIFE EVENTS', ''],
     ...((inputs.lifeEvents ?? []).length > 0
       ? (inputs.lifeEvents ?? []).map(e => [`${e.name} (${e.year})`, e.amount])
@@ -105,6 +119,14 @@ export async function exportToExcel(berekening: BerekeningsSet, clientName: stri
     phaseRows.push(['  Eigen vermogen', eur(p.incomeFromCapital), 'AOW', eur(p.aow)])
     phaseRows.push(['  Werkgeverspensioen', eur(p.employerPension), 'Lijfrente-/bankspaaruitkering', eur(p.lijfrenteUitkering)])
     phaseRows.push(['  Totaal', eur(p.total), '', ''])
+    // Bij een meerekenende partner zijn de drie bronnen hierboven het totaal van
+    // twee apart belaste personen. Zonder deze regel is uit de export niet af te
+    // leiden van wie welk deel komt. Eigen vermogen staat er bewust niet bij:
+    // dat is van het huishouden samen, niet per persoon toe te rekenen.
+    if (p.partner !== null && p.partner.totaal > 0) {
+      phaseRows.push(['  Waarvan van de partner', eur(p.partner.totaal), 'AOW partner', eur(p.partner.aow)])
+      phaseRows.push(['    Werkgeverspensioen partner', eur(p.partner.employerPension), 'Lijfrente partner', eur(p.partner.lijfrenteUitkering)])
+    }
     if (p.shortfallFromAge !== null) {
       phaseRows.push(['  Let op', `eigen vermogen op vanaf leeftijd ${p.shortfallFromAge}`, '', ''])
     }

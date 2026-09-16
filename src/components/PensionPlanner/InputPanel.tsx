@@ -5,7 +5,7 @@ import { aowVakantiegeldFactor } from '../../utils/pensionCalc'
 import { PARAMETER_JAAR } from '../../config/modelVersie'
 import { track } from '@vercel/analytics'
 import { X } from 'lucide-react'
-import type { PensionInputs, IncomeType, ContributionFrequency, LifeEvent, RiskProfile, Woonsituatie, LijfrenteSoort } from '../../types'
+import type { PensionInputs, PensionResult, IncomeType, ContributionFrequency, LifeEvent, RiskProfile, Woonsituatie, LijfrenteSoort } from '../../types'
 import { RISICOPROFIELEN, PROFIEL_VOLGORDE } from '../../config/risicoprofielen'
 import { AOW_NETTO } from '../../utils/pensionCalc'
 import { LIJFRENTE } from '../../config/fiscaleParameters'
@@ -15,6 +15,10 @@ const MAX_ROWS = 20
 interface Props {
   inputs: PensionInputs
   onChange: (updates: Partial<PensionInputs>) => void
+  // Optioneel: nog niet beschikbaar zolang de invoer ongeldig is (zie isGeldig in
+  // PensionPlanner/index.tsx). De overbruggingswaarschuwing hieronder valt in dat
+  // geval terug op niets tonen in plaats van zelf te herberekenen.
+  result?: PensionResult | null
 }
 
 // ---- Shared UI primitives ----
@@ -83,7 +87,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
  * handen wegspringt. Begrenzen en melden gebeurt pas bij het verlaten van het
  * veld.
  */
-function NumberInput({ id, value, onChange, prefix, suffix, min = 0, max }: {
+export function NumberInput({ id, value, onChange, prefix, suffix, min = 0, max }: {
   id?: string
   value: number; onChange: (v: number) => void
   prefix?: string; suffix?: string; step?: number; min?: number; max?: number
@@ -178,7 +182,7 @@ function AgeSliderRow({ label, value, min, max, onChange }: {
 
 // ---- Parameters tab ----
 
-function ParametersTab({ inputs, onChange }: Props) {
+function ParametersTab({ inputs, onChange, result }: Props) {
   // Losse velden buiten Field om (met een Toggle ernaast in plaats van alleen
   // een hint-paragraaf) hebben elk hun eigen stabiele id nodig, om dezelfde
   // reden als in Field hierboven.
@@ -212,10 +216,20 @@ function ParametersTab({ inputs, onChange }: Props) {
         <Field label="Huidig vermogen">
           <NumberInput value={inputs.currentCapital} onChange={v => onChange({ currentCapital: v })}
             prefix="€" step={1000} />
+          {/* Box 2 werd hier tot 9 september 2026 niet genoemd, terwijl de tool zich
+              op DGA's richt. Sinds de planner box 3 zelf uitrekent is dat een groter
+              risico dan het was: wie zijn BV-vermogen hier invult kreeg er stilzwijgend
+              box 3 over, én een onttrekking die de tool als onbelast behandelt.
+
+              De eigen woning staat er bewust niet bij (besluit Hendrik, 9 september
+              2026): niemand vult zijn huis in als vermogen, en zou dat ook niet moeten.
+              Komt er bij een verhuizing overwaarde vrij, dan hoort die als eenmalig
+              bedrag in het tweede tabblad. Dat staat daar nu ook als voorbeeld. */}
           <p className="text-xs text-body leading-relaxed mt-1">
             Vul hier je vrij belegde vermogen in (box 3). Lijfrente, banksparen en pensioenbeleggen
             kun je beter niet meetellen: opnames daaruit zijn belast als inkomen in box 1, en daar
-            rekent deze tool niet mee.
+            rekent deze tool niet mee. Geld in je eigen BV hoort hier evenmin: dat valt in box 2 en
+            komt alleen belast naar privé.
           </p>
         </Field>
         <div className="space-y-1">
@@ -286,14 +300,15 @@ function ParametersTab({ inputs, onChange }: Props) {
       <div className="border-t border-line-soft" />
 
       <Section title="Pensioenuitkeringen">
-        {/* Expliciete afbakening. De tool kent geen tweede persoon met eigen
-            pensioen, eigen belasting en eigen leeftijd; woonsituatie stuurt alleen
-            het AOW-bedrag en de alleenstaandeouderenkorting (audit 7 september
-            2026, bevinding 16). */}
+        {/* De tool rekende tot september 2026 alleen één persoon. Voor een stel gaat
+            dat op twee manieren mis, want box 1 is individueel: alleen je eigen AOW
+            invullen laat de helft van het vaste inkomen weg, en de opgetelde AOW in
+            één veld zetten belast dat als het inkomen van één persoon
+            (audit-bevinding 16). */}
         <p className="text-xs text-body leading-relaxed">
-          Deze berekening gaat over één persoon. Kies je samenwonend, dan past dat je AOW-bedrag
-          en je heffingskortingen aan, maar er wordt geen tweede persoon met een eigen pensioen,
-          eigen leeftijd en eigen belasting doorgerekend.
+          {inputs.partner.actief
+            ? 'Jij en je partner worden apart belast, zoals de inkomstenbelasting werkt: ieder met eigen schijven en eigen heffingskortingen. Wat je hieronder invult geldt per persoon.'
+            : 'Deze berekening gaat over één persoon. Woon je samen en heeft je partner ook AOW of pensioen, zet dan hieronder "Partner meerekenen" aan.'}
         </p>
         {/* Referentie aan je eigen pensioenleeftijd: die staat in de sectie
             "Leeftijd" hierboven, dus zonder deze regel zie je 'm niet meer
@@ -313,12 +328,33 @@ function ParametersTab({ inputs, onChange }: Props) {
           <div className="flex justify-between items-center">
             <label className="label mb-0">Woonsituatie</label>
             <Toggle value={inputs.woonsituatie}
-              onChange={v => onChange({
-                woonsituatie: v as Woonsituatie,
-                aowMaandBedragNetto: v === 'alleenstaand'
-                  ? AOW_NETTO.alleenstaand
-                  : AOW_NETTO.samenwonend,
-              })}
+              onChange={v => {
+                const samen = v === 'samenwonend'
+                onChange({
+                  woonsituatie: v as Woonsituatie,
+                  aowMaandBedragNetto: samen ? AOW_NETTO.samenwonend : AOW_NETTO.alleenstaand,
+                  // Overschakelen naar samenwonend zet de partner meteen aan en vult
+                  // hem met het standaardbedrag: voor een stel is dát de juiste
+                  // uitgangssituatie, niet de helft van het huishoudinkomen. Terug
+                  // naar alleenstaand zet hem weer uit.
+                  partner: {
+                    ...inputs.partner,
+                    actief: samen,
+                    // Was eerder `inputs.partner.leeftijd || inputs.currentAge`. De
+                    // default-partnerleeftijd (40, zie DEFAULT_INPUTS.partner in
+                    // index.tsx) is toevallig gelijk aan de default-hoofdleeftijd,
+                    // dus die falsy-fallback kon in de praktijk nooit afvuren: wie
+                    // eerst de eigen leeftijd wijzigt en dan pas samenwonend
+                    // aanzet, kreeg alsnog een partner van 40 (bevinding review
+                    // 14 september 2026). Nu expliciet: alleen syncen zolang de
+                    // partnerleeftijd nog op die ongewijzigde default staat, zodat
+                    // een al eerder handmatig ingevulde leeftijd nooit overschreven
+                    // wordt.
+                    leeftijd: inputs.partner.leeftijd === 40 ? inputs.currentAge : inputs.partner.leeftijd,
+                    aowMaandBedragNetto: AOW_NETTO.samenwonend,
+                  },
+                })
+              }}
               options={[
                 { value: 'alleenstaand', label: 'Alleenstaand' },
                 { value: 'samenwonend', label: 'Samenwonend' },
@@ -328,6 +364,81 @@ function ParametersTab({ inputs, onChange }: Props) {
             Bepaalt je AOW-bedrag en of je recht hebt op de alleenstaandeouderenkorting.
           </p>
         </div>
+
+        {/* Partner meerekenen. Alleen zichtbaar bij samenwonend: als alleenstaande
+            is er geen tweede persoon om te belasten. */}
+        {inputs.woonsituatie === 'samenwonend' && (
+          <div className="border-t border-line-soft pt-3 space-y-3">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={inputs.partner.actief}
+                onChange={e => onChange({ partner: { ...inputs.partner, actief: e.target.checked } })}
+                className="rounded accent-ink" />
+              <span className="text-xs font-medium text-ink">Partner meerekenen</span>
+            </label>
+
+            {!inputs.partner.actief && (
+              <p className="text-xs text-signal leading-relaxed">
+                Je rekent nu alleen met jouw eigen AOW en pensioen. Heeft je partner ook een
+                AOW-uitkering, dan mist het huishouden die helemaal.
+              </p>
+            )}
+
+            {inputs.partner.actief && (
+              <div className="space-y-3">
+                <p className="text-xs text-body leading-relaxed">
+                  De bedragen van je partner worden apart belast en daarna bij die van jou
+                  opgeteld. Dat scheelt: twee mensen hebben elk hun eigen schijven en hun eigen
+                  heffingskortingen. Alles bij elkaar in één veld zetten geeft een fors lager netto.
+                </p>
+
+                <Field label="Leeftijd partner nu">
+                  <NumberInput value={inputs.partner.leeftijd}
+                    onChange={v => onChange({ partner: { ...inputs.partner, leeftijd: v } })}
+                    suffix="jr" step={1} min={18} max={100} />
+                  <p className="text-xs text-body leading-relaxed mt-1">
+                    {inputs.partner.leeftijd === inputs.currentAge
+                      ? 'Even oud als jij.'
+                      : inputs.partner.leeftijd < inputs.currentAge
+                        ? `${inputs.currentAge - inputs.partner.leeftijd} jaar jonger dan jij, dus AOW en pensioen gaan later in.`
+                        : `${inputs.partner.leeftijd - inputs.currentAge} jaar ouder dan jij, dus AOW en pensioen gaan eerder in.`}
+                  </p>
+                </Field>
+
+                <Field label="AOW partner netto per maand">
+                  <NumberInput value={inputs.partner.aowMaandBedragNetto}
+                    onChange={v => onChange({ partner: { ...inputs.partner, aowMaandBedragNetto: v } })}
+                    prefix="€" step={50} />
+                </Field>
+
+                <Field label="AOW partner ingangsdatum (leeftijd)">
+                  <NumberInput value={inputs.partner.aowStartAge}
+                    onChange={v => onChange({ partner: { ...inputs.partner, aowStartAge: v } })}
+                    suffix="jr" step={1} min={60} max={75} />
+                </Field>
+
+                <Field label="Werkgeverspensioen partner (bruto/mnd)">
+                  <NumberInput value={inputs.partner.employerPension}
+                    onChange={v => onChange({ partner: { ...inputs.partner, employerPension: v } })}
+                    prefix="€" step={50} />
+                </Field>
+
+                <Field label="Werkgeverspensioen partner ingang (leeftijd)">
+                  <NumberInput value={inputs.partner.employerPensionStartAge}
+                    onChange={v => onChange({ partner: { ...inputs.partner, employerPensionStartAge: v } })}
+                    suffix="jr" step={1} min={55} max={75} />
+                </Field>
+
+                <p className="text-xs text-body leading-relaxed">
+                  Wat hier niet in zit: een aparte beleggingspot per persoon, een eigen lijfrente
+                  voor je partner, en wat er gebeurt als één van jullie eerder overlijdt. Het
+                  vermogen en het gewenste inkomen gelden voor jullie samen.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
         <Field label="AOW netto per maand">
           <NumberInput value={inputs.aowMaandBedragNetto}
             onChange={v => onChange({ aowMaandBedragNetto: v })} prefix="€" step={50} />
@@ -453,9 +564,12 @@ function ParametersTab({ inputs, onChange }: Props) {
             </p>
           </div>
         </div>
-        {inputs.retirementAge < Math.min(inputs.aowStartAge, inputs.employerPensionStartAge, inputs.lijfrenteStartAge) && (
+        {/* overbruggingsJaren komt uit het resultaat (pensionCalc.ts), niet uit een
+            eigen herberekening hier: dezelfde ingangsleeftijden-vergelijking stond
+            tot 14 september 2026 dubbel in de code, zie de toelichting daar. */}
+        {result && result.overbruggingsJaren > 0 && (
           <p className="text-xs text-signal bg-panel border border-signal rounded-[3px] p-2 leading-relaxed">
-            ⚠ Overbruggingsperiode van {Math.min(inputs.aowStartAge, inputs.employerPensionStartAge, inputs.lijfrenteStartAge) - inputs.retirementAge} jaar: eigen vermogen dekt het volledige inkomen.
+            ⚠ Overbruggingsperiode van {result.overbruggingsJaren} jaar: eigen vermogen dekt het volledige inkomen.
           </p>
         )}
       </Section>
@@ -575,16 +689,18 @@ function RisicoprofielSection({ inputs, onChange }: Props) {
         </div>
       )}
 
-      {/* Kosten en vermogensbelasting, apart van het brutorendement. Bewust twee
-          velden en geen ingebouwde berekening: het box 3-stelsel beweegt richting
-          heffing over werkelijk rendement, en een volledig model daarvoor is bij
-          invoering opnieuw fout. De schatting hiernaast komt wel uit de
-          gepubliceerde parameters, zie utils/box3.ts. */}
+      {/* Kosten en vermogensbelasting, apart van het brutorendement.
+          Box 3 kent sinds september 2026 twee routes. Standaard rekent de tool de
+          heffing elk jaar opnieuw uit over het vermogen van dát jaar, want door het
+          heffingsvrije vermogen loopt de druk op met de omvang van het vermogen en
+          kan één percentage over de hele looptijd niet kloppen. Wie een eigen
+          percentage invult schakelt over op de tweede route en houdt dat getal.
+          Zie utils/box3.ts en de uitleg in pensionCalc.ts. */}
       <div className="border-t border-line-soft pt-3 space-y-3">
         <p className="text-xs text-body leading-relaxed">
-          Wat er van dat brutorendement af gaat. Laat je beide op 0 staan, dan rekent de tool
-          zonder kosten en zonder vermogensbelasting, en valt de uitkomst dus gunstiger uit dan
-          in werkelijkheid.
+          Wat er van dat brutorendement af gaat. De kosten vul je zelf in; box 3 rekent de tool
+          standaard elk jaar voor je uit. Zet je de kosten op 0, dan valt de uitkomst gunstiger
+          uit dan in werkelijkheid.
         </p>
 
         <Field label="Kosten van beleggen">
@@ -597,52 +713,59 @@ function RisicoprofielSection({ inputs, onChange }: Props) {
         </Field>
 
         <Field label="Vermogensbelasting (box 3)">
-          {/* Het veld begint op de schatting die bij het opgegeven vermogen hoort en
-              beweegt daarmee mee, tot je het zelf aanpast. Een vast getal kan hier
-              niet kloppen: de druk loopt op met de omvang van het vermogen. */}
-          <NumberInput value={inputs.vermogensbelastingPct}
-            onChange={v => onChange({ vermogensbelastingPct: v, vermogensbelastingHandmatig: true })}
-            suffix="%" step={0.1} min={0} max={5} />
+          <select
+            value={inputs.vermogensbelastingHandmatig ? 'zelf' : 'berekenen'}
+            onChange={e => onChange({ vermogensbelastingHandmatig: e.target.value === 'zelf' })}
+            className="input-field"
+            aria-label="Hoe wordt box 3 meegerekend"
+          >
+            <option value="berekenen">Elk jaar uitrekenen over mijn vermogen</option>
+            <option value="zelf">Ik vul zelf een percentage in</option>
+          </select>
+
+          {inputs.vermogensbelastingHandmatig && (
+            <div className="mt-2">
+              <NumberInput value={inputs.vermogensbelastingPct}
+                onChange={v => onChange({ vermogensbelastingPct: v })}
+                suffix="%" step={0.1} min={0} max={5} />
+            </div>
+          )}
+
           <div className="text-xs text-body leading-relaxed mt-1 space-y-1">
             {inputs.vermogensbelastingHandmatig ? (
               <>
                 <p>
-                  Je hebt dit zelf ingevuld. Bij een vermogen van
+                  Je vult zelf een vast percentage in, dat de hele looptijd van je rendement af
+                  gaat. Bij een vermogen van
                   € {Math.round(inputs.currentCapital).toLocaleString('nl-NL')} en je woonsituatie
-                  komt onze schatting voor {PARAMETER_JAAR} uit op{' '}
+                  hoort daar voor {PARAMETER_JAAR}{' '}
                   <strong className="font-medium text-ink">
                     {box3Schatting.toLocaleString('nl-NL', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%
-                  </strong>.
+                  </strong> bij. Let op: dat percentage past bij je vermogen van vandaag, niet bij
+                  het vermogen dat je straks hebt.
                 </p>
                 {box3Afwijkend && (
                   <button
                     type="button"
-                    onClick={() => onChange({
-                      vermogensbelastingPct: box3Schatting,
-                      vermogensbelastingHandmatig: false,
-                    })}
+                    onClick={() => onChange({ vermogensbelastingPct: box3Schatting })}
                     className="underline font-medium text-data-700 hover:text-ink"
                   >
-                    Terug naar de schatting
+                    Neem {box3Schatting.toLocaleString('nl-NL', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}% over
                   </button>
                 )}
               </>
             ) : (
               <p>
-                Geschat op basis van je vermogen van
-                € {Math.round(inputs.currentCapital).toLocaleString('nl-NL')} en je woonsituatie,
-                met de percentages van {PARAMETER_JAAR}. Past dit bedrag zich aan, dan past dit
-                percentage mee. Vul je zelf iets in, dan blijft dat staan.
+                De heffing wordt elk jaar opnieuw berekend over het vermogen van dát jaar, met de
+                percentages van {PARAMETER_JAAR} en je woonsituatie. Dat is nauwkeuriger dan één
+                vast percentage, want de druk loopt op met de omvang van je vermogen: bij een ton
+                ongeveer 0,9%, bij een miljoen ruim 2%.
               </p>
             )}
             <p>
-              De druk loopt op met de omvang van je vermogen, doordat het heffingsvrije deel een
-              steeds kleiner aandeel wordt: bij een ton ongeveer 0,9%, bij een miljoen ruim 2%.
-              Voor spaargeld ligt hij lager dan voor beleggingen.
-            </p>
-            <p>
-              Een vereenvoudiging: de heffing wordt niet elk jaar opnieuw over je actuele vermogen
-              berekend, en de verdeling tussen sparen, beleggen en schulden telt niet mee.
+              Twee vereenvoudigingen: je vermogen telt volledig mee als beleggingen, dus wie
+              vooral spaart betaalt in werkelijkheid minder. En het heffingsvrije vermogen loopt
+              mee met de inflatie, zoals dat nu ook gebeurt.
             </p>
           </div>
         </Field>
@@ -754,7 +877,8 @@ function EenmaligeBedragenSection({ inputs, onChange }: Props) {
     <Section title={`Eenmalige bedragen${validCount > 0 ? ` (${validCount})` : ''}`}>
       <p className="text-xs text-body -mt-1 leading-relaxed">
         Een erfenis, verbouwing, extra inleg of opname: eenmalige bedragen die je vermogen op
-        een bepaald jaar raken. Positief is een bijschrijving, negatief een afschrijving.
+        een bepaald jaar raken. Ook de overwaarde die vrijkomt als je je huis verkoopt en kleiner
+        gaat wonen hoort hier. Positief is een bijschrijving, negatief een afschrijving.
       </p>
       <div className="space-y-3">
         {rows.map((row, i) => {
@@ -831,7 +955,7 @@ function EventsTab({ inputs, onChange }: Props) {
 
 type PanelTab = 'parameters' | 'events'
 
-export function InputPanel({ inputs, onChange }: Props) {
+export function InputPanel({ inputs, onChange, result }: Props) {
   const [tab, setTab] = useState<PanelTab>('parameters')
 
   const eventCount = inputs.lifeEvents?.length ?? 0
@@ -859,7 +983,7 @@ export function InputPanel({ inputs, onChange }: Props) {
         ))}
       </div>
 
-      {tab === 'parameters' && <ParametersTab inputs={inputs} onChange={onChange} />}
+      {tab === 'parameters' && <ParametersTab inputs={inputs} onChange={onChange} result={result} />}
       {tab === 'events'     && <EventsTab     inputs={inputs} onChange={onChange} />}
     </div>
   )

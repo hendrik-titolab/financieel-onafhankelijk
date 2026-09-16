@@ -13,6 +13,40 @@ export interface LifeEvent {
 export type Woonsituatie = 'alleenstaand' | 'samenwonend'
 
 /**
+ * De partner als tweede, apart belaste persoon.
+ *
+ * De inkomstenbelasting in box 1 is individueel: twee mensen hebben elk hun eigen
+ * schijven en hun eigen heffingskortingen. De tool rekende één persoon, en voor
+ * een stel ging dat op twee manieren mis. Vulde je alleen je eigen AOW in, dan
+ * miste het huishouden de AOW van je partner. Vulde je de opgetelde AOW in één
+ * veld in, dan belastte de tool dat als het inkomen van één persoon.
+ *
+ * Doorgerekend met de parameters van 2026, twee partners met elk € 1.084 AOW
+ * netto en € 1.500 werkgeverspensioen bruto per maand:
+ *   apart belast (juist)          € 4.673,81 netto per maand
+ *   samengeteld in één veld       € 3.718,73
+ *   verschil                      €   955,08, oftewel 25,7%
+ *
+ * Bij alleen AOW is het verschil circa 5%. Zodra er aanvullend pensioen bij komt
+ * loopt het hard op, omdat één persoon door de schijven schuift en zijn
+ * ouderenkorting volledig afbouwt terwijl twee personen elk onder die grenzen
+ * blijven (audit 7 september 2026, bevinding 16).
+ *
+ * Bewust NIET gemodelleerd: een aparte portefeuille per persoon, een
+ * nabestaandenscenario, een aparte planningshorizon, en een lijfrente voor de
+ * partner. Die staan als openstaand punt in CLAUDE.md.
+ */
+export interface PartnerGegevens {
+  actief: boolean
+  /** Huidige leeftijd van de partner. Mag afwijken van die van de hoofdpersoon. */
+  leeftijd: number
+  aowMaandBedragNetto: number
+  aowStartAge: number
+  employerPension: number          // bruto/mnd
+  employerPensionStartAge: number
+}
+
+/**
  * Levenslang verzekerd of tijdelijk (bancair of verzekerd).
  *
  * Het verschil is fiscaal en praktisch relevant: een levenslange
@@ -48,24 +82,28 @@ export interface PensionInputs {
   /**
    * Vermogensbelasting (box 3), in procentpunten van het rendement.
    *
-   * Bewust een invoerveld en geen berekening: het box 3-stelsel beweegt richting
-   * heffing over werkelijk rendement, en een volledig model daarvoor bouwen levert
-   * een fiscale motor op die bij invoering opnieuw fout is. utils/box3.ts rekent
-   * wel een schatting voor bij het opgegeven vermogen, en is het vervangpunt voor
-   * het volledige model.
+   * Doet alleen iets als vermogensbelastingHandmatig true is. Staat die op false,
+   * dan rekent de kern de heffing per jaar uit over het dán actuele vermogen en
+   * blijft dit veld ongebruikt; het houdt dan wel de schatting bij het opgegeven
+   * vermogen vast, zodat overschakelen naar handmatig met een zinnig getal begint.
    */
   vermogensbelastingPct: number
   /**
-   * Of de gebruiker de vermogensbelasting zelf heeft ingevuld.
+   * Welke van de twee box 3-routes de rekenkern volgt.
    *
-   * Staat dit op false, dan volgt vermogensbelastingPct automatisch de schatting
-   * die utils/box3.ts uit het opgegeven vermogen en de woonsituatie afleidt. Zodra
-   * iemand het veld zelf aanpast gaat de vlag op true en blijft zijn waarde staan.
+   * false: de heffing wordt elk jaar opnieuw berekend over het vermogen van dát
+   * jaar en gaat in euro's van het saldo af. Dit is sinds september 2026 de
+   * standaard in de tool, en het antwoord op openstaand punt 2 uit de audit van
+   * 7 september 2026: één vast percentage over de hele looptijd kan niet kloppen,
+   * want door het heffingsvrije vermogen loopt de druk op met de omvang van het
+   * vermogen (ongeveer 0,9 procentpunt bij een ton, ruim 2,0 bij een miljoen).
    *
-   * Reden: een vast getal kan niet kloppen, want de druk loopt op met de omvang
-   * van het vermogen. Zonder deze automatiek zou de gebruiker bij elke wijziging
-   * van zijn vermogen zelf moeten herrekenen, of blijven zitten met een percentage
-   * dat niet meer bij zijn situatie past.
+   * true: de gebruiker vult zelf een vast percentage in, dat als procentpunten van
+   * het rendement af gaat. Dat was tot september 2026 de enige route.
+   *
+   * Nooit allebei: staat deze vlag op false, dan doet vermogensbelastingPct niets.
+   * De default in de testfixtures is bewust true met 0%, zodat de golden values van
+   * vóór deze wijziging onveranderd blijven.
    */
   vermogensbelastingHandmatig: boolean
 
@@ -87,6 +125,12 @@ export interface PensionInputs {
    * zetten hoort alleen als het ingevulde bedrag het al bevat.
    */
   aowVakantiegeld: boolean
+
+  /**
+   * De partner. `actief: false` betekent dat er alleen voor één persoon wordt
+   * gerekend, en dan is de uitkomst exact gelijk aan die van vóór september 2026.
+   */
+  partner: PartnerGegevens
   aowStartAge: number         // age at which AOW kicks in
   employerPension: number     // gross monthly (bruto/maand)
   employerPensionStartAge: number  // age at which employer pension kicks in (default 67, see UPO)
@@ -144,6 +188,19 @@ export interface YearData {
   totalIncome: number
 }
 
+/**
+ * Wat één persoon netto per maand aan vaste uitkeringen ontvangt. Stond tot
+ * 15 september 2026 in pensionCalc.ts; hierheen verplaatst toen IncomePhase het
+ * partnerdeel ging meedragen, anders zou types/index.ts uit de rekenkern moeten
+ * importeren en die importeert zelf al uit dit bestand.
+ */
+export interface PersoonInkomen {
+  aow: number
+  employerPension: number
+  lijfrenteUitkering: number
+  totaal: number
+}
+
 export interface IncomePhase {
   label: string
   fromAge: number
@@ -158,6 +215,17 @@ export interface IncomePhase {
   employerPension: number
   lijfrenteUitkering: number
   total: number
+  /**
+   * Het deel van de drie bronnen hierboven dat van de partner komt, of null als
+   * er geen partner meerekent. Alleen voor weergave: de bedragen hierboven zijn
+   * al inclusief dit deel, dus nooit bij elkaar optellen.
+   *
+   * incomeFromCapital heeft bewust geen tegenhanger. Box 1 is individueel, dus
+   * AOW en pensioen zijn per persoon toe te rekenen; het vermogen is dat niet,
+   * dat geldt in dit model voor het huishouden samen (zie CLAUDE.md,
+   * "Huishoudmodel is er half").
+   */
+  partner: PersoonInkomen | null
   /**
    * De eerste leeftijd binnen deze fase waarop het vermogen het gewenste bedrag
    * niet meer kan opbrengen, of null als de fase volledig gedekt is. Afgeleid uit
@@ -179,7 +247,14 @@ export interface PensionResult {
   /**
    * Hetzelfde doelbedrag volgens alleen de eindwaarde: contante waarde van de
    * onttrekkingen minus pvEventsAfterRetirement. Verklaart de opbouw op het scherm
-   * en in de export. Gelijk aan requiredCapital zolang er niets te overbruggen is.
+   * en in de export.
+   *
+   * Niet meer gelijk aan requiredCapital zodra er niets te overbruggen is: deze
+   * formule kent de box 3-heffing niet, requiredCapital sinds september 2026 wel
+   * (vermogensbelastingHandmatig:false). Een verschil tussen deze twee kan dus
+   * zowel van een echte overbrugging komen als van box 3 alleen — zie
+   * overbruggingsToeslag hieronder voor hoe dat uit elkaar wordt gehouden
+   * (bevinding review 14 september 2026).
    */
   requiredCapitalEindwaarde: number
   /**
@@ -191,9 +266,20 @@ export interface PensionResult {
   effectiveRetirementAge: number
   /**
    * Wat er bovenop requiredCapitalEindwaarde nodig is om de jaren te overbruggen
-   * tot een later bedrag binnenkomt. Nul als de eindwaarde al toereikend is.
+   * tot een later bedrag binnenkomt. Nul als er geen echte overbruggingsperiode is
+   * (zie overbruggingsJaren) — ook als requiredCapital en requiredCapitalEindwaarde
+   * dan nog uit elkaar liggen door het box 3-verschil hierboven. Dat verschil heet
+   * dan geen overbrugging, want dat is het niet.
    */
   overbruggingsToeslag: number
+  /**
+   * Aantal jaar tussen de pensioendatum en de eerste eigen inkomstenbron (AOW,
+   * werkgeverspensioen, lijfrente, of de partner-equivalenten). Nul als er geen
+   * overbruggingsperiode is. Los van overbruggingsToeslag teruggegeven zodat het
+   * scherm "X jaar" kan tonen zonder de ingangsleeftijden-vergelijking zelf over
+   * te doen (bevinding review 14 september 2026).
+   */
+  overbruggingsJaren: number
   /**
    * De leeftijd waarop het inkomensdoel voor het eerst niet meer volledig uit
    * vermogen betaald kan worden, of null als dat niet gebeurt. "Wanneer ontstaat

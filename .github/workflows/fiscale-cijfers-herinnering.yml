@@ -1,0 +1,60 @@
+# Herinnering om de fiscale cijfers te checken, WP10 uit HANDOFF-borging-2026-09.md.
+#
+# Vier vaste momenten per jaar waarop de Belastingdienst/SVB nieuwe officiële cijfers
+# publiceert: 1 januari (nieuwe box 1-schijven en heffingskortingen), 1 juli
+# (AOW-peildatum), rond Prinsjesdag (koopkrachtplaatje, vaak voorlopige cijfers voor
+# het jaar erna) en half februari (definitieve box 3-forfaits in de Staatscourant,
+# zoals dat op 12 februari 2026 voor 2025 gebeurde). Dit is een gepland
+# controlemoment, geen exacte wettelijke deadline: Prinsjesdag valt niet altijd op
+# 16 september, dus een paar dagen speling is bewust.
+#
+# Onafhankelijk van of er op dat moment een Claude-sessie actief is: dit opent gewoon
+# een issue in deze repo.
+name: Herinnering fiscale cijfers
+
+on:
+  schedule:
+    - cron: '0 8 1 1 *'   # 1 januari
+    - cron: '0 8 1 7 *'   # 1 juli, AOW-peildatum
+    - cron: '0 8 16 9 *'  # rond Prinsjesdag (derde dinsdag van september)
+    - cron: '0 8 15 2 *'  # half februari, definitieve box 3-forfaits
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  herinnering:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Issue openen
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const dag = new Date().toISOString().slice(0, 10)
+            const body = [
+              '**Automatische herinnering, geen exacte wettelijke deadline.**',
+              '',
+              'Controleer of er nieuwe officiële cijfers zijn gepubliceerd (AOW-bedragen, ' +
+                'box 1-schijven en heffingskortingen, box 3-forfaits, jaarruimteparameters, ' +
+                'Prinsjesdag-koopkrachtplaatje) en werk zo nodig bij:',
+              '',
+              '1. Werk `C:\\Users\\schak\\Documents\\Fiscale bron\\fiscale-cijfers.json` bij, ' +
+                'met bron en datum per gewijzigde waarde.',
+              '2. Draai `node genereer.mjs` in die map.',
+              '3. Commit de wijziging in de website-repo. `git diff src/config/` moet precies ' +
+                'de verwachte cijfers tonen, niets meer.',
+              '4. Zet `bijgewerkt` in de bron op vandaag.',
+              '5. Verandert een cijfer een rekenuitkomst? Reken de nieuwe waarde eerst ' +
+                'onafhankelijk na, werk de golden-fixtures bij, en hoog `MODEL_VERSIE` op ' +
+                '(`src/config/modelVersie.ts`).',
+              '',
+              'Volledige werkwijze: `CLAUDE.md` en `HANDOFF-borging-2026-09.md` in de repo-root.',
+            ].join('\n')
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Fiscale cijfers checken (${dag})`,
+              body,
+            })

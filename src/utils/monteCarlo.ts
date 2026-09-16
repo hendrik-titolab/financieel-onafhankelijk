@@ -1,6 +1,7 @@
 import type { PensionInputs, MonteCarloResult, PercentilePoint } from '../types'
-import { brutoMaandNaarNettoMaand, getMonthlyWithdrawal, controleerLeeftijden } from './pensionCalc'
-import { nettoNominaalRendement } from './box3'
+import { brutoMaandNaarNettoMaand, getMonthlyWithdrawal, controleerLeeftijden, huishoudOp } from './pensionCalc'
+import type { HuishoudOpParams } from './pensionCalc'
+import { nettoNominaalRendement, box3HeffingPerJaar } from './box3'
 
 export const N_SIMULATIONS = 2000
 
@@ -40,19 +41,50 @@ function realReturn(nominal: number, inflation: number): number {
   return ((1 + nominal / 100) / (1 + inflation / 100) - 1) * 100
 }
 
+/**
+ * De standaardafwijking die bij een REËEL rendement hoort, afgeleid uit de
+ * nominale standaardafwijking die de gebruiker invult.
+ *
+ * Tot september 2026 ging er een reëel verwacht rendement de trekking in met een
+ * nominale standaardafwijking ernaast. Die twee horen niet bij elkaar. Omdat de
+ * inflatie in dit model een vast getal is, is de omrekening exact: elk nominaal
+ * rendement wordt gedeeld door (1 + inflatie), en dus schaalt de spreiding mee
+ * met diezelfde deling.
+ *
+ *   σ_reëel = σ_nominaal / (1 + inflatie)
+ *
+ * Bij 12% en 3% inflatie geeft dat 11,65%. De log-sigma die sampleAnnualReturn()
+ * daaruit afleidt gaat van 0,11621 naar 0,11285, dus 2,9% lager.
+ *
+ * WAT DIT NIET OPLOST, en dat weegt zwaarder dan de correctie zelf. Dit model
+ * behandelt inflatie als zeker: één vast percentage voor de hele looptijd. In
+ * werkelijkheid varieert inflatie, en dat maakt een reëel rendement onzekerder
+ * dan hier wordt getoond. De te hoge volatiliteit van hiervoor compenseerde dat
+ * per ongeluk een beetje. Deze correctie maakt de berekening intern kloppend, ze
+ * maakt het risicobeeld niet automatisch realistischer. Lees de bandbreedte in de
+ * grafiek dus niet als een volledige weergave van het risico.
+ *
+ * Stochastische inflatie, en de correlatie tussen inflatie en rendement, staan
+ * als openstaand punt in CLAUDE.md.
+ */
+export function reeleVolatiliteit(volatiliteitNominaal: number, inflatie: number): number {
+  return volatiliteitNominaal / (1 + inflatie / 100)
+}
+
 export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number; currentYear?: number }): MonteCarloResult {
   const rng = opts?.rng ?? Math.random
   const {
     currentAge, retirementAge: retirementAgeInput, lifeExpectancy,
     currentCapital, monthlyContribution, contributionFrequency,
     returnBeforeRetirement, returnAfterRetirement, inflation,
-    kostenPct = 0, vermogensbelastingPct = 0,
+    kostenPct = 0, vermogensbelastingPct = 0, vermogensbelastingHandmatig = true,
     desiredRetirementIncome, desiredRetirementIncomeType,
     aowMaandBedragNetto, aowStartAge, woonsituatie = 'alleenstaand',
     employerPension, employerPensionStartAge,
     lijfrenteUitkering, lijfrenteStartAge,
     lijfrenteSoort = 'levenslang', lijfrenteEindLeeftijd = Infinity,
     aowVakantiegeld = false,
+    partner,
     lifeEvents = [],
     volatilityPre, volatilityPost,
   } = inputs
@@ -92,11 +124,33 @@ export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number
       )
     : desiredRetirementIncome
 
-  // Zelfde aftrek als in pensionCalc.ts, zie daar.
+  // Zelfde twee routes voor box 3 als in pensionCalc.ts, zie de uitleg daar. Of
+  // het percentage van het rendement af gaat, of de heffing gaat per jaar in
+  // euro's van het saldo af. Nooit allebei.
+  const belastingViaPercentage = vermogensbelastingHandmatig ? vermogensbelastingPct : 0
+  const heffing = vermogensbelastingHandmatig
+    ? () => 0
+    : (vermogenBeginJaar: number) => box3HeffingPerJaar(vermogenBeginJaar, woonsituatie)
+
   const realPre = realReturn(
-    nettoNominaalRendement(returnBeforeRetirement, kostenPct, vermogensbelastingPct), inflation)
+    nettoNominaalRendement(returnBeforeRetirement, kostenPct, belastingViaPercentage), inflation)
   const realPost = realReturn(
-    nettoNominaalRendement(returnAfterRetirement, kostenPct, vermogensbelastingPct), inflation)
+    nettoNominaalRendement(returnAfterRetirement, kostenPct, belastingViaPercentage), inflation)
+
+  const volPre = reeleVolatiliteit(volatilityPre, inflation)
+  const volPost = reeleVolatiliteit(volatilityPost, inflation)
+
+  // Zelfde gedeelde huishoudOp() als pensionCalc.ts, zodat beide kernen hetzelfde
+  // huishouden doorrekenen (was tot 14 september 2026 een eigen, bijna-identieke
+  // kopie hier).
+  const partnerActief = Boolean(partner?.actief)
+  const huishoudOpParams: HuishoudOpParams = {
+    woonsituatie, aowVakantiegeld, currentAge,
+    aowMonthlyNetto, aowStartAge,
+    employerPension, employerPensionStartAge,
+    lijfrenteUitkering, lijfrenteStartAge, lijfrenteEinde,
+    partnerActief, partner,
+  }
   const monthlyPMT = contributionFrequency === 'jaarlijks'
     ? monthlyContribution / 12
     : monthlyContribution
@@ -131,38 +185,38 @@ export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number
       capitalByAge[yr][sim] = Math.max(0, capital)
 
       if (age < retirementAge) {
-        const r = sampleAnnualReturn(realPre, volatilityPre, rng)
+        const r = sampleAnnualReturn(realPre, volPre, rng)
         // Mid-year-conventie voor de jaarinleg, zelfde reden en zelfde
         // Math.sqrt(1+r) als in pensionCalc.ts's simulateAccumulation. r kan
         // hier niet onder -100% uitkomen (lognormale trekking, zie
         // sampleAnnualReturn), dus 1+r is altijd positief en de wortel is
         // altijd reëel.
         const groeifactorInleg = Math.sqrt(1 + r)
-        capital   = (capital   + event) * (1 + r) + monthlyPMT * 12 * groeifactorInleg
-        capital75 = (capital75 + event) * (1 + r) + monthlyPMT * 12 * groeifactorInleg
+        // De heffing gaat over het saldo aan het begin van het jaar, zelfde
+        // peildatumconventie als in pensionCalc.ts. Beide paden krijgen hun eigen
+        // heffing, want ze hebben een verschillend vermogen: het 75%-pad houdt
+        // meer over en betaalt dus meer.
+        const beginSaldo   = capital   + event
+        const beginSaldo75 = capital75 + event
+        capital   = beginSaldo   * (1 + r) + monthlyPMT * 12 * groeifactorInleg - heffing(beginSaldo)
+        capital75 = beginSaldo75 * (1 + r) + monthlyPMT * 12 * groeifactorInleg - heffing(beginSaldo75)
       } else {
-        const r = sampleAnnualReturn(realPost, volatilityPost, rng)
+        const r = sampleAnnualReturn(realPost, volPost, rng)
         // Full income scenario
-        const withdrawal = getMonthlyWithdrawal(
-          age, desiredNetto, aowMonthlyNetto, aowStartAge,
-          employerPension, employerPensionStartAge, woonsituatie,
-          lijfrenteUitkering, lijfrenteStartAge, lijfrenteEinde, aowVakantiegeld
-        ) * 12
+        const withdrawal = getMonthlyWithdrawal(huishoudOp(huishoudOpParams, age, desiredNetto)) * 12
         // 75% income scenario: client accepts 25% lower total income
         // getMonthlyWithdrawal handles phase-aware tax: fixed income (AOW + emp + lijfrente)
         // already covers part of the 75% threshold, so the capital withdrawal is reduced accordingly.
-        const withdrawal75 = getMonthlyWithdrawal(
-          age, desiredNetto * 0.75, aowMonthlyNetto, aowStartAge,
-          employerPension, employerPensionStartAge, woonsituatie,
-          lijfrenteUitkering, lijfrenteStartAge, lijfrenteEinde, aowVakantiegeld
-        ) * 12
+        const withdrawal75 = getMonthlyWithdrawal(huishoudOp(huishoudOpParams, age, desiredNetto * 0.75)) * 12
         // Mid-year-conventie voor de onttrekking, zelfde wortelfactor en zelfde
         // reden als bij de jaarinleg hierboven en als in pensionCalc.ts. Zonder
         // deze factor rekende de simulatie alsof het hele jaarbedrag pas op
         // 31 december werd opgenomen, terwijl de inleg wél maandelijks was.
         const groeifactorOpname = Math.sqrt(1 + r)
-        capital   = (capital   + event) * (1 + r) - withdrawal   * groeifactorOpname
-        capital75 = (capital75 + event) * (1 + r) - withdrawal75 * groeifactorOpname
+        const beginSaldo   = capital   + event
+        const beginSaldo75 = capital75 + event
+        capital   = beginSaldo   * (1 + r) - withdrawal   * groeifactorOpname - heffing(beginSaldo)
+        capital75 = beginSaldo75 * (1 + r) - withdrawal75 * groeifactorOpname - heffing(beginSaldo75)
       }
 
       // Liquiditeitstoets voor élk jaar, ook in de opbouwfase. Stond tot september

@@ -4,7 +4,7 @@ beschrijving: "De FO-planner rekent met een reëel rendement, een fasegevoelige 
 samenvatting: "De planner geeft geen vast antwoord maar een slagingskans, berekend over 2.000 simulaties met wisselend rendement. Alle bedragen staan in koopkracht van vandaag: het nominale rendement wordt eerst gecorrigeerd voor inflatie. Belasting wordt berekend over je AOW en pensioen samen, met de tarieven, heffingskortingen en de bijdrage Zorgverzekeringswet die bij je leeftijd en woonsituatie horen. Elke aanname is aan te passen; niets ligt vast."
 pillar: "wat-is-financiele-onafhankelijkheid"
 volgorde: 6
-bijgewerkt: "2026-08-22"
+bijgewerkt: "2026-09-14"
 tool:
   label: "Bekijk je eigen uitkomst in de planner"
   href: "/ben-ik-financieel-onafhankelijk"
@@ -14,7 +14,7 @@ faq:
   - vraag: "Wat als ik geen zin heb om zelf rendement en volatiliteit in te vullen?"
     antwoord: "Dan gebruik je een van de vijf standaard risicoprofielen (van defensief tot offensief). Die zijn vooraf ingevuld met een redelijk rendement en bijbehorende schommeling. Zelf invullen kan altijd via het vinkje bij risicoprofiel."
   - vraag: "Rekent de planner ook met box 3 (vermogensbelasting)?"
-    antwoord: "Als je dat invult wel. Bij het risicoprofiel staat een veld voor vermogensbelasting in procentpunten, dat van je rendement af gaat. De planner rekent voor wat de heffing bij jouw vermogen ongeveer is, op basis van de forfaitaire percentages en het heffingsvrije vermogen van 2026, en je kunt die schatting met één klik overnemen. Laat je het veld op 0 staan, dan rekent de planner zonder vermogensbelasting en valt de uitkomst gunstiger uit dan in werkelijkheid. Het is een vereenvoudiging: de heffing wordt niet elk jaar opnieuw over je actuele vermogen berekend, en de verdeling tussen spaargeld en beleggingen telt niet mee."
+    antwoord: "Ja, standaard. De planner berekent de heffing elk jaar opnieuw over het vermogen van dat jaar, met het tarief, het forfait voor beleggingen en het heffingsvrije vermogen van 2026, en haalt dat bedrag van je saldo af. Wil je liever zelf een vast percentage invullen, dan kan dat via de keuze bij vermogensbelasting. Twee vereenvoudigingen: je hele vermogen telt als beleggingen (wie vooral spaart betaalt minder), en schulden tellen niet mee."
   - vraag: "Klopt de uitkomst ook als mijn geld in een lijfrente of op een bankspaarrekening staat?"
     antwoord: "Deels automatisch. Je eigen vermogen blijft de planner behandelen als vrij belegd vermogen in box 3, vul daar dus alleen dat deel in. Voor een lijfrente-, bankspaar- of pensioenbeleggingsuitkering is er een apart veld: die uitkering is belast in box 1 en kan niet vrij worden opgenomen. Vul daar de verwáchte bruto-uitkering in, niet het opgebouwde bedrag. Die vind je op de prognose van je aanbieder."
 bronnen:
@@ -117,17 +117,17 @@ scenario's en draait daarom niet bij elke toetsaanslag mee.
 
 Het rendement dat bij een risicoprofiel hoort is een brutorendement: dat is het verwachte
 rendement van de portefeuille zelf, vóór kosten en vóór belasting. Wat daarvan af gaat, vul je
-apart in bij kosten van beleggen en bij vermogensbelasting. Laat je die twee op 0 staan, dan
-rekent de planner alsof beleggen gratis is en er geen belasting over je vermogen wordt geheven.
+apart in bij kosten van beleggen en bij vermogensbelasting. Laat je de kosten op 0 staan, dan
+rekent de planner alsof beleggen gratis is.
 De uitkomst valt dan gunstiger uit dan in werkelijkheid.
 
-Voor de vermogensbelasting rekent de planner voor wat de heffing bij jouw vermogen ongeveer is,
-op basis van de forfaitaire percentages en het heffingsvrije vermogen die de Belastingdienst voor
-2026 publiceert. Dat is een schatting en geen aanslag: de planner berekent de heffing niet elk
-jaar opnieuw over je actuele vermogen, en houdt geen rekening met de verdeling tussen spaargeld
-en beleggingen of met schulden. De druk loopt bovendien op naarmate je vermogen groeit, doordat
-het heffingsvrije deel een steeds kleiner aandeel wordt. Bij een ton is het ongeveer 0,9% van je
-vermogen per jaar, bij een miljoen ruim 2%.
+De vermogensbelasting in box 3 rekent de planner standaard elk jaar opnieuw uit over het
+vermogen van dat jaar, en trekt het bedrag van je saldo af. Daarbij telt je hele vermogen als
+beleggingen: wie een groot deel op een spaarrekening heeft, betaalt in werkelijkheid minder.
+Schulden en de verdeling tussen spaargeld en beleggingen zitten er niet in. Wil je een eigen
+percentage gebruiken, dan kan dat; let dan op dat een vast percentage niet meegroeit met je
+vermogen, terwijl de werkelijke druk dat wel doet: bij een ton ongeveer 0,9% per jaar, bij een
+miljoen ruim 2%.
 
 Specifieke beleggingsproducten kent de planner niet. Je vult één rendement en één
 kostenpercentage in voor je hele vermogen.

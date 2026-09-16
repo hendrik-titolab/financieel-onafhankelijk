@@ -24,6 +24,7 @@ import Header from '../components/Header.astro'
 import Footer from '../components/Footer.astro'
 import { SITE } from '../config/site'
 import { organizationSchema, websiteSchema, absUrl } from '../lib/seo'
+import { MODEL_VERSIE } from '../config/modelVersie'
 
 interface Props {
   title: string
@@ -64,6 +65,10 @@ const schemas = [organizationSchema(), websiteSchema(), ...jsonLd]
     <meta name="description" content={description} />
     <link rel="canonical" href={canonicalUrl} />
     {noindex && <meta name="robots" content="noindex, nofollow" />}
+
+    <!-- Modelversie, zichtbaar via view-source of devtools. Doel: controleren of een
+    push ook echt live staat, zonder Vercel-dashboardtoegang (WP11, HANDOFF-borging-2026-09.md). -->
+    <meta name="model-versie" content={MODEL_VERSIE} />
 
     <!-- Open Graph -->
     <meta property="og:type" content={ogType} />

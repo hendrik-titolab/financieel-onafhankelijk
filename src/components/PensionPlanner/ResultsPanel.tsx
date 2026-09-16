@@ -402,6 +402,13 @@ export function ResultsPanel({ inputs, result, berekening, mcStale, isCalculatin
           {result.incomePhases.map((phase, i) => {
             const total = phase.total
             const isGap = phase.aow === 0 && phase.employerPension === 0 && phase.lijfrenteUitkering === 0
+            // De drie bronregels hieronder zijn bij een meerekenende partner het
+            // totaal van twee apart belaste personen. Zonder deze splitsing is
+            // niet te zien van wie welk deel komt, terwijl dat juist stuurt: de
+            // partner kan een andere AOW- en pensioendatum hebben.
+            const vastTotaal = phase.aow + phase.employerPension + phase.lijfrenteUitkering
+            const vanPartner = phase.partner?.totaal ?? 0
+            const vanJou = Math.max(0, vastTotaal - vanPartner)
             return (
               <div key={i} className={`rounded-[3px] p-3 border ${isGap ? 'border-signal bg-panel' : 'border-line-soft bg-canvas'}`}>
                 <div className="flex justify-between items-center mb-2">
@@ -441,6 +448,13 @@ export function ResultsPanel({ inputs, result, berekening, mcStale, isCalculatin
                     </div>
                   ))}
                 </div>
+                {phase.partner !== null && vastTotaal > 0 && (
+                  <p className="text-xs text-body leading-relaxed mt-2">
+                    Vaste uitkeringen: <span className="font-numeric tabular">{eur(vanJou)}</span> van
+                    jou, <span className="font-numeric tabular">{eur(vanPartner)}</span> van je
+                    partner. Het eigen vermogen geldt voor jullie samen.
+                  </p>
+                )}
               </div>
             )
           })}
@@ -612,9 +626,14 @@ export function ResultsPanel({ inputs, result, berekening, mcStale, isCalculatin
         Je eigen vermogen behandelen we als vrij belegd vermogen in box 3: een opname daaruit is niet
         belast. Heb je een lijfrente, banksparen of pensioenbeleggen? Vul de verwachte uitkering
         daarvan in bij "Lijfrente-/bankspaaruitkering" hierboven, niet bij je eigen vermogen: die
-        uitkering is namelijk wél belast in box 1, net als je AOW en werkgeverspensioen.
-        Het ingevulde rendement is bruto: het verwachte rendement van de portefeuille zelf. Wat je
-        bij kosten en vermogensbelasting invult gaat daar in procentpunten van af.
+        uitkering is namelijk wél belast in box 1, net als je AOW en werkgeverspensioen. Geld in je
+        eigen BV hoort er ook niet bij: dat valt in box 2, er gaat geen box 3-heffing overheen, maar
+        een uitkering naar privé is wél belast. Deze tool rekent dat niet uit, dus reken hier alleen
+        met vermogen dat je vrij en onbelast kunt opnemen.
+        Het ingevulde rendement is bruto: het verwachte rendement van de portefeuille zelf. De
+        kosten die je invult gaan daar in procentpunten van af. De box 3-heffing wordt standaard
+        elk jaar apart berekend over het vermogen van dát jaar en van het saldo afgehaald, tenzij
+        je zelf een vast percentage invult.
         We gaan er daarnaast van uit dat je aanvullend pensioen, net als de AOW, volledig met de
         inflatie meestijgt. Voor AOW is dat verdedigbaar, voor een aanvullend pensioen niet:
         indexatie is niet gegarandeerd en kan achterblijven, waardoor je koopkracht na pensionering

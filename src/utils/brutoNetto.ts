@@ -2,6 +2,7 @@ import {
   BOX1_PRE_AOW, BOX1_POST_AOW,
   HEFFINGSKORTING_PRE_AOW, HEFFINGSKORTING_POST_AOW,
 } from '../config/fiscaleParameters'
+import { PARAMETER_JAAR } from '../config/modelVersie'
 
 // Rekenlogica van de bruto-nettotool. Stond tot augustus 2026 in
 // src/components/BrutoNetto/index.tsx en was daardoor niet te testen zonder de
@@ -16,7 +17,13 @@ import {
 // Alle getallen komen uit de centrale config (fiscaleParameters.ts), zodat de
 // kwartaalcheck ze meeneemt. Hier alleen omgezet naar de vorm die de tool gebruikt.
 export const P = {
-  jaar: 2026,
+  // De tool zet dit jaartal letterlijk op het scherm, boven de titel en boven het
+  // paneel met de gebruikte cijfers. Het stond hier als los getal 2026 naast de
+  // schijven eronder, die wel uit de config komen: bij een jaarwisseling zou het
+  // label dus op 2026 blijven staan terwijl er met nieuwe cijfers gerekend wordt.
+  // Stil verkeerd, en in Wft-gebied is een verkeerd jaartal boven een berekening
+  // geen schoonheidsfout (WP9).
+  jaar: PARAMETER_JAAR,
   schijven: [
     { tot: BOX1_PRE_AOW.schijf1Grens, tarief: BOX1_PRE_AOW.schijf1Tarief },
     { tot: BOX1_PRE_AOW.schijf2Grens, tarief: BOX1_PRE_AOW.schijf2Tarief },

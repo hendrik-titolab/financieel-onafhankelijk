@@ -21,17 +21,40 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Volledige geschiedenis nodig voor de versiecheck hieronder, die de PR
+          # vergelijkt met de basisbranch (git diff met '...' vereist een gedeelde
+          # voorouder, die een ondiepe clone niet heeft).
+          #
+          # Was eerder conditioneel (alleen 0 op een pull_request, anders de
+          # standaard ondiepe clone) als kleine efficiencywinst. Teruggedraaid: de
+          # GitHub Actions-expressie `cond && 0 || 1` gaf altijd 1, ook op een PR,
+          # want Actions behandelt 0 als "falsy" — dus de rechterkant van `||`
+          # won altijd, ongeacht `cond`. Dat brak de versiecheck op de eerste
+          # echte PR-run (bevinding 14 september 2026: eerst "unknown revision",
+          # daarna "no merge base"). Een kleine checkout-optimalisatie is de
+          # complexiteit en het risico van deze klasse fout niet waard.
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
           # Vastgelegd in plaats van "latest": een Node-wissel mag een rekenuitkomst
-          # nooit stilzwijgend veranderen. Sluit aan op de engines-eis in
-          # package.json.
-          node-version: '20'
+          # nooit stilzwijgend veranderen.
+          # Was '20', gelijk aan de engines-eis in package.json (>=18.20.8). Die eis
+          # bleek zelf achterhaald: Astro 7.2.0 (sinds 10 augustus 2026 in gebruik)
+          # vereist Node >=22.12.0 en weigert te draaien op 20. Dat kwam pas nu aan
+          # het licht, omdat de workflow altijd al eerder vastliep (zie hierboven).
+          # package.json's engines-veld is nog niet bijgewerkt, zie het slotbericht.
+          node-version: '22'
           cache: npm
 
       - name: Afhankelijkheden installeren
         run: npm ci
+
+      - name: Astro-types genereren
+        # tsc heeft de door Astro gegenereerde types nodig (astro:content).
+        # Zonder deze stap faalde de typecontrole in CI op elke run.
+        run: npx astro sync
 
       - name: Typecontrole
         # Los van de build. Astro's build compileert met esbuild en meldt
@@ -40,6 +63,12 @@ jobs:
 
       - name: Astro-controle
         run: npm run check
+
+      - name: Versiecheck
+        # Alleen zinvol op een PR: vergelijkt met de basisbranch. Zie
+        # scripts/check-modelversie.mjs voor de reden.
+        if: github.event_name == 'pull_request'
+        run: node scripts/check-modelversie.mjs
 
       - name: Tests
         # Bevat de golden masters, de fiscale referentiegevallen en de

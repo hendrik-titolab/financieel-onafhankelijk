@@ -1,7 +1,7 @@
-import type { PensionInputs, PensionResult, YearData, IncomePhase, LifeEvent, Woonsituatie } from '../types'
+import type { PensionInputs, PensionResult, YearData, IncomePhase, PersoonInkomen, LifeEvent, Woonsituatie, PartnerGegevens } from '../types'
 import { AOW_NETTO_MAAND, AOW_BRUTO_MAAND, AOW_VAKANTIEGELD_BRUTO_MAAND, ZVW } from '../config/fiscaleParameters'
 import { belastingBox1 } from './brutoNetto'
-import { nettoNominaalRendement } from './box3'
+import { nettoNominaalRendement, box3HeffingPerJaar } from './box3'
 
 // AOW netto maandbedragen — uit centrale config (fiscaleParameters.ts)
 export const AOW_NETTO = {
@@ -69,10 +69,117 @@ function realAnnualReturn(nominal: number, inflation: number): number {
 // monteCarlo.ts leunen alle drie hierop (was tot augustus 2026 drie keer los
 // uitgeschreven, bevinding A1).
 export interface MaandInkomenVerdeling {
+  /** Beide personen samen, netto per maand. */
   aow: number
   employerPension: number      // netto, fase-afhankelijk belast
   lijfrenteUitkering: number   // netto, fase-afhankelijk belast (E1-optie-B)
   fromCapital: number          // wat er nog uit eigen vermogen moet komen
+  /**
+   * De uitsplitsing van de partner, of null als er geen partner meerekent.
+   * Alleen voor weergave; de bedragen hierboven zijn al het totaal.
+   */
+  partner: PersoonInkomen | null
+}
+
+
+/** De inkomensgegevens van één persoon op een gegeven leeftijd. */
+export interface PersoonInvoer {
+  age: number
+  aowNetto: number
+  aowStartAge: number
+  employerPensionBruto: number
+  employerPensionStartAge: number
+  lijfrenteUitkeringBruto?: number
+  lijfrenteStartAge?: number
+  /** Oneindig betekent levenslang. */
+  lijfrenteEindLeeftijd?: number
+}
+
+/**
+ * Eén huishouden op een gegeven moment.
+ *
+ * De parameterlijst van getIncomeBreakdown() was gegroeid naar tien positionele
+ * argumenten met defaults. Met een partner erbij zouden dat er zestien worden, en
+ * dan is de volgorde niet meer te overzien. Vandaar dit object.
+ */
+export interface HuishoudInvoer {
+  /** Het gewenste netto maandinkomen van het hele huishouden. */
+  desiredNetto: number
+  persoon: PersoonInvoer
+  /**
+   * De partner, of null wanneer er alleen voor één persoon wordt gerekend.
+   *
+   * De partner wordt APART belast en dat is de hele reden dat dit veld bestaat.
+   * De inkomstenbelasting in box 1 is individueel: twee mensen hebben elk hun
+   * eigen schijven en hun eigen heffingskortingen. Twee AOW-uitkeringen bij
+   * elkaar optellen in één veld en dat als het inkomen van één persoon belasten
+   * levert een fors te laag netto op. Doorgerekend met de parameters van 2026,
+   * twee partners met elk € 1.084 AOW en € 1.500 werkgeverspensioen per maand:
+   * apart belast € 4.673,81 netto per maand, samengeteld in één veld
+   * € 3.718,73. Een verschil van € 955 per maand (audit 7 september 2026,
+   * bevinding 16; gebouwd 8 september).
+   */
+  partner?: PersoonInvoer | null
+  woonsituatie?: Woonsituatie
+  aowVakantiegeld?: boolean
+}
+
+/**
+ * Alles wat huishoudOp() nodig heeft, op één leeftijd na (die verschilt per
+ * aanroep binnen de jaar-voor-jaar-lus). Was tot 14 september 2026 een losse,
+ * bijna-identieke closure in zowel calculatePension() als runMonteCarlo(): het
+ * commentaar in beide bestanden zei al "zodat ze niet uiteen kunnen lopen", maar
+ * de code zelf was toch gekopieerd. Nu één gedeelde functie, hier en in
+ * monteCarlo.ts geïmporteerd (bevinding review 14 september 2026).
+ */
+export interface HuishoudOpParams {
+  woonsituatie: Woonsituatie
+  aowVakantiegeld: boolean
+  currentAge: number
+  aowMonthlyNetto: number
+  aowStartAge: number
+  employerPension: number
+  employerPensionStartAge: number
+  lijfrenteUitkering: number
+  lijfrenteStartAge: number
+  lijfrenteEinde: number
+  partnerActief: boolean
+  partner?: PartnerGegevens
+}
+
+/**
+ * Stelt het huishouden samen op een gegeven leeftijd van de hoofdpersoon. De
+ * leeftijd van de partner loopt mee met de kalender, niet met die van de
+ * hoofdpersoon: een partner die drie jaar jonger is, krijgt zijn AOW drie
+ * kalenderjaren later. Vandaar het verschil ten opzichte van p.currentAge.
+ */
+export function huishoudOp(p: HuishoudOpParams, age: number, netto: number): HuishoudInvoer {
+  return {
+    desiredNetto: netto,
+    woonsituatie: p.woonsituatie,
+    aowVakantiegeld: p.aowVakantiegeld,
+    persoon: {
+      age,
+      aowNetto: p.aowMonthlyNetto,
+      aowStartAge: p.aowStartAge,
+      employerPensionBruto: p.employerPension,
+      employerPensionStartAge: p.employerPensionStartAge,
+      lijfrenteUitkeringBruto: p.lijfrenteUitkering,
+      lijfrenteStartAge: p.lijfrenteStartAge,
+      lijfrenteEindLeeftijd: p.lijfrenteEinde,
+    },
+    partner: p.partnerActief && p.partner
+      ? {
+          age: p.partner.leeftijd + (age - p.currentAge),
+          aowNetto: p.partner.aowMaandBedragNetto,
+          aowStartAge: p.partner.aowStartAge,
+          employerPensionBruto: p.partner.employerPension,
+          employerPensionStartAge: p.partner.employerPensionStartAge,
+          // Geen lijfrente voor de partner. Dat veld hoort bij persoon 1; zie
+          // CLAUDE.md bij de openstaande punten.
+        }
+      : null,
+  }
 }
 
 /**
@@ -181,29 +288,35 @@ export function marginaalTarief(brutoJaar: number, pastAow: boolean, alleenstaan
   return 1 - (hoog - laag) / delta
 }
 
-export function getIncomeBreakdown(
-  age: number,
-  desiredNetto: number,
-  aowNetto: number,
-  aowStartAge: number,
-  employerPensionBruto: number,
-  employerPensionStartAge: number,
+/**
+ * Wat één persoon netto per maand overhoudt aan AOW, werkgeverspensioen en
+ * lijfrente, op een gegeven leeftijd.
+ *
+ * Belasten over het TOTALE box 1-inkomen van deze persoon, niet per bron.
+ * Heffingskortingen zijn inkomensafhankelijk, dus per bron rekenen geeft een te
+ * hoge korting en daarmee een te rooskleurig netto (bevinding E4).
+ *
+ * De AOW blijft staan op het bedrag dat de gebruiker invulde. Elke volgende bron
+ * krijgt wat er bovenop de vorige netto overblijft. Dat is precies de marginale
+ * behandeling die klopt: elke bron duwt de algemene heffingskorting en de
+ * ouderenkorting verder in de afbouw. De volgorde AOW -> werkgeverspensioen ->
+ * lijfrente is willekeurig gekozen (er is geen fiscaal correcte manier om een
+ * gedeelde korting-afbouw over twee gelijktijdige bronnen te verdelen), niet
+ * fiscaal betekenisvol.
+ *
+ * Deze functie rekent bewust voor ÉÉN persoon. Een partner gaat er apart doorheen,
+ * want box 1 is individueel. Zie HuishoudInvoer.partner.
+ */
+export function persoonNettoInkomen(
+  p: PersoonInvoer,
   woonsituatie: Woonsituatie = 'alleenstaand',
-  // Lijfrente-/bankspaaruitkering (E1-optie-B): fiscaal beklemd, box 1, dezelfde
-  // behandeling als werkgeverspensioen. Achteraan toegevoegd met een default, zodat
-  // elke bestaande aanroep ongewijzigd blijft werken en compileren — geen van de
-  // andere call sites in pensionCalc.ts/monteCarlo.ts hoefde hierdoor aangepast te
-  // worden aan de argumentvolgorde.
-  lijfrenteUitkeringBruto = 0,
-  lijfrenteStartAge = 67,
-  // Einde van een tijdelijke uitkering. Oneindig betekent levenslang, en dat is de
-  // default zodat elke bestaande aanroep zich gedraagt zoals voorheen.
-  lijfrenteEindLeeftijd = Infinity,
-  // Of het AOW-vakantiegeld meetelt. Default false zodat een losse aanroep zich
-  // gedraagt als voorheen; calculatePension en runMonteCarlo geven de keuze van de
-  // gebruiker door.
   aowVakantiegeld = false
-): MaandInkomenVerdeling {
+): PersoonInkomen {
+  const {
+    age, aowNetto, aowStartAge, employerPensionBruto, employerPensionStartAge,
+    lijfrenteUitkeringBruto = 0, lijfrenteStartAge = 67, lijfrenteEindLeeftijd = Infinity,
+  } = p
+
   const pastAow = age >= aowStartAge
   const alleenstaand = woonsituatie === 'alleenstaand'
 
@@ -220,17 +333,6 @@ export function getIncomeBreakdown(
   // tot de planningshorizon, ook een uitkering van vijf jaar (bevinding 9).
   const heeftLijfrente = age >= lijfrenteStartAge && age < lijfrenteEindLeeftijd
 
-  // Belasten over het TOTALE box 1-inkomen, niet per bron. Heffingskortingen zijn
-  // inkomensafhankelijk, dus per bron rekenen geeft een te hoge korting en daarmee
-  // een te rooskleurig netto (bevinding E4).
-  //
-  // De AOW blijft staan op het bedrag dat de gebruiker invulde. Elke volgende bron
-  // krijgt wat er bovenop de vorige netto overblijft. Dat is precies de marginale
-  // behandeling die klopt: elke bron duwt de algemene heffingskorting en de
-  // ouderenkorting verder in de afbouw. De volgorde AOW -> werkgeverspensioen ->
-  // lijfrente is willekeurig gekozen (er is geen fiscaal correcte manier om een
-  // gedeelde korting-afbouw over twee gelijktijdige bronnen te verdelen), niet
-  // fiscaal betekenisvol.
   const aowBrutoJaar = pastAow ? aowNettoNaarBruto(aowNettoMetVg) * 12 : 0
   const pensioenBrutoJaar = heeftPensioen ? employerPensionBruto * 12 : 0
   const lijfrenteBrutoJaar = heeftLijfrente ? lijfrenteUitkeringBruto * 12 : 0
@@ -244,34 +346,39 @@ export function getIncomeBreakdown(
   const employerPension = Math.max(0, (nettoAowPensioenJaar - nettoAowJaar) / 12)
   const lijfrenteUitkering = Math.max(0, (nettoAowPensioenLijfrenteJaar - nettoAowPensioenJaar) / 12)
 
+  return { aow, employerPension, lijfrenteUitkering, totaal: aow + employerPension + lijfrenteUitkering }
+}
+
+/**
+ * Het netto maandinkomen van het hele huishouden, en wat er daarna nog uit eigen
+ * vermogen moet komen.
+ *
+ * Beide personen gaan apart door de belastingmotor en pas daarna worden hun
+ * netto's opgeteld. Dat is niet alleen netter maar ook het enige wat klopt: de
+ * inkomstenbelasting in box 1 is individueel.
+ */
+export function getIncomeBreakdown(o: HuishoudInvoer): MaandInkomenVerdeling {
+  const { desiredNetto, persoon, partner = null, woonsituatie = 'alleenstaand', aowVakantiegeld = false } = o
+
+  const eigen = persoonNettoInkomen(persoon, woonsituatie, aowVakantiegeld)
+  const vanPartner = partner ? persoonNettoInkomen(partner, woonsituatie, aowVakantiegeld) : null
+
+  const aow = eigen.aow + (vanPartner?.aow ?? 0)
+  const employerPension = eigen.employerPension + (vanPartner?.employerPension ?? 0)
+  const lijfrenteUitkering = eigen.lijfrenteUitkering + (vanPartner?.lijfrenteUitkering ?? 0)
+
   return {
     aow,
     employerPension,
     lijfrenteUitkering,
     fromCapital: Math.max(0, desiredNetto - aow - employerPension - lijfrenteUitkering),
+    partner: vanPartner,
   }
 }
 
-// Monthly withdrawal needed from own capital, given age (phase-aware).
-// Employer pension is taxed at different rates before vs after AOW age.
-export function getMonthlyWithdrawal(
-  age: number,
-  desiredNetto: number,
-  aowNetto: number,
-  aowStartAge: number,
-  employerPensionBruto: number,
-  employerPensionStartAge: number,
-  woonsituatie: Woonsituatie = 'alleenstaand',
-  lijfrenteUitkeringBruto = 0,
-  lijfrenteStartAge = 67,
-  lijfrenteEindLeeftijd = Infinity,
-  aowVakantiegeld = false
-): number {
-  return getIncomeBreakdown(
-    age, desiredNetto, aowNetto, aowStartAge, employerPensionBruto, employerPensionStartAge,
-    woonsituatie, lijfrenteUitkeringBruto, lijfrenteStartAge, lijfrenteEindLeeftijd,
-    aowVakantiegeld
-  ).fromCapital
+/** Wat er dit jaar uit eigen vermogen moet komen. Zie getIncomeBreakdown(). */
+export function getMonthlyWithdrawal(o: HuishoudInvoer): number {
+  return getIncomeBreakdown(o).fromCapital
 }
 
 function buildEventMap(
@@ -309,7 +416,8 @@ function simulateAccumulation(
   yearsToRetirement: number,
   realReturnAnnual: number,
   eventMap: Map<number, number>,
-  startCalendarYear: number
+  startCalendarYear: number,
+  heffing: (vermogenBeginJaar: number) => number = () => 0
 ): number {
   let capital = startCapital
   const annualFactor = 1 + realReturnAnnual / 100
@@ -317,7 +425,13 @@ function simulateAccumulation(
   for (let yr = 0; yr < yearsToRetirement; yr++) {
     const calYear = startCalendarYear + yr
     const event = eventMap.get(calYear) ?? 0
-    capital = (capital + event) * annualFactor + monthlyPMT * 12 * Math.sqrt(annualFactor)
+    // Box 3 kent één peildatum: 1 januari. De heffing gaat dus over het saldo aan
+    // het begin van het jaar, inclusief een eenmalig bedrag dat volgens de
+    // conventie hierboven ook aan het begin van het jaar binnenkomt. Afgetrokken
+    // ná de groei, want de aanslag komt pas in het jaar erna.
+    const beginSaldo = capital + event
+    capital = beginSaldo * annualFactor + monthlyPMT * 12 * Math.sqrt(annualFactor)
+      - heffing(beginSaldo)
   }
   return capital
 }
@@ -338,7 +452,8 @@ function simulateRetirementPath(
   retirementYear: number,
   realPostAnnual: number,
   retEventMap: Map<number, number>,
-  withdrawalAtAge: (age: number) => number
+  withdrawalAtAge: (age: number) => number,
+  heffing: (vermogenBeginJaar: number) => number = () => 0
 ): { minCapital: number; endCapital: number } {
   let capital = startCapital
   let minCapital = startCapital
@@ -351,7 +466,9 @@ function simulateRetirementPath(
   for (let yr = 0; yr < yearsInRetirement; yr++) {
     const age = retirementAge + yr
     const event = retEventMap.get(retirementYear + yr) ?? 0
-    capital = (capital + event) * factor - withdrawalAtAge(age) * 12 * onttrekkingsFactor
+    const beginSaldo = capital + event
+    capital = beginSaldo * factor - withdrawalAtAge(age) * 12 * onttrekkingsFactor
+      - heffing(beginSaldo)
     // Ná de onttrekking van dat jaar: dát is het moment waarop de rekening
     // betaald moet zijn. Vóór de onttrekking meten zou een tekort dat pas in
     // december ontstaat een jaar te laat zien.
@@ -373,9 +490,12 @@ function simulateRetirementPath(
  * geen tekort, terwijl de simulatie 0% slaagde. Voor de eerste vijf jaar is
  * € 60.000 overbrugging nodig.
  *
- * Het saldo is een strikt stijgende functie van het startvermogen (de recursie is
- * lineair, iedere euro extra groeit mee met r^t), dus bisectie vindt hier één
- * eenduidig antwoord. De bovengrens wordt eerst verdubbelend gezocht: een vaste
+ * Het saldo is een strikt stijgende functie van het startvermogen, dus bisectie
+ * vindt hier één eenduidig antwoord. Zonder box 3-heffing is de recursie lineair:
+ * iedere euro extra groeit mee met r^t. Mét heffing is ze stuksgewijs lineair,
+ * maar nog steeds strikt stijgend: boven de vrijstelling levert een euro extra
+ * (1 + r) − 2,16% op, en dat is positief bij elk realistisch rendement. De
+ * bisectie blijft dus geldig. De bovengrens wordt eerst verdubbelend gezocht: een vaste
  * bovengrens kan bij een negatief reëel rendement of een grote uitgave in de
  * uitkeringsfase te laag uitvallen, en dan zou de tool stilzwijgend een te laag
  * doelbedrag noemen.
@@ -390,11 +510,12 @@ function findRequiredCapital(
   retirementYear: number,
   realPostAnnual: number,
   retEventMap: Map<number, number>,
-  withdrawalAtAge: (age: number) => number
+  withdrawalAtAge: (age: number) => number,
+  heffing: (vermogenBeginJaar: number) => number = () => 0
 ): number {
   const haalbaar = (start: number) => simulateRetirementPath(
     start, yearsInRetirement, retirementAge, retirementYear,
-    realPostAnnual, retEventMap, withdrawalAtAge
+    realPostAnnual, retEventMap, withdrawalAtAge, heffing
   ).minCapital >= 0
 
   if (haalbaar(0)) return 0
@@ -422,13 +543,15 @@ function findRequiredPMT(
   yearsToRetirement: number,
   realReturnAnnual: number,
   eventMap: Map<number, number>,
-  startCalendarYear: number
+  startCalendarYear: number,
+  heffing: (vermogenBeginJaar: number) => number = () => 0
 ): number {
   if (yearsToRetirement <= 0) return 0
   let lo = -50000, hi = 200000
   for (let i = 0; i < 60; i++) {
     const mid = (lo + hi) / 2
-    const cap = simulateAccumulation(startCapital, mid, yearsToRetirement, realReturnAnnual, eventMap, startCalendarYear)
+    const cap = simulateAccumulation(
+      startCapital, mid, yearsToRetirement, realReturnAnnual, eventMap, startCalendarYear, heffing)
     if (cap < targetCapital) lo = mid
     else hi = mid
   }
@@ -440,13 +563,14 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
     currentAge, retirementAge: retirementAgeInput, lifeExpectancy,
     currentCapital, monthlyContribution, contributionFrequency,
     returnBeforeRetirement, returnAfterRetirement, inflation,
-    kostenPct = 0, vermogensbelastingPct = 0,
+    kostenPct = 0, vermogensbelastingPct = 0, vermogensbelastingHandmatig = true,
     desiredRetirementIncome, desiredRetirementIncomeType,
     aowMaandBedragNetto, aowStartAge, woonsituatie = 'alleenstaand',
     employerPension, employerPensionStartAge,
     lijfrenteUitkering, lijfrenteStartAge,
     lijfrenteSoort = 'levenslang', lijfrenteEindLeeftijd = Infinity,
     aowVakantiegeld = false,
+    partner,
     lifeEvents = [],
   } = inputs
 
@@ -454,12 +578,37 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
   // uitkering doorlopen tot de planningshorizon.
   const lijfrenteEinde = lijfrenteSoort === 'tijdelijk' ? lijfrenteEindLeeftijd : Infinity
 
-  // Kosten en vermogensbelasting gaan er als procentpunten af vóórdat de inflatie
-  // eruit wordt gerekend. Staan ze op nul, dan verandert er niets: dat is de stand
-  // van vóór september 2026, toen de tekst iets anders beweerde dan de rekenkern
-  // deed (audit-bevinding 10).
-  const brutoPre = nettoNominaalRendement(returnBeforeRetirement, kostenPct, vermogensbelastingPct)
-  const brutoPost = nettoNominaalRendement(returnAfterRetirement, kostenPct, vermogensbelastingPct)
+  // Twee routes voor box 3, en precies één ervan is actief.
+  //
+  // vermogensbelastingHandmatig = true: de gebruiker vult zelf een percentage in,
+  // dat gaat er als procentpunten van het rendement af. Dat was tot september 2026
+  // de enige route (audit-bevinding 10).
+  //
+  // vermogensbelastingHandmatig = false: de heffing wordt per jaar uitgerekend over
+  // het dán actuele vermogen en gaat in euro's van het saldo af. Dat is wat de
+  // audit vroeg: een vast percentage over de hele looptijd kan niet kloppen, want
+  // door het heffingsvrije vermogen loopt de druk op met de omvang van het
+  // vermogen. Bij € 100.000 is het ongeveer 0,9 procentpunt, bij € 1.000.000 ruim
+  // 2,0, en een plan dat van de eerste naar de tweede groeit zit er met één
+  // percentage per definitie naast.
+  //
+  // Twee aannames, allebei bewust:
+  //
+  // 1. Het hele vermogen telt als beleggingen (forfait 6,00%), niet als spaargeld.
+  //    De planner kent geen vermogensmix. Wie vooral spaart betaalt minder dan hier
+  //    staat. Zie box3HeffingPerJaar().
+  // 2. Het heffingsvrije vermogen wordt jaarlijks geïndexeerd en is in reële euro's
+  //    dus constant. Deze rekenkern werkt in euro's van vandaag; zonder die aanname
+  //    zou de vrijstelling gedurende de looptijd langzaam verdampen. De heffing
+  //    zelf is inflatieneutraal: 6% × 36% is 2,16% van het vermogen, en dat
+  //    percentage is in reële en nominale euro's hetzelfde.
+  const belastingViaPercentage = vermogensbelastingHandmatig ? vermogensbelastingPct : 0
+  const heffing = vermogensbelastingHandmatig
+    ? () => 0
+    : (vermogenBeginJaar: number) => box3HeffingPerJaar(vermogenBeginJaar, woonsituatie)
+
+  const brutoPre = nettoNominaalRendement(returnBeforeRetirement, kostenPct, belastingViaPercentage)
+  const brutoPost = nettoNominaalRendement(returnAfterRetirement, kostenPct, belastingViaPercentage)
   const realPre = realAnnualReturn(brutoPre, inflation)
   const realPost = realAnnualReturn(brutoPost, inflation)
 
@@ -487,7 +636,7 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
 
   // Projected capital at retirement (year-by-year with life events)
   const projectedCapital = simulateAccumulation(
-    currentCapital, monthlyPMT, yearsToRetirement, realPre, accEventMap, currentYear
+    currentCapital, monthlyPMT, yearsToRetirement, realPre, accEventMap, currentYear, heffing
   )
 
   // Gewenst netto maandinkomen. Bij een bruto-invoer geldt het belastingregime op
@@ -511,11 +660,21 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
   // onttrekking). Anders ligt dit doelbedrag ~1% boven wat de simulatie werkelijk
   // nodig heeft en spreken het KPI-oordeel en de jaartabel elkaar tegen (E9).
   const rPostAnnual = 1 + realPost / 100
-  const withdrawalAtAge = (age: number) => getMonthlyWithdrawal(
-    age, desiredMonthlyNetto, aowMonthlyNetto, aowStartAge,
-    employerPension, employerPensionStartAge, woonsituatie,
-    lijfrenteUitkering, lijfrenteStartAge, lijfrenteEinde, aowVakantiegeld
-  )
+
+  // Eén plek die het huishouden op een gegeven leeftijd samenstelt. De jaartabel,
+  // de fasenlijst en de contante waarde gebruiken alle drie deze functie, zodat ze
+  // niet uiteen kunnen lopen. Zelfde gedeelde huishoudOp() als monteCarlo.ts.
+  const partnerActief = Boolean(partner?.actief)
+  const huishoudOpParams: HuishoudOpParams = {
+    woonsituatie, aowVakantiegeld, currentAge,
+    aowMonthlyNetto, aowStartAge,
+    employerPension, employerPensionStartAge,
+    lijfrenteUitkering, lijfrenteStartAge, lijfrenteEinde,
+    partnerActief, partner,
+  }
+
+  const withdrawalAtAge = (age: number) =>
+    getMonthlyWithdrawal(huishoudOp(huishoudOpParams, age, desiredMonthlyNetto))
 
   // Contante waarde van alle onttrekkingen: wat je inkomen op zichzelf kost, nog
   // zonder de latere eenmalige bedragen. Blijft berekend omdat het scherm en de
@@ -561,24 +720,54 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
   // wat er later binnenkomt. Dit is wat er tot september 2026 als requiredCapital
   // uit deze functie kwam, en het is nog steeds het bedrag dat de opbouw op het
   // scherm verklaart.
+  //
+  // Let op: deze contante waarde rekent met één vast rendement en kent de
+  // box 3-heffing niet. Zodra die heffing aanstaat is dit dus een benadering, en
+  // ligt het echte doelbedrag eronder in de simulatie hieronder. Dat is geen fout
+  // in de uitkomst (requiredCapital komt uit findRequiredCapital en niet hieruit),
+  // maar de opbouw op het scherm sluit dan niet meer tot op de euro aan.
   const requiredCapitalEindwaarde = pvWithdrawals - pvEventsAfterRetirement
 
   // Het werkelijke doelbedrag: het kleinste startvermogen waarbij het saldo
   // onderweg nooit negatief wordt. Gelijk aan de eindwaarde zolang er geen
   // overbrugging nodig is, hoger zodra een ontvangst pas later binnenkomt.
   const requiredCapital = findRequiredCapital(
-    yearsInRetirement, retirementAge, retirementYear, realPost, retEventMap, withdrawalAtAge
+    yearsInRetirement, retirementAge, retirementYear, realPost, retEventMap, withdrawalAtAge,
+    heffing
   )
 
   // Wat er bovenop de eindwaarde nodig is om de jaren tót die latere ontvangst te
   // overbruggen. Apart teruggegeven zodat het scherm dit als eigen regel kan tonen
   // in plaats van het stilzwijgend in het doelbedrag te verwerken: zonder die regel
   // ziet iemand wél een hoger doelbedrag, maar niet waardoor.
-  const overbruggingsToeslag = Math.max(0, requiredCapital - requiredCapitalEindwaarde)
+  //
+  // Alleen een echte overbrugging telt mee: is er geen enkele periode waarin nog
+  // geen inkomstenbron (eigen of partner) loopt, dan is requiredCapital > eindwaarde
+  // uitsluitend het gevolg van de box 3-heffing die requiredCapitalEindwaarde (regel
+  // 700 hierboven) niet kent — dat is geen overbrugging en mag niet zo genoemd
+  // worden in het scherm of de export (bevinding review 14 september 2026).
+  //
+  // Dit is de ENIGE plek die deze vergelijking maakt. InputPanel.tsx toonde tot
+  // 14 september 2026 een eigen, losse kopie van precies deze berekening (om de
+  // waarschuwing te tonen vóórdat er een result is) — nu leest het scherm
+  // overbruggingsJaren hieronder uit het resultaat, dezelfde reden als bij
+  // huishoudOp: niet twee plekken die uiteen kunnen lopen.
+  const ingangsleeftijden = [aowStartAge, employerPensionStartAge, lijfrenteStartAge]
+  if (partnerActief && partner) {
+    const leeftijdsverschilPartner = partner.leeftijd - currentAge
+    ingangsleeftijden.push(partner.aowStartAge - leeftijdsverschilPartner)
+    ingangsleeftijden.push(partner.employerPensionStartAge - leeftijdsverschilPartner)
+  }
+  const eersteEigenInkomen = Math.min(...ingangsleeftijden)
+  const heeftOverbruggingsperiode = retirementAge < eersteEigenInkomen
+  const overbruggingsJaren = heeftOverbruggingsperiode ? eersteEigenInkomen - retirementAge : 0
+  const overbruggingsToeslag = heeftOverbruggingsperiode
+    ? Math.max(0, requiredCapital - requiredCapitalEindwaarde)
+    : 0
 
   // Required monthly contribution (binary search, accounts for life events)
   const requiredMonthlyContribution = findRequiredPMT(
-    requiredCapital, currentCapital, yearsToRetirement, realPre, accEventMap, currentYear
+    requiredCapital, currentCapital, yearsToRetirement, realPre, accEventMap, currentYear, heffing
   )
 
   // --- Year-by-year simulation for chart & table ---
@@ -606,7 +795,11 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
     })
 
     // Mid-year-conventie voor de jaarinleg, zie simulateAccumulation hierboven.
-    capital = (capital + event) * (1 + realPre / 100) + monthlyPMT * 12 * Math.sqrt(1 + realPre / 100)
+    // De box 3-heffing gaat over het saldo aan het begin van het jaar, net als
+    // daar, anders loopt de tabel uit de pas met de KPI erboven.
+    const beginSaldo = capital + event
+    capital = beginSaldo * (1 + realPre / 100) + monthlyPMT * 12 * Math.sqrt(1 + realPre / 100)
+      - heffing(beginSaldo)
   }
 
   // Retirement phase
@@ -617,11 +810,8 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
     const calYear = retirementYear + yr
     const isLaatsteRij = yr === yearsInRetirement
 
-    const { aow, employerPension: emp, lijfrenteUitkering: lijf, fromCapital } = getIncomeBreakdown(
-      age, desiredMonthlyNetto, aowMonthlyNetto, aowStartAge,
-      employerPension, employerPensionStartAge, woonsituatie,
-      lijfrenteUitkering, lijfrenteStartAge, lijfrenteEinde, aowVakantiegeld
-    )
+    const { aow, employerPension: emp, lijfrenteUitkering: lijf, fromCapital } =
+      getIncomeBreakdown(huishoudOp(huishoudOpParams, age, desiredMonthlyNetto))
 
     // Het eenmalige bedrag van dit jaar komt aan het begin binnen en is dus
     // beschikbaar voor het inkomen van datzelfde jaar. Het werd hieronder pas
@@ -690,15 +880,30 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
     // over. Een volledige maandmotor haalt die laatste 0,16% op en kost een
     // herbouw van beide rekenkernen; dat is bewust niet gedaan (audit 7 september
     // 2026, bevinding 14).
-    capital = (capital + retEvent) * (1 + realPost / 100)
+    const beginSaldoUitkering = capital + retEvent
+    capital = beginSaldoUitkering * (1 + realPost / 100)
       - fromCapital * 12 * Math.sqrt(1 + realPost / 100)
+      - heffing(beginSaldoUitkering)
   }
 
+  // Knikpunten in het inkomen: elke ingangsdatum en elk einde van een uitkering
+  // begint een nieuwe fase. Met een partner komen daar zijn ingangsdata bij.
+  const knikpunten = [
+    aowStartAge,
+    employerPensionStartAge,
+    lijfrenteStartAge,
+    lijfrenteEinde,
+    ...(partnerActief && partner
+      ? [
+          partner.aowStartAge - (partner.leeftijd - currentAge),
+          partner.employerPensionStartAge - (partner.leeftijd - currentAge),
+        ]
+      : []),
+  ]
+
   const incomePhases = buildIncomePhases(
-    retirementAge, lifeExpectancy,
-    desiredMonthlyNetto, aowMonthlyNetto, aowStartAge,
-    employerPension, employerPensionStartAge, woonsituatie,
-    lijfrenteUitkering, lijfrenteStartAge, lijfrenteEinde, aowVakantiegeld,
+    retirementAge, lifeExpectancy, knikpunten,
+    (age: number) => huishoudOp(huishoudOpParams, age, desiredMonthlyNetto),
     yearData
   )
 
@@ -708,6 +913,7 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
     requiredCapitalEindwaarde,
     effectiveRetirementAge: retirementAge,
     overbruggingsToeslag,
+    overbruggingsJaren,
     pvEventsAfterRetirement,
     desiredMonthlyNetto,
     requiredMonthlyContribution,
@@ -720,19 +926,19 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
   }
 }
 
+/**
+ * De uitkeringsfase opgeknipt in stukken met een gelijk inkomensbeeld.
+ *
+ * Nam eerder tien losse parameters om het inkomen zelf te kunnen uitrekenen. Nu
+ * krijgt hij `huishoudOp`, dezelfde functie die de jaartabel gebruikt, zodat de
+ * fasenlijst per definitie niet kan afwijken van de rest van de berekening.
+ */
 function buildIncomePhases(
   retirementAge: number,
   lifeExpectancy: number,
-  desiredNetto: number,
-  aowNetto: number,
-  aowStartAge: number,
-  employerPensionBruto: number,
-  empStartAge: number,
-  woonsituatie: Woonsituatie,
-  lijfrenteUitkeringBruto = 0,
-  lijfrenteStartAge = 67,
-  lijfrenteEindLeeftijd = Infinity,
-  aowVakantiegeld = false,
+  /** Leeftijden waarop het inkomen verandert. Buiten de looptijd of oneindig wordt genegeerd. */
+  knikpunten: number[],
+  huishoudOp: (age: number) => HuishoudInvoer,
   // Het saldoverloop uit dezelfde berekening. Zonder dit toonde de fasenlijst het
   // volledige gewenste bedrag uit eigen vermogen, ook voor jaren waarin de pot al
   // leeg was: het scherm sprak dan de grafiek ernaast tegen (audit 7 september
@@ -741,14 +947,8 @@ function buildIncomePhases(
   yearData: YearData[] = []
 ): IncomePhase[] {
   const breakpoints = new Set([retirementAge, lifeExpectancy])
-  if (aowStartAge > retirementAge && aowStartAge < lifeExpectancy) breakpoints.add(aowStartAge)
-  if (empStartAge > retirementAge && empStartAge < lifeExpectancy) breakpoints.add(empStartAge)
-  if (lijfrenteStartAge > retirementAge && lijfrenteStartAge < lifeExpectancy) breakpoints.add(lijfrenteStartAge)
-  // Het einde van een tijdelijke uitkering is een knik in het inkomen en hoort dus
-  // een eigen fase te beginnen (bevinding 9).
-  if (Number.isFinite(lijfrenteEindLeeftijd)
-    && lijfrenteEindLeeftijd > retirementAge && lijfrenteEindLeeftijd < lifeExpectancy) {
-    breakpoints.add(lijfrenteEindLeeftijd)
+  for (const k of knikpunten) {
+    if (Number.isFinite(k) && k > retirementAge && k < lifeExpectancy) breakpoints.add(k)
   }
 
   const sorted = [...breakpoints].sort((a, b) => a - b)
@@ -756,11 +956,8 @@ function buildIncomePhases(
 
   for (let i = 0; i < sorted.length - 1; i++) {
     const fromAge = sorted[i]
-    const { aow, employerPension: emp, lijfrenteUitkering: lijf, fromCapital } = getIncomeBreakdown(
-      fromAge, desiredNetto, aowNetto, aowStartAge, employerPensionBruto, empStartAge,
-      woonsituatie, lijfrenteUitkeringBruto, lijfrenteStartAge, lijfrenteEindLeeftijd,
-      aowVakantiegeld
-    )
+    const { aow, employerPension: emp, lijfrenteUitkering: lijf, fromCapital, partner } =
+      getIncomeBreakdown(huishoudOp(fromAge))
 
     const toAge = sorted[i + 1]
     const eersteTekort = yearData.find(
@@ -776,6 +973,11 @@ function buildIncomePhases(
       employerPension: emp,
       lijfrenteUitkering: lijf,
       total: fromCapital + aow + emp + lijf,
+      // getIncomeBreakdown() berekent dit al per persoon apart (box 1 is
+      // individueel). Tot 15 september 2026 werd het hier weggegooid, waardoor
+      // het scherm en de exports bij een meerekenende partner één opgeteld
+      // AOW-bedrag toonden zonder te laten zien van wie het kwam.
+      partner,
       shortfallFromAge: eersteTekort ? eersteTekort.age : null,
     })
   }

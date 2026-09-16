@@ -8,7 +8,7 @@
 > jaarruimteparameters, welk mechanisme ontbreekt, en wat er nog beoordeeld moet worden. Die
 > redenering past niet in een datastructuur en zou anders verloren gaan.
 
-**Ontstaan:** audit 2026-08 (`AUDIT-fase0-1-feiten.md`, `AUDIT-fase2-externe-bronnen.md`).
+**Ontstaan:** audit 2026-08 (`docs/archief/AUDIT-fase0-1-feiten.md`, `docs/archief/AUDIT-fase2-externe-bronnen.md`).
 
 ---
 

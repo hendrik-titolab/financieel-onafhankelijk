@@ -3,7 +3,7 @@
 ## Wat is dit?
 
 Een Astro 7-site (SSG, statisch gebouwd) met React-eilanden voor de interactieve rekentools.
-Combinatie van een kennisautoriteitssite (uitlegartikelen) en vier rekentools, gericht op zowel
+Combinatie van een kennisautoriteitssite (uitlegartikelen) en vijf rekentools, gericht op zowel
 breed publiek als financieel adviseurs. Staat live op https://benikfinancieelonafhankelijk.nl
 
 **Stack:** Astro 7 + React 18 (eilanden) + TypeScript + Tailwind CSS 3
@@ -62,7 +62,7 @@ afgestemd.
 
 ---
 
-## De vier rekentools
+## De vijf rekentools
 
 ### 1. FO-planner (hoofdtool) — `/ben-ik-financieel-onafhankelijk`
 React-eiland (`client:only="react"`), component `src/components/PensionPlanner/`.
@@ -94,6 +94,28 @@ reserveringsruimte-modi, berekeningen opslaan in `localStorage`.
 
 ### 4. Inflatie & spaargeld — `/tools/inflatie`
 React-component `src/components/Inflatie/`. Reëel vs. nominaal rendement, negeert bewust box 3.
+De noot onderaan verwijst sinds 8 september 2026 door naar de box 3-tool.
+
+### 5. Box 3 — `/tools/box3`
+React-component `src/components/Box3/`, rekenlogica in `src/utils/box3.ts` en niet in het
+component, anders dan bij Inflatie: deze berekening moet getoetst worden en moet later door de
+FO-planner te gebruiken zijn. Belastingjaren 2025 en 2026, per jaar gevoed door `BOX3_JAREN` uit
+de gegenereerde config.
+- Rekent het forfait en het tegenbewijs allebei uit en toont welke van de twee geldt. Alleen het
+  forfait rekenen geeft iedereen met een tegenvallend rendement een te hoog bedrag.
+- Twee afrondingsregels. Bij de aangifte mag elk veld op een hele euro worden afgerond in het
+  voordeel van de belastingplichtige (Hendrik, 8 september 2026); welke kant dat per veld op valt
+  volgt uit de vijf rekenvoorbeelden van de Belastingdienst. Bezittingen naar beneden, het
+  schuldrendement naar boven omdat het van het totaal af gaat, voordeel en belasting naar beneden.
+  Het aandeel bij stap 4 valt daarbuiten, dat is geen euro maar een percentage: dat wordt afgekapt
+  op twee decimalen en niet afgerond. `box3.test.ts` legt alle vijf voorbeelden vast, plus de drie
+  rekenvoorbeelden uit het uitlegartikel, zodat tool en artikel niet uit elkaar kunnen lopen.
+- **Aan de tegenbewijskant gelden andere regels dan aan de forfaitkant**, en dat is geen slordigheid
+  maar artikel 5.26, derde lid, Wet IB 2001: de schuldendrempel (artikel 5.3, derde lid, onderdeel f)
+  en de vrijstelling groene beleggingen (artikel 5.13) zijn daar niet van toepassing. Pas dus nooit
+  "voor de consistentie" de drempel aan beide kanten toe; er staat een toets op.
+- Bewust niet meegerekend, en in de UI ook zo benoemd: de vrijstelling voor groene beleggingen en
+  de bijtelling voor eigen gebruik van een tweede woning (vanaf 2026 5,06% van de WOZ-waarde).
 
 ### Technische details, alle tools
 - Bedragen in reële koopkracht (na inflatie) tenzij expliciet "nominaal" vermeld.
@@ -238,7 +260,7 @@ src/
 | Beslissing | Reden |
 |---|---|
 | Astro (niet React/Vite-SPA) | Server-side title/description/canonical/OG/JSON-LD per pagina, automatische sitemap — nodig voor SEO/GEO op een contentsite met 14+ artikelen |
-| React-eilanden alleen voor de vier rekentools | Rest van de site is statisch, sneller en beter indexeerbaar |
+| React-eilanden alleen voor de vijf rekentools | Rest van de site is statisch, sneller en beter indexeerbaar |
 | Reëel rendement (na inflatie) | Koopkracht blijft behouden: €4.000 vandaag = €4.000 koopkracht bij pensionering |
 | localStorage, geen backend | Privacy by design, geen persoonsgegevens op een server |
 | Life events en stortingen samengevoegd (11 aug 2026) | Rekenden al identiek, twee gescheiden secties met een niet te raden onderscheid was verwarrend en repareerde een exportbug (stortingen kwamen nooit in Excel terecht) |
@@ -292,17 +314,42 @@ premie in de werkgeversregeling, dus werkgeversdeel én eigen bijdrage. Het veld
   alleen in de Excel-export.
 - De vijf datatokens uit de herstijling (`data-100/300/500/700`, `sand-deep`, zie
   `DESIGN_SYSTEM.md`) zijn zelf afgeleid en nog niet beoordeeld door Hendriks grafisch ontwerper.
-- **Volledig box 3-model** (auditbevinding 10). Het invoerveld voor vermogensbelasting start nu
-  op een schatting die uit het vermogen en de woonsituatie wordt afgeleid en beweegt daarmee mee
-  tot de gebruiker het zelf invult. Wat nog ontbreekt is een echte jaarlijkse heffing over het
-  actuele vermogen, met vermogensmix, schulden en fiscaal partnerschap. `src/utils/box3.ts` is
-  het vervangpunt. Besluit Hendrik, 8 september 2026: eerst het invulbare veld, het model daarna.
-- **Volatiliteit is nominaal, rendement reëel.** `risicoprofielen.ts` geeft nominale
-  standaardafwijkingen, `monteCarlo.ts` plakt die op een reëel rendement, en inflatie is
-  deterministisch. De auditor noemt dit niet; het is een grotere modelfout dan de
-  lognormaal-omzetting die hij wél noemt (die geeft 12,08% in plaats van 12,00%, verwaarloosbaar).
-- **Geen huishoudmodel.** Eén persoon; samenwonend stuurt alleen het AOW-bedrag en de
-  alleenstaandeouderenkorting. Nu expliciet benoemd in de UI, nog niet opgelost.
+- ~~**Volledig box 3-model** (auditbevinding 10).~~ Grotendeels opgelost op 9 september 2026. De
+  planner rekent de heffing nu per jaar uit over het dán actuele vermogen, in beide rekenkernen en
+  in beide Monte Carlo-paden. `vermogensbelastingHandmatig` schakelt tussen "reken het uit" en "ik
+  vul zelf een percentage in"; het percentage doet niets zodra de heffing aanstaat.
+
+  Wat bewust niet meegaat, en in de UI ook zo benoemd staat: het vermogen telt volledig als
+  beleggingen (de planner kent geen vermogensmix, wie vooral spaart betaalt minder), en er zijn
+  geen schulden. Fiscaal partnerschap gaat wél mee, via `woonsituatie`.
+
+  Twee dingen om te weten bij een volgende wijziging. De heffing gaat over het saldo aan het begin
+  van het jaar, want box 3 kent één peildatum. En de contante-waardeopbouw van het doelbedrag op
+  het scherm (`requiredCapitalEindwaarde`) kent de heffing niet, dus die sluit niet meer tot op de
+  euro aan op `requiredCapital`; dat laatste komt uit de simulatie en klopt wel.
+- **Inflatie is deterministisch.** Eén vast percentage voor de hele looptijd, dus de
+  bandbreedte in de grafiek toont niet het risico dat de inflatie zelf tegenvalt, en evenmin de
+  correlatie tussen inflatie en rendement. Dat is het deel dat blijft liggen.
+
+  Wat op 8 september 2026 wél is opgelost: `monteCarlo.ts` plakte een nominale
+  standaardafwijking op een reëel rendement. Dat is nu `reeleVolatiliteit()`, met
+  σ_reëel = σ_nominaal / (1 + inflatie): bij 12% en 3% inflatie 11,65%, en de log-sigma van de
+  trekking daalt van 0,11621 naar 0,11285.
+
+  Let op bij het beoordelen daarvan: die te hoge volatiliteit compenseerde de ontbrekende
+  inflatieonzekerheid per ongeluk een beetje. De correctie maakt het model intern kloppend, niet
+  automatisch realistischer. De slagingskans van het basisscenario ging er dan ook ómlaag van
+  8,80% naar 8,25%, want bij een plan dat mediaan niet haalt komt succes uit de bovenstaart en
+  die wordt dunner bij minder spreiding.
+- **Huishoudmodel is er half.** Sinds 8 september 2026 kan een partner meegerekend worden als
+  tweede, apart belaste persoon (`PartnerGegevens` in `types/index.ts`, `persoonNettoInkomen()` in
+  `pensionCalc.ts`). Box 1 is individueel, dus dat is de enige juiste behandeling: twee partners
+  met elk € 1.084 AOW en € 1.500 pensioen komen apart belast op € 4.673,81 netto per maand uit,
+  tegen € 3.718,73 als je alles in één veld optelt.
+
+  Wat nog ontbreekt: een aparte beleggingspot per persoon, een eigen lijfrente voor de partner,
+  een aparte planningshorizon, en nabestaandenscenario's (wat er gebeurt als één van beiden eerder
+  overlijdt). Het vermogen en het gewenste inkomen gelden voor het huishouden samen.
 - ~~Lettertypen niet zelf gehost.~~ Opgelost op 8 september 2026. De site laadt geen enkel
   bestand meer van een derde partij; `font-src` en `style-src` in de CSP staan nu op `'self'`.
   Nagetrokken tegen de productiebuild: alle drie de families laden vanaf het eigen domein en de
@@ -310,4 +357,4 @@ premie in de werkgeversregeling, dus werkgeversdeel én eigen bijdrage. Het veld
 
 (Audit 2026-08 heeft nagelopen of de H1 op de FO-planner-pagina nog `sr-only` was, zoals hier
 eerder stond — dat bleek niet meer zo: de H1 is zichtbaar. Dit punt is daarom verwijderd, zie
-`AUDIT-2026-08-bevindingen.md`, C3.)
+`docs/archief/AUDIT-2026-08-bevindingen.md`, C3.)

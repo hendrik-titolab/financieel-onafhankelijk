@@ -6,6 +6,7 @@ import { calculatePension, controleerLeeftijden } from '../../utils/pensionCalc'
 import { runMonteCarlo } from '../../utils/monteCarlo'
 import { MODEL_VERSIE, PARAMETER_JAAR } from '../../config/modelVersie'
 import { box3DrukAfgerond } from '../../utils/box3'
+import { AOW_NETTO } from '../../utils/pensionCalc'
 import { InputPanel } from './InputPanel'
 import { ResultsPanel } from './ResultsPanel'
 
@@ -34,11 +35,21 @@ const DEFAULT_INPUTS: PensionInputs = {
   desiredRetirementIncome: 5000,
   desiredRetirementIncomeType: 'bruto',
   woonsituatie: 'alleenstaand',
-  aowMaandBedragNetto: 1582,  // alleenstaand netto met heffingskorting, SVB per 1 juli 2026
+  aowMaandBedragNetto: AOW_NETTO.alleenstaand,  // uit de fiscale config
   aowStartAge: 67,
   // Standaard aan: de SVB keert het vakantiegeld in mei apart uit, dus het
   // maandbedrag op iemands overzicht is exclusief.
   aowVakantiegeld: true,
+  // Partner staat uit: dan is de uitkomst exact gelijk aan die van vóór het
+  // partnermodel, en verschuift er geen enkele golden-waarde om die reden.
+  partner: {
+    actief: false,
+    leeftijd: 40,
+    aowMaandBedragNetto: AOW_NETTO.samenwonend,
+    aowStartAge: 67,
+    employerPension: 0,
+    employerPensionStartAge: 67,
+  },
   employerPension: 0,
   employerPensionStartAge: 67,
   lijfrenteUitkering: 0,
@@ -121,10 +132,11 @@ export function PensionPlanner({ clientName, onCloseSession }: Props) {
     setMcStale(mcPrev => mcPrev || true)
   }, [])
 
-  // Zolang de gebruiker de vermogensbelasting niet zelf heeft ingevuld, volgt die
-  // de schatting bij het opgegeven vermogen. Verhoog je je vermogen van een ton
-  // naar een miljoen, dan loopt de druk mee van 0,9% naar 2,0% zonder dat je daar
-  // zelf aan hoeft te denken. Zodra je het veld aanraakt blijft jouw waarde staan.
+  // Zolang box 3 per jaar wordt uitgerekend, houdt dit veld de schatting bij het
+  // opgegeven vermogen vast. Het percentage doet dan niets in de berekening, maar
+  // het staat wél klaar met een zinnig getal voor wie overschakelt naar "ik vul
+  // zelf een percentage in". Zonder dit begint dat veld op een waarde die bij een
+  // heel ander vermogen hoorde.
   useEffect(() => {
     if (inputs.vermogensbelastingHandmatig) return
     const schatting = box3DrukAfgerond(inputs.currentCapital, inputs.woonsituatie)
@@ -184,7 +196,7 @@ export function PensionPlanner({ clientName, onCloseSession }: Props) {
         <div className="card !p-0 flex flex-col max-h-[75vh] lg:max-h-[calc(100vh-140px)] overflow-hidden">
           <div ref={scrollAreaRef} className="relative flex-1 min-h-0 overflow-y-auto visible-scrollbar p-4">
             <h2 className="text-sm font-medium text-ink mb-4">Invoer</h2>
-            <InputPanel inputs={inputs} onChange={handleChange} />
+            <InputPanel inputs={inputs} onChange={handleChange} result={result} />
             {showScrollHint && (
               // position:absolute (niet in de content-flow) zodat de plek
               // waar dit landt niet afhangt van de zichtbare paneelhoogte —
