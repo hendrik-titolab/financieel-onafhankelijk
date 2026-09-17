@@ -1,8 +1,8 @@
 # Implementatieplan WP9: belastingmotor per jaar
 
-**Status:** planningsdocument, geschreven 14 september 2026. Op 15 september is het deel
-uitgevoerd dat geen van de zes vragen in sectie 8 vooruitloopt; zie de voortgangstabel
-hieronder. De rest wacht op antwoord op die vragen.
+**Status:** afgerond. Geschreven 14 september 2026, alle zes vragen uit sectie 8
+beantwoord op 16 september, zie de voortgangstabel hieronder. Fase 4 en 5 zijn met
+Hendriks akkoord bewust komen te vervallen; fase 6 wacht op een echte jaargrens.
 
 Gebaseerd op onderzoek van de rekenkern op 14 september 2026, branch `vervolg-2026-09`.
 Bestand:regel-verwijzingen hieronder zijn een momentopname van die dag; controleer ze
@@ -10,20 +10,70 @@ opnieuw als er intussen aan de rekenkern is gewerkt.
 
 ---
 
-## Voortgang (bijgewerkt 15 september 2026)
+## Voortgang (bijgewerkt 16 september 2026)
+
+Hendrik beantwoordde op 16 september alle zes de vragen uit sectie 8: optie B, `opts`,
+historisch cijfermateriaal opzoeken en toevoegen, alleen het label repareren, het
+versieveld toevoegen, en opruimen pas na een jaargrens.
 
 | Onderdeel | Staat |
 |---|---|
-| **Fase 1, `box3.ts`** | **Klaar.** De drie FO-plannerfuncties lezen `BOX3_JAREN[belastingjaar]` in plaats van het platte `BOX3`. Default `PARAMETER_JAAR`, dat een letterlijk type is, dus `tsc` toetst zelf of dat jaar cijfers heeft. 18 testaanroepen expliciet gemaakt, 3 tests erbij die bewijzen dat het jaar doorwerkt. Geen rekenuitkomst veranderd, vooraf gecontroleerd dat `BOX3` en `BOX3_JAREN[2026]` gelijk zijn. |
-| **Twee hardgecodeerde jaartallen** | **Klaar.** `P.jaar` in `brutoNetto.ts` en de startwaarde van de box 3-tool komen van `PARAMETER_JAAR`, met terugval op het laatste jaar dat de tool kan rekenen. Beide stonden als los getal 2026 terwijl de cijfers eronder uit de config komen. |
-| **Bronbewaking in `genereer.mjs`** | **Klaar** (andere repo). De generator stopt nu als een tool een jaar aanbiedt zonder cijfers, als `belastingjaar` geen box 3-blok heeft, of als `PARAMETER_JAAR` in `modelVersie.ts` niet meeloopt met de bron. Dat laatste was het onbewaakte synchronisatiepunt uit sectie 4.3. |
-| **Fase 0, 2, 3, 4, 5** | **Wacht op vraag 1 en 2.** Alles hierin bouwt op de structuur `FISCAAL`, en hoe die eruitziet is de eerste keuze. |
-| **Fase 6, opruimen** | **Wacht op vraag 6.** Wel alvast een feit: het platte `BOX3` wordt sinds fase 1 door geen enkel bestand meer geïmporteerd. Het staat er nog, bewust, zolang vraag 6 open is. |
-| **Fase 7, UI** | **Wacht op vraag 4.** Het jaarlabel is gerepareerd; een echte jaarselector voor de bruto-nettotool is de keuze die openstaat. |
+| **Fase 1, `box3.ts`** | **Klaar** (15 september). De drie FO-plannerfuncties lezen `BOX3_JAREN[belastingjaar]`. |
+| **Twee hardgecodeerde jaartallen** | **Klaar** (15 september). `P.jaar` en de startwaarde van de box 3-tool volgen `PARAMETER_JAAR`. |
+| **Vraag 3, historische cijfers** | **Klaar.** 2021 tot en met 2025 opgezocht bij de Belastingdienst en toegevoegd aan `fiscale-cijfers.json`, met bron per jaar. Alleen pre-AOW, zie de afbakening hieronder. |
+| **Fase 0, `FISCAAL`** | **Klaar.** Nieuw blok `belastingjaren` in de bron, generator emit `FISCAAL` met 2021 tot en met 2026. Puur additief: de platte exports en elke bestaande rekenroute bleven ongewijzigd. |
+| **Fase 2, `brutoNetto.ts`** | **Klaar.** `belastingBox1()` neemt een `belastingjaar`, standaard `PARAMETER_JAAR`. Geen uitkomst veranderd. |
+| **Fase 3, `jaarruimte.ts`** | **Klaar.** Het belastingvoordeel wordt geschat met het tarief van het aftrekjaar. Dit verandert wel uitkomsten, zie hieronder. `MODEL_VERSIE` naar 2026.09.4. |
+| **Vraag 5, opslag** | **Klaar.** Een opgeslagen jaarruimteberekening draagt model en parameterjaar mee en toont ze. |
+| **Fase 4 en 5, `pensionCalc` en `monteCarlo`** | **Bewust niet gedaan.** Hendrik ging op 16 september akkoord met het voorstel om ze te laten liggen. Zie de afweging hieronder; de notitie in `pensionCalc.ts` stond er al. |
+| **Fase 6, opruimen** | **Wacht op een jaargrens**, zoals afgesproken bij vraag 6. Het platte `BOX3` wordt al nergens meer geïmporteerd. |
+| **Fase 7, jaarselector bruto-netto** | **Vervalt.** Bij vraag 4 gekozen voor alleen het label; dat is klaar. |
 
-Wat hier bewust **niet** is gedaan: geen `FISCAAL`-structuur, geen `belastingjaar` op
-`belastingBox1`, `pensionCalc` of `monteCarlo`, geen veld op `SavedJaarruimte`. Dat zijn
-allemaal onderdelen waarvan de vorm afhangt van een antwoord in sectie 8.
+### Wat fase 3 concreet veranderde
+
+In de golden-fixture stond voor 2022, 2023 en 2026 hetzelfde effectieve tarief van
+43,96%. Dat is het tarief van 2026, ongeacht het aftrekjaar. Alleen
+`belastingVoordeel` en `belastingTariefPct` verschuiven; de jaarruimte zelf, de
+reserveringsruimte en elk ander veld blijven in alle fixtures gelijk. Beide nieuwe
+waarden zijn onafhankelijk nagerekend met een script zonder projectcode:
+
+| Aftrekjaar | Voordeel oud | Voordeel nieuw | Tarief oud | Tarief nieuw |
+|---|---|---|---|---|
+| 2022 | € 3.342 | € 3.313 | 43,96% | 43,58% |
+| 2023 | € 7.432 | € 7.274 | 43,96% | 43,02% |
+
+### Afbakening: alleen pre-AOW historisch
+
+`FISCAAL` dekt voor 2021 tot en met 2025 alleen de cijfers van vóór de AOW-leeftijd.
+De jaarruimtetool rekent het belastingvoordeel altijd met `pastAow: false`, en de
+FO-planner rekent altijd op het huidige jaar. Historische post-AOW-cijfers zouden dus
+vandaag geen enkele gebruiker hebben, terwijl het er ruim honderd extra zijn die elk
+een vergunningsrisico dragen. Vragen om post-AOW voor een jaar dat het niet heeft
+levert een leesbare fout op, geen stille terugval.
+
+### Waarom fase 4 en 5 beter kunnen blijven liggen
+
+**Besloten.** Dit wijkt af van het oorspronkelijke plan; Hendrik ging op 16 september
+akkoord met onderstaande afweging.
+
+De planner heeft geen jaarkeuze in de UI en krijgt die volgens dit plan ook niet.
+Hij projecteert bovendien tientallen jaren vooruit op één vast tariefanker, en er is
+geen scenario waarin je daarvoor een ouder jaar zou willen kiezen: voor een
+toekomstprojectie wil je altijd de meest actuele cijfers. De winst is dus nul
+vandaag.
+
+Zwaarder weegt dit. `aowNettoNaarBruto()` en `aowVakantiegeldFactor()` leunen op
+`ZVW` en `AOW_*_MAAND`, en die staan niet per jaar in de bron. Een
+`belastingjaar`-parameter op `calculatePension()` zou dus alleen de box 1-helft
+sturen en de Zvw- en AOW-helft stil op het huidige jaar laten. Dat is precies de
+halve migratie die dit plan bij `box3.ts` zelf aanwijst als probleem: het oogt
+jaarbewust en is het niet. Liever geen parameter dan een parameter die de helft van
+de berekening niet raakt.
+
+Fase 4 en 5 pas oppakken als er een aanleiding is, namelijk een jaarkeuze in de
+planner-UI of Zvw- en AOW-cijfers per jaar in de bron. Tot die tijd staat er in
+`pensionCalc.ts`, direct boven `calculatePension()`, een notitie dat de planner
+bewust op `PARAMETER_JAAR` rekent en waarom.
 
 ---
 

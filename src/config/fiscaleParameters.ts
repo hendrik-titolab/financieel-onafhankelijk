@@ -75,6 +75,167 @@ export const HEFFINGSKORTING_POST_AOW = {
   },
 } as const
 
+// ─── Belastingmotor per jaar (WP9) ──────────────────────────────────────────
+// De vier blokken hierboven (BOX1_*, HEFFINGSKORTING_*) beschrijven één jaar: het
+// jaar dat in de bron als belastingjaar is aangewezen. FISCAAL beschrijft elk jaar
+// waarvan de cijfers bekend zijn, zodat een berekening over een ander aftrekjaar
+// niet stilzwijgend met de tarieven van nu wordt gedaan.
+//
+// preAow is voor elk jaar gevuld; postAow alleen voor het huidige jaar, omdat
+// alleen de FO-planner daarmee rekent en die altijd op het huidige jaar rekent.
+// Zie _dekking in fiscale-cijfers.json voor waarom historische postAow-cijfers
+// bewust niet zijn opgezocht.
+
+export interface Belastingschijf {
+  /** Bovengrens van deze schijf. null bij de laatste schijf, die er geen heeft. */
+  tot: number | null
+  /** Gecombineerd tarief: inkomstenbelasting plus premie volksverzekeringen. */
+  tarief: number
+}
+
+export interface Kortingschaal {
+  max: number
+  afbouwVanaf: number
+  afbouwPct: number
+  nihilBij: number
+}
+
+export interface Arbeidskortingschaal {
+  knik1: number; pct1: number
+  knik2: number; pct2: number
+  knik3: number; pct3: number
+  afbouwVanaf: number; afbouwPct: number
+  max: number
+}
+
+/** De tarieven en kortingen van één fase: vóór of ná de AOW-leeftijd. */
+export interface FiscaleFase {
+  schijven: Belastingschijf[]
+  algemeneHeffingskorting: Kortingschaal
+  arbeidskorting: Arbeidskortingschaal
+  /** Alleen ná de AOW-leeftijd. */
+  ouderenkorting?: Kortingschaal
+  /** Alleen ná de AOW-leeftijd. */
+  alleenstaandeouderenkorting?: number
+}
+
+export interface FiscaalJaar {
+  preAow: FiscaleFase
+  /** Alleen gevuld voor jaren waarin een rekentool ná de AOW-leeftijd rekent. */
+  postAow?: FiscaleFase
+}
+
+export const FISCAAL: Record<number, FiscaalJaar> = {
+  2021: {
+    preAow: {
+      schijven: [
+        { tot: 68_507, tarief: 0.371 },
+        { tot: null, tarief: 0.495 },
+      ],
+      algemeneHeffingskorting: { max: 2_837, afbouwVanaf: 21_043, afbouwPct: 0.05977, nihilBij: 68_507 },
+      arbeidskorting: {
+        knik1: 10_108, pct1: 0.04581,
+        knik2: 21_835, pct2: 0.28771,
+        knik3: 35_652, pct3: 0.02663,
+        afbouwVanaf: 35_652, afbouwPct: 0.06, max: 4_205,
+      },
+    },
+  },
+  2022: {
+    preAow: {
+      schijven: [
+        { tot: 69_398, tarief: 0.3707 },
+        { tot: null, tarief: 0.495 },
+      ],
+      algemeneHeffingskorting: { max: 2_888, afbouwVanaf: 21_317, afbouwPct: 0.06007, nihilBij: 69_398 },
+      arbeidskorting: {
+        knik1: 10_350, pct1: 0.04541,
+        knik2: 22_356, pct2: 0.28461,
+        knik3: 36_649, pct3: 0.0261,
+        afbouwVanaf: 36_649, afbouwPct: 0.0586, max: 4_260,
+      },
+    },
+  },
+  2023: {
+    preAow: {
+      schijven: [
+        { tot: 73_031, tarief: 0.3693 },
+        { tot: null, tarief: 0.495 },
+      ],
+      algemeneHeffingskorting: { max: 3_070, afbouwVanaf: 22_660, afbouwPct: 0.06095, nihilBij: 73_031 },
+      arbeidskorting: {
+        knik1: 10_740, pct1: 0.08231,
+        knik2: 23_201, pct2: 0.29861,
+        knik3: 37_691, pct3: 0.03085,
+        afbouwVanaf: 37_691, afbouwPct: 0.0651, max: 5_052,
+      },
+    },
+  },
+  2024: {
+    preAow: {
+      schijven: [
+        { tot: 75_518, tarief: 0.3697 },
+        { tot: null, tarief: 0.495 },
+      ],
+      algemeneHeffingskorting: { max: 3_362, afbouwVanaf: 24_812, afbouwPct: 0.0663, nihilBij: 75_518 },
+      arbeidskorting: {
+        knik1: 11_490, pct1: 0.08425,
+        knik2: 24_820, pct2: 0.31433,
+        knik3: 39_957, pct3: 0.02471,
+        afbouwVanaf: 39_957, afbouwPct: 0.0651, max: 5_532,
+      },
+    },
+  },
+  2025: {
+    preAow: {
+      schijven: [
+        { tot: 38_441, tarief: 0.3582 },
+        { tot: 76_817, tarief: 0.3748 },
+        { tot: null, tarief: 0.495 },
+      ],
+      algemeneHeffingskorting: { max: 3_068, afbouwVanaf: 28_406, afbouwPct: 0.06337, nihilBij: 76_817 },
+      arbeidskorting: {
+        knik1: 12_169, pct1: 0.08053,
+        knik2: 26_288, pct2: 0.3003,
+        knik3: 43_071, pct3: 0.02258,
+        afbouwVanaf: 43_071, afbouwPct: 0.0651, max: 5_599,
+      },
+    },
+  },
+  2026: {
+    preAow: {
+      schijven: [
+        { tot: 38_883, tarief: 0.3575 },
+        { tot: 78_426, tarief: 0.3756 },
+        { tot: null, tarief: 0.495 },
+      ],
+      algemeneHeffingskorting: { max: 3_115, afbouwVanaf: 29_736, afbouwPct: 0.06398, nihilBij: 78_426 },
+      arbeidskorting: {
+        knik1: 11_965, pct1: 0.08324,
+        knik2: 25_845, pct2: 0.31009,
+        knik3: 45_592, pct3: 0.0195,
+        afbouwVanaf: 45_593, afbouwPct: 0.0651, max: 5_685,
+      },
+    },
+    postAow: {
+      schijven: [
+        { tot: 38_883, tarief: 0.1785 },
+        { tot: 78_426, tarief: 0.3756 },
+        { tot: null, tarief: 0.495 },
+      ],
+      algemeneHeffingskorting: { max: 1_556, afbouwVanaf: 29_736, afbouwPct: 0.03195, nihilBij: 78_426 },
+      arbeidskorting: {
+        knik1: 11_965, pct1: 0.04156,
+        knik2: 25_845, pct2: 0.15483,
+        knik3: 45_592, pct3: 0.00974,
+        afbouwVanaf: 45_593, afbouwPct: 0.0325, max: 2_840,
+      },
+      ouderenkorting: { max: 2_067, afbouwVanaf: 46_002, afbouwPct: 0.15, nihilBij: 59_782 },
+      alleenstaandeouderenkorting: 540,
+    },
+  },
+}
+
 // ─── Bijdrage Zorgverzekeringswet ───────────────────────────────────────────
 // De lage bijdrage is de eigen bijdrage die wordt ingehouden op loon, uitkering of pensioen, dus ook op AOW en aanvullend pensioen. De hoge bijdrage is de werkgeversheffing en speelt bij een gepensioneerde niet. Kruiscontrole met de AOW-bedragen: 79,42 / 1637,57 = 4,850% en 54,42 / 1122,12 = 4,850%, allebei exact de lage bijdrage.
 export const ZVW = {

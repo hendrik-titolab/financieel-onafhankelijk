@@ -12,7 +12,11 @@
 // 2026.09.2: box 3 per jaar in de planner, partner apart belast, reële volatiliteit (8 en 9 september 2026).
 // 2026.09.3: overbruggingsToeslag telt het box 3-verschil niet meer mee als er geen
 // echte overbruggingsperiode is (14 september 2026).
-export const MODEL_VERSIE = '2026.09.3'
+// 2026.09.4: de jaarruimtetool schat het belastingvoordeel met de schijven en
+// heffingskortingen van het aftrekjaar zelf, in plaats van altijd met die van het
+// parameterjaar (WP9, 16 september 2026). Raakt alleen aftrekjaren ongelijk aan
+// PARAMETER_JAAR; de jaarruimte zelf verandert nergens.
+export const MODEL_VERSIE = '2026.09.4'
 
 /** Belastingjaar waarop fiscaleParameters.ts is gebaseerd. */
 export const PARAMETER_JAAR = 2026
