@@ -1,6 +1,6 @@
 import type { JaarruimteInputs, JaarruimteResult, PensioenType } from '../types'
 import {
-  JAARRUIMTE_PARAMS, JAARRUIMTE_BELASTINGJAREN,
+  JAARRUIMTE_PARAMS, JAARRUIMTE_BELASTINGJAREN, FISCAAL,
   RESERVERINGSRUIMTE_PCT_VOOR_2023, RESERVERINGSRUIMTE_TERUGKIJK,
 } from '../config/fiscaleParameters'
 import { belastingBox1 } from './brutoNetto'
@@ -197,13 +197,17 @@ export function controleerJaarruimteInvoer(inputs: JaarruimteInputs): Jaarruimte
     gezien.add(rij.jaar)
   }
 
-  // De belastingschijven in fiscaleParameters.ts zijn er voor een jaar. Voor een
-  // ander aftrekjaar is het geschatte voordeel dus een benadering, en dat hoort
-  // de gebruiker te weten in plaats van te moeten raden.
-  if (inputs.year !== PARAMETER_JAAR) {
+  // Tot september 2026 stond hier een waarschuwing bij elk aftrekjaar dat niet het
+  // parameterjaar was: belastingBox1() kende toen maar één jaar. Sinds WP9 rekent
+  // hij met de schijven en kortingen van het aftrekjaar zelf, dus die waarschuwing
+  // is niet meer waar en is weg. Wat blijft is het vangnet: biedt de tool ooit een
+  // jaar aan waarvoor de fiscale cijfers ontbreken, dan hoort de gebruiker dat te
+  // weten in plaats van een bedrag te zien dat nergens op slaat.
+  if (FISCAAL[inputs.year] === undefined) {
     waarschuwingen.push(
-      `Het geschatte belastingvoordeel rekent met de schijven en heffingskortingen van ` +
-      `${PARAMETER_JAAR}. Voor aftrekjaar ${inputs.year} is dat een benadering.`
+      `Voor aftrekjaar ${inputs.year} zijn de belastingschijven en heffingskortingen niet ` +
+      `bekend. Het geschatte belastingvoordeel rekent met die van ${PARAMETER_JAAR} en is ` +
+      `voor dit jaar dus een benadering.`
     )
   }
 
@@ -288,11 +292,17 @@ export function calculateJaarruimte(inputs: JaarruimteInputs): JaarruimteResult 
   // heffingskorting bouwt wél af over het lagere inkomen, en dat effect zit hier
   // dus in.
   const aftrekInkomen = inputs.aftrekjaarInkomen ?? income
+  // Het aftrekjaar bepaalt de schijven en kortingen, niet het jaar van vandaag: een
+  // aftrek over 2022 levert het tarief van 2022 op. Valt het jaar buiten wat FISCAAL
+  // dekt, dan rekent hij met het parameterjaar en staat de waarschuwing hierboven
+  // erbij; een harde fout zou de tool onbruikbaar maken voor een jaar dat hij zelf
+  // aanbiedt (WP9, fase 3).
+  const tariefJaar = FISCAAL[inputs.year] !== undefined ? inputs.year : PARAMETER_JAAR
   const voorAftrek = belastingBox1(Math.max(0, aftrekInkomen), {
-    pastAow: false, arbeidsinkomen: Math.max(0, aftrekInkomen),
+    pastAow: false, arbeidsinkomen: Math.max(0, aftrekInkomen), belastingjaar: tariefJaar,
   })
   const naAftrek = belastingBox1(Math.max(0, aftrekInkomen - nogTeDoen), {
-    pastAow: false, arbeidsinkomen: Math.max(0, aftrekInkomen),
+    pastAow: false, arbeidsinkomen: Math.max(0, aftrekInkomen), belastingjaar: tariefJaar,
   })
   const belastingVoordeel = Math.max(0, voorAftrek.teBetalen - naAftrek.teBetalen)
   // Het effectieve tarief over déze aftrek, niet een schijftarief. Bij een aftrek

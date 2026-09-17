@@ -6,7 +6,7 @@ import {
   berekenJaarruimteEenvoudig, getOudsteParameterJaar, getFormuleTekst,
   controleerJaarruimteInvoer, terugkijktermijn, oudsteReserveringsjaar,
 } from '../../utils/jaarruimte'
-import { PARAMETER_JAAR, PARAMETER_PEILDATUM, modelStempel } from '../../config/modelVersie'
+import { MODEL_VERSIE, PARAMETER_JAAR, PARAMETER_PEILDATUM, modelStempel } from '../../config/modelVersie'
 import { parseBedrag, formatBedrag } from '../../utils/bedrag'
 
 const STORAGE_KEY = 'jaarruimte_berekeningen'
@@ -157,6 +157,18 @@ function SavedCard({ item, onDelete, onLoad }: SavedCardProps) {
           </div>
           {item.notities && (
             <p className="text-xs text-body italic border-l-2 border-line pl-2">{item.notities}</p>
+          )}
+          {/* Waarmee dit bedrag destijds is uitgerekend. Zonder deze regel is een
+              berekening van vóór een cijferupdate niet te verklaren: hij wijkt af
+              van wat de tool vandaag geeft en niets laat zien waarom. Alleen tonen
+              als het is vastgelegd; berekeningen van vóór 16 september 2026 hebben
+              het niet en krijgen hier geen verzonnen versie (WP9, vraag 5). */}
+          {item.modelVersie && (
+            <p className="text-xs text-body">
+              Berekend met model {item.modelVersie}
+              {item.parameterJaar ? ` en de fiscale cijfers van ${item.parameterJaar}` : ''}.
+              {item.modelVersie !== MODEL_VERSIE && ' De tool rekent inmiddels met een nieuwer model.'}
+            </p>
           )}
           <div className="flex gap-2 pt-1">
             <button onClick={() => onLoad(item)} className="btn-secondary text-xs py-1">Laden</button>
@@ -569,6 +581,11 @@ export function JaarruimteTab() {
       inputs: { ...inputs },
       result: { ...result },
       notities: inputs.notities,
+      // Zodat een heropende berekening te verklaren blijft nadat de cijfers zijn
+      // bijgewerkt. De FO-planner legt dit al vast in BerekeningsSet; hier stond
+      // het nog niet (WP9, vraag 5).
+      modelVersie: MODEL_VERSIE,
+      parameterJaar: PARAMETER_JAAR,
     }
     const updated = [entry, ...saved]
     setSaved(updated)
@@ -907,7 +924,7 @@ export function JaarruimteTab() {
 
           <p className="text-xs text-body leading-relaxed">
             Het belastingvoordeel is een schatting: belasting zonder aftrek min belasting met aftrek,
-            met de schijven en heffingskortingen van {PARAMETER_JAAR} en een verwacht inkomen van{' '}
+            met de schijven en heffingskortingen van {inputs.year} en een verwacht inkomen van{' '}
             {eur(inputs.aftrekjaarInkomen ?? inputs.income)} in het aftrekjaar. Geen definitief bedrag.
             Deze berekening is educatief en indicatief, geen persoonlijk financieel advies.
           </p>

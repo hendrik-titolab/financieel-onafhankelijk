@@ -391,6 +391,19 @@ export interface SavedJaarruimte {
   inputs: JaarruimteInputs
   result: JaarruimteResult
   notities: string
+  /**
+   * Met welk rekenmodel en welke fiscale cijfers deze berekening destijds is
+   * gemaakt. Zonder dit is een heropende berekening uit vorig jaar niet te
+   * verklaren: het bedrag klopt dan niet met wat de tool vandaag zou uitrekenen,
+   * en niets laat zien waarom.
+   *
+   * Optioneel omdat berekeningen van vóór 16 september 2026 het niet hebben. Bij
+   * het laden blijft het dan leeg en toont het scherm er niets over, in plaats van
+   * een versie te verzinnen die er nooit was (WP9, vraag 5).
+   */
+  modelVersie?: string
+  /** Belastingjaar van de fiscale parameters waarmee is gerekend. */
+  parameterJaar?: number
 }
 
 /**

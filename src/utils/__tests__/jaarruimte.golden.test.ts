@@ -17,6 +17,7 @@ import {
   controleerJaarruimteInvoer, terugkijktermijn, oudsteReserveringsjaar,
 } from '../jaarruimte'
 import type { PensioenType } from '../../types'
+import { JAARRUIMTE_BELASTINGJAREN, FISCAAL } from '../../config/fiscaleParameters'
 import { round } from './fixtures'
 import fixture from './__golden__/jaarruimte.golden.json'
 
@@ -302,9 +303,44 @@ describe('controleerJaarruimteInvoer', () => {
     expect(controleerJaarruimteInvoer(basis({ income: -1 })).errors).toHaveLength(1)
   })
 
-  it('waarschuwt als het aftrekjaar afwijkt van het parameterjaar', () => {
-    expect(controleerJaarruimteInvoer(basis({ year: 2023 })).waarschuwingen).toHaveLength(1)
-    expect(controleerJaarruimteInvoer(basis({ year: 2026 })).waarschuwingen).toHaveLength(0)
+  it('waarschuwt niet meer over het aftrekjaar, want elk aangeboden jaar heeft cijfers', () => {
+    // Tot WP9 waarschuwde de tool bij elk jaar dat niet het parameterjaar was,
+    // want belastingBox1() kende maar een jaar. Nu rekent hij met de schijven van
+    // het aftrekjaar zelf en is die waarschuwing niet meer waar.
+    for (const jaar of JAARRUIMTE_BELASTINGJAREN) {
+      expect(controleerJaarruimteInvoer(basis({ year: jaar })).waarschuwingen).toHaveLength(0)
+    }
+  })
+
+  it('schat het belastingvoordeel met het tarief van het aftrekjaar', () => {
+    // De kern van WP9 voor deze tool. Vóór 16 september 2026 kwam elk aftrekjaar op
+    // hetzelfde effectieve tarief uit, 43,96%, want belastingBox1() gebruikte altijd
+    // de schijven van het parameterjaar. Dat was zichtbaar in de golden-fixture:
+    // 2022, 2023 en 2026 stonden alle drie op 43,96%.
+    const tarief = (jaar: number) => {
+      const r = calculateJaarruimte({
+        year: jaar, income: 70000, pensioenType: 'geen',
+        factorA: 0, pensioenpremie: 0, alIngelegd: 0, reserveringsruimteRijen: [],
+        clientName: '', adviseurNaam: '', notities: '',
+      })
+      return round(r.belastingTarief * 100, 2)
+    }
+    // Onafhankelijk nagerekend met de gepubliceerde cijfers van elk jaar.
+    expect(tarief(2022)).toBe(43.58)
+    expect(tarief(2023)).toBe(43.02)
+    expect(tarief(2026)).toBe(43.96)
+    expect(new Set([tarief(2022), tarief(2023), tarief(2026)]).size).toBe(3)
+  })
+
+  it('heeft voor elk aangeboden aftrekjaar ook fiscale cijfers', () => {
+    // De invariant achter de test hierboven. De waarschuwing in
+    // controleerJaarruimteInvoer() is een vangnet voor het geval deze twee lijsten
+    // uiteenlopen, bijvoorbeeld als de tool 2027 aanbiedt voordat de cijfers van
+    // 2027 zijn toegevoegd. Vandaag is dat vangnet onbereikbaar, en deze test
+    // bewaakt dat dat zo blijft in plaats van dat het stilletjes verandert.
+    for (const jaar of JAARRUIMTE_BELASTINGJAREN) {
+      expect(FISCAAL[jaar], `aftrekjaar ${jaar} heeft geen fiscale cijfers`).toBeDefined()
+    }
   })
 })
 

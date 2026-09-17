@@ -1,6 +1,8 @@
 import {
-  BOX1_PRE_AOW, BOX1_POST_AOW,
-  HEFFINGSKORTING_PRE_AOW, HEFFINGSKORTING_POST_AOW,
+  BOX1_PRE_AOW,
+  HEFFINGSKORTING_PRE_AOW,
+  FISCAAL,
+  type FiscaleFase,
 } from '../config/fiscaleParameters'
 import { PARAMETER_JAAR } from '../config/modelVersie'
 
@@ -142,15 +144,47 @@ export interface BelastingOpties {
   arbeidsinkomen?: number
   /** Geeft recht op de alleenstaandeouderenkorting. Alleen na de AOW-leeftijd. */
   alleenstaand?: boolean
+  /**
+   * Het jaar waarvan de schijven en heffingskortingen gelden. Standaard het
+   * parameterjaar van de site.
+   *
+   * Dit is niet hetzelfde als het kalenderjaar waarin gerekend wordt. De
+   * jaarruimtetool schat het belastingvoordeel van een aftrek in het aftrekjaar
+   * dat de gebruiker koos, en dat kan een ander jaar zijn dan vandaag.
+   */
+  belastingjaar?: number
 }
 
-function schijvenVoor(pastAow: boolean) {
-  const t = pastAow ? BOX1_POST_AOW : BOX1_PRE_AOW
-  return [
-    { tot: t.schijf1Grens, tarief: t.schijf1Tarief },
-    { tot: t.schijf2Grens, tarief: t.schijf2Tarief },
-    { tot: Infinity, tarief: t.schijf3Tarief },
-  ]
+/**
+ * De tarieven en kortingen van één belastingjaar, vóór of ná de AOW-leeftijd.
+ *
+ * Gooit liever een leesbare fout dan stilzwijgend terug te vallen op een ander
+ * jaar. Een berekening die met de verkeerde schijven is gedaan en er verder
+ * normaal uitziet, is in Wft-gebied gevaarlijker dan een berekening die weigert:
+ * de gebruiker ziet geen enkel signaal dat het bedrag niet klopt. Dezelfde keuze
+ * als getParams() in jaarruimte.ts al maakt (WP9, fase 2).
+ */
+export function fiscaleFaseVoor(pastAow: boolean, belastingjaar: number = PARAMETER_JAAR): FiscaleFase {
+  const jaar = FISCAAL[belastingjaar]
+  if (!jaar) {
+    throw new Error(
+      `Geen fiscale cijfers bekend voor belastingjaar ${belastingjaar}. ` +
+      `Bekend: ${Object.keys(FISCAAL).join(', ')}.`)
+  }
+  const fase = pastAow ? jaar.postAow : jaar.preAow
+  if (!fase) {
+    throw new Error(
+      `Voor ${belastingjaar} zijn alleen de cijfers van vóór de AOW-leeftijd bekend, ` +
+      `en er is om de cijfers van erna gevraagd. Zie _dekking in fiscale-cijfers.json.`)
+  }
+  return fase
+}
+
+// tot is null bij de laatste schijf, die geen bovengrens heeft. belastingSchijven()
+// rekent met Infinity, dus dat wordt hier vertaald.
+function schijvenVoor(pastAow: boolean, belastingjaar?: number) {
+  return fiscaleFaseVoor(pastAow, belastingjaar).schijven
+    .map(s => ({ tot: s.tot ?? Infinity, tarief: s.tarief }))
 }
 
 /** Lineair afgebouwde korting: onder de grens het maximum, daarboven aflopend tot nul. */
@@ -163,19 +197,22 @@ function afgebouwdeKorting(
 }
 
 export function belastingBox1(brutoJaar: number, opties: BelastingOpties): BerekeningResultaat {
-  const { pastAow, alleenstaand = false } = opties
+  const { pastAow, alleenstaand = false, belastingjaar = PARAMETER_JAAR } = opties
   const arbeidsinkomen = opties.arbeidsinkomen ?? brutoJaar
 
-  const { totaal: belasting, detail } = belastingSchijven(brutoJaar, schijvenVoor(pastAow))
+  const fase = fiscaleFaseVoor(pastAow, belastingjaar)
+  const { totaal: belasting, detail } = belastingSchijven(brutoJaar, schijvenVoor(pastAow, belastingjaar))
 
-  const kortingSet = pastAow ? HEFFINGSKORTING_POST_AOW : HEFFINGSKORTING_PRE_AOW
-  const ahk = afgebouwdeKorting(brutoJaar, kortingSet.algemeneHeffingskorting)
-  const ak = arbeidskortingVoor(arbeidsinkomen, kortingSet.arbeidskorting)
-  const ouderenkorting = pastAow
-    ? afgebouwdeKorting(brutoJaar, HEFFINGSKORTING_POST_AOW.ouderenkorting)
+  const ahk = afgebouwdeKorting(brutoJaar, fase.algemeneHeffingskorting)
+  const ak = arbeidskortingVoor(arbeidsinkomen, fase.arbeidskorting)
+  // De ouderenkortingen bestaan alleen ná de AOW-leeftijd, en dus alleen op een
+  // fase die ze meebrengt. fiscaleFaseVoor() heeft hierboven al geweigerd als er
+  // om een postAow-fase is gevraagd die er niet is.
+  const ouderenkorting = fase.ouderenkorting
+    ? afgebouwdeKorting(brutoJaar, fase.ouderenkorting)
     : 0
-  const alleenstaandeouderenkorting = pastAow && alleenstaand
-    ? HEFFINGSKORTING_POST_AOW.alleenstaandeouderenkorting
+  const alleenstaandeouderenkorting = alleenstaand
+    ? fase.alleenstaandeouderenkorting ?? 0
     : 0
 
   const kortingen = Math.min(
@@ -200,16 +237,16 @@ export function belastingBox1(brutoJaar: number, opties: BelastingOpties): Berek
 }
 
 /** Bruto naar netto voor een werknemer onder de AOW-leeftijd. Wat de bruto-nettotool gebruikt. */
-export function brutoNaarNetto(brutoJaar: number): BerekeningResultaat {
-  return belastingBox1(brutoJaar, { pastAow: false })
+export function brutoNaarNetto(brutoJaar: number, belastingjaar?: number): BerekeningResultaat {
+  return belastingBox1(brutoJaar, { pastAow: false, belastingjaar })
 }
 
-export function nettoNaarBruto(nettoJaar: number): BerekeningResultaat {
+export function nettoNaarBruto(nettoJaar: number, belastingjaar?: number): BerekeningResultaat {
   let lo = nettoJaar, hi = nettoJaar * 2.5 + 50_000
   for (let i = 0; i < 80; i++) {
     const mid = (lo + hi) / 2
-    if (brutoNaarNetto(mid).nettoJaar < nettoJaar) lo = mid
+    if (brutoNaarNetto(mid, belastingjaar).nettoJaar < nettoJaar) lo = mid
     else hi = mid
   }
-  return brutoNaarNetto((lo + hi) / 2)
+  return brutoNaarNetto((lo + hi) / 2, belastingjaar)
 }
