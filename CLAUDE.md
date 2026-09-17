@@ -7,7 +7,7 @@ Combinatie van een kennisautoriteitssite (uitlegartikelen) en zeven rekentools, 
 breed publiek als financieel adviseurs. Staat live op https://benikfinancieelonafhankelijk.nl
 
 **Stack:** Astro 7 + React 18 (eilanden) + TypeScript + Tailwind CSS 3
-**Hosting:** Vercel (automatisch deploy bij git push naar **`astro-migratie`**)
+**Hosting:** Vercel (automatisch deploy zodra er iets op **`astro-migratie`** landt, via een PR)
 **Repo:** https://github.com/hendrik-titolab/financieel-onafhankelijk
 **Lokaal:** `C:\Users\schak\financiele-planning`
 
@@ -159,7 +159,12 @@ https://benikfinancieelonafhankelijk.nl (domein via TransIP, DNS A-record → Ve
 
 ### Vercel
 - Project: `financieel-onafhankelijk`, account `titolab`
-- **Automatische deploy bij elke `git push` naar `astro-migratie`** (niet `main`)
+- **Automatische deploy zodra er een commit op `astro-migratie` landt** (niet `main`). Rechtstreeks
+  pushen kan sinds 17 september 2026 niet meer, zie "Update deployen" hieronder
+- Vercel bouwt ook een **preview per pull request**. Die URL is op te halen zonder
+  dashboardtoegang:
+  `gh api repos/hendrik-titolab/financieel-onafhankelijk/deployments --jq '.[0].id'` en dan
+  `gh api repos/.../deployments/<id>/statuses --jq '.[0].environment_url'`
 - Web Analytics moet in het Vercel-dashboard aan staan (Project → Analytics → Enable) — code
   alleen is niet genoeg, dat is Hendriks eigen handeling
 - Ik heb geen Vercel-dashboardtoegang — verifieer een deploy via een `fetch` met
@@ -182,9 +187,10 @@ ingesteld.
 compileert met esbuild en meldt typefouten niet, dus die losse `tsc`-stap is de enige die dat
 wel doet. `npm audit` draait niet-blokkerend.
 
-De workflow houdt een kapotte push niet tegen, hij maakt hem zichtbaar. Wil je dat hard maken:
-zet branch protection op `astro-migratie` met deze workflow als verplichte check. Dat is een
-handeling in GitHub die ik niet voor je kan doen.
+**Deze workflow is sinds 17 september 2026 een harde poort.** Op `astro-migratie` staat branch
+protection met `controle` als verplichte status check. Vóór die datum maakte de workflow een
+kapotte push alleen zichtbaar; nu houdt hij hem tegen. Praktisch gevolg: een mislukte `controle`
+betekent dat de PR niet te mergen is, niet dat er een rood vinkje in de historie komt te staan.
 
 `vercel.json` zet twee dingen. Ten eerste de beveiligingsheaders (CSP, X-Content-Type-Options,
 Referrer-Policy, X-Frame-Options, Permissions-Policy). Ten tweede een cacheregel voor
@@ -205,16 +211,37 @@ zonder één CSP-melding. Wijzig je de CSP, test hem dan opnieuw op die manier e
 `astro dev`, want daar gelden deze headers niet.
 
 ### Update deployen
+
+**Rechtstreeks pushen naar `astro-migratie` werkt niet meer.** Sinds 17 september 2026 staat er
+branch protection op met `controle` als verplichte check; een `git push origin astro-migratie`
+wordt geweigerd met "push declined due to repository rule violations". Alles gaat via een pull
+request. Dat is geen omweg maar het punt: de releasepoort kan zo niet meer overgeslagen worden.
+
+Begin altijd met ophalen, want `origin/astro-migratie` kan vooruit lopen op je lokale kopie
+doordat PR's op GitHub zelf gemerged worden:
 ```
 cd C:\Users\schak\financiele-planning
-git checkout astro-migratie
+git fetch origin
+git checkout -b omschrijvende-branchnaam origin/astro-migratie
+```
+Werk, en draai de poort lokaal vóór je pusht (dit is exact wat CI ook doet):
+```
+npx tsc --noEmit && npm run check && npx vitest run && npm run build
+```
+Dan pushen en een PR openen:
+```
 git add .
 git commit -m "Omschrijving van wijziging"
-git push origin astro-migratie
+git push -u origin omschrijvende-branchnaam
+gh pr create --base astro-migratie
 ```
-Vercel deployt automatisch. Werk bij grotere wijzigingen liever eerst op een eigen branch en merge
-daarna naar `astro-migratie`, in plaats van rechtstreeks te committen — zie hoe de herstijling van
-11 augustus is aangepakt (branch `herstijling-2026`) als voorbeeld.
+Wacht tot `controle` groen is (`gh pr checks <nr> --watch`) en merge dan met
+`gh pr merge <nr> --merge`. Vercel deployt zodra de merge op `astro-migratie` landt.
+
+Twee dingen voor Claude in het bijzonder. Het mergen zelf wordt in auto-mode geblokkeerd door de
+classifier ("merge without review"), dus die knop is een handeling van Hendrik tenzij hij er in
+de sessie expliciet om vraagt. En verifieer een deploy met een `fetch` met `cache: 'no-store'` op
+de live URL, niet via het Vercel-dashboard, want daar is geen toegang toe.
 
 ---
 
