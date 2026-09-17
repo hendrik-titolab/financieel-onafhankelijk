@@ -1,0 +1,87 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import { EenmaligeInlegTool } from '../../components/RenteOpRente'
+import { articleSchema, faqSchema, breadcrumbSchema } from '../../lib/seo'
+
+const title = 'Rente op rente berekenen | Wat wordt je bedrag waard?'
+const description =
+  'Bereken wat een eenmalige inleg wordt door rente op rente. Zie per rendement en looptijd hoe vaak je geld zich vermenigvuldigt, en reken je eigen bedrag door.'
+
+const faq = [
+  {
+    vraag: 'Wat is rente op rente?',
+    antwoord:
+      'Rendement dat je niet opneemt, maakt het jaar erna zelf ook weer rendement. Daardoor groeit je bedrag versnellend in plaats van met een vast bedrag per jaar. De formule is: eindbedrag = inleg × (1 + rendement) tot de macht het aantal jaren. Bij 6% per jaar wordt € 10.000 na tien jaar € 17.908, na dertig jaar € 57.435.',
+  },
+  {
+    vraag: 'Hoelang duurt het voordat mijn geld verdubbelt?',
+    antwoord:
+      'Bij 6% per jaar ongeveer 11,9 jaar, bij 8% ongeveer 9,0 jaar en bij 2% ruim 35 jaar. De vuistregel van 72 komt daar dicht bij in de buurt: deel 72 door het rendementspercentage en je hebt de verdubbeltijd bij benadering.',
+  },
+  {
+    vraag: 'Geldt dit ook voor spaargeld?',
+    antwoord:
+      'De rekenwijze wel, de uitkomst zelden. Spaarrentes liggen meestal onder de inflatie, dus dan groeit je saldo op papier wel maar je koopkracht niet. Hoe dat uitpakt lees je bij inflatie en spaargeld.',
+  },
+  {
+    vraag: 'Is het opgegeven rendement voor of na inflatie en belasting?',
+    antwoord:
+      'Voor. Alle bedragen op deze pagina zijn nominaal: vóór inflatie, kosten van beleggen en belasting in box 3. Bij 2% inflatie is € 100.000 over dertig jaar ongeveer € 55.000 aan koopkracht waard. Rendementen uit het verleden bieden geen garantie voor de toekomst.',
+  },
+]
+
+const schemas = [
+  articleSchema({
+    title,
+    description,
+    path: '/tools/rente-op-rente/',
+    dateModified: '2026-09-17',
+  }),
+  faqSchema(faq),
+  breadcrumbSchema([
+    { name: 'Home', path: '/' },
+    { name: 'Rekentools', path: '/tools/' },
+    { name: 'Rente op rente', path: '/tools/rente-op-rente/' },
+  ]),
+]
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  canonical="/tools/rente-op-rente/"
+  jsonLd={schemas}
+>
+  <main class="flex-1 p-4 md:p-6">
+    <div class="max-w-5xl mx-auto">
+      <h1 class="font-serif text-2xl text-ink mb-1">Rente op rente: wat wordt je inleg waard?</h1>
+      <p class="text-sm text-body mb-5 leading-relaxed">
+        Eén bedrag dat je laat staan groeit niet rechtlijnig maar versnellend, omdat het rendement
+        zelf weer rendement maakt. De tabel laat zien wat dat over lange looptijden doet. Daaronder
+        reken je je eigen bedrag door.
+      </p>
+      <EenmaligeInlegTool client:load />
+
+      <section class="mt-8 border-t border-line-soft pt-6">
+        <h2 class="label-mono mb-3">Lees ook</h2>
+        <ul class="space-y-2 text-sm">
+          <li>
+            <a href="/tools/maandelijks-beleggen/" class="text-data-700 hover:underline">
+              Wat levert maandelijks inleggen op?
+            </a>
+          </li>
+          <li>
+            <a href="/uitleg/sparen-maakt-mensen-arm" class="text-data-700 hover:underline">
+              Sparen maakt mensen arm: waarom je spaargeld elk jaar minder waard wordt
+            </a>
+          </li>
+          <li>
+            <a href="/uitleg/wat-is-inflatie" class="text-data-700 hover:underline">
+              Wat is inflatie en wat doet het met je geld?
+            </a>
+          </li>
+        </ul>
+      </section>
+    </div>
+  </main>
+</BaseLayout>

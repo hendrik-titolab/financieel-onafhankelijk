@@ -55,6 +55,18 @@ uit dezelfde tinthoek als ochtendblauw (208°) en zand (38°), alleen dieper in 
 **Openstaand:** deze vijf tokens zijn functioneel getest en voldoen aan de contrasteisen, maar zijn
 nog niet beoordeeld door de grafisch ontwerper. Voorleggen voordat dit als definitief geldt.
 
+**Uitzondering, 17 september 2026: heatmap in een datamatrix.** De twee rente-op-rente-tools
+(`src/components/RenteOpRente/Matrix.tsx`) kleuren hun tabelcellen met `data-300` op vijf
+dekkingsstappen (15/30/45/60/75%). Dat lijkt in te gaan tegen "uitsluitend grafiekvlak, nooit een
+los UI-element", maar die regel bestaat omdat `data-100`/`data-300` de 3:1-eis niet halen en dus
+ongeschikt zijn als knop, badge of rand waar de kleur de vindbaarheid moet dragen. Een heatmapcel
+draagt geen vindbaarheid: de matrix ís de grafiek op die pagina, en het bedrag staat voluit als
+cijfer in de cel. De tint is dus redundante codering van een getal dat er al staat, geen enige
+drager van betekenis. Voorwaarden waaronder dit mag: alle celtekst in `ink` (in `body` zakt de
+subregel op de donkerste tint naar 3,47:1), dekking niet boven 75% (inkt haalt daar circa 5,2:1),
+en een legenda bij de tabel. Zand is hier bewust niet gebruikt, zie kleurregel 4. Deze uitzondering
+hoort bij het openstaande punt hierboven en gaat mee als de tokens worden voorgelegd.
+
 ### Tailwind-config (v3.4.13 — tokens in `tailwind.config.js`, niet `@theme`)
 
 Zie `tailwind.config.js` in de repo-root voor de volledige, actuele lijst.

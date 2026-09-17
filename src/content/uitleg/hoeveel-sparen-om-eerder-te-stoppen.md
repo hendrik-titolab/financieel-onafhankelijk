@@ -37,6 +37,8 @@ De volgende tabel geeft een ruwe indicatie van het aantal jaren tot financiële 
 
 Je ziet: elke stap omhoog in je spaarquote scheelt flink. Van 30% naar 50% halveert de tijd bijna.
 
+*Wil je zien wat jouw maandbedrag oplevert bij een bepaald rendement en een bepaalde looptijd? [Bereken wat maandelijks inleggen oplevert](/tools/maandelijks-beleggen/).*
+
 ## Waarom dit werkt
 
 Een hogere spaarquote werkt twee kanten op. Je legt meer geld opzij, waardoor je vermogen sneller groeit. En je leeft van minder, waardoor je [benodigde vermogen](/uitleg/hoeveel-geld-financieel-onafhankelijk) lager is. Die twee effecten versterken elkaar.

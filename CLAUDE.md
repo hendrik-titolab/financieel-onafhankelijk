@@ -3,11 +3,11 @@
 ## Wat is dit?
 
 Een Astro 7-site (SSG, statisch gebouwd) met React-eilanden voor de interactieve rekentools.
-Combinatie van een kennisautoriteitssite (uitlegartikelen) en vijf rekentools, gericht op zowel
+Combinatie van een kennisautoriteitssite (uitlegartikelen) en zeven rekentools, gericht op zowel
 breed publiek als financieel adviseurs. Staat live op https://benikfinancieelonafhankelijk.nl
 
 **Stack:** Astro 7 + React 18 (eilanden) + TypeScript + Tailwind CSS 3
-**Hosting:** Vercel (automatisch deploy bij git push naar **`astro-migratie`**)
+**Hosting:** Vercel (automatisch deploy zodra er iets op **`astro-migratie`** landt, via een PR)
 **Repo:** https://github.com/hendrik-titolab/financieel-onafhankelijk
 **Lokaal:** `C:\Users\schak\financiele-planning`
 
@@ -62,7 +62,7 @@ afgestemd.
 
 ---
 
-## De vijf rekentools
+## De zeven rekentools
 
 ### 1. FO-planner (hoofdtool) — `/ben-ik-financieel-onafhankelijk`
 React-eiland (`client:only="react"`), component `src/components/PensionPlanner/`.
@@ -117,6 +117,32 @@ de gegenereerde config.
 - Bewust niet meegerekend, en in de UI ook zo benoemd: de vrijstelling voor groene beleggingen en
   de bijtelling voor eigen gebruik van een tweede woning (vanaf 2026 5,06% van de WOZ-waarde).
 
+### 6 en 7. Rente op rente — `/tools/rente-op-rente` en `/tools/maandelijks-beleggen`
+Twee losse pagina's, één gedeeld React-component `src/components/RenteOpRente/`. Ze verschillen
+alleen in de formule en de labels: een `VariantConfig` per tool voedt dezelfde `RenteOpRenteTool`.
+Rekenlogica in `src/utils/renteOpRente.ts` en niet in het component, want twee tools delen de
+formules en de uitkomsten moeten toetsbaar zijn. Zelfde criterium als bij `box3.ts`.
+
+- Bovenaan een matrix van 5 rendementen (2, 4, 6, 8, 10%) × 8 looptijden (5 tot 50 jaar), met één
+  gedeeld inlegveld dat zowel de matrix als de rekentool eronder voedt. Daaronder drie velden:
+  jaren, inleg en verwacht rendement.
+- **Deze twee pagina's zijn breder dan de andere vijf** (`max-w-5xl` in plaats van `max-w-2xl`).
+  Anders past de matrix van negen kolommen niet en scrollt hij ook op desktop. Op mobiel scrollt
+  hij wél, met de rendementskolom vastgezet.
+- Hydratie met `client:load` en niet `client:only="react"`: de matrix draagt de boodschap en moet
+  in de gebouwde HTML staan voor indexering. Dat kan veilig, want er zit geen `Date`,
+  `localStorage` of `Math.random` in dit component.
+- **Alles nominaal**, dus vóór inflatie, kosten en belasting. Dat is de enige plek op de site waar
+  dat zo is; de rest rekent in reële koopkracht. Beide pagina's benoemen het in de UI.
+- De maandinleg wordt exact per maand gerekend, storting aan het begin van de maand, met een
+  maandrendement uit (1 + r)^(1/12) − 1. Dat wijkt **0,3013%** af van de mid-year-benadering
+  × √(1+r) in `simulateAccumulation()` (`pensionCalc.ts`). Bewust: dat is een exacte berekening
+  naast een gedocumenteerde benadering (auditbevinding 14), en de keuze wanneer in de maand je
+  stort weegt zwaarder (0,56%) dan het verschil met de planner. `renteOpRente.test.ts` pint die
+  0,3013% vast, dus het valt om zodra iemand aan een van beide kanten draait.
+- De test pint ook de negen cellen van de rendementstabel uit
+  `wanneer-ben-je-financieel-onafhankelijk.mdx` vast, zodat tool en artikel niet uit elkaar lopen.
+
 ### Technische details, alle tools
 - Bedragen in reële koopkracht (na inflatie) tenzij expliciet "nominaal" vermeld.
 - Geen server, geen database — alles client-side, hooguit `localStorage` voor
@@ -133,7 +159,12 @@ https://benikfinancieelonafhankelijk.nl (domein via TransIP, DNS A-record → Ve
 
 ### Vercel
 - Project: `financieel-onafhankelijk`, account `titolab`
-- **Automatische deploy bij elke `git push` naar `astro-migratie`** (niet `main`)
+- **Automatische deploy zodra er een commit op `astro-migratie` landt** (niet `main`). Rechtstreeks
+  pushen kan sinds 17 september 2026 niet meer, zie "Update deployen" hieronder
+- Vercel bouwt ook een **preview per pull request**. Die URL is op te halen zonder
+  dashboardtoegang:
+  `gh api repos/hendrik-titolab/financieel-onafhankelijk/deployments --jq '.[0].id'` en dan
+  `gh api repos/.../deployments/<id>/statuses --jq '.[0].environment_url'`
 - Web Analytics moet in het Vercel-dashboard aan staan (Project → Analytics → Enable) — code
   alleen is niet genoeg, dat is Hendriks eigen handeling
 - Ik heb geen Vercel-dashboardtoegang — verifieer een deploy via een `fetch` met
@@ -156,9 +187,10 @@ ingesteld.
 compileert met esbuild en meldt typefouten niet, dus die losse `tsc`-stap is de enige die dat
 wel doet. `npm audit` draait niet-blokkerend.
 
-De workflow houdt een kapotte push niet tegen, hij maakt hem zichtbaar. Wil je dat hard maken:
-zet branch protection op `astro-migratie` met deze workflow als verplichte check. Dat is een
-handeling in GitHub die ik niet voor je kan doen.
+**Deze workflow is sinds 17 september 2026 een harde poort.** Op `astro-migratie` staat branch
+protection met `controle` als verplichte status check. Vóór die datum maakte de workflow een
+kapotte push alleen zichtbaar; nu houdt hij hem tegen. Praktisch gevolg: een mislukte `controle`
+betekent dat de PR niet te mergen is, niet dat er een rood vinkje in de historie komt te staan.
 
 `vercel.json` zet twee dingen. Ten eerste de beveiligingsheaders (CSP, X-Content-Type-Options,
 Referrer-Policy, X-Frame-Options, Permissions-Policy). Ten tweede een cacheregel voor
@@ -179,16 +211,37 @@ zonder één CSP-melding. Wijzig je de CSP, test hem dan opnieuw op die manier e
 `astro dev`, want daar gelden deze headers niet.
 
 ### Update deployen
+
+**Rechtstreeks pushen naar `astro-migratie` werkt niet meer.** Sinds 17 september 2026 staat er
+branch protection op met `controle` als verplichte check; een `git push origin astro-migratie`
+wordt geweigerd met "push declined due to repository rule violations". Alles gaat via een pull
+request. Dat is geen omweg maar het punt: de releasepoort kan zo niet meer overgeslagen worden.
+
+Begin altijd met ophalen, want `origin/astro-migratie` kan vooruit lopen op je lokale kopie
+doordat PR's op GitHub zelf gemerged worden:
 ```
 cd C:\Users\schak\financiele-planning
-git checkout astro-migratie
+git fetch origin
+git checkout -b omschrijvende-branchnaam origin/astro-migratie
+```
+Werk, en draai de poort lokaal vóór je pusht (dit is exact wat CI ook doet):
+```
+npx tsc --noEmit && npm run check && npx vitest run && npm run build
+```
+Dan pushen en een PR openen:
+```
 git add .
 git commit -m "Omschrijving van wijziging"
-git push origin astro-migratie
+git push -u origin omschrijvende-branchnaam
+gh pr create --base astro-migratie
 ```
-Vercel deployt automatisch. Werk bij grotere wijzigingen liever eerst op een eigen branch en merge
-daarna naar `astro-migratie`, in plaats van rechtstreeks te committen — zie hoe de herstijling van
-11 augustus is aangepakt (branch `herstijling-2026`) als voorbeeld.
+Wacht tot `controle` groen is (`gh pr checks <nr> --watch`) en merge dan met
+`gh pr merge <nr> --merge`. Vercel deployt zodra de merge op `astro-migratie` landt.
+
+Twee dingen voor Claude in het bijzonder. Het mergen zelf wordt in auto-mode geblokkeerd door de
+classifier ("merge without review"), dus die knop is een handeling van Hendrik tenzij hij er in
+de sessie expliciet om vraagt. En verifieer een deploy met een `fetch` met `cache: 'no-store'` op
+de live URL, niet via het Vercel-dashboard, want daar is geen toegang toe.
 
 ---
 
@@ -237,6 +290,7 @@ src/
 │   ├── jaarruimte.ts              # Jaarruimteberekeningen
 │   ├── bedrag.ts                  # Nederlandse bedragnotatie, één parser voor alle velden
 │   ├── box3.ts                    # Kosten/vermogensbelasting op het rendement, vervangpunt
+│   ├── renteOpRente.ts            # Rente op rente: eenmalig en maandelijks, plus de matrix
 │   ├── exportExcel.ts / exportPDF.ts
 │   └── downloadLimit.ts           # Downloadteller (localStorage)
 ├── components/
@@ -249,7 +303,8 @@ src/
 │   │   └── WealthChart.tsx        # Vermogensgrafiek (Recharts)
 │   ├── BrutoNetto/index.tsx
 │   ├── Inflatie/index.tsx
-│   └── Jaarruimte/index.tsx
+│   ├── Jaarruimte/index.tsx
+│   └── RenteOpRente/              # Matrix + rekentool, gedeeld door beide rente-op-rente-tools
 └── index.css                      # Componentklassen (.card, .input-field, .label, sliders)
 ```
 
@@ -260,7 +315,7 @@ src/
 | Beslissing | Reden |
 |---|---|
 | Astro (niet React/Vite-SPA) | Server-side title/description/canonical/OG/JSON-LD per pagina, automatische sitemap — nodig voor SEO/GEO op een contentsite met 14+ artikelen |
-| React-eilanden alleen voor de vijf rekentools | Rest van de site is statisch, sneller en beter indexeerbaar |
+| React-eilanden alleen voor de zeven rekentools | Rest van de site is statisch, sneller en beter indexeerbaar |
 | Reëel rendement (na inflatie) | Koopkracht blijft behouden: €4.000 vandaag = €4.000 koopkracht bij pensionering |
 | localStorage, geen backend | Privacy by design, geen persoonsgegevens op een server |
 | Life events en stortingen samengevoegd (11 aug 2026) | Rekenden al identiek, twee gescheiden secties met een niet te raden onderscheid was verwarrend en repareerde een exportbug (stortingen kwamen nooit in Excel terecht) |
