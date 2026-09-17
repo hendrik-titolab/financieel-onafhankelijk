@@ -46,11 +46,14 @@ jobs:
         with:
           # Vastgelegd in plaats van "latest": een Node-wissel mag een rekenuitkomst
           # nooit stilzwijgend veranderen.
-          # Was '20', gelijk aan de engines-eis in package.json (>=18.20.8). Die eis
-          # bleek zelf achterhaald: Astro 7.2.0 (sinds 10 augustus 2026 in gebruik)
-          # vereist Node >=22.12.0 en weigert te draaien op 20. Dat kwam pas nu aan
-          # het licht, omdat de workflow altijd al eerder vastliep (zie hierboven).
-          # package.json's engines-veld is nog niet bijgewerkt, zie het slotbericht.
+          # Was '20', gelijk aan de toenmalige engines-eis in package.json
+          # (>=18.20.8). Die eis bleek zelf achterhaald: Astro 7.2.0 (sinds
+          # 10 augustus 2026 in gebruik) vereist Node >=22.12.0 en weigert te draaien
+          # op 20. Dat kwam pas op 14 september aan het licht, omdat de workflow
+          # altijd al eerder vastliep (zie hierboven).
+          # Sinds 17 september 2026 staat >=22.12.0 ook in package.json, dus deze
+          # regel en dat veld lopen weer gelijk. Verhoog je hier de major, verhoog
+          # dan ook engines.node, anders bouwt Vercel op een andere Node dan CI.
           node-version: '22'
           cache: npm
 
