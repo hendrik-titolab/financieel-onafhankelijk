@@ -20,7 +20,13 @@ jobs:
   controle:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      # v4 van beide actions hieronder draaide zelf nog op Node 20, dat GitHub
+      # aan het uitfaseren is ("forced to run on Node.js 24", gezien in de runlog
+      # van 16 september 2026). Opgehoogd naar de laatste major (v7 voor allebei,
+      # nagekeken via de GitHub releases van deze twee actions), geen
+      # gedragswijziging voor deze eenvoudige aanroepen (alleen fetch-depth en
+      # node-version/cache).
+      - uses: actions/checkout@v7
         with:
           # Volledige geschiedenis nodig voor de versiecheck hieronder, die de PR
           # vergelijkt met de basisbranch (git diff met '...' vereist een gedeelde
@@ -36,7 +42,7 @@ jobs:
           # complexiteit en het risico van deze klasse fout niet waard.
           fetch-depth: 0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           # Vastgelegd in plaats van "latest": een Node-wissel mag een rekenuitkomst
           # nooit stilzwijgend veranderen.
