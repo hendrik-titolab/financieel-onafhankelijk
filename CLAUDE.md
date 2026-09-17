@@ -3,7 +3,7 @@
 ## Wat is dit?
 
 Een Astro 7-site (SSG, statisch gebouwd) met React-eilanden voor de interactieve rekentools.
-Combinatie van een kennisautoriteitssite (uitlegartikelen) en vijf rekentools, gericht op zowel
+Combinatie van een kennisautoriteitssite (uitlegartikelen) en zeven rekentools, gericht op zowel
 breed publiek als financieel adviseurs. Staat live op https://benikfinancieelonafhankelijk.nl
 
 **Stack:** Astro 7 + React 18 (eilanden) + TypeScript + Tailwind CSS 3
@@ -62,7 +62,7 @@ afgestemd.
 
 ---
 
-## De vijf rekentools
+## De zeven rekentools
 
 ### 1. FO-planner (hoofdtool) — `/ben-ik-financieel-onafhankelijk`
 React-eiland (`client:only="react"`), component `src/components/PensionPlanner/`.
@@ -116,6 +116,32 @@ de gegenereerde config.
   "voor de consistentie" de drempel aan beide kanten toe; er staat een toets op.
 - Bewust niet meegerekend, en in de UI ook zo benoemd: de vrijstelling voor groene beleggingen en
   de bijtelling voor eigen gebruik van een tweede woning (vanaf 2026 5,06% van de WOZ-waarde).
+
+### 6 en 7. Rente op rente — `/tools/rente-op-rente` en `/tools/maandelijks-beleggen`
+Twee losse pagina's, één gedeeld React-component `src/components/RenteOpRente/`. Ze verschillen
+alleen in de formule en de labels: een `VariantConfig` per tool voedt dezelfde `RenteOpRenteTool`.
+Rekenlogica in `src/utils/renteOpRente.ts` en niet in het component, want twee tools delen de
+formules en de uitkomsten moeten toetsbaar zijn. Zelfde criterium als bij `box3.ts`.
+
+- Bovenaan een matrix van 5 rendementen (2, 4, 6, 8, 10%) × 8 looptijden (5 tot 50 jaar), met één
+  gedeeld inlegveld dat zowel de matrix als de rekentool eronder voedt. Daaronder drie velden:
+  jaren, inleg en verwacht rendement.
+- **Deze twee pagina's zijn breder dan de andere vijf** (`max-w-5xl` in plaats van `max-w-2xl`).
+  Anders past de matrix van negen kolommen niet en scrollt hij ook op desktop. Op mobiel scrollt
+  hij wél, met de rendementskolom vastgezet.
+- Hydratie met `client:load` en niet `client:only="react"`: de matrix draagt de boodschap en moet
+  in de gebouwde HTML staan voor indexering. Dat kan veilig, want er zit geen `Date`,
+  `localStorage` of `Math.random` in dit component.
+- **Alles nominaal**, dus vóór inflatie, kosten en belasting. Dat is de enige plek op de site waar
+  dat zo is; de rest rekent in reële koopkracht. Beide pagina's benoemen het in de UI.
+- De maandinleg wordt exact per maand gerekend, storting aan het begin van de maand, met een
+  maandrendement uit (1 + r)^(1/12) − 1. Dat wijkt **0,3013%** af van de mid-year-benadering
+  × √(1+r) in `simulateAccumulation()` (`pensionCalc.ts`). Bewust: dat is een exacte berekening
+  naast een gedocumenteerde benadering (auditbevinding 14), en de keuze wanneer in de maand je
+  stort weegt zwaarder (0,56%) dan het verschil met de planner. `renteOpRente.test.ts` pint die
+  0,3013% vast, dus het valt om zodra iemand aan een van beide kanten draait.
+- De test pint ook de negen cellen van de rendementstabel uit
+  `wanneer-ben-je-financieel-onafhankelijk.mdx` vast, zodat tool en artikel niet uit elkaar lopen.
 
 ### Technische details, alle tools
 - Bedragen in reële koopkracht (na inflatie) tenzij expliciet "nominaal" vermeld.
@@ -237,6 +263,7 @@ src/
 │   ├── jaarruimte.ts              # Jaarruimteberekeningen
 │   ├── bedrag.ts                  # Nederlandse bedragnotatie, één parser voor alle velden
 │   ├── box3.ts                    # Kosten/vermogensbelasting op het rendement, vervangpunt
+│   ├── renteOpRente.ts            # Rente op rente: eenmalig en maandelijks, plus de matrix
 │   ├── exportExcel.ts / exportPDF.ts
 │   └── downloadLimit.ts           # Downloadteller (localStorage)
 ├── components/
@@ -249,7 +276,8 @@ src/
 │   │   └── WealthChart.tsx        # Vermogensgrafiek (Recharts)
 │   ├── BrutoNetto/index.tsx
 │   ├── Inflatie/index.tsx
-│   └── Jaarruimte/index.tsx
+│   ├── Jaarruimte/index.tsx
+│   └── RenteOpRente/              # Matrix + rekentool, gedeeld door beide rente-op-rente-tools
 └── index.css                      # Componentklassen (.card, .input-field, .label, sliders)
 ```
 
@@ -260,7 +288,7 @@ src/
 | Beslissing | Reden |
 |---|---|
 | Astro (niet React/Vite-SPA) | Server-side title/description/canonical/OG/JSON-LD per pagina, automatische sitemap — nodig voor SEO/GEO op een contentsite met 14+ artikelen |
-| React-eilanden alleen voor de vijf rekentools | Rest van de site is statisch, sneller en beter indexeerbaar |
+| React-eilanden alleen voor de zeven rekentools | Rest van de site is statisch, sneller en beter indexeerbaar |
 | Reëel rendement (na inflatie) | Koopkracht blijft behouden: €4.000 vandaag = €4.000 koopkracht bij pensionering |
 | localStorage, geen backend | Privacy by design, geen persoonsgegevens op een server |
 | Life events en stortingen samengevoegd (11 aug 2026) | Rekenden al identiek, twee gescheiden secties met een niet te raden onderscheid was verwarrend en repareerde een exportbug (stortingen kwamen nooit in Excel terecht) |

@@ -81,7 +81,7 @@ De vuistregel is als volgt. Zet op je spaarrekening wat je de komende zes maande
 
 Een valkuil waar veel spaarders in lopen: hun geld jarenlang laten staan bij de bank waar ze een lage rente krijgen. Vaak de huisbank, uit gewoonte. Maar vergelijken loont, en meer dan je zou denken. Spaarrentes verschillen sterk, terwijl je geld bij de ene bank net zo veilig staat als bij de andere, allemaal binnen dezelfde Europese depositogarantie.
 
-Neem een saldo van €50.000. Bij 1,25% rente krijg je €625 per jaar. Bij 2,25% is dat €1.125. Een verschil van €500 per jaar. En na tien jaar? Door rente op rente is het verschil dan opgelopen tot bijna €5.850. Wie niet vergelijkt, laat dat gewoon liggen.
+Neem een saldo van €50.000. Bij 1,25% rente krijg je €625 per jaar. Bij 2,25% is dat €1.125. Een verschil van €500 per jaar. En na tien jaar? Door [rente op rente](/tools/rente-op-rente/) is het verschil dan opgelopen tot bijna €5.850. Wie niet vergelijkt, laat dat gewoon liggen.
 
 Let daarbij wel op tijdelijke lokrentes. Een hoog percentage dat na drie maanden terugvalt naar iets bescheidens, levert over een heel jaar weinig op. Kijk dus vooral naar de rente die je structureel krijgt.
 
@@ -90,6 +90,8 @@ Let daarbij wel op tijdelijke lokrentes. Een hoog percentage dat na drie maanden
 Beleggen brengt risico met zich mee, dat is waar. Koersen bewegen, en op korte termijn kun je soms veel verliezen. Maar waarom heb je als belegger minder last van inflatie? Daar zijn twee redenen voor.
 
 In de eerste plaats mag je als belegger op de lange termijn meer rendement verwachten dan de paar procent die een spaarrekening geeft. Dat is geen cadeau, maar de vergoeding voor het risico dat je neemt en dat een spaarder niet accepteert. Alleen al dat verschil helpt je de inflatie voor te blijven.
+
+*Benieuwd wat een vaste maandelijkse inleg oplevert? [Reken het door met de tool voor maandelijks beleggen](/tools/maandelijks-beleggen/).*
 
 Daarnaast bewegen beleggingen in aandelen van bedrijven van nature mee met de inflatie. Word alles duurder, dan verhogen bedrijven simpelweg de prijzen van hun producten en diensten. Dat moeten ze ook wel, want anders kunnen ze de gestegen lonen en inkoopkosten niet betalen en houden ze niets over. Die hogere prijzen betekenen hogere omzet, en uiteindelijk een hogere waarde van het bedrijf. Als aandeelhouder profiteer je daarvan mee.
 

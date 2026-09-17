@@ -1,0 +1,87 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import { MaandelijkseInlegTool } from '../../components/RenteOpRente'
+import { articleSchema, faqSchema, breadcrumbSchema } from '../../lib/seo'
+
+const title = 'Maandelijks beleggen berekenen | Wat levert je inleg op?'
+const description =
+  'Bereken wat een vaste maandelijkse inleg oplevert. Zie in één tabel hoeveel rendement en looptijd uitmaken, en reken daarna je eigen bedrag door.'
+
+const faq = [
+  {
+    vraag: 'Wat levert € 250 per maand op?',
+    antwoord:
+      'Dat hangt vooral af van je looptijd en je rendement. Bij 6% per jaar levert € 250 per maand na tien jaar ongeveer € 40.816 op, waarvan € 30.000 je eigen inleg is. Na dertig jaar is het ongeveer € 244.814 op € 90.000 eigen inleg. De tabel bovenaan deze pagina laat alle combinaties zien.',
+  },
+  {
+    vraag: 'Waarom maakt vroeg beginnen zoveel uit?',
+    antwoord:
+      'Elke euro die je inlegt heeft tot je einddatum de tijd om rendement te maken, en dat rendement maakt daarna zelf weer rendement. Neem dezelfde eigen inleg van € 90.000 bij 6% per jaar: € 250 per maand gedurende dertig jaar komt uit op ongeveer € 244.814, terwijl € 500 per maand gedurende vijftien jaar uitkomt op ongeveer € 144.154. Dezelfde inleg, ruim € 100.000 verschil, alleen door de tijd.',
+  },
+  {
+    vraag: 'Is het opgegeven rendement voor of na inflatie?',
+    antwoord:
+      'Voor. Alle bedragen op deze pagina zijn nominaal, dus vóór inflatie, kosten van beleggen en belasting in box 3. Bij 2% inflatie is € 100.000 over dertig jaar ongeveer € 55.000 aan koopkracht waard. Wil je in koopkracht van vandaag rekenen, vul dan een lager rendement in.',
+  },
+  {
+    vraag: 'Wanneer in de maand wordt er met mijn inleg gerekend?',
+    antwoord:
+      'Aan het begin van de maand, zoals bij een automatische incasso rond de eerste. Het opgegeven percentage is een effectief jaarrendement; daaruit volgt een maandrendement van (1 + rendement) tot de macht een twaalfde. Bij 6% per jaar is dat 0,4868% per maand, niet 0,5%.',
+  },
+]
+
+const schemas = [
+  articleSchema({
+    title,
+    description,
+    path: '/tools/maandelijks-beleggen/',
+    dateModified: '2026-09-17',
+  }),
+  faqSchema(faq),
+  breadcrumbSchema([
+    { name: 'Home', path: '/' },
+    { name: 'Rekentools', path: '/tools/' },
+    { name: 'Maandelijks beleggen', path: '/tools/maandelijks-beleggen/' },
+  ]),
+]
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  canonical="/tools/maandelijks-beleggen/"
+  jsonLd={schemas}
+>
+  <main class="flex-1 p-4 md:p-6">
+    <div class="max-w-5xl mx-auto">
+      <h1 class="font-serif text-2xl text-ink mb-1">Wat levert maandelijks inleggen op?</h1>
+      <p class="text-sm text-body mb-5 leading-relaxed">
+        Hoe langer je inlegt, hoe groter het deel van je eindbedrag dat uit rendement komt in plaats
+        van uit je eigen geld. De tabel laat zien wat rendement en looptijd samen doen. Daaronder
+        reken je je eigen bedrag door.
+      </p>
+      <MaandelijkseInlegTool client:load />
+
+      <section class="mt-8 border-t border-line-soft pt-6">
+        <h2 class="label-mono mb-3">Lees ook</h2>
+        <ul class="space-y-2 text-sm">
+          <li>
+            <a href="/tools/rente-op-rente/" class="text-data-700 hover:underline">
+              Rente op rente: wat wordt je inleg waard?
+            </a>
+          </li>
+          <li>
+            <a href="/uitleg/hoeveel-sparen-om-eerder-te-stoppen" class="text-data-700 hover:underline">
+              Hoeveel moet ik sparen om eerder te stoppen met werken?
+            </a>
+          </li>
+          <li>
+            <a href="/uitleg/wanneer-ben-je-financieel-onafhankelijk" class="text-data-700 hover:underline">
+              Wanneer ben je financieel onafhankelijk?
+            </a>
+          </li>
+        </ul>
+      </section>
+    </div>
+  </main>
+</BaseLayout>
