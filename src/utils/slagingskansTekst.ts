@@ -1,29 +1,34 @@
 // Tekst onder het percentage in de slagingskansmeter (SuccessGauge in
-// ResultsPanel.tsx). Los van het component getrokken zodat de "1 op de N"-breuk
-// te testen is zonder een React-render: dit project heeft geen
-// component-testinfrastructuur (geen React Testing Library/jsdom), alleen
-// pure functies in utils/__tests__/.
+// ResultsPanel.tsx). Los van het component getrokken zodat hij te testen is zonder
+// een React-render: dit project heeft geen component-testinfrastructuur (geen React
+// Testing Library/jsdom), alleen pure functies in utils/__tests__/.
 //
-// Bevinding Hendrik, 16 september 2026, op de live site: bij 74,1% stond hier
-// vast "1 op de 3", terwijl de faalkans daar 25,9% is, dus 1 op de 4. Dat vaste
-// getal klopte alleen precies bij 66,7% (1/3 faalkans) en was voor de rest van
-// de band 60-80% fout. Nu berekend uit de daadwerkelijke faalkans.
-// Bevinding Hendrik, 20 september 2026: bij 1,7% stond hier "haalt dit; de meeste
-// niet". Feitelijk waar, maar het leest alsof het net niet lukt, terwijl bijna geen
-// enkel scenario slaagt. Vandaar een eigen tekst voor de echt lage kansen.
+// Geschiedenis van deze ene regel, want hij is drie keer gesneuveld op hetzelfde
+// punt: er stond een interpretatie in plaats van een feit.
 //
-// Bij het doorvoeren daarvan bleek dezelfde regel een tweede probleem te hebben.
-// De band onder de 60% liep tot 0, dus bij 55% stond er ook "de meeste niet",
-// terwijl 55% juist betekent dat de meeste scenario's het wél halen. Dat was geen
-// ongelukkige formulering maar een onjuiste bewering. De "1 op de N"-band loopt nu
-// door tot 50%, waar hij exact uitkomt op 1 op de 2.
-export function slagingskansOordeel(value: number): string {
-  if (value >= 80) return 'van de 2.000 scenario’s haalt dit'
-  if (value >= 50) {
-    const opDeN = Math.round(100 / (100 - value))
-    return `haalt dit; 1 op de ${opDeN} niet`
-  }
-  // 10 tot 50%: de meerderheid faalt (50,1% tot 90%), dus "de meeste niet" klopt hier.
-  if (value >= 10) return 'haalt dit; de meeste niet'
-  return 'haalt dit; de kans is zeer klein'
+// 1. Tot 16 september 2026 stond er een vaste breuk "1 op de 3 niet" voor de hele
+//    band 60-80%. Die klopte alleen precies bij 66,7%; bij 74,1% is de faalkans
+//    25,9%, dus 1 op de 4 (bevinding Hendrik, op de live site).
+// 2. Tot 20 september 2026 liep de band daaronder van 0 tot 60. Bij 55% stond er
+//    "de meeste niet", terwijl 55% juist betekent dat de meeste scenario's het wél
+//    halen. Een onjuiste bewering over precies het cijfer waar de tool om draait.
+//    En bij 1,7% las "de meeste niet" alsof het net niet lukte.
+// 3. Elke poging om dat met kwalificaties op te lossen ("de kans is zeer klein",
+//    "klein", "50/50") liep vast op dezelfde twee bezwaren: het leest als een
+//    spelfout zonder het woord scenario's erachter, en een kwalificatie is een
+//    oordeel. Auditbevinding 15 (7 september 2026) had zulke oordelen juist van deze
+//    meter gehaald, omdat een norm als 80% nergens onderbouwd wordt.
+//
+// Besluit Hendrik, 20 september 2026: gewoon schrijven hoe het is. Eén zin, hetzelfde
+// over de hele schaal, zonder banden en zonder oordeel. Valt er niets meer te
+// interpreteren, dan valt er ook niets meer fout te interpreteren.
+//
+// Nederlandse notatie, dus een komma. Het component gebruikte toFixed(1) en zette
+// daarmee "14.0%" met een Engelse punt op een Nederlandse site.
+export function slagingskansPercentage(value: number): string {
+  return value.toLocaleString('nl-NL', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%'
+}
+
+export function slagingskansTekst(value: number): string {
+  return `Kans op halen doel is ${slagingskansPercentage(value)}`
 }
