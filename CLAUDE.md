@@ -363,8 +363,24 @@ premie in de werkgeversregeling, dus werkgeversdeel én eigen bijdrage. Het veld
 
 ## Bekende openstaande punten (niet opgelost, alleen genoteerd)
 
-- Geen custom analytics-events, alleen kale paginabezoeken (Vercel Web Analytics). Onbekend
-  hoeveel mensen op "Bereken" drukken of waar ze afhaken.
+- ~~Geen custom analytics-events, alleen kale paginabezoeken (Vercel Web Analytics).~~ Deels
+  achterhaald, geconstateerd op 21 september 2026. Er zijn vijf events, allemaal in de
+  FO-planner: `bereken_geklikt` (`PensionPlanner/index.tsx`), `tab_eenmalige_bedragen`
+  (`InputPanel.tsx`), en `download_pdf`, `download_excel` en `download_limiet_bereikt`
+  (`ResultsPanel.tsx`). De injectie zelf staat in `BaseLayout.astro`. Juist de vraag die hier
+  als onbekend stond, hoeveel mensen op "Bereken" drukken, wordt dus gemeten.
+
+  Wat wél openstaat: **de andere zes rekentools zijn niet geïnstrumenteerd.** Bruto-netto,
+  jaarruimte, inflatie, box 3 en de twee rente-op-rente-tools leveren alleen kale
+  paginabezoeken, dus van die tools is onbekend of bezoekers er daadwerkelijk iets invullen.
+  Binnen de FO-planner is ook nog niet te zien waar iemand in de achttien velden afhaakt.
+
+  Los daarvan: **Vercel Speed Insights is niet geïnstalleerd.** `@vercel/speed-insights` stond
+  in een voorstel van Vercel van 5 juli 2026 (PR #1), dat gesloten is zonder te mergen. Voor een
+  site die het van SEO moet hebben zijn Core Web Vitals van echte bezoekers wel relevant. Die
+  oude branch is als startpunt onbruikbaar, die patcht `src/App.tsx` uit het SPA-tijdperk;
+  opnieuw opzetten is een install plus één regel naast de analytics-injectie in
+  `BaseLayout.astro`.
 - `currentIncome`-veld in de FO-planner wordt ingevuld maar nergens in de berekening gebruikt,
   alleen in de Excel-export.
 - De vijf datatokens uit de herstijling (`data-100/300/500/700`, `sand-deep`, zie
