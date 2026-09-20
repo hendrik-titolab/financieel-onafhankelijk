@@ -36,8 +36,54 @@ describe('slagingskansOordeel — "1 op de N" volgt de daadwerkelijke faalkans',
     expect(slagingskansOordeel(95)).toBe('van de 2.000 scenario’s haalt dit')
   })
 
-  it('noemt geen breuk onder 60%', () => {
-    expect(slagingskansOordeel(59.9)).toBe('haalt dit; de meeste niet')
+  it('noemt bij precies 50% 1 op de 2, de exacte ondergrens van de breukband', () => {
+    expect(slagingskansOordeel(50)).toBe('haalt dit; 1 op de 2 niet')
+  })
+
+  it('noemt geen breuk onder 50%', () => {
+    expect(slagingskansOordeel(49.9)).toBe('haalt dit; de meeste niet')
     expect(slagingskansOordeel(10)).toBe('haalt dit; de meeste niet')
+  })
+})
+
+// Bevinding Hendrik, 20 september 2026: "de meeste niet" bij 1,7%.
+describe('slagingskansOordeel — lage kansen', () => {
+  it('zegt bij het gemelde geval (1,7%) dat de kans zeer klein is', () => {
+    expect(slagingskansOordeel(1.7)).toBe('haalt dit; de kans is zeer klein')
+  })
+
+  it('zegt dat ook bij het basisscenario van 8,25% uit CLAUDE.md', () => {
+    expect(slagingskansOordeel(8.25)).toBe('haalt dit; de kans is zeer klein')
+  })
+
+  it('schakelt om op 10%: daarboven "de meeste niet", daaronder "zeer klein"', () => {
+    expect(slagingskansOordeel(10)).toBe('haalt dit; de meeste niet')
+    expect(slagingskansOordeel(9.9)).toBe('haalt dit; de kans is zeer klein')
+  })
+
+  it('zegt bij 0% niet dat het net niet lukt', () => {
+    expect(slagingskansOordeel(0)).toBe('haalt dit; de kans is zeer klein')
+  })
+})
+
+// De tweede fout die bij deze wijziging aan het licht kwam: de oude band liep van
+// 0 tot 60, dus bij 55% stond er "de meeste niet" terwijl de meerderheid het juist
+// wél haalt. Deze tests leggen vast dat die bewering niet meer voorkomt.
+describe('slagingskansOordeel — beweert nooit dat de meerderheid faalt terwijl die slaagt', () => {
+  for (const v of [50, 52.5, 55, 57.3, 59.9]) {
+    it(`zegt bij ${v.toLocaleString('nl-NL')}% niet "de meeste niet"`, () => {
+      expect(slagingskansOordeel(v)).not.toBe('haalt dit; de meeste niet')
+      expect(slagingskansOordeel(v)).toMatch(/^haalt dit; 1 op de \d+ niet$/)
+    })
+  }
+
+  it('gebruikt "de meeste niet" alleen waar de meerderheid ook echt faalt', () => {
+    // Elk heel procent van 0 tot 100: de tekst mag alleen "de meeste niet" zijn
+    // als de faalkans daadwerkelijk boven de 50% ligt.
+    for (let v = 0; v <= 100; v++) {
+      if (slagingskansOordeel(v) === 'haalt dit; de meeste niet') {
+        expect(100 - v).toBeGreaterThan(50)
+      }
+    }
   })
 })
