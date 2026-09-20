@@ -29,6 +29,8 @@ export function slagingskansPercentage(value: number): string {
   return value.toLocaleString('nl-NL', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%'
 }
 
-export function slagingskansTekst(value: number): string {
-  return `Kans op halen doel is ${slagingskansPercentage(value)}`
-}
+// Het percentage staat er als groot getal al boven, dus deze regel herhaalt het niet:
+// dan stond hetzelfde cijfer twee keer in een kaartje van een paar centimeter
+// (besluit Hendrik, 20 september 2026). Wat hier staat is alleen nog wat het getal
+// erboven betekent.
+export const SLAGINGSKANS_LABEL = 'Kans op halen doel'
