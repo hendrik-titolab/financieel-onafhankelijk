@@ -7,7 +7,7 @@ import { exportToPDF } from '../../utils/exportPDF'
 import { FEEDBACK_URL } from '../../config/site'
 import { FREE_DOWNLOAD_LIMIT, getDownloadCount, incrementDownloadCount } from '../../utils/downloadLimit'
 import { marginaalTarief, aowNettoNaarBruto } from '../../utils/pensionCalc'
-import { slagingskansOordeel } from '../../utils/slagingskansTekst'
+import { SLAGINGSKANS_LABEL, slagingskansPercentage } from '../../utils/slagingskansTekst'
 import { modelStempel } from '../../config/modelVersie'
 import { useInstallPrompt } from '../../hooks/useInstallPrompt'
 import { InstallAppButton } from '../InstallAppButton'
@@ -79,12 +79,12 @@ function MetricCell({
 function SuccessGauge({ value, title, subtitle }: { value: number; title: string; subtitle: string }) {
   const color = value >= 80 ? '#29392E' : value >= 60 ? '#9A835B' : '#A85A3C'
 
-  // Geen waardeoordeel meer ("Goed" bij 80%). Een norm van 80% is een adviesnorm
-  // die wij nergens onderbouwen, en bij 80% faalt een op de vijf scenario's. Wat
-  // hier staat is wat het cijfer feitelijk is: het aandeel geslaagde simulaties
-  // (audit 7 september 2026, bevinding 15). Zie slagingskansTekst.ts voor de
-  // "1 op de N"-berekening.
-  const oordeel = slagingskansOordeel(value)
+  // Onder het percentage staat alleen een label, geen omschrijving van de kans.
+  // Geen waardeoordeel ("Goed" bij 80%), want een norm van 80% is een adviesnorm die
+  // wij nergens onderbouwen en bij 80% faalt een op de vijf scenario's (audit
+  // 7 september 2026, bevinding 15). En sinds 20 september ook geen omschrijving
+  // meer ("de meeste niet", "1 op de 4 niet"): zie slagingskansTekst.ts voor waarom
+  // die drie keer achter elkaar fout bleken.
 
   // De boog loopt van (10,65) linksonder over de bovenkant naar (110,65)
   // rechtsonder. In SVG wijst +y omlaag, dus die halve cirkel beslaat 180 tot 360
@@ -120,8 +120,8 @@ function SuccessGauge({ value, title, subtitle }: { value: number; title: string
         <circle cx="60" cy="65" r="4" fill="#29392E" />
       </svg>
       <div className="text-center">
-        <span className="font-numeric tabular text-2xl" style={{ color }}>{value.toFixed(1)}%</span>
-        <span className="text-xs text-body block leading-tight">{oordeel}</span>
+        <span className="font-numeric tabular text-2xl" style={{ color }}>{slagingskansPercentage(value)}</span>
+        <span className="text-xs text-body block leading-tight">{SLAGINGSKANS_LABEL}</span>
       </div>
     </div>
   )

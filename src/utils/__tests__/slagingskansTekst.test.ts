@@ -1,43 +1,50 @@
-// Bevinding Hendrik, 16 september 2026: op de live site stond bij 74,1% de tekst
-// "1 op de 3 niet", terwijl 100% - 74,1% = 25,9% faalkans overeenkomt met 1 op de
-// 4. Het getal 3 stond vast voor de hele band 60-80% en klopte alleen precies bij
-// 66,7%. Deze tests leggen vast dat de breuk nu meebeweegt met het percentage.
+// De regel onder de slagingskansmeter is drie keer gesneuveld op hetzelfde punt: er
+// stond een interpretatie in plaats van een feit. Eerst een vaste breuk "1 op de 3
+// niet" die alleen bij 66,7% klopte (bevinding 16 september 2026). Daarna "de meeste
+// niet" voor alles onder de 60%, wat bij 55% een onjuiste bewering was en bij 1,7%
+// las alsof het net niet lukte (bevinding 20 september 2026). Sinds 20 september
+// staat er alleen nog een label onder het percentage, zonder banden en zonder oordeel.
 import { describe, it, expect } from 'vitest'
-import { slagingskansOordeel } from '../slagingskansTekst'
+import { SLAGINGSKANS_LABEL, slagingskansPercentage } from '../slagingskansTekst'
 
-describe('slagingskansOordeel — "1 op de N" volgt de daadwerkelijke faalkans', () => {
-  it('geeft bij 74,1% (het gemelde geval) 1 op de 4, niet 1 op de 3', () => {
-    // Faalkans 25,9%: 100 / 25,9 = 3,86..., afgerond 4.
-    expect(slagingskansOordeel(74.1)).toBe('haalt dit; 1 op de 4 niet')
+describe('slagingskansPercentage — Nederlandse notatie', () => {
+  // Het component gebruikte toFixed(1) en zette daarmee "14.0%" met een Engelse
+  // punt op een Nederlandse site. Hendrik zag dat op 20 september op het scherm.
+  it('gebruikt een komma en geen punt', () => {
+    expect(slagingskansPercentage(14)).toBe('14,0%')
+    expect(slagingskansPercentage(1.7)).toBe('1,7%')
   })
 
-  it('geeft bij precies 66,7% (faalkans 1/3) nog steeds 1 op de 3', () => {
-    // Dit is het enige punt in de band waar de oude vaste tekst toevallig klopte.
-    expect(slagingskansOordeel(66.7)).toBe('haalt dit; 1 op de 3 niet')
+  it('toont altijd precies één decimaal', () => {
+    expect(slagingskansPercentage(0)).toBe('0,0%')
+    expect(slagingskansPercentage(100)).toBe('100,0%')
+    expect(slagingskansPercentage(74.14)).toBe('74,1%')
+    expect(slagingskansPercentage(74.15)).toBe('74,2%')
   })
 
-  it('geeft bij 75% 1 op de 4 (faalkans exact 25%)', () => {
-    expect(slagingskansOordeel(75)).toBe('haalt dit; 1 op de 4 niet')
+  it('bevat nergens een punt als decimaalteken', () => {
+    for (let v = 0; v <= 100; v += 0.1) {
+      expect(slagingskansPercentage(v)).not.toContain('.')
+    }
+  })
+})
+
+describe('SLAGINGSKANS_LABEL — benoemt het getal, omschrijft de kans niet', () => {
+  it('is het label dat onder het percentage staat', () => {
+    expect(SLAGINGSKANS_LABEL).toBe('Kans op halen doel')
   })
 
-  it('geeft bij 79,9% 1 op de 5, niet nog steeds 1 op de 3', () => {
-    // Faalkans 20,1%: 100 / 20,1 = 4,98..., afgerond 5. Bewijst dat de breuk
-    // varieert binnen de band en niet ergens anders alsnog vastligt op 3.
-    expect(slagingskansOordeel(79.9)).toBe('haalt dit; 1 op de 5 niet')
+  // Het percentage staat er als groot getal al boven. Zou het hier ook nog staan,
+  // dan toont de kaart hetzelfde cijfer twee keer.
+  it('herhaalt het percentage niet', () => {
+    expect(SLAGINGSKANS_LABEL).not.toMatch(/\d/)
+    expect(SLAGINGSKANS_LABEL).not.toContain('%')
   })
 
-  it('geeft bij de ondergrens van de band (60%) 1 op de 3', () => {
-    // Faalkans 40%: 100 / 40 = 2,5, afgerond (half naar boven) 3.
-    expect(slagingskansOordeel(60)).toBe('haalt dit; 1 op de 3 niet')
-  })
-
-  it('noemt geen breuk vanaf 80%', () => {
-    expect(slagingskansOordeel(80)).toBe('van de 2.000 scenario’s haalt dit')
-    expect(slagingskansOordeel(95)).toBe('van de 2.000 scenario’s haalt dit')
-  })
-
-  it('noemt geen breuk onder 60%', () => {
-    expect(slagingskansOordeel(59.9)).toBe('haalt dit; de meeste niet')
-    expect(slagingskansOordeel(10)).toBe('haalt dit; de meeste niet')
+  // Deze valt om zodra iemand opnieuw een omschrijving van de kans invoert.
+  it('bevat geen van de omschrijvingen die eerder fout bleken', () => {
+    for (const woord of ['de meeste niet', '1 op de', 'zeer klein', '50/50', 'scenario']) {
+      expect(SLAGINGSKANS_LABEL).not.toContain(woord)
+    }
   })
 })
