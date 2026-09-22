@@ -432,9 +432,9 @@ premie in de werkgeversregeling, dus werkgeversdeel én eigen bijdrage. Het veld
   geen schulden. Fiscaal partnerschap gaat wél mee, via `woonsituatie`.
 
   Twee dingen om te weten bij een volgende wijziging. De heffing gaat over het saldo aan het begin
-  van het jaar, want box 3 kent één peildatum. En de contante-waardeopbouw van het doelbedrag op
-  het scherm (`requiredCapitalEindwaarde`) kent de heffing niet, dus die sluit niet meer tot op de
-  euro aan op `requiredCapital`; dat laatste komt uit de simulatie en klopt wel.
+  van het jaar, want box 3 kent één peildatum. De contante-waardeopbouw
+  (`requiredCapitalEindwaarde`) kent de heffing niet; sinds 22 september 2026 staat het verschil
+  als eigen regel `box3Toeslag` in de opbouw, zodat die weer sluit.
 - **Inflatie is deterministisch.** Eén vast percentage voor de hele looptijd, dus de
   bandbreedte in de grafiek toont niet het risico dat de inflatie zelf tegenvalt, en evenmin de
   correlatie tussen inflatie en rendement. Dat is het deel dat blijft liggen.
