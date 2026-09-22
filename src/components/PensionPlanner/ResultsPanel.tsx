@@ -9,6 +9,7 @@ import { FREE_DOWNLOAD_LIMIT, getDownloadCount, incrementDownloadCount } from '.
 import { marginaalTarief, aowNettoNaarBruto } from '../../utils/pensionCalc'
 import { SLAGINGSKANS_LABEL, slagingskansPercentage } from '../../utils/slagingskansTekst'
 import { modelStempel } from '../../config/modelVersie'
+import { HEFFINGSKORTING_POST_AOW } from '../../config/fiscaleParameters'
 import { useInstallPrompt } from '../../hooks/useInstallPrompt'
 import { InstallAppButton } from '../InstallAppButton'
 import { useState, useEffect } from 'react'
@@ -154,11 +155,20 @@ export function ResultsPanel({ inputs, result, berekening, mcStale, isCalculatin
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [limitReached])
   const surplus = result.projectedCapital - result.requiredCapital
-  const isOnTrack = surplus >= 0
+  // Een saldo dat in de opbouwfase onder nul komt is een tekort, ook als het
+  // eindvermogen het doel haalt: de uitgave van dat jaar is dan niet te betalen
+  // (review 22 september 2026, bevinding 1).
+  const opbouwTekort = result.opbouwTekort
+  const isOnTrack = surplus >= 0 && opbouwTekort === null
   const currentMonthlyPMT = inputs.contributionFrequency === 'maandelijks'
     ? inputs.monthlyContribution
     : inputs.monthlyContribution / 12
   const needsMoreContribution = result.requiredMonthlyContribution > currentMonthlyPMT
+  // Wie al met pensioen is kan niets meer inleggen voor de pensioendatum. De kern
+  // geeft dan 0 terug, en het scherm las dat tot 22 september 2026 als "huidige
+  // inleg voldoende", naast een tekort van ruim twee ton (bevinding 2).
+  const alMetPensioen = result.yearsToRetirement === 0
+  const ok = HEFFINGSKORTING_POST_AOW.ouderenkorting
 
   // Marginaal tarief op het steady-state inkomen (AOW + werkgeverspensioen +
   // lijfrente-/bankspaaruitkering, alle drie ingegaan): numeriek afgeleid uit
@@ -190,20 +200,41 @@ export function ResultsPanel({ inputs, result, berekening, mcStale, isCalculatin
   // binnenkomt betaalt de eerste vijf jaar niet. Die overbrugging krijgt een eigen
   // onderregel, want anders staat er een doelbedrag van € 60.000 met eronder
   // "− € 120.000 later" en spreekt het scherm zichzelf tegen.
+  //
+  // Sinds de review van 22 september 2026 heeft ook box 3 een eigen deel van de
+  // opbouw (box3Toeslag). Met box 3 per jaar aan, de standaard, is dat voor de
+  // meeste mensen het enige verschil met "wat je inkomen kost", en dan hoort het
+  // hier te staan in plaats van "voor 23 jaar inkomen".
   const pvLater = result.pvEventsAfterRetirement
   const overbrugging = result.overbruggingsToeslag
+  const box3 = result.box3Toeslag
   const benodigdSub =
     Math.round(overbrugging) > 0
       ? `incl. ${eurAbs(overbrugging)} overbrugging`
-      : Math.round(pvLater) === 0
-        ? `voor ${inputs.lifeExpectancy - result.effectiveRetirementAge} jaar inkomen`
-        : result.requiredCapital < 0
-          // Het doelbedrag is negatief: wat er later binnenkomt is méér dan alle
-          // onttrekkingen samen. Het getal blijft mét minteken staan, want de drie
-          // andere cellen rekenen ermee — een nette € 0 tonen zou het scherm laten
-          // afwijken van de rekenkern.
-          ? 'later geld dekt alles'
-          : `${pvLater > 0 ? '−' : '+'} ${eurAbs(pvLater)} later`
+      : Math.round(result.laterGeldOverschot) > 0
+        ? 'later geld dekt alles'
+        : Math.round(pvLater) !== 0
+          ? `${pvLater > 0 ? '−' : '+'} ${eurAbs(pvLater)} later`
+          : Math.round(box3) > 0
+            ? `incl. ${eurAbs(box3)} box 3`
+            : `voor ${inputs.lifeExpectancy - result.effectiveRetirementAge} jaar inkomen`
+
+  // 8A: het slechtweerscenario naast het verwachte getal, zoals op een
+  // pensioenoverzicht. Uit de afgeronde berekening, zodat het vermogen en het
+  // doelbedrag bij dezelfde invoer horen. Wie al met pensioen is heeft geen
+  // opbouwfase meer waar het weer iets aan verandert. Zonder doelbedrag, of met een
+  // gat in de opbouwfase, zegt de regel niets bruikbaars: dan stond er "€ 0, genoeg
+  // voor je doel" naast een slagingskans van 0%.
+  const slechtWeer = berekening
+    && berekening.result.yearsToRetirement > 0
+    && berekening.result.requiredCapital > 0
+    && berekening.result.opbouwTekort === null
+    ? {
+        vermogen: berekening.mc.slechtWeerBijPensioen,
+        tekort: berekening.result.requiredCapital - berekening.mc.slechtWeerBijPensioen,
+        leeftijd: berekening.result.effectiveRetirementAge,
+      }
+    : null
 
   // Exporteren kan alleen als er een afgeronde berekening is die nog bij de huidige
   // invoer hoort. Tot september 2026 mocht het altijd: het bestand kreeg dan de
@@ -352,6 +383,15 @@ export function ResultsPanel({ inputs, result, berekening, mcStale, isCalculatin
         </p>
       )}
 
+      {/* 8A: het raster rekent met het verwachte rendement, en dat is de mediaan.
+          "Overschot" en "inleg voldoende" lazen tot 22 september 2026 als
+          zekerheid, terwijl een plan dat precies uitkomt een kans van 50% heeft.
+          Pensioenfondsen doen hetzelfde (50e percentiel als verwacht resultaat),
+          en zetten er een slechtweerscenario naast; dat staat onder het raster. */}
+      <p className="text-xs text-body leading-relaxed -mb-2">
+        Bij het verwachte rendement: de helft van de scenario's valt beter uit, de helft slechter.
+      </p>
+
       {/* KPI-raster: haarlijnen tussen de cellen, precies één donkere cel */}
       <div
         className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-line border border-line rounded-[3px] overflow-hidden"
@@ -366,19 +406,53 @@ export function ResultsPanel({ inputs, result, berekening, mcStale, isCalculatin
           value={eur(result.requiredCapital)}
           sub={benodigdSub}
         />
-        <MetricCell
-          label={isOnTrack ? 'Overschot' : 'Tekort'}
-          value={eurAbs(surplus)}
-          sub={isOnTrack ? 'meer dan nodig' : 'extra nodig'}
-          tone={isOnTrack ? undefined : 'tekort'}
-        />
+        {opbouwTekort !== null && surplus >= 0 ? (
+          <MetricCell
+            label="Tekort onderweg"
+            value={eurAbs(opbouwTekort.bedrag)}
+            sub={`op leeftijd ${opbouwTekort.leeftijd}`}
+            tone="tekort"
+          />
+        ) : (
+          <MetricCell
+            label={isOnTrack ? 'Overschot' : 'Tekort'}
+            value={eurAbs(surplus)}
+            sub={isOnTrack ? 'meer dan nodig' : 'extra nodig'}
+            tone={isOnTrack ? undefined : 'tekort'}
+          />
+        )}
         <MetricCell
           label="Benodigde maandinleg"
-          value={needsMoreContribution ? eur(Math.max(0, result.requiredMonthlyContribution)) : '—'}
-          sub={needsMoreContribution ? `huidig: ${eur(currentMonthlyPMT)}/mnd` : 'Huidige inleg voldoende'}
+          value={alMetPensioen ? 'n.v.t.' : needsMoreContribution ? eur(Math.max(0, result.requiredMonthlyContribution)) : '—'}
+          sub={alMetPensioen
+            ? 'je bent al met pensioen'
+            : needsMoreContribution ? `huidig: ${eur(currentMonthlyPMT)}/mnd` : 'Huidige inleg voldoende'}
           tone="nadruk"
         />
       </div>
+
+      {opbouwTekort !== null && (
+        <div className="rounded-[3px] border border-signal bg-panel p-3">
+          <p className="text-xs text-signal leading-relaxed">
+            <strong className="font-medium">Je vermogen komt op leeftijd {opbouwTekort.leeftijd} onder nul.</strong>{' '}
+            Een uitgave in je eenmalige bedragen is dan groter dan wat er op dat moment staat,
+            tot {eurAbs(opbouwTekort.bedrag)} te weinig. Geld dat later binnenkomt kan dat niet
+            meer betalen. {alMetPensioen ? '' : 'De benodigde maandinleg hierboven dicht dat gat.'}
+          </p>
+        </div>
+      )}
+
+      {slechtWeer && (
+        <p className={`text-xs text-body leading-relaxed ${mcStale ? 'opacity-50' : ''}`}>
+          <span className="font-medium text-ink">Bij slecht weer</span> (één op de twintig scenario's
+          valt lager uit) heb je op {slechtWeer.leeftijd} jaar{' '}
+          <span className="font-numeric tabular text-ink">{eurAbs(slechtWeer.vermogen)}</span>
+          {slechtWeer.tekort > 0
+            ? <>, <span className="font-numeric tabular text-signal">{eurAbs(slechtWeer.tekort)}</span> minder dan nodig.</>
+            : <>, genoeg voor je doel.</>}
+          {' '}Pensioenfondsen tonen dezelfde maat op je pensioenoverzicht.
+        </p>
+      )}
 
       {/* Income phases */}
       <div className="card">
@@ -468,8 +542,9 @@ export function ResultsPanel({ inputs, result, berekening, mcStale, isCalculatin
           Een extra euro AOW- of pensioeninkomen op leeftijd {marginaalLeeftijd} kost je ongeveer{' '}
           <span className="font-numeric tabular font-medium text-ink">{marginaalPct}%</span> aan
           belasting, Zvw-bijdrage en afbouwende heffingskortingen samen, meer dan het schijftarief
-          alleen doet vermoeden. Dat percentage ligt het hoogst tussen € 46.002 en € 59.782 bruto per
-          jaar; valt jouw inkomen daar middenin, dan kan het lonen een lijfrente- of
+          alleen doet vermoeden. Dat percentage ligt het hoogst tussen € {ok.afbouwVanaf.toLocaleString('nl-NL')} en
+          € {ok.nihilBij.toLocaleString('nl-NL')} bruto per jaar, waar de ouderenkorting afbouwt;
+          valt jouw inkomen daar middenin, dan kan het lonen een lijfrente- of
           bankspaaruitkering over meerdere jaren te spreiden.
         </p>
 
@@ -632,10 +707,10 @@ export function ResultsPanel({ inputs, result, berekening, mcStale, isCalculatin
         kosten die je invult gaan daar in procentpunten van af. De box 3-heffing wordt standaard
         elk jaar apart berekend over het vermogen van dát jaar en van het saldo afgehaald, tenzij
         je zelf een vast percentage invult.
-        We gaan er daarnaast van uit dat je aanvullend pensioen, net als de AOW, volledig met de
-        inflatie meestijgt. Voor AOW is dat verdedigbaar, voor een aanvullend pensioen niet:
-        indexatie is niet gegarandeerd en kan achterblijven, waardoor je koopkracht na pensionering
-        lager uitvalt dan dit model laat zien.
+        De AOW stijgt mee met de inflatie. Bij je werkgeverspensioen en lijfrente kies je zelf of
+        het bedrag meestijgt of vast is. Een vast bedrag verliest elk jaar koopkracht; in de fasen
+        hierboven staat dan wat het aan het begin van de fase waard is. Ook een meestijgend
+        pensioen is niet gegarandeerd: indexatie kan achterblijven.
         We berekenen in 2.000 scenario's met verschillende toekomstige rendementen hoe groot de kans is dat je jouw doel haalt.
         De lijn in de grafiek is de mediaan van die 2.000 scenario's: de middelste uitkomst, niet het gemiddelde.
         Voor het gemiddelde rendement en de inflatie gaan we uit van wat er is ingevoerd.

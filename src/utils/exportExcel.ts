@@ -1,5 +1,7 @@
 import type { BerekeningsSet } from '../types'
 import { N_SIMULATIONS } from './monteCarlo'
+import { slagingskansPercentage } from './slagingskansTekst'
+import { opbouwDoelbedrag, indexatieTekst } from './opbouwDoelbedrag'
 
 function eur(v: number) {
   return `€ ${Math.round(v).toLocaleString('nl-NL')}`
@@ -82,8 +84,10 @@ export async function exportToExcel(berekening: BerekeningsSet, clientName: stri
     ['AOW ingangsdatum (leeftijd)', inputs.aowStartAge],
     ['Werkgeverspensioen (bruto/maand)', inputs.employerPension],
     ['Werkgeverspensioen ingangsdatum (leeftijd)', inputs.employerPensionStartAge],
+    ['Werkgeverspensioen indexatie', indexatieTekst(inputs.employerPensionIndexatie)],
     ['Lijfrente-/bankspaaruitkering (bruto/maand)', inputs.lijfrenteUitkering],
     ['Lijfrente-/bankspaaruitkering ingangsdatum (leeftijd)', inputs.lijfrenteStartAge],
+    ['Lijfrente-/bankspaaruitkering indexatie', indexatieTekst(inputs.lijfrenteIndexatie)],
     ['', ''],
     // Zonder deze regels is een dossier met partner niet te reproduceren: je ziet
     // wel een hoger vast inkomen, maar niet waar het vandaan komt.
@@ -96,6 +100,7 @@ export async function exportToExcel(berekening: BerekeningsSet, clientName: stri
           ['AOW partner ingangsdatum (leeftijd)', inputs.partner.aowStartAge],
           ['Werkgeverspensioen partner (bruto/maand)', inputs.partner.employerPension],
           ['Werkgeverspensioen partner ingangsdatum (leeftijd)', inputs.partner.employerPensionStartAge],
+          ['Werkgeverspensioen partner indexatie', indexatieTekst(inputs.partner.employerPensionIndexatie)],
         ]
       : [['Partner meegerekend', 'nee, berekening voor één persoon']]),
     ['', ''],
@@ -137,30 +142,23 @@ export async function exportToExcel(berekening: BerekeningsSet, clientName: stri
   // zit in het getalformaat, dat hieronder op de kolom wordt gezet.
   const resultRows: (string | number)[][] = [
     ['FINANCIËLE PLANNING - RESULTATEN', ''],
+    ['Bij het verwachte rendement: de helft van de scenario\'s valt beter uit, de helft slechter.', ''],
     ['', ''],
     ['Verwacht eindvermogen', Math.round(result.projectedCapital)],
-    // Eenmalige bedragen ná de pensioendatum zitten verrekend in
-    // requiredCapital (zie pensionCalc.ts). Hier staat de afleiding uitgeschreven,
-    // anders is uit het doelbedrag alleen niet af te lezen waardoor het afwijkt van
-    // wat het inkomen op zichzelf kost. Alleen tonen als er zo'n bedrag is.
-    ...(Math.round(result.pvEventsAfterRetirement) !== 0
-      ? [
-          ['Benodigd voor je inkomen', Math.round(result.requiredCapitalEindwaarde + result.pvEventsAfterRetirement)],
-          [
-            result.pvEventsAfterRetirement > 0
-              ? 'Af: eenmalige bedragen ná de pensioendatum (contante waarde)'
-              : 'Bij: eenmalige bedragen ná de pensioendatum (contante waarde)',
-            Math.round(Math.abs(result.pvEventsAfterRetirement)),
-          ],
-        ]
-      : []),
-    // Wat er extra nodig is om de jaren tot een latere ontvangst te overbruggen.
-    // Alleen tonen als er iets te overbruggen valt (bevinding 2).
-    ...(Math.round(result.overbruggingsToeslag) !== 0
-      ? [['Bij: overbrugging tot dat geld binnenkomt', Math.round(result.overbruggingsToeslag)]]
-      : []),
+    // De afleiding van het doelbedrag, met teken zodat een adviseur de kolom kan
+    // optellen. Zie opbouwDoelbedrag(): de regels sluiten op requiredCapital.
+    ...opbouwDoelbedrag(result).map(r => [r.label, Math.round(r.bedrag)]),
     ['Benodigd eindvermogen', Math.round(result.requiredCapital)],
     ['Verschil', Math.round(result.projectedCapital - result.requiredCapital)],
+    ...(result.yearsToRetirement > 0 && result.requiredCapital > 0 && result.opbouwTekort === null
+      ? [['Eindvermogen bij slecht weer (5e percentiel)', Math.round(mc.slechtWeerBijPensioen)]]
+      : []),
+    ...(result.opbouwTekort !== null
+      ? [
+          ['Vermogen onder nul in de opbouwfase vanaf leeftijd', result.opbouwTekort.leeftijd],
+          ['Grootste tekort in de opbouwfase', Math.round(result.opbouwTekort.bedrag)],
+        ]
+      : []),
     ['Restkapitaal op ' + inputs.lifeExpectancy + ' jaar', Math.round(result.surplusAtEnd)],
     ['Plan loopt vast vanaf leeftijd',
       result.firstShortfallAge !== null ? result.firstShortfallAge : 'niet binnen de looptijd'],
@@ -169,15 +167,16 @@ export async function exportToExcel(berekening: BerekeningsSet, clientName: stri
     ...phaseRows,
     ['', ''],
     ['Gewenst netto inkomen (per maand)', Math.round(result.desiredMonthlyNetto)],
-    ['Benodigde maandinleg om doel te halen', Math.round(Math.max(0, result.requiredMonthlyContribution))],
+    ['Benodigde maandinleg om doel te halen',
+      result.yearsToRetirement === 0 ? 'n.v.t., al met pensioen' : Math.round(Math.max(0, result.requiredMonthlyContribution))],
     ['', ''],
     ['MONTE CARLO ANALYSE', ''],
-    ['Kans op volledig inkomensdoel', `${mc.successRate.toFixed(1)}%`],
-    ['Kans op 75% van het inkomensdoel', `${mc.successRate75.toFixed(1)}%`],
+    ['Kans op volledig inkomensdoel', slagingskansPercentage(mc.successRate)],
+    ['Kans op 75% van het inkomensdoel', slagingskansPercentage(mc.successRate75)],
     ['Aantal simulaties', N_SIMULATIONS],
     ['Volatiliteit vóór / na pensioendatum (%)', `${inputs.volatilityPre} / ${inputs.volatilityPost}`],
     ['', ''],
-    ['Alle bedragen in huidig koopkracht (reëel rendement)'],
+    ['Alle bedragen in koopkracht van vandaag (reëel rendement); een vast bedrag is teruggerekend met de inflatie.'],
     ['Onzekerheidsmarge: bij 2.000 simulaties is de steekproeffout rond een kans van 80% circa 1,8 procentpunt.'],
     ['Deze berekening is educatief en indicatief, geen persoonlijk financieel advies.'],
   ]
