@@ -23,10 +23,17 @@
 // over de hele schaal, zonder banden en zonder oordeel. Valt er niets meer te
 // interpreteren, dan valt er ook niets meer fout te interpreteren.
 //
-// Nederlandse notatie, dus een komma. Het component gebruikte toFixed(1) en zette
-// daarmee "14.0%" met een Engelse punt op een Nederlandse site.
+// Hele procenten. Tot 22 september 2026 stond hier één decimaal, terwijl de
+// onzekerheid van 2.000 scenario's rond een kans van 50% ongeveer 1,1 procentpunt is
+// (√(0,25 / 2000)). Een decimaal suggereerde een precisie die het getal niet heeft
+// (review 22 september 2026, bevinding 7).
+//
+// Aan de randen geen afronding naar een getal dat niet klopt: 99,6% is niet 100%,
+// want er faalt nog steeds een scenario, en 0,4% is niet 0%.
 export function slagingskansPercentage(value: number): string {
-  return value.toLocaleString('nl-NL', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%'
+  if (value > 0 && value < 1) return '< 1%'
+  if (value > 99 && value < 100) return '> 99%'
+  return Math.round(value).toLocaleString('nl-NL') + '%'
 }
 
 // Het percentage staat er als groot getal al boven, dus deze regel herhaalt het niet:

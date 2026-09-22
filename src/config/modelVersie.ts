@@ -16,7 +16,11 @@
 // heffingskortingen van het aftrekjaar zelf, in plaats van altijd met die van het
 // parameterjaar (WP9, 16 september 2026). Raakt alleen aftrekjaren ongelijk aan
 // PARAMETER_JAAR; de jaarruimte zelf verandert nergens.
-export const MODEL_VERSIE = '2026.09.4'
+// 2026.09.5: review 22 september 2026. Liquiditeitstoets in de opbouwfase, sluitende
+// opbouw van het doelbedrag (overbrugging, later geld, box 3), indexatiekeuze per
+// uitkering, Monte Carlo met een startwaarde uit de invoer, slechtweerwaarde
+// (5e percentiel) op de pensioendatum.
+export const MODEL_VERSIE = '2026.09.5'
 
 /** Belastingjaar waarop fiscaleParameters.ts is gebaseerd. */
 export const PARAMETER_JAAR = 2026

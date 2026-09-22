@@ -7,19 +7,23 @@
 import { describe, it, expect } from 'vitest'
 import { SLAGINGSKANS_LABEL, slagingskansPercentage } from '../slagingskansTekst'
 
-describe('slagingskansPercentage — Nederlandse notatie', () => {
-  // Het component gebruikte toFixed(1) en zette daarmee "14.0%" met een Engelse
-  // punt op een Nederlandse site. Hendrik zag dat op 20 september op het scherm.
-  it('gebruikt een komma en geen punt', () => {
-    expect(slagingskansPercentage(14)).toBe('14,0%')
-    expect(slagingskansPercentage(1.7)).toBe('1,7%')
+describe('slagingskansPercentage — hele procenten', () => {
+  // Eén decimaal suggereerde een precisie die 2.000 scenario's niet hebben: de
+  // onzekerheid rond 50% is ongeveer 1,1 procentpunt (review 22 september 2026,
+  // bevinding 7).
+  it('rondt af op een heel percentage', () => {
+    expect(slagingskansPercentage(14)).toBe('14%')
+    expect(slagingskansPercentage(1.7)).toBe('2%')
+    expect(slagingskansPercentage(74.4)).toBe('74%')
+    expect(slagingskansPercentage(74.5)).toBe('75%')
+    expect(slagingskansPercentage(0)).toBe('0%')
+    expect(slagingskansPercentage(100)).toBe('100%')
   })
 
-  it('toont altijd precies één decimaal', () => {
-    expect(slagingskansPercentage(0)).toBe('0,0%')
-    expect(slagingskansPercentage(100)).toBe('100,0%')
-    expect(slagingskansPercentage(74.14)).toBe('74,1%')
-    expect(slagingskansPercentage(74.15)).toBe('74,2%')
+  // 99,6% is niet 100%: er faalt nog een scenario. En 0,4% is niet 0%.
+  it('rondt aan de randen niet af naar een getal dat niet klopt', () => {
+    expect(slagingskansPercentage(99.6)).toBe('> 99%')
+    expect(slagingskansPercentage(0.4)).toBe('< 1%')
   })
 
   it('bevat nergens een punt als decimaalteken', () => {

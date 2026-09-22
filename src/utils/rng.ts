@@ -1,9 +1,12 @@
-// Deterministische pseudo-random generator, uitsluitend voor testdoeleinden
-// (golden-master-tests op monteCarlo.ts). Niet geschikt voor cryptografie of
-// voor iets anders dan reproduceerbare testfixtures — mulberry32 is een
-// eenvoudige, snelle 32-bit PRNG met een periode van 2^32, statistisch
-// prima genoeg om deterministische Monte Carlo-uitkomsten vast te leggen,
-// niet bedoeld als vervanging van Math.random() in productiepaden.
+// Deterministische pseudo-random generator voor de Monte Carlo-simulatie. Niet
+// geschikt voor cryptografie. mulberry32 is een eenvoudige, snelle 32-bit PRNG met
+// een periode van 2^32, statistisch ruim voldoende voor de 2.000 scenario's van de
+// FO-planner.
+//
+// Tot 22 september 2026 alleen voor tests; productie trok met Math.random(). Sinds
+// dan krijgt runMonteCarlo() zonder meegegeven generator deze, met een startwaarde
+// uit de invoer, zodat dezelfde invoer altijd dezelfde slagingskans geeft (zie
+// startwaardeVoorInvoer() in monteCarlo.ts).
 //
 // Referentie-implementatie: mulberry32 (Tommy Ettinger, public domain).
 
