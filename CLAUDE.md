@@ -398,7 +398,18 @@ premie in de werkgeversregeling, dus werkgeversdeel én eigen bijdrage. Het veld
   wereldgemiddelde; alleen de VS of een start in 1960 komt hoger uit.
 - **De productiebuild draait lokaal niet** op Hendriks Windows-machine: een Application
   Control-beleid blokkeert het native bestand van de MDX-plugin (`satteri_napi.win32-x64-msvc.node`).
-  `tsc`, `astro check`, `vitest` en `astro dev` werken wel; de build draait in CI.
+  `tsc`, `astro check`, `vitest` en `astro dev` werken wel, maar alleen dankzij een
+  contentcache: zolang de markdown niet opnieuw gerenderd hoeft te worden, is dat bestand
+  niet nodig. De build draait in CI. Twee valkuilen, allebei op 22 september 2026
+  tegengekomen:
+  - `npm ci` of een verwijderde `node_modules` wist `node_modules/.astro/data-store.json`,
+    de cache die `astro check` gebruikt. Herstel: kopieer `.astro/data-store.json` (de
+    dev-cache) naar `node_modules/.astro/`.
+  - Astro 7.3.x laadt dit bestand al bij het opstarten. Een update daarnaartoe maakt ook
+    `astro check` en de dev-server lokaal onbruikbaar, en is daarom teruggedraaid, hoewel
+    `npm audit` voor 7.2.0 een kritieke melding geeft (het omzetten van AVIF-afbeeldingen;
+    praktisch risico laag, want de site is statisch). Updaten kan zodra het beleid dit
+    bestand toestaat, of via een PR die alleen in CI wordt getoetst.
 
 - ~~Geen custom analytics-events, alleen kale paginabezoeken (Vercel Web Analytics).~~ Deels
   achterhaald, geconstateerd op 21 september 2026. Er zijn vijf events, allemaal in de
