@@ -73,7 +73,30 @@ React-eiland (`client:only="react"`), component `src/components/PensionPlanner/`
 - Rechterkolom: KPI-haarlijnraster, fasenlijst, vermogensgrafiek (Monte Carlo-bandbreedte,
   Recharts), twee slagingskans-meters.
 - Monte Carlo: 2.000 simulaties, draait alleen op knopdruk (niet live), Box-Muller
-  normaalverdeling.
+  normaalverdeling. Sinds 22 september 2026 met een startwaarde die uit de invoer wordt
+  afgeleid (`startwaardeVoorInvoer()` in `monteCarlo.ts`): dezelfde invoer geeft altijd
+  dezelfde slagingskans. Op het scherm en in de exports hele procenten, want de
+  onzekerheid van 2.000 scenario's rond 50% is ongeveer 1,1 procentpunt.
+- Het KPI-raster rekent met het verwachte rendement, en dat is de **mediaan** (50% kans).
+  Het scherm zegt dat erbij en toont een slechtweerregel: het 5e percentiel van het
+  vermogen op de pensioendatum, dezelfde maat als pensioenfondsen (art. 30b lid 5
+  Regeling Pensioenwet en Wvb). Besluit Hendrik 22 september 2026 (optie 8A).
+- **De opbouw van het doelbedrag sluit altijd:** `requiredCapitalEindwaarde +
+  overbruggingsToeslag + laterGeldOverschot + box3Toeslag = requiredCapital`. De exports
+  lezen de regels uit `opbouwDoelbedrag.ts`. Overbrugging betekent hier liquiditeit tot
+  een later eenmalig bedrag, niet "jaren vóór de AOW": die kosten zitten al in de
+  contante waarde. `overbruggingsJaren` (alleen voor de waarschuwing) telt alleen
+  bronnen met een bedrag.
+- Het saldo mag ook in de **opbouwfase** niet onder nul (`opbouwTekort`); de benodigde
+  inleg houdt daar rekening mee, net als de simulatie al deed.
+- **Indexatie per uitkering** (`Indexatie` in `types/index.ts`): werkgeverspensioen,
+  werkgeverspensioen partner en lijfrente zijn 'meestijgend' of 'vast'. Een vast bedrag
+  wordt in `huishoudOp()` per jaar teruggerekend naar koopkracht van vandaag, zodat
+  beide rekenkernen gelijk lopen. In de UI start een lijfrente op 'vast',
+  werkgeverspensioen op 'meestijgend'; in de code is de standaard 'meestijgend', zodat
+  oude invoer en golden values niet verschuiven.
+- Met een partner erbij is het inkomensdoel **alleen netto**: hoe een bruto
+  huishoudinkomen over twee apart belaste mensen verdeeld is, weet de tool niet.
 - Resultaat blijft zichtbaar bij een invoerwijziging (met een "verouderd"-badge), verdwijnt niet
   meer zoals vóór de herstijling.
 - Export: PDF (`jsPDF` + `html2canvas`) en Excel (`exceljs`), max 3 gratis downloads samen
@@ -362,6 +385,20 @@ premie in de werkgeversregeling, dus werkgeversdeel én eigen bijdrage. Het veld
 `pensioenpremie`, met een migratie voor opgeslagen berekeningen.
 
 ## Bekende openstaande punten (niet opgelost, alleen genoteerd)
+
+- **Rendementsparameters van de risicoprofielen (review 22 september 2026, punt 9).**
+  `risicoprofielen.ts` is "eigen huisvisie, geen externe onderbouwing". Onderzocht: de
+  Commissie Parameters 2022 (aandelen 5,4%, een wettelijk maximum voor pensioenfondsen,
+  te laag als beste schatting), UBS/DMS Yearbook 2026 (ontwikkelde markten 8,5% per jaar
+  1900-2025, nominaal in USD), Damodaran (S&P 500 10,0% 1928-2025), MSCI World EUR
+  (6,64% sinds 2000) en J.P. Morgan LTCMA 2026 (7,0% vooruitkijkend). Hendrik wil het
+  Dimensional Matrix Book erbij halen voordat hij kiest. Aandachtspunt bij elke keuze:
+  een historisch rendement hoort bij de historische inflatie (circa 3%), dus niet
+  combineren met 2% inflatie. En "zeer offensief" op 9% ligt boven het
+  wereldgemiddelde; alleen de VS of een start in 1960 komt hoger uit.
+- **De productiebuild draait lokaal niet** op Hendriks Windows-machine: een Application
+  Control-beleid blokkeert het native bestand van de MDX-plugin (`satteri_napi.win32-x64-msvc.node`).
+  `tsc`, `astro check`, `vitest` en `astro dev` werken wel; de build draait in CI.
 
 - ~~Geen custom analytics-events, alleen kale paginabezoeken (Vercel Web Analytics).~~ Deels
   achterhaald, geconstateerd op 21 september 2026. Er zijn vijf events, allemaal in de
