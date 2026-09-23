@@ -431,14 +431,168 @@ describe('benodigd vermogen — liquiditeit onderweg', () => {
     expect(r.requiredCapital).toBeGreaterThan(r.requiredCapitalEindwaarde)
   })
 
-  it('blijft een echte overbruggingsperiode correct tonen, ook met box 3 aan', () => {
+  // Deze toets eiste tot 22 september 2026 een overbruggingsToeslag > 0. Zonder
+  // eenmalige bedragen was dat bedrag in werkelijkheid het box 3-verschil onder een
+  // andere naam: de zeven jaar vóór de AOW zitten al in de contante waarde van de
+  // onttrekkingen. Sinds de review van 22 september heeft box 3 een eigen regel.
+  it('houdt overbruggingsjaren, liquiditeit en box 3 uit elkaar', () => {
     const r = calculatePension(
       baseInputs({ vermogensbelastingHandmatig: false, retirementAge: 60 }),
       { currentYear: 2026 }
     )
-    // Nu wél 7 jaar overbrugging (pensioen op 60, AOW/werkgeverspensioen/lijfrente
-    // op 67): de fix mag een echte overbrugging niet laten verdwijnen.
-    expect(r.overbruggingsToeslag).toBeGreaterThan(0)
+    // Pensioen op 60, AOW op 67: zeven jaar zonder uitkering, en de waarschuwing
+    // op het invoerscherm moet dat blijven zeggen.
+    expect(r.overbruggingsJaren).toBe(7)
+    // Geen eenmalige bedragen, dus niets om naartoe te overbruggen.
+    expect(r.overbruggingsToeslag).toBe(0)
+    expect(r.box3Toeslag).toBeGreaterThan(0)
+  })
+})
+
+// Review 22 september 2026, bevinding 3: de opbouw van het doelbedrag telde in de
+// export niet op. Vier delen, en ze moeten in elke situatie sluiten.
+describe('opbouw van het doelbedrag sluit altijd', () => {
+  const sluit = (r: ReturnType<typeof calculatePension>) =>
+    r.requiredCapitalEindwaarde + r.overbruggingsToeslag + r.laterGeldOverschot + r.box3Toeslag
+
+  it('stoppen na de AOW-datum, erfenis op 73: de overbrugging staat erin', () => {
+    const r = calculatePension(baseInputs({
+      currentAge: 45, retirementAge: 68, currentCapital: 0, monthlyContribution: 0,
+      desiredRetirementIncome: 2500, lifeEvents: [{ name: 'erfenis', amount: 300000, year: 2026 + (73 - 45) }],
+    }), { currentYear: 2026 })
+    // Nagerekend in de review: benodigd € 54.516 tegen een eindwaarde van
+    // − € 66.121. Het verschil (afgerond € 120.637, onafgerond € 120.636,x) stond
+    // tot deze datum nergens.
+    expect(Math.round(r.requiredCapital)).toBe(54516)
+    expect(Math.round(r.requiredCapitalEindwaarde)).toBe(-66121)
+    expect(Math.round(r.overbruggingsToeslag)).toBe(120636)
+    expect(sluit(r)).toBeCloseTo(r.requiredCapital, 2)
+  })
+
+  it('sluit ook met box 3 per jaar en een eenmalig bedrag na de pensioendatum', () => {
+    const r = calculatePension(baseInputs({
+      vermogensbelastingHandmatig: false, currentCapital: 400000,
+      lifeEvents: [{ name: 'erfenis', amount: 200000, year: 2026 + (75 - 45) }],
+    }), { currentYear: 2026 })
+    expect(r.box3Toeslag).toBeGreaterThan(0)
+    expect(sluit(r)).toBeCloseTo(r.requiredCapital, 2)
+  })
+
+  it('sluit als later geld alles dekt', () => {
+    const r = calculatePension(baseInputs({
+      currentAge: 66, retirementAge: 67, lifeExpectancy: 75, currentCapital: 0,
+      desiredRetirementIncome: 1800,
+      lifeEvents: [{ name: 'erfenis', amount: 500000, year: 2027 }],
+    }), { currentYear: 2026 })
+    expect(r.requiredCapital).toBe(0)
+    expect(r.laterGeldOverschot).toBeGreaterThan(0)
+    expect(sluit(r)).toBeCloseTo(r.requiredCapital, 2)
+  })
+
+  it('sluit in de standaardscenario\'s', () => {
+    for (const key of Object.keys(SCENARIOS) as (keyof typeof SCENARIOS)[]) {
+      const r = calculatePension(SCENARIOS[key], { currentYear: 2026 })
+      expect(sluit(r)).toBeCloseTo(r.requiredCapital, 2)
+    }
+  })
+})
+
+// Review 22 september 2026, bevinding 1: de vaste berekening liet een negatief
+// saldo in de opbouwfase gewoon doorgroeien en meldde een overschot, terwijl de
+// simulatie 0% gaf.
+describe('opbouwfase — het saldo mag onderweg niet onder nul', () => {
+  const opbouwgat = baseInputs({
+    currentAge: 40, currentCapital: 0, monthlyContribution: 0, desiredRetirementIncome: 1500,
+    lifeEvents: [
+      { name: 'verbouwing', amount: -50000, year: 2027 },
+      { name: 'erfenis', amount: 60000, year: 2030 },
+    ],
+  })
+
+  it('meldt op welke leeftijd het saldo onder nul komt', () => {
+    const r = calculatePension(opbouwgat, { currentYear: 2026 })
+    expect(r.opbouwTekort?.leeftijd).toBe(41)
+    expect(r.opbouwTekort!.bedrag).toBeGreaterThan(50000)
+  })
+
+  it('vraagt een inleg die het gat dicht, en die inleg haalt het ook', () => {
+    const r = calculatePension(opbouwgat, { currentYear: 2026 })
+    expect(r.requiredMonthlyContribution).toBeGreaterThan(0)
+    const metInleg = calculatePension(
+      { ...opbouwgat, monthlyContribution: r.requiredMonthlyContribution + 0.01 },
+      { currentYear: 2026 }
+    )
+    expect(metInleg.opbouwTekort).toBeNull()
+  })
+
+  it('verandert niets als er geen gat is', () => {
+    const r = calculatePension(SCENARIOS['1_basis'], { currentYear: 2026 })
+    expect(r.opbouwTekort).toBeNull()
+  })
+})
+
+// Review 22 september 2026, bevinding 11: een ingangsleeftijd zonder bedrag telde
+// als inkomen en liet de overbruggingswaarschuwing verdwijnen.
+describe('overbruggingsjaren — alleen bronnen met een bedrag', () => {
+  it('werkgeverspensioen € 0 met ingang 60 telt niet als inkomen', () => {
+    const r = calculatePension(baseInputs({
+      retirementAge: 60, employerPension: 0, employerPensionStartAge: 60,
+    }), { currentYear: 2026 })
+    expect(r.overbruggingsJaren).toBe(7)
+  })
+
+  it('met een bedrag telt de ingangsleeftijd wel', () => {
+    const r = calculatePension(baseInputs({
+      retirementAge: 60, employerPension: 500, employerPensionStartAge: 60,
+    }), { currentYear: 2026 })
+    expect(r.overbruggingsJaren).toBe(0)
+  })
+})
+
+// Review 22 september 2026, bevinding 4: een vast bedrag telde als koopkracht van
+// vandaag. Een vaste uitkering moet gelijk uitkomen aan een meestijgende uitkering
+// van het teruggerekende bedrag.
+describe('indexatie — een vast bedrag verliest koopkracht', () => {
+  const vanaf40 = { currentAge: 40, inflation: 2.5 }
+
+  it('vaste lijfrente van € 1.000 op 67 = meestijgend € 1.000 / 1,025^27', () => {
+    const vast = calculatePension(baseInputs({
+      ...vanaf40, lijfrenteUitkering: 1000, lijfrenteIndexatie: 'vast',
+    }), { currentYear: 2026 })
+    const teruggerekend = calculatePension(baseInputs({
+      ...vanaf40, lijfrenteUitkering: 1000 / Math.pow(1.025, 27), lijfrenteIndexatie: 'meestijgend',
+    }), { currentYear: 2026 })
+    const rij = (r: typeof vast) => r.yearData.find(y => y.age === 67)!
+    expect(rij(vast).lijfrenteIncome).toBeCloseTo(rij(teruggerekend).lijfrenteIncome, 6)
+  })
+
+  it('een vast bedrag daalt daarna elk jaar verder', () => {
+    const r = calculatePension(baseInputs({
+      ...vanaf40, employerPension: 1500, employerPensionIndexatie: 'vast',
+    }), { currentYear: 2026 })
+    const op = (leeftijd: number) => r.yearData.find(y => y.age === leeftijd)!.employerIncome
+    expect(op(80)).toBeLessThan(op(70))
+  })
+
+  it('maakt het doelbedrag hoger dan dezelfde meestijgende uitkering', () => {
+    const meestijgend = calculatePension(baseInputs({ ...vanaf40, lijfrenteUitkering: 1000 }), { currentYear: 2026 })
+    const vast = calculatePension(baseInputs({
+      ...vanaf40, lijfrenteUitkering: 1000, lijfrenteIndexatie: 'vast',
+    }), { currentYear: 2026 })
+    expect(vast.requiredCapital).toBeGreaterThan(meestijgend.requiredCapital)
+  })
+
+  it('werkt ook voor het werkgeverspensioen van de partner', () => {
+    const partner = (indexatie: 'vast' | 'meestijgend') => baseInputs({
+      ...vanaf40, woonsituatie: 'samenwonend',
+      partner: {
+        actief: true, leeftijd: 40, aowMaandBedragNetto: 1084, aowStartAge: 67,
+        employerPension: 1500, employerPensionStartAge: 67, employerPensionIndexatie: indexatie,
+      },
+    })
+    const vast = calculatePension(partner('vast'), { currentYear: 2026 })
+    const meestijgend = calculatePension(partner('meestijgend'), { currentYear: 2026 })
+    expect(vast.requiredCapital).toBeGreaterThan(meestijgend.requiredCapital)
   })
 })
 

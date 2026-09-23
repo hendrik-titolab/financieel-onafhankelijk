@@ -13,6 +13,21 @@ export interface LifeEvent {
 export type Woonsituatie = 'alleenstaand' | 'samenwonend'
 
 /**
+ * Of een uitkering meestijgt met de inflatie of een vast bedrag in euro's is.
+ *
+ * De rekenkern werkt in koopkracht van vandaag. Tot september 2026 telde elke
+ * uitkering als koopkracht van vandaag, ook een lijfrente die als vast bedrag is
+ * afgesproken. Bij 40 jaar, € 1.000 bruto per maand vanaf 67 en 2,5% inflatie is
+ * zo'n vast bedrag bij ingang nog € 513 aan koopkracht waard, en de tool rekende
+ * met € 1.000 (review 22 september 2026, bevinding 4).
+ *
+ * 'vast': het ingevulde bedrag is het bedrag dat straks op je rekening komt. De
+ * kern rekent het per jaar terug naar koopkracht van vandaag.
+ * 'meestijgend': het bedrag houdt zijn koopkracht, zoals de AOW.
+ */
+export type Indexatie = 'meestijgend' | 'vast'
+
+/**
  * De partner als tweede, apart belaste persoon.
  *
  * De inkomstenbelasting in box 1 is individueel: twee mensen hebben elk hun eigen
@@ -44,6 +59,8 @@ export interface PartnerGegevens {
   aowStartAge: number
   employerPension: number          // bruto/mnd
   employerPensionStartAge: number
+  /** Ontbreekt bij oudere invoer; dan 'meestijgend', het gedrag van vóór deze keuze. */
+  employerPensionIndexatie?: Indexatie
 }
 
 /**
@@ -134,6 +151,8 @@ export interface PensionInputs {
   aowStartAge: number         // age at which AOW kicks in
   employerPension: number     // gross monthly (bruto/maand)
   employerPensionStartAge: number  // age at which employer pension kicks in (default 67, see UPO)
+  /** Zie Indexatie. Ontbreekt bij oudere invoer; dan 'meestijgend'. */
+  employerPensionIndexatie?: Indexatie
 
   // Lijfrente, banksparen of pensioenbeleggen: fiscaal beklemd (box 1), geen vrije
   // onttrekking mogelijk (art. 3.125 Wet IB 2001). Ingevuld als de verwáchte
@@ -159,6 +178,8 @@ export interface PensionInputs {
    * planningshorizon.
    */
   lijfrenteEindLeeftijd: number
+  /** Zie Indexatie. Ontbreekt bij oudere invoer; dan 'meestijgend'. */
+  lijfrenteIndexatie?: Indexatie
 
   lifeEvents: LifeEvent[]  // named events: schenking, woningaankoop, erfenis…
 
@@ -266,12 +287,40 @@ export interface PensionResult {
   effectiveRetirementAge: number
   /**
    * Wat er bovenop requiredCapitalEindwaarde nodig is om de jaren te overbruggen
-   * tot een later bedrag binnenkomt. Nul als er geen echte overbruggingsperiode is
-   * (zie overbruggingsJaren) — ook als requiredCapital en requiredCapitalEindwaarde
-   * dan nog uit elkaar liggen door het box 3-verschil hierboven. Dat verschil heet
-   * dan geen overbrugging, want dat is het niet.
+   * tot een later eenmalig bedrag binnenkomt: het verschil tussen "op de einddatum
+   * op nul uitkomen" en "onderweg nooit onder nul komen", gerekend zonder box 3.
+   *
+   * Tot 22 september 2026 telde dit alleen mee als er een periode vóór de eerste
+   * uitkering was. Wie ná de AOW-datum stopte en op 73 zou erven, kreeg daardoor
+   * een doelbedrag waarvan € 120.637 in de opbouw nergens verklaard werd (review
+   * 22 september 2026, bevinding 3).
+   *
+   * Samen sluiten de vier delen altijd: requiredCapitalEindwaarde +
+   * overbruggingsToeslag + laterGeldOverschot + box3Toeslag = requiredCapital.
    */
   overbruggingsToeslag: number
+  /**
+   * Alleen als wat er later binnenkomt méér is dan alle onttrekkingen samen: dan is
+   * de eindwaarde negatief, maar nodig is € 0 en niet minder. Dit veld is dat
+   * verschil, zodat de opbouw ook dan optelt.
+   */
+  laterGeldOverschot: number
+  /**
+   * Wat de box 3-heffing aan het doelbedrag toevoegt. Nul als de heffing via een
+   * vast percentage op het rendement loopt, want dan zit ze al in het rendement.
+   */
+  box3Toeslag: number
+  /**
+   * Het vermogen komt in de opbouwfase onder nul, bijvoorbeeld door een uitgave die
+   * er nog niet is. Leeftijd van het eerste jaar waarin dat gebeurt en het diepste
+   * tekort. Null als dat niet gebeurt.
+   *
+   * Tot 22 september 2026 toetste alleen de simulatie dit. De vaste berekening liet
+   * een negatief saldo gewoon doorgroeien tegen beleggingsrendement, alsof lenen
+   * gratis was, en meldde een overschot terwijl de simulatie 0% gaf (review
+   * 22 september 2026, bevinding 1).
+   */
+  opbouwTekort: { leeftijd: number; bedrag: number } | null
   /**
    * Aantal jaar tussen de pensioendatum en de eerste eigen inkomstenbron (AOW,
    * werkgeverspensioen, lijfrente, of de partner-equivalenten). Nul als er geen
@@ -307,6 +356,12 @@ export interface MonteCarloResult {
   successRate: number      // % simulations where full income target is met
   successRate75: number    // % simulations where at least 75% of income target is met
   percentileData: PercentilePoint[]
+  /**
+   * Het vermogen op de feitelijke pensioenleeftijd in het slechtweerscenario: het
+   * 5e percentiel. Dezelfde maat die pensioenfondsen hanteren (art. 30b lid 5
+   * Regeling Pensioenwet en Wvb). Eén op de twintig scenario's valt lager uit.
+   */
+  slechtWeerBijPensioen: number
 }
 
 export interface PercentilePoint {

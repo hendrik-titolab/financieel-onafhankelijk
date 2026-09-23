@@ -1,16 +1,19 @@
 import { useState, useEffect, useRef, useId, Children, isValidElement, cloneElement } from 'react'
 import { parseBedrag, parseBedragBegrensd, formatBedrag } from '../../utils/bedrag'
-import { box3DrukAfgerond } from '../../utils/box3'
-import { aowVakantiegeldFactor } from '../../utils/pensionCalc'
+import { box3DrukAfgerond, geschatteBox3Druk } from '../../utils/box3'
+import { aowVakantiegeldFactor, brutoMaandNaarNettoMaand } from '../../utils/pensionCalc'
 import { PARAMETER_JAAR } from '../../config/modelVersie'
 import { track } from '@vercel/analytics'
 import { X } from 'lucide-react'
-import type { PensionInputs, PensionResult, IncomeType, ContributionFrequency, LifeEvent, RiskProfile, Woonsituatie, LijfrenteSoort } from '../../types'
+import type { PensionInputs, PensionResult, IncomeType, ContributionFrequency, LifeEvent, RiskProfile, Woonsituatie, LijfrenteSoort, Indexatie } from '../../types'
 import { RISICOPROFIELEN, PROFIEL_VOLGORDE } from '../../config/risicoprofielen'
 import { AOW_NETTO } from '../../utils/pensionCalc'
 import { LIJFRENTE } from '../../config/fiscaleParameters'
 
 const MAX_ROWS = 20
+
+/** Een percentage op één decimaal, Nederlandse notatie. */
+const pct1 = (v: number) => v.toLocaleString('nl-NL', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%'
 
 interface Props {
   inputs: PensionInputs
@@ -180,6 +183,52 @@ function AgeSliderRow({ label, value, min, max, onChange }: {
   )
 }
 
+/**
+ * Stijgt de uitkering mee met de inflatie, of is het een vast bedrag? De planner
+ * rekent in koopkracht van vandaag, dus voor een vast bedrag moet hij weten dat
+ * het straks minder waard is (review 22 september 2026, bevinding 4).
+ */
+function IndexatieKeuze({ value, onChange }: { value: Indexatie | undefined; onChange: (v: Indexatie) => void }) {
+  const huidig = value ?? 'meestijgend'
+  return (
+    <div className="mt-2 space-y-1">
+      <Toggle value={huidig} onChange={v => onChange(v as Indexatie)}
+        options={[
+          { value: 'meestijgend', label: 'Stijgt mee met inflatie' },
+          { value: 'vast', label: 'Vast bedrag' },
+        ]} />
+      <p className="text-xs text-body leading-relaxed">
+        {huidig === 'vast'
+          ? 'Het bedrag dat straks op je rekening komt. We rekenen het terug naar wat het dan waard is: bij 2,5% inflatie is € 1.000 over 27 jaar nog € 513 aan koopkracht van nu.'
+          : 'Het bedrag houdt zijn koopkracht, zoals de AOW. Kies dit alleen als je regeling indexeert of het bedrag al in euro\'s van nu staat.'}
+      </p>
+    </div>
+  )
+}
+
+/**
+ * Met een partner erbij rekent de tool alleen met een netto doel.
+ *
+ * Een bruto huishoudinkomen werd omgerekend alsof één persoon het verdiende. Voor
+ * € 5.000 bruto gaf dat € 3.567 netto, terwijl twee personen met elk € 2.500 op
+ * € 4.467 uitkomen: ruim 25% verschil, in strijd met het uitgangspunt dat box 1
+ * individueel is (review 22 september 2026, bevinding 5). Hoe het bruto over twee
+ * mensen verdeeld is weet de tool niet, dus hij vraagt het netto bedrag.
+ *
+ * Bij het aanzetten wordt het bestaande doel omgerekend met de berekening die er
+ * tot nu toe voor gebruikt werd, zodat de uitkomst niet verspringt. Het bedrag
+ * staat daarna zichtbaar als netto in het veld en is aan te passen.
+ */
+function nettoDoelVoorPartner(inputs: PensionInputs, woonsituatie: Woonsituatie): Partial<PensionInputs> {
+  if (inputs.desiredRetirementIncomeType !== 'bruto') return {}
+  const netto = brutoMaandNaarNettoMaand(
+    inputs.desiredRetirementIncome,
+    Math.max(inputs.currentAge, inputs.retirementAge) >= inputs.aowStartAge,
+    woonsituatie === 'alleenstaand',
+  )
+  return { desiredRetirementIncome: Math.round(netto), desiredRetirementIncomeType: 'netto' }
+}
+
 // ---- Parameters tab ----
 
 function ParametersTab({ inputs, onChange, result }: Props) {
@@ -262,10 +311,14 @@ function ParametersTab({ inputs, onChange, result }: Props) {
         </div>
         <div className="space-y-1">
           <div className="flex justify-between items-center">
-            <label htmlFor={gewenstInkomenId} className="label mb-0">Gewenst pensioeninkomen</label>
-            <Toggle value={inputs.desiredRetirementIncomeType}
-              onChange={v => onChange({ desiredRetirementIncomeType: v as IncomeType })}
-              options={[{ value: 'bruto', label: 'Bruto' }, { value: 'netto', label: 'Netto' }]} />
+            <label htmlFor={gewenstInkomenId} className="label mb-0">
+              Gewenst pensioeninkomen{inputs.partner.actief ? ' (netto, samen)' : ''}
+            </label>
+            {!inputs.partner.actief && (
+              <Toggle value={inputs.desiredRetirementIncomeType}
+                onChange={v => onChange({ desiredRetirementIncomeType: v as IncomeType })}
+                options={[{ value: 'bruto', label: 'Bruto' }, { value: 'netto', label: 'Netto' }]} />
+            )}
           </div>
           <NumberInput id={gewenstInkomenId} value={inputs.desiredRetirementIncome}
             onChange={v => onChange({ desiredRetirementIncome: v })}
@@ -275,7 +328,14 @@ function ParametersTab({ inputs, onChange, result }: Props) {
             houdt zijn koopkracht: € 3.000 nu is over dertig jaar nog steeds € 3.000 aan
             boodschappen. Het bedrag dat er dan feitelijk op je rekening staat is hoger.
           </p>
-          {inputs.desiredRetirementIncomeType === 'bruto' && (
+          {inputs.partner.actief && (
+            <p className="text-xs text-body leading-relaxed">
+              Met je partner erbij vul je het netto bedrag in dat jullie samen per maand willen
+              besteden. Een bruto bedrag kunnen we niet goed omrekenen: dat hangt ervan af hoe
+              het over jullie tweeën verdeeld is, want ieder betaalt apart belasting.
+            </p>
+          )}
+          {inputs.desiredRetirementIncomeType === 'bruto' && !inputs.partner.actief && (
             <p className="text-xs text-body leading-relaxed">
               We rekenen dit om naar netto met de belastingregels die gelden op je pensioenleeftijd
               ({inputs.retirementAge} jaar): {inputs.retirementAge >= inputs.aowStartAge
@@ -331,6 +391,7 @@ function ParametersTab({ inputs, onChange, result }: Props) {
               onChange={v => {
                 const samen = v === 'samenwonend'
                 onChange({
+                  ...(samen ? nettoDoelVoorPartner(inputs, 'samenwonend') : {}),
                   woonsituatie: v as Woonsituatie,
                   aowMaandBedragNetto: samen ? AOW_NETTO.samenwonend : AOW_NETTO.alleenstaand,
                   // Overschakelen naar samenwonend zet de partner meteen aan en vult
@@ -373,7 +434,10 @@ function ParametersTab({ inputs, onChange, result }: Props) {
               <input
                 type="checkbox"
                 checked={inputs.partner.actief}
-                onChange={e => onChange({ partner: { ...inputs.partner, actief: e.target.checked } })}
+                onChange={e => onChange({
+                  ...(e.target.checked ? nettoDoelVoorPartner(inputs, inputs.woonsituatie) : {}),
+                  partner: { ...inputs.partner, actief: e.target.checked },
+                })}
                 className="rounded accent-ink" />
               <span className="text-xs font-medium text-ink">Partner meerekenen</span>
             </label>
@@ -422,6 +486,10 @@ function ParametersTab({ inputs, onChange, result }: Props) {
                   <NumberInput value={inputs.partner.employerPension}
                     onChange={v => onChange({ partner: { ...inputs.partner, employerPension: v } })}
                     prefix="€" step={50} />
+                  {inputs.partner.employerPension > 0 && (
+                    <IndexatieKeuze value={inputs.partner.employerPensionIndexatie}
+                      onChange={v => onChange({ partner: { ...inputs.partner, employerPensionIndexatie: v } })} />
+                  )}
                 </Field>
 
                 <Field label="Werkgeverspensioen partner ingang (leeftijd)">
@@ -475,6 +543,10 @@ function ParametersTab({ inputs, onChange, result }: Props) {
           <Field label="Werkgeverspensioen (bruto/mnd)">
             <NumberInput value={inputs.employerPension}
               onChange={v => onChange({ employerPension: v })} prefix="€" step={50} />
+            {inputs.employerPension > 0 && (
+              <IndexatieKeuze value={inputs.employerPensionIndexatie}
+                onChange={v => onChange({ employerPensionIndexatie: v })} />
+            )}
           </Field>
           <div className="mt-2">
             <Field label="Werkgeverspensioen ingang (leeftijd)">
@@ -536,6 +608,8 @@ function ParametersTab({ inputs, onChange, result }: Props) {
                     ? 'Loopt door tot het einde van je planning. Zo werkt een levenslange oudedagslijfrente bij een verzekeraar.'
                     : 'Stopt op de leeftijd die je hieronder invult. Zo werkt een uitkering vanaf een lijfrenterekening bij een bank, of een tijdelijke oudedagslijfrente.'}
                 </p>
+                <IndexatieKeuze value={inputs.lijfrenteIndexatie}
+                  onChange={v => onChange({ lijfrenteIndexatie: v })} />
               </div>
             )}
             <Field label="Lijfrente-/bankspaaruitkering ingang (leeftijd)">
@@ -758,8 +832,9 @@ function RisicoprofielSection({ inputs, onChange }: Props) {
               <p>
                 De heffing wordt elk jaar opnieuw berekend over het vermogen van dát jaar, met de
                 percentages van {PARAMETER_JAAR} en je woonsituatie. Dat is nauwkeuriger dan één
-                vast percentage, want de druk loopt op met de omvang van je vermogen: bij een ton
-                ongeveer 0,9%, bij een miljoen ruim 2%.
+                vast percentage, want de druk loopt op met de omvang van je vermogen: voor een
+                alleenstaande bij € 100.000 ongeveer {pct1(geschatteBox3Druk(100_000, 'alleenstaand'))},
+                bij € 1.000.000 ongeveer {pct1(geschatteBox3Druk(1_000_000, 'alleenstaand'))}.
               </p>
             )}
             <p>
@@ -772,6 +847,11 @@ function RisicoprofielSection({ inputs, onChange }: Props) {
       </div>
     </Section>
   )
+}
+
+function zelfdeEvents(a: LifeEvent[], b: LifeEvent[]): boolean {
+  return a.length === b.length
+    && a.every((e, i) => e.name === b[i].name && e.amount === b[i].amount && e.year === b[i].year)
 }
 
 // ---- Eenmalige bedragen tab ----
@@ -826,6 +906,14 @@ function EenmaligeBedragenSection({ inputs, onChange }: Props) {
     isFilled(r) && r.year !== '' && !isNaN(Number(r.year)) &&
     (Number(r.year) < currentYear || Number(r.year) > laatsteJaar)
 
+  // Een wijziging die nog in de wachtrij van de debounce staat. Wordt bij het
+  // verlaten van dit tabblad alsnog doorgegeven, anders ging een bedrag dat je
+  // binnen 300 ms na het typen wegklikte verloren (review 22 september 2026,
+  // bevinding 6).
+  const wachtend = useRef<LifeEvent[] | null>(null)
+  const onChangeRef = useRef(onChange)
+  onChangeRef.current = onChange
+
   useEffect(() => {
     // Gedebouncet: zonder dit ging elke toetsaanslag direct de berekening in. Een
     // tussenstaat tijdens het wijzigen van een al ingevuld jaar (bijv. "2" terwijl
@@ -834,11 +922,22 @@ function EenmaligeBedragenSection({ inputs, onChange }: Props) {
     // uitviel en het KPI-raster zichtbaar terugsprong naar de waarde zonder die
     // regel — precies zolang je nog aan het typen was (bevinding tijdens deze
     // sessie: "als ik het jaartal invul, springt tekort steeds terug").
+    const valid: LifeEvent[] = rows
+      .filter(r => r.year !== '' && !isNaN(Number(r.year)) && isFilled(r))
+      .filter(r => !buitenLooptijd(r))
+      .map(r => ({ name: r.name.trim() || '—', amount: bedragVan(r) as number, year: Number(r.year) }))
+
+    // Alleen doorgeven wat echt anders is. Dit effect loopt ook bij het openen van
+    // het tabblad, en gaf dan de ongewijzigde lijst door. Dat telde als een
+    // wijziging: het resultaat heette daarna "verouderd" en downloaden kon pas na
+    // opnieuw rekenen, zonder dat er iets veranderd was (bevinding 6).
+    if (zelfdeEvents(valid, inputs.lifeEvents ?? [])) {
+      wachtend.current = null
+      return
+    }
+    wachtend.current = valid
     const timeoutId = setTimeout(() => {
-      const valid: LifeEvent[] = rows
-        .filter(r => r.year !== '' && !isNaN(Number(r.year)) && isFilled(r))
-        .filter(r => !buitenLooptijd(r))
-        .map(r => ({ name: r.name.trim() || '—', amount: bedragVan(r) as number, year: Number(r.year) }))
+      wachtend.current = null
       onChange({ lifeEvents: valid })
     }, 300)
     return () => clearTimeout(timeoutId)
@@ -846,6 +945,10 @@ function EenmaligeBedragenSection({ inputs, onChange }: Props) {
   // die, dan moet opnieuw bepaald worden welke regels binnen de looptijd vallen.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rows, inputs.currentAge, inputs.lifeExpectancy])
+
+  useEffect(() => () => {
+    if (wachtend.current) onChangeRef.current({ lifeEvents: wachtend.current })
+  }, [])
 
   const handleChange = (i: number, field: keyof DraftEvent, value: string) => {
     const newRows = rows.map((r, idx) => idx === i ? { ...r, [field]: value } : r)
@@ -879,6 +982,14 @@ function EenmaligeBedragenSection({ inputs, onChange }: Props) {
         Een erfenis, verbouwing, extra inleg of opname: eenmalige bedragen die je vermogen op
         een bepaald jaar raken. Ook de overwaarde die vrijkomt als je je huis verkoopt en kleiner
         gaat wonen hoort hier. Positief is een bijschrijving, negatief een afschrijving.
+      </p>
+      {/* De planner rekent in koopkracht van vandaag, ook voor deze bedragen. Een
+          bedrag dat pas over twintig jaar vrijkomt en dat je alleen in euro's van
+          dan kent, telt anders te zwaar mee (review 22 september 2026, bevinding 4). */}
+      <p className="text-xs text-body leading-relaxed">
+        Vul bedragen in euro's van vandaag in. Weet je alleen het bedrag dat je later krijgt,
+        reken het dan terug: bij 2,5% inflatie is € 100.000 over twintig jaar ongeveer
+        € 61.000 van nu.
       </p>
       <div className="space-y-3">
         {rows.map((row, i) => {

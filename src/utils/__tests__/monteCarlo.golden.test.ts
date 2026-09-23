@@ -58,6 +58,28 @@ describe('runMonteCarlo — golden master', () => {
     expect(a.percentileData).toEqual(b.percentileData)
   })
 
+  // Review 22 september 2026, bevinding 7: de productiecode trok met Math.random,
+  // en tien keer rekenen op dezelfde invoer gaf 46,8% tot 50,1%.
+  it('zonder meegegeven generator: dezelfde invoer geeft dezelfde uitkomst', () => {
+    const a = runMonteCarlo(SCENARIOS['1_basis'], { currentYear: 2026 })
+    const b = runMonteCarlo(SCENARIOS['1_basis'], { currentYear: 2026 })
+    expect(a.successRate).toBe(b.successRate)
+    expect(a.percentileData).toEqual(b.percentileData)
+    // Een andere invoer geeft een andere reeks trekkingen.
+    const c = runMonteCarlo({ ...SCENARIOS['1_basis'], monthlyContribution: 501 }, { currentYear: 2026 })
+    expect(c.percentileData).not.toEqual(a.percentileData)
+  })
+
+  // 8A: het slechtweerscenario is het 5e percentiel op de pensioendatum, dus nooit
+  // hoger dan het 10e percentiel op diezelfde leeftijd.
+  it('slechtweerwaarde ligt op of onder P10 op de pensioendatum', () => {
+    const inp = SCENARIOS['1_basis']
+    const mc = runMonteCarlo(inp, { rng: makeRng(12345), currentYear: 2026 })
+    const p10 = mc.percentileData.find(p => p.age === inp.retirementAge)!.p10
+    expect(mc.slechtWeerBijPensioen).toBeGreaterThan(0)
+    expect(mc.slechtWeerBijPensioen).toBeLessThanOrEqual(p10)
+  })
+
   it('E7 opgelost: een eenmalig bedrag na pensioendatum verandert de simulatie wél', () => {
     const withoutEvent = runMonteCarlo(SCENARIOS['1_basis'], { rng: makeRng(12345), currentYear: 2026 })
     const withEvent = runMonteCarlo(SCENARIOS['4_negatief_bedrag_na_pensioendatum'], { rng: makeRng(12345), currentYear: 2026 })

@@ -49,15 +49,22 @@ const DEFAULT_INPUTS: PensionInputs = {
     aowStartAge: 67,
     employerPension: 0,
     employerPensionStartAge: 67,
+    employerPensionIndexatie: 'meestijgend',
   },
   employerPension: 0,
   employerPensionStartAge: 67,
+  // Werkgeverspensioen standaard meestijgend: dat was het gedrag vóór deze keuze
+  // bestond, en of een regeling indexeert verschilt per fonds. Een lijfrente is
+  // vrijwel altijd een vast afgesproken bedrag, dus die start op vast (review
+  // 22 september 2026, bevinding 4).
+  employerPensionIndexatie: 'meestijgend',
   lijfrenteUitkering: 0,
   lijfrenteStartAge: 67,
   lijfrenteSoort: 'levenslang',
   // Alleen van betekenis bij een tijdelijke uitkering; bij levenslang loopt ze
   // door tot de planningshorizon.
   lijfrenteEindLeeftijd: 87,
+  lijfrenteIndexatie: 'vast',
   lifeEvents: [],
   volatilityPre: 12,
   volatilityPost: 8,

@@ -2,11 +2,34 @@ import type { PensionInputs, MonteCarloResult, PercentilePoint } from '../types'
 import { brutoMaandNaarNettoMaand, getMonthlyWithdrawal, controleerLeeftijden, huishoudOp } from './pensionCalc'
 import type { HuishoudOpParams } from './pensionCalc'
 import { nettoNominaalRendement, box3HeffingPerJaar } from './box3'
+import { makeRng } from './rng'
 
 export const N_SIMULATIONS = 2000
 
+/**
+ * Een startwaarde voor de toevalsgenerator, afgeleid uit de invoer (FNV-1a, 32 bit).
+ *
+ * Tot 22 september 2026 trok de simulatie met Math.random. Tien keer rekenen op
+ * precies dezelfde invoer gaf dan een slagingskans tussen 46,8% en 50,1%, terwijl
+ * het scherm één decimaal toonde (review 22 september 2026, bevinding 7). Nu geeft
+ * dezelfde invoer altijd hetzelfde getal. Dat maakt de onzekerheid van 2.000
+ * scenario's niet kleiner, maar een verschil op het scherm komt voortaan alleen nog
+ * van een andere invoer.
+ */
+export function startwaardeVoorInvoer(inputs: PensionInputs, currentYear: number): number {
+  const tekst = JSON.stringify(inputs) + '|' + currentYear
+  let h = 0x811c9dc5
+  for (let i = 0; i < tekst.length; i++) {
+    h ^= tekst.charCodeAt(i)
+    h = Math.imul(h, 0x01000193)
+  }
+  return h >>> 0
+}
+
 function sampleNormal(mean: number, std: number, rng: () => number): number {
-  const u1 = rng()
+  // log(0) is min oneindig. De generator kan precies 0 teruggeven; dat ene geval
+  // vervangen door het kleinste positieve getal verandert geen andere trekking.
+  const u1 = rng() || Number.MIN_VALUE
   const u2 = rng()
   return mean + std * Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2)
 }
@@ -72,7 +95,8 @@ export function reeleVolatiliteit(volatiliteitNominaal: number, inflatie: number
 }
 
 export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number; currentYear?: number }): MonteCarloResult {
-  const rng = opts?.rng ?? Math.random
+  const currentYear = opts?.currentYear ?? new Date().getFullYear()
+  const rng = opts?.rng ?? makeRng(startwaardeVoorInvoer(inputs, currentYear))
   const {
     currentAge, retirementAge: retirementAgeInput, lifeExpectancy,
     currentCapital, monthlyContribution, contributionFrequency,
@@ -83,6 +107,7 @@ export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number
     employerPension, employerPensionStartAge,
     lijfrenteUitkering, lijfrenteStartAge,
     lijfrenteSoort = 'levenslang', lijfrenteEindLeeftijd = Infinity,
+    employerPensionIndexatie = 'meestijgend', lijfrenteIndexatie = 'meestijgend',
     aowVakantiegeld = false,
     partner,
     lifeEvents = [],
@@ -101,7 +126,6 @@ export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number
   const aowMonthlyNetto = aowMaandBedragNetto
   const lijfrenteEinde = lijfrenteSoort === 'tijdelijk' ? lijfrenteEindLeeftijd : Infinity
 
-  const currentYear = opts?.currentYear ?? new Date().getFullYear()
   // Eén kaart over de hele looptijd, opbouw- én uitkeringsfase. Was tot augustus
   // 2026 gefilterd op year < retirementYear, waardoor een eenmalig bedrag ná de
   // pensioendatum de slagingskans en de bandbreedte niet raakte terwijl het de
@@ -150,6 +174,7 @@ export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number
     employerPension, employerPensionStartAge,
     lijfrenteUitkering, lijfrenteStartAge, lijfrenteEinde,
     partnerActief, partner,
+    inflation, employerPensionIndexatie, lijfrenteIndexatie,
   }
   const monthlyPMT = contributionFrequency === 'jaarlijks'
     ? monthlyContribution / 12
@@ -248,9 +273,15 @@ export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number
     })
   }
 
+  // Het vermogen op de pensioendatum in het slechtweerscenario: het 5e percentiel,
+  // de maat die pensioenfondsen hanteren (art. 30b lid 5 Regeling Pensioenwet en
+  // Wvb). Is iemand al met pensioen, dan is dat het vermogen van vandaag.
+  const pensioenIndex = Math.min(totalYears, Math.max(0, retirementAge - currentAge))
+
   return {
     successRate: (successCount / N_SIMULATIONS) * 100,
     successRate75: (successCount75 / N_SIMULATIONS) * 100,
     percentileData,
+    slechtWeerBijPensioen: Math.max(0, percentile(capitalByAge[pensioenIndex], 5)),
   }
 }

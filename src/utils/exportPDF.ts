@@ -1,13 +1,18 @@
 import type { BerekeningsSet } from '../types'
 import { N_SIMULATIONS } from './monteCarlo'
+import { slagingskansPercentage } from './slagingskansTekst'
+import { opbouwDoelbedrag, indexatieTekst } from './opbouwDoelbedrag'
 
 function eur(v: number): string {
-  return `€ ${Math.round(v).toLocaleString('nl-NL')}`
+  const r = Math.round(v)
+  return `${r < 0 ? '-' : ''}€ ${Math.abs(r).toLocaleString('nl-NL')}`
 }
 
 function pct(v: number): string {
-  return `${v.toFixed(1)}%`
+  return `${v.toLocaleString('nl-NL', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`
 }
+
+
 
 /**
  * Schrijft een afgeronde berekening weg. Neemt de hele BerekeningsSet, zodat de
@@ -47,12 +52,17 @@ export async function exportToPDF(
   // --- Key metrics row ---
   pdf.setTextColor(41, 57, 46)
   const surplus = result.projectedCapital - result.requiredCapital
-  const isOnTrack = surplus >= 0
+  const opbouwTekort = result.opbouwTekort
+  const isOnTrack = surplus >= 0 && opbouwTekort === null
+  const groen: [number, number, number] = [41, 57, 46]
+  const rood: [number, number, number] = [168, 90, 60]
 
   const metrics = [
-    { label: 'Verwacht eindvermogen', value: eur(result.projectedCapital), color: [41, 57, 46] as [number, number, number] },
+    { label: 'Verwacht eindvermogen', value: eur(result.projectedCapital), color: groen },
     { label: 'Benodigd eindvermogen', value: eur(result.requiredCapital), color: [76, 90, 80] as [number, number, number] },
-    { label: isOnTrack ? 'Overschot' : 'Tekort', value: eur(Math.abs(surplus)), color: isOnTrack ? [41, 57, 46] as [number, number, number] : [168, 90, 60] as [number, number, number] },
+    opbouwTekort !== null && surplus >= 0
+      ? { label: `Tekort onderweg (leeftijd ${opbouwTekort.leeftijd})`, value: eur(opbouwTekort.bedrag), color: rood }
+      : { label: isOnTrack ? 'Overschot' : 'Tekort', value: eur(Math.abs(surplus)), color: isOnTrack ? groen : rood },
   ]
 
   const boxW = contentW / 3 - 2.67
@@ -70,6 +80,30 @@ export async function exportToPDF(
     pdf.setFont('helvetica', 'normal')
   })
   y += 28
+
+  // 8A: de drie getallen hierboven gaan uit van het verwachte rendement (de
+  // mediaan). Het slechtweerscenario erbij, zoals op een pensioenoverzicht.
+  pdf.setFontSize(7.5)
+  pdf.setFont('helvetica', 'normal')
+  pdf.setTextColor(76, 90, 80)
+  pdf.text('Bij het verwachte rendement: de helft van de scenario\'s valt beter uit, de helft slechter.', margin, y)
+  y += 4
+  // Zelfde voorwaarden als op het scherm (ResultsPanel.tsx).
+  if (result.yearsToRetirement > 0 && result.requiredCapital > 0 && opbouwTekort === null) {
+    const tekortSlechtWeer = result.requiredCapital - mc.slechtWeerBijPensioen
+    pdf.text(
+      `Bij slecht weer (1 op de 20 scenario's valt lager uit): ${eur(mc.slechtWeerBijPensioen)} op ${result.effectiveRetirementAge} jaar` +
+      (tekortSlechtWeer > 0 ? `, ${eur(tekortSlechtWeer)} minder dan nodig.` : ', genoeg voor je doel.'),
+      margin, y)
+    y += 4
+  }
+  if (opbouwTekort !== null) {
+    pdf.setTextColor(...rood)
+    pdf.text(`Let op: je vermogen komt op leeftijd ${opbouwTekort.leeftijd} onder nul, tot ${eur(opbouwTekort.bedrag)} te weinig.`, margin, y)
+    pdf.setTextColor(76, 90, 80)
+    y += 4
+  }
+  y += 3
 
   // --- Slagingskans (uitkomst Monte Carlo) — prominent weergegeven ---
   const kansKleur = (v: number): [number, number, number] =>
@@ -97,7 +131,7 @@ export async function exportToPDF(
     pdf.text(k.label, x + halfW / 2, y + 7, { align: 'center' })
     pdf.setFont('helvetica', 'bold')
     pdf.setFontSize(15)
-    pdf.text(k.value === null ? 'Niet berekend' : pct(k.value), x + halfW / 2, y + 15.5, { align: 'center' })
+    pdf.text(k.value === null ? 'Niet berekend' : slagingskansPercentage(k.value), x + halfW / 2, y + 15.5, { align: 'center' })
     pdf.setFont('helvetica', 'normal')
   })
   y += 26
@@ -160,32 +194,15 @@ export async function exportToPDF(
     }
   })
 
+  // De afleiding van het benodigd eindvermogen uit de kaders bovenaan: in die
+  // kaders past geen toelichting. Zie opbouwDoelbedrag().
+  const opbouw = opbouwDoelbedrag(result)
   const incomeRows = [
     ['Gewenst netto inkomen', eur(result.desiredMonthlyNetto)],
-    // Eenmalige bedragen ná de pensioendatum zitten verrekend in het benodigd
-    // eindvermogen in de kaders bovenaan (zie pensionCalc.ts). Hier staat de
-    // afleiding uitgeschreven: in die kaders past geen toelichting, en zonder
-    // deze regels is niet te zien waardoor het doelbedrag afwijkt van wat het
-    // inkomen op zichzelf kost. Alleen tonen als er zo'n bedrag is.
-    ...(Math.round(result.pvEventsAfterRetirement) !== 0
-      ? [
-          ['Benodigd voor je inkomen', eur(result.requiredCapitalEindwaarde + result.pvEventsAfterRetirement)],
-          [
-            result.pvEventsAfterRetirement > 0
-              ? 'Af: eenmalige bedragen na de pensioendatum (contante waarde)'
-              : 'Bij: eenmalige bedragen na de pensioendatum (contante waarde)',
-            eur(Math.abs(result.pvEventsAfterRetirement)),
-          ],
-        ]
-      : []),
-    // Wat er extra nodig is om de jaren tot een latere ontvangst te overbruggen
-    // (bevinding 2). Alleen tonen als er iets te overbruggen valt.
-    ...(Math.round(result.overbruggingsToeslag) !== 0
-      ? [['Bij: overbrugging tot dat geld binnenkomt', eur(result.overbruggingsToeslag)]]
-      : []),
-    ...(Math.round(result.pvEventsAfterRetirement) !== 0 || Math.round(result.overbruggingsToeslag) !== 0
-      ? [['Benodigd eindvermogen', eur(result.requiredCapital)]]
-      : []),
+    ...opbouw.map(r => [r.label, eur(Math.abs(r.bedrag))]),
+    ...(opbouw.length > 0 ? [['Benodigd eindvermogen', eur(result.requiredCapital)]] : []),
+    ['Benodigde maandinleg',
+      result.yearsToRetirement === 0 ? 'n.v.t., al met pensioen' : eur(Math.max(0, result.requiredMonthlyContribution))],
     ['Restkapitaal op ' + inputs.lifeExpectancy + ' jaar', eur(result.surplusAtEnd)],
     ['Plan loopt vast vanaf leeftijd',
       result.firstShortfallAge !== null ? String(result.firstShortfallAge) : 'niet binnen de looptijd'],
@@ -243,14 +260,14 @@ export async function exportToPDF(
     `Woonsituatie: ${inputs.woonsituatie === 'alleenstaand' ? 'alleenstaand' : 'samenwonend'} | Gewenst inkomen: ${eur(inputs.desiredRetirementIncome)}/mnd ${inputs.desiredRetirementIncomeType} | Netto omgerekend: ${eur(result.desiredMonthlyNetto)}/mnd`,
     `Rendement voor pensioen: ${pct(inputs.returnBeforeRetirement)} nominaal | Na pensioen: ${pct(inputs.returnAfterRetirement)} | Inflatie: ${pct(inputs.inflation)} | Volatiliteit: ${pct(inputs.volatilityPre)} / ${pct(inputs.volatilityPost)}`,
     `${inlegLabel}: ${eur(inputs.monthlyContribution)} | Huidig vermogen: ${eur(inputs.currentCapital)}`,
-    `Lijfrente-/bankspaaruitkering: ${eur(inputs.lijfrenteUitkering)}/mnd bruto vanaf ${inputs.lijfrenteStartAge} jr | AOW: ${eur(inputs.aowMaandBedragNetto)}/mnd netto`,
+    `Werkgeverspensioen: ${eur(inputs.employerPension)}/mnd bruto, ${indexatieTekst(inputs.employerPensionIndexatie)} | Lijfrente-/bankspaaruitkering: ${eur(inputs.lijfrenteUitkering)}/mnd bruto vanaf ${inputs.lijfrenteStartAge} jr, ${indexatieTekst(inputs.lijfrenteIndexatie)} | AOW: ${eur(inputs.aowMaandBedragNetto)}/mnd netto`,
     inputs.partner?.actief
-      ? `Partner (apart belast): nu ${inputs.partner.leeftijd} jr | AOW ${eur(inputs.partner.aowMaandBedragNetto)}/mnd netto vanaf ${inputs.partner.aowStartAge} jr | werkgeverspensioen ${eur(inputs.partner.employerPension)}/mnd bruto vanaf ${inputs.partner.employerPensionStartAge} jr`
+      ? `Partner (apart belast): nu ${inputs.partner.leeftijd} jr | AOW ${eur(inputs.partner.aowMaandBedragNetto)}/mnd netto vanaf ${inputs.partner.aowStartAge} jr | werkgeverspensioen ${eur(inputs.partner.employerPension)}/mnd bruto vanaf ${inputs.partner.employerPensionStartAge} jr, ${indexatieTekst(inputs.partner.employerPensionIndexatie)}`
       : 'Partner: niet meegerekend, deze berekening gaat over een persoon',
     eenmalige.length > 0
       ? `Eenmalige bedragen: ${eenmalige.map(e => `${e.name || 'zonder naam'} ${eur(e.amount)} in ${e.year}`).join(' | ')}`
       : 'Eenmalige bedragen: geen',
-    `Alle bedragen in koopkracht van vandaag (reeel rendement). Monte Carlo: ${N_SIMULATIONS.toLocaleString('nl-NL')} simulaties; de steekproeffout is rond een kans van 80% circa 1,8 procentpunt.`,
+    `Alle bedragen in koopkracht van vandaag (reeel rendement); een vast bedrag is teruggerekend met de inflatie. Monte Carlo: ${N_SIMULATIONS.toLocaleString('nl-NL')} simulaties; de steekproeffout is rond een kans van 80% circa 1,8 procentpunt.`,
     `Modelversie ${modelVersie} | fiscale cijfers belastingjaar ${parameterJaar} | berekend ${new Date(peildatum).toLocaleString('nl-NL')}`,
   ]
 

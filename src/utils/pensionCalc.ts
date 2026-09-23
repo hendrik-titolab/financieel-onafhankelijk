@@ -1,4 +1,4 @@
-import type { PensionInputs, PensionResult, YearData, IncomePhase, PersoonInkomen, LifeEvent, Woonsituatie, PartnerGegevens } from '../types'
+import type { PensionInputs, PensionResult, YearData, IncomePhase, PersoonInkomen, LifeEvent, Woonsituatie, PartnerGegevens, Indexatie } from '../types'
 import { AOW_NETTO_MAAND, AOW_BRUTO_MAAND, AOW_VAKANTIEGELD_BRUTO_MAAND, ZVW } from '../config/fiscaleParameters'
 import { belastingBox1 } from './brutoNetto'
 import { nettoNominaalRendement, box3HeffingPerJaar } from './box3'
@@ -145,6 +145,21 @@ export interface HuishoudOpParams {
   lijfrenteEinde: number
   partnerActief: boolean
   partner?: PartnerGegevens
+  /** Inflatie in procenten, voor het terugrekenen van vaste bedragen. */
+  inflation: number
+  employerPensionIndexatie: Indexatie
+  lijfrenteIndexatie: Indexatie
+}
+
+/**
+ * Wat een vast bedrag in euro's op een gegeven leeftijd waard is in koopkracht van
+ * vandaag. Een meestijgend bedrag houdt zijn waarde. De jaren tellen vanaf nu, op
+ * de kalender: dat geldt voor de partner net zo, want de inflatie loopt voor het
+ * hele huishouden in dezelfde jaren.
+ */
+function koopkrachtFactor(indexatie: Indexatie | undefined, inflation: number, jarenVanafNu: number): number {
+  if (indexatie !== 'vast') return 1
+  return Math.pow(1 + inflation / 100, -Math.max(0, jarenVanafNu))
 }
 
 /**
@@ -152,8 +167,19 @@ export interface HuishoudOpParams {
  * leeftijd van de partner loopt mee met de kalender, niet met die van de
  * hoofdpersoon: een partner die drie jaar jonger is, krijgt zijn AOW drie
  * kalenderjaren later. Vandaar het verschil ten opzichte van p.currentAge.
+ *
+ * Vaste bedragen (zie Indexatie) worden hier teruggerekend naar koopkracht van
+ * vandaag, en daarna pas belast. Dat klopt in dit reële model: de schijven en
+ * kortingen stijgen mee met de inflatie, dus een vast bruto bedrag belasten tegen
+ * de schijven van nu, na terugrekenen, is hetzelfde als het nominale bedrag
+ * belasten tegen de geïndexeerde schijven van dat jaar. Omdat beide rekenkernen via
+ * deze functie lopen, kan de indexatie nergens anders uiteenlopen.
  */
 export function huishoudOp(p: HuishoudOpParams, age: number, netto: number): HuishoudInvoer {
+  const jarenVanafNu = age - p.currentAge
+  const pensioenFactor = koopkrachtFactor(p.employerPensionIndexatie, p.inflation, jarenVanafNu)
+  const lijfrenteFactor = koopkrachtFactor(p.lijfrenteIndexatie, p.inflation, jarenVanafNu)
+  const partnerPensioenFactor = koopkrachtFactor(p.partner?.employerPensionIndexatie, p.inflation, jarenVanafNu)
   return {
     desiredNetto: netto,
     woonsituatie: p.woonsituatie,
@@ -162,9 +188,9 @@ export function huishoudOp(p: HuishoudOpParams, age: number, netto: number): Hui
       age,
       aowNetto: p.aowMonthlyNetto,
       aowStartAge: p.aowStartAge,
-      employerPensionBruto: p.employerPension,
+      employerPensionBruto: p.employerPension * pensioenFactor,
       employerPensionStartAge: p.employerPensionStartAge,
-      lijfrenteUitkeringBruto: p.lijfrenteUitkering,
+      lijfrenteUitkeringBruto: p.lijfrenteUitkering * lijfrenteFactor,
       lijfrenteStartAge: p.lijfrenteStartAge,
       lijfrenteEindLeeftijd: p.lijfrenteEinde,
     },
@@ -173,7 +199,7 @@ export function huishoudOp(p: HuishoudOpParams, age: number, netto: number): Hui
           age: p.partner.leeftijd + (age - p.currentAge),
           aowNetto: p.partner.aowMaandBedragNetto,
           aowStartAge: p.partner.aowStartAge,
-          employerPensionBruto: p.partner.employerPension,
+          employerPensionBruto: p.partner.employerPension * partnerPensioenFactor,
           employerPensionStartAge: p.partner.employerPensionStartAge,
           // Geen lijfrente voor de partner. Dat veld hoort bij persoon 1; zie
           // CLAUDE.md bij de openstaande punten.
@@ -418,8 +444,13 @@ function simulateAccumulation(
   eventMap: Map<number, number>,
   startCalendarYear: number,
   heffing: (vermogenBeginJaar: number) => number = () => 0
-): number {
+): { endCapital: number; minCapital: number } {
   let capital = startCapital
+  // Het laagste saldo aan het eind van een jaar. Zelfde meetmoment als de
+  // liquiditeitstoets in monteCarlo.ts (na de jaarmutatie), zodat een uitgave
+  // die in hetzelfde jaar door inleg wordt goedgemaakt in geen van beide kernen
+  // als tekort telt. Het startvermogen zelf telt niet mee: dat is invoer.
+  let minCapital = Infinity
   const annualFactor = 1 + realReturnAnnual / 100
 
   for (let yr = 0; yr < yearsToRetirement; yr++) {
@@ -432,8 +463,9 @@ function simulateAccumulation(
     const beginSaldo = capital + event
     capital = beginSaldo * annualFactor + monthlyPMT * 12 * Math.sqrt(annualFactor)
       - heffing(beginSaldo)
+    if (capital < minCapital) minCapital = capital
   }
-  return capital
+  return { endCapital: capital, minCapital }
 }
 
 /**
@@ -536,7 +568,16 @@ function findRequiredCapital(
   return hi
 }
 
-// Binary search for required monthly PMT to reach targetCapital
+/**
+ * De kleinste maandinleg waarmee het doelbedrag op de pensioendatum gehaald wordt
+ * én het saldo onderweg nooit onder nul komt.
+ *
+ * Die tweede eis ontbrak tot 22 september 2026. Een uitgave van € 50.000 volgend
+ * jaar bij € 0 vermogen, gevolgd door € 60.000 erven drie jaar later, gaf een
+ * benodigde inleg van min € 19 en een overschot, terwijl de simulatie 0% slaagde
+ * (review 22 september 2026, bevinding 1). Beide eisen zijn stijgend in de inleg,
+ * dus de bisectie blijft één eenduidig antwoord vinden.
+ */
 function findRequiredPMT(
   targetCapital: number,
   startCapital: number,
@@ -550,9 +591,9 @@ function findRequiredPMT(
   let lo = -50000, hi = 200000
   for (let i = 0; i < 60; i++) {
     const mid = (lo + hi) / 2
-    const cap = simulateAccumulation(
+    const { endCapital, minCapital } = simulateAccumulation(
       startCapital, mid, yearsToRetirement, realReturnAnnual, eventMap, startCalendarYear, heffing)
-    if (cap < targetCapital) lo = mid
+    if (endCapital < targetCapital || minCapital < 0) lo = mid
     else hi = mid
   }
   return hi
@@ -587,6 +628,7 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
     employerPension, employerPensionStartAge,
     lijfrenteUitkering, lijfrenteStartAge,
     lijfrenteSoort = 'levenslang', lijfrenteEindLeeftijd = Infinity,
+    employerPensionIndexatie = 'meestijgend', lijfrenteIndexatie = 'meestijgend',
     aowVakantiegeld = false,
     partner,
     lifeEvents = [],
@@ -655,7 +697,7 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
   // Projected capital at retirement (year-by-year with life events)
   const projectedCapital = simulateAccumulation(
     currentCapital, monthlyPMT, yearsToRetirement, realPre, accEventMap, currentYear, heffing
-  )
+  ).endCapital
 
   // Gewenst netto maandinkomen. Bij een bruto-invoer geldt het belastingregime op
   // de pensioendatum: wie ná de AOW-leeftijd stopt valt onder de lagere eerste
@@ -689,6 +731,7 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
     employerPension, employerPensionStartAge,
     lijfrenteUitkering, lijfrenteStartAge, lijfrenteEinde,
     partnerActief, partner,
+    inflation, employerPensionIndexatie, lijfrenteIndexatie,
   }
 
   const withdrawalAtAge = (age: number) =>
@@ -739,11 +782,10 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
   // uit deze functie kwam, en het is nog steeds het bedrag dat de opbouw op het
   // scherm verklaart.
   //
-  // Let op: deze contante waarde rekent met één vast rendement en kent de
-  // box 3-heffing niet. Zodra die heffing aanstaat is dit dus een benadering, en
-  // ligt het echte doelbedrag eronder in de simulatie hieronder. Dat is geen fout
-  // in de uitkomst (requiredCapital komt uit findRequiredCapital en niet hieruit),
-  // maar de opbouw op het scherm sluit dan niet meer tot op de euro aan.
+  // Let op: deze contante waarde kent de box 3-heffing niet en toetst niet of het
+  // saldo onderweg onder nul komt. Het echte doelbedrag (requiredCapital) komt uit
+  // findRequiredCapital(); de verschillen staan als eigen regels in de opbouw
+  // hieronder (overbruggingsToeslag, laterGeldOverschot, box3Toeslag).
   const requiredCapitalEindwaarde = pvWithdrawals - pvEventsAfterRetirement
 
   // Het werkelijke doelbedrag: het kleinste startvermogen waarbij het saldo
@@ -754,34 +796,58 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
     heffing
   )
 
-  // Wat er bovenop de eindwaarde nodig is om de jaren tót die latere ontvangst te
-  // overbruggen. Apart teruggegeven zodat het scherm dit als eigen regel kan tonen
-  // in plaats van het stilzwijgend in het doelbedrag te verwerken: zonder die regel
-  // ziet iemand wél een hoger doelbedrag, maar niet waardoor.
+  // De opbouw van het doelbedrag, in vier delen die altijd optellen:
   //
-  // Alleen een echte overbrugging telt mee: is er geen enkele periode waarin nog
-  // geen inkomstenbron (eigen of partner) loopt, dan is requiredCapital > eindwaarde
-  // uitsluitend het gevolg van de box 3-heffing die requiredCapitalEindwaarde (regel
-  // 700 hierboven) niet kent — dat is geen overbrugging en mag niet zo genoemd
-  // worden in het scherm of de export (bevinding review 14 september 2026).
+  //   requiredCapitalEindwaarde + overbruggingsToeslag + laterGeldOverschot
+  //     + box3Toeslag = requiredCapital
   //
-  // Dit is de ENIGE plek die deze vergelijking maakt. InputPanel.tsx toonde tot
-  // 14 september 2026 een eigen, losse kopie van precies deze berekening (om de
-  // waarschuwing te tonen vóórdat er een result is) — nu leest het scherm
-  // overbruggingsJaren hieronder uit het resultaat, dezelfde reden als bij
-  // huishoudOp: niet twee plekken die uiteen kunnen lopen.
-  const ingangsleeftijden = [aowStartAge, employerPensionStartAge, lijfrenteStartAge]
+  // Daarvoor is één extra zoekronde nodig: hetzelfde doelbedrag zonder box 3
+  // (zonderHeffing). Het verschil met de eindwaarde is dan zuiver liquiditeit, het
+  // verschil met requiredCapital zuiver box 3.
+  //
+  // Tot 22 september 2026 hing overbrugging aan de vraag of er een periode vóór de
+  // eerste uitkering was. Dat gaf twee fouten. Wie ná de AOW-datum stopte en later
+  // zou erven, kreeg een doelbedrag waarvan € 120.637 in de opbouw nergens stond.
+  // En het box 3-deel stond in geen enkele regel (review 22 september 2026,
+  // bevinding 3). De eerdere reparatie van 14 september, die het box 3-verschil
+  // terecht niet meer "overbrugging" noemde, blijft hiermee overeind: box 3 heeft
+  // nu een eigen regel.
+  const zonderHeffing = !vermogensbelastingHandmatig
+    ? findRequiredCapital(
+        yearsInRetirement, retirementAge, retirementYear, realPost, retEventMap, withdrawalAtAge
+      )
+    : requiredCapital
+  // De bisectie convergeert tot op een fractie van een cent; een verschil daaronder
+  // is rekenruis en geen overbrugging.
+  const liquiditeitsVerschil = zonderHeffing - requiredCapitalEindwaarde
+  const overbruggingsToeslag = zonderHeffing > 0 && Math.abs(liquiditeitsVerschil) >= 0.01
+    ? liquiditeitsVerschil
+    : 0
+  const laterGeldOverschot = zonderHeffing > 0 ? 0 : Math.max(0, -requiredCapitalEindwaarde)
+  const box3Toeslag = requiredCapital - zonderHeffing
+
+  // Hoeveel jaar er ligt tussen de pensioendatum en de eerste uitkering. Alleen voor
+  // de waarschuwing op het invoerscherm; het doelbedrag rekent de jaren zelf door.
+  //
+  // Een bron telt alleen mee als er ook een bedrag bij staat. Werkgeverspensioen
+  // € 0 met een ingangsleeftijd van 60 liet de waarschuwing tot 22 september 2026
+  // verdwijnen bij wie op 60 stopte en pas op 67 AOW kreeg (review, bevinding 11).
+  //
+  // Dit is de ENIGE plek die deze vergelijking maakt. InputPanel.tsx leest
+  // overbruggingsJaren uit het resultaat, zodat er niet twee plekken zijn die uiteen
+  // kunnen lopen.
+  const ingangsleeftijden: number[] = []
+  if (aowMaandBedragNetto > 0) ingangsleeftijden.push(aowStartAge)
+  if (employerPension > 0) ingangsleeftijden.push(employerPensionStartAge)
+  if (lijfrenteUitkering > 0) ingangsleeftijden.push(lijfrenteStartAge)
   if (partnerActief && partner) {
     const leeftijdsverschilPartner = partner.leeftijd - currentAge
-    ingangsleeftijden.push(partner.aowStartAge - leeftijdsverschilPartner)
-    ingangsleeftijden.push(partner.employerPensionStartAge - leeftijdsverschilPartner)
+    if (partner.aowMaandBedragNetto > 0) ingangsleeftijden.push(partner.aowStartAge - leeftijdsverschilPartner)
+    if (partner.employerPension > 0) ingangsleeftijden.push(partner.employerPensionStartAge - leeftijdsverschilPartner)
   }
-  const eersteEigenInkomen = Math.min(...ingangsleeftijden)
-  const heeftOverbruggingsperiode = retirementAge < eersteEigenInkomen
-  const overbruggingsJaren = heeftOverbruggingsperiode ? eersteEigenInkomen - retirementAge : 0
-  const overbruggingsToeslag = heeftOverbruggingsperiode
-    ? Math.max(0, requiredCapital - requiredCapitalEindwaarde)
-    : 0
+  // Zonder enige uitkering loopt de overbrugging tot de planningshorizon.
+  const eersteEigenInkomen = Math.min(lifeExpectancy, ...ingangsleeftijden)
+  const overbruggingsJaren = Math.max(0, eersteEigenInkomen - retirementAge)
 
   // Required monthly contribution (binary search, accounts for life events)
   const requiredMonthlyContribution = findRequiredPMT(
@@ -791,6 +857,9 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
   // --- Year-by-year simulation for chart & table ---
   const yearData: YearData[] = []
   let capital = currentCapital
+  // Eerste leeftijd waarop het saldo in de opbouwfase onder nul komt, en het
+  // diepste punt. Zelfde meetmoment als simulateAccumulation(): na de jaarmutatie.
+  let opbouwTekort: { leeftijd: number; bedrag: number } | null = null
 
   // Accumulation phase
   for (let yr = 0; yr < yearsToRetirement; yr++) {
@@ -818,6 +887,11 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
     const beginSaldo = capital + event
     capital = beginSaldo * (1 + realPre / 100) + monthlyPMT * 12 * Math.sqrt(1 + realPre / 100)
       - heffing(beginSaldo)
+    if (capital < 0) {
+      opbouwTekort = opbouwTekort === null
+        ? { leeftijd: age, bedrag: -capital }
+        : { leeftijd: opbouwTekort.leeftijd, bedrag: Math.max(opbouwTekort.bedrag, -capital) }
+    }
   }
 
   // Retirement phase
@@ -931,6 +1005,9 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
     requiredCapitalEindwaarde,
     effectiveRetirementAge: retirementAge,
     overbruggingsToeslag,
+    laterGeldOverschot,
+    box3Toeslag,
+    opbouwTekort,
     overbruggingsJaren,
     pvEventsAfterRetirement,
     desiredMonthlyNetto,
