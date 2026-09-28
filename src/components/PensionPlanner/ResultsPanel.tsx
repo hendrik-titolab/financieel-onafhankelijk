@@ -575,7 +575,7 @@ export function ResultsPanel({ inputs, result, berekening, mcStale, isCalculatin
           return (
             <div className="mt-3 rounded-[3px] bg-morning border border-line p-3">
               <p className="text-xs font-medium text-ink mb-2">
-                Koopkrachtbehoud: nominale inkomensbedragen ({inputs.inflation}% inflatie)
+                Koopkrachtbehoud: nominale inkomensbedragen ({inputs.inflation.toLocaleString('nl-NL', { maximumFractionDigits: 1 })}% inflatie)
               </p>
               <p className="text-xs text-body mb-3 leading-relaxed">
                 Het gewenste inkomen van {eur(result.desiredMonthlyNetto)}/mnd is in huidige koopkracht.

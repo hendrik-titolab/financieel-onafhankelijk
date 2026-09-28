@@ -907,7 +907,7 @@ export function JaarruimteTab() {
             <ResultRow
               label="Nog in te leggen"
               value={eur(result.nogTeDoen)}
-              sub={result.nogTeDoen > 0 ? `Belastingvoordeel: ${eur(result.belastingVoordeel)} (${(result.belastingTarief * 100).toFixed(2)}%)` : 'Volledig benut'}
+              sub={result.nogTeDoen > 0 ? `Belastingvoordeel: ${eur(result.belastingVoordeel)} (${(result.belastingTarief * 100).toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%)` : 'Volledig benut'}
             />
           </div>
 
