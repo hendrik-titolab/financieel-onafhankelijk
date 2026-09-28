@@ -107,8 +107,10 @@ vermogen. Zodra AOW of werkgeverspensioen wel loopt, vult je eigen vermogen alle
 verschil aan.
 
 Eenmalige gebeurtenissen, een erfenis, de verkoop van een huis, een dure verbouwing,
-voer je in als life events. Die tellen mee in het jaar waarin ze vallen, vóórdat het
-rendement van dat jaar wordt bijgeschreven.
+voer je in als eenmalige bedragen. Die tellen mee in het jaar waarin ze vallen, vóórdat het
+rendement van dat jaar wordt bijgeschreven. Vul het bedrag in zoals het in dat jaar op je
+rekening komt of eraf gaat. De planner rekent het zelf terug naar koopkracht van vandaag:
+bij 3% inflatie is € 100.000 over twintig jaar ongeveer € 55.000 van nu.
 
 ## Welke aannames staan al klaar, en welke stel jij zelf in?
 

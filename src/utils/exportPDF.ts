@@ -372,7 +372,7 @@ export async function exportToPDF(
       ? `Partner (apart belast): nu ${invoer.partner.leeftijd} jr | AOW ${eur(invoer.partner.aowMaandBedragNetto)}/mnd netto vanaf ${invoer.partner.aowStartAge} jr | werkgeverspensioen ${eur(invoer.partner.employerPension)}/mnd bruto vanaf ${invoer.partner.employerPensionStartAge} jr, ${indexatieTekst(invoer.partner.employerPensionIndexatie)}`
       : 'Partner: niet meegerekend, deze berekening gaat over een persoon',
     eenmalige.length > 0
-      ? `Eenmalige bedragen: ${eenmalige.map(e => `${e.name || 'zonder naam'} ${eur(e.amount)} in ${e.year}`).join(' | ')}`
+      ? `Eenmalige bedragen (in euro's van dat jaar): ${eenmalige.map(e => `${e.name || 'zonder naam'} ${eur(e.amount)} in ${e.year}`).join(' | ')}`
       : 'Eenmalige bedragen: geen',
     `Alle bedragen in koopkracht van vandaag (reeel rendement); een vast bedrag is teruggerekend met de inflatie. Monte Carlo: ${N_SIMULATIONS.toLocaleString('nl-NL')} simulaties; de steekproeffout is rond een kans van 80% circa 1,8 procentpunt.`,
     `Modelversie ${modelVersie} | fiscale cijfers belastingjaar ${parameterJaar} | berekend ${new Date(peildatum).toLocaleString('nl-NL')}`,

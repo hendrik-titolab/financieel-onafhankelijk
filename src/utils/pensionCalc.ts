@@ -163,6 +163,20 @@ function koopkrachtFactor(indexatie: Indexatie | undefined, inflation: number, j
 }
 
 /**
+ * Een eenmalig bedrag is het NOMINALE bedrag in het jaar waarin het valt: € 100.000
+ * in 2048 is in 2048 € 100.000 op de rekening, niet meer. Besluit Hendrik
+ * 28 september 2026; daarvoor las de planner het als euro's van vandaag, waardoor
+ * een vast bedrag ver in de toekomst te zwaar meetelde (review 22 september 2026,
+ * bevinding 4). Dit reële model rekent het terug naar koopkracht van vandaag. Beide
+ * rekenkernen gebruiken deze functie, zodat ze gelijk blijven lopen.
+ */
+export function eenmaligInKoopkracht(
+  bedrag: number, jaar: number, currentYear: number, inflation: number
+): number {
+  return bedrag * Math.pow(1 + inflation / 100, -Math.max(0, jaar - currentYear))
+}
+
+/**
  * Stelt het huishouden samen op een gegeven leeftijd van de hoofdpersoon. De
  * leeftijd van de partner loopt mee met de kalender, niet met die van de
  * hoofdpersoon: een partner die drie jaar jonger is, krijgt zijn AOW drie
@@ -244,8 +258,9 @@ export function aowNettoNaarBruto(nettoMaand: number): number {
  * getIncomeBreakdown() het totaal, inclusief dit deel, tegen het juiste marginale
  * tarief.
  *
- * Alleenstaand: (1.662,64 + 106,55) / 1.662,64 = 1,064086.
- * Samenwonend:  (1.139,25 +  76,10) / 1.139,25 = 1,066799.
+ * Alleenstaand: (1.662,16 + 104,78) / 1.662,16 = 1,063038.
+ * Samenwonend:  (1.139,39 +  74,85) / 1.139,39 = 1,065693.
+ * (SVB per 1 juli 2026, nagekeken 28 september 2026.)
  */
 export function aowVakantiegeldFactor(woonsituatie: Woonsituatie): number {
   const bruto = AOW_BRUTO_MAAND[woonsituatie]
@@ -410,12 +425,15 @@ export function getMonthlyWithdrawal(o: HuishoudInvoer): number {
 function buildEventMap(
   events: LifeEvent[],
   startYear: number,
-  endYear: number
+  endYear: number,
+  currentYear: number,
+  inflation: number
 ): Map<number, number> {
   const map = new Map<number, number>()
   for (const e of events) {
     if (e.year >= startYear && e.year < endYear && e.amount !== 0) {
-      map.set(e.year, (map.get(e.year) ?? 0) + e.amount)
+      const reeel = eenmaligInKoopkracht(e.amount, e.year, currentYear, inflation)
+      map.set(e.year, (map.get(e.year) ?? 0) + reeel)
     }
   }
   return map
@@ -691,8 +709,9 @@ export function calculatePension(inputs: PensionInputs, opts?: { currentYear?: n
   const retirementYear = currentYear + yearsToRetirement
 
   // Split life events into accumulation and retirement phase
-  const accEventMap = buildEventMap(lifeEvents, currentYear, retirementYear)
-  const retEventMap = buildEventMap(lifeEvents, retirementYear, retirementYear + yearsInRetirement + 1)
+  const accEventMap = buildEventMap(lifeEvents, currentYear, retirementYear, currentYear, inflation)
+  const retEventMap = buildEventMap(
+    lifeEvents, retirementYear, retirementYear + yearsInRetirement + 1, currentYear, inflation)
 
   // Projected capital at retirement (year-by-year with life events)
   const projectedCapital = simulateAccumulation(

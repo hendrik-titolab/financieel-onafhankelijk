@@ -1,5 +1,5 @@
 import type { PensionInputs, MonteCarloResult, PercentilePoint } from '../types'
-import { brutoMaandNaarNettoMaand, getMonthlyWithdrawal, controleerLeeftijden, huishoudOp } from './pensionCalc'
+import { brutoMaandNaarNettoMaand, getMonthlyWithdrawal, controleerLeeftijden, huishoudOp, eenmaligInKoopkracht } from './pensionCalc'
 import type { HuishoudOpParams } from './pensionCalc'
 import { nettoNominaalRendement, box3HeffingPerJaar } from './box3'
 import { makeRng } from './rng'
@@ -133,7 +133,9 @@ export function runMonteCarlo(inputs: PensionInputs, opts?: { rng?: () => number
   const eventMap = new Map<number, number>()
   for (const e of lifeEvents) {
     if (e.year >= currentYear && e.amount !== 0) {
-      eventMap.set(e.year, (eventMap.get(e.year) ?? 0) + e.amount)
+      // Nominaal ingevuld, dus terug naar koopkracht van vandaag (zie pensionCalc.ts).
+      const reeel = eenmaligInKoopkracht(e.amount, e.year, currentYear, inflation)
+      eventMap.set(e.year, (eventMap.get(e.year) ?? 0) + reeel)
     }
   }
   // Zelfde conversie als calculatePension(): via de volledige belastingmotor, met

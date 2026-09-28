@@ -12,7 +12,8 @@ describe('opbouwDoelbedrag — de regels in het rapport tellen op', () => {
   it('stoppen op 68, erfenis op 73: met een regel overbrugging', () => {
     const r = calculatePension(baseInputs({
       currentAge: 45, retirementAge: 68, currentCapital: 0, monthlyContribution: 0,
-      desiredRetirementIncome: 2500, lifeEvents: [{ name: 'erfenis', amount: 300000, year: 2054 }],
+      // Nominaal € 600.000 in 2054, bij 2,5% inflatie ongeveer € 300.000 van nu.
+      desiredRetirementIncome: 2500, lifeEvents: [{ name: 'erfenis', amount: 600000, year: 2054 }],
     }), { currentYear: 2026 })
     const regels = opbouwDoelbedrag(r)
     expect(regels.some(x => x.label.includes('overbrugging'))).toBe(true)

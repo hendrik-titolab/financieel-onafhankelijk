@@ -10,7 +10,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   calculatePension, getIncomeBreakdown, brutoMaandNaarNettoMaand,
-  controleerLeeftijden, aowVakantiegeldFactor,
+  controleerLeeftijden, aowVakantiegeldFactor, eenmaligInKoopkracht,
 } from '../pensionCalc'
 import type { YearData } from '../../types'
 import { SCENARIOS, baseInputs, round } from './fixtures'
@@ -201,10 +201,12 @@ describe('calculatePension — eenmalig bedrag rond de pensioendatum', () => {
     const voor = uitkomst(2026)  // laatste jaar vóór de pensioendatum: opbouwfase
     const na = uitkomst(2027)    // pensioenjaar zelf: eerste uitkeringsjaar
 
-    // 400.000 × (1,09/1,03 − 1) = € 23.301 aan gemist reëel rendement. Dit is de
-    // kern van deze test en het cijfer is niet veranderd door de bruto-nettofix van
-    // september 2026: het hangt aan het eenmalige bedrag, niet aan het inkomensdoel.
-    expect(Math.round(voor.surplus - na.surplus)).toBe(23301)
+    // Sinds 28 september 2026 is een eenmalig bedrag nominaal. Een jaar later
+    // ontvangen kost dan één jaar nominaal rendement: 400.000 × 9% = € 36.000 in
+    // 2027, is 36.000 / 1,03 = € 34.951 van nu. (Tot die datum las de planner het
+    // bedrag als koopkracht van nu en was het verschil 400.000 × (1,09/1,03 − 1) =
+    // € 23.301.) Het cijfer hangt aan het eenmalige bedrag, niet aan het inkomensdoel.
+    expect(Math.round(voor.surplus - na.surplus)).toBe(34951)
     // De absolute ankers schoven wél mee (122.039 en 98.738 vóór die fix). Dit
     // scenario stopt op leeftijd 49 en gebruikt een bruto inkomensdoel, dus geldt
     // nu het pre-AOW-regime in plaats van het post-AOW-regime dat de oude
@@ -218,7 +220,7 @@ describe('calculatePension — eenmalig bedrag rond de pensioendatum', () => {
     // sqrt(1 + reëel rendement na pensioen) = sqrt(1,0291262) = 1,0144586:
     // € 736.730 werd € 747.382. Het overschot daalt met datzelfde bedrag.
     expect(Math.round(voor.surplus)).toBe(416695)
-    expect(Math.round(na.surplus)).toBe(393394)
+    expect(Math.round(na.surplus)).toBe(381744)
   })
 
   it('blijft in beide gevallen een overschot, net als het restkapitaal', () => {
@@ -236,12 +238,13 @@ describe('calculatePension — eenmalig bedrag rond de pensioendatum', () => {
   it('een uitgave ná de pensioendatum verhoogt het benodigd eindvermogen', () => {
     const zonder = calculatePension(baseInputs(), { currentYear: 2026 })
     const met = calculatePension(SCENARIOS['4_negatief_bedrag_na_pensioendatum'], { currentYear: 2026 })
-    // −100.000 in 2056, acht jaar na de pensioendatum 2048, contant tegen het
+    // −100.000 nominaal in 2056, dertig jaar na 2026 dus 100.000 / 1,025^30 van nu,
+    // acht jaar na de pensioendatum 2048, contant tegen het
     // reële rendement ná pensioendatum (1,04/1,025 − 1 = 1,46341% per jaar).
     // Uitgeschreven als formule en niet als afgerond bedrag: de uitkomst
     // (€ 89.027,51) ligt te dicht op een halve euro om op een rond getal te
     // toetsen zonder de toets zelf broos te maken.
-    const contanteWaarde = 100000 / Math.pow(1.04 / 1.025, 8)
+    const contanteWaarde = 100000 / Math.pow(1.025, 30) / Math.pow(1.04 / 1.025, 8)
     expect(met.requiredCapital - zonder.requiredCapital).toBeCloseTo(contanteWaarde, 6)
   })
 })
@@ -270,11 +273,12 @@ describe('calculatePension — pvEventsAfterRetirement onderbouwt het doelbedrag
     expect(calculatePension(baseInputs(), { currentYear: 2026 }).pvEventsAfterRetirement).toBe(0)
   })
 
-  it('is in het pensioenjaar zelf het onverdisconteerde bedrag', () => {
+  it('is in het pensioenjaar zelf het bedrag in koopkracht van nu, zonder rendementskorting', () => {
     // 2027 is het eerste uitkeringsjaar (yr = 0), dus contant maken deelt door
-    // r^0 = 1 en de contante waarde is het bedrag zelf.
+    // r^0 = 1. Wat overblijft is alleen de omrekening van het nominale bedrag in
+    // 2027 naar koopkracht van nu: 400.000 / 1,03.
     const r = calculatePension(metJaar(2027), { currentYear: 2026 })
-    expect(r.pvEventsAfterRetirement).toBeCloseTo(400000, 6)
+    expect(r.pvEventsAfterRetirement).toBeCloseTo(400000 / 1.03, 6)
   })
 
   it('is precies wat van het doelbedrag is afgetrokken', () => {
@@ -458,14 +462,18 @@ describe('opbouw van het doelbedrag sluit altijd', () => {
   it('stoppen na de AOW-datum, erfenis op 73: de overbrugging staat erin', () => {
     const r = calculatePension(baseInputs({
       currentAge: 45, retirementAge: 68, currentCapital: 0, monthlyContribution: 0,
-      desiredRetirementIncome: 2500, lifeEvents: [{ name: 'erfenis', amount: 300000, year: 2026 + (73 - 45) }],
+      desiredRetirementIncome: 2500, lifeEvents: [{ name: 'erfenis', amount: 600000, year: 2026 + (73 - 45) }],
     }), { currentYear: 2026 })
     // Nagerekend in de review: benodigd € 54.516 tegen een eindwaarde van
     // − € 66.121. Het verschil (afgerond € 120.637, onafgerond € 120.636,x) stond
     // tot deze datum nergens.
+    // Sinds 28 september 2026 is een eenmalig bedrag nominaal. De erfenis is daarom
+    // € 600.000 in 2054, bij 2,5% inflatie € 600.000 / 1,025^28 = € 300.526 van nu,
+    // vrijwel het oude voorbeeld. Het benodigde vermogen verandert niet: dat wordt
+    // bepaald door de jaren tot de erfenis, niet door de hoogte ervan.
     expect(Math.round(r.requiredCapital)).toBe(54516)
-    expect(Math.round(r.requiredCapitalEindwaarde)).toBe(-66121)
-    expect(Math.round(r.overbruggingsToeslag)).toBe(120636)
+    expect(Math.round(r.requiredCapitalEindwaarde)).toBe(-66610)
+    expect(Math.round(r.overbruggingsToeslag)).toBe(121126)
     expect(sluit(r)).toBeCloseTo(r.requiredCapital, 2)
   })
 
@@ -783,16 +791,40 @@ describe('lijfrente — levenslang of tijdelijk', () => {
   })
 })
 
+// Besluit Hendrik 28 september 2026: een eenmalig bedrag is nominaal. € 100.000 in
+// 2048 is in 2048 € 100.000 op de rekening, en in koopkracht van nu minder.
+describe('eenmalige bedragen zijn nominaal', () => {
+  it('rekent het bedrag terug naar koopkracht van nu', () => {
+    // 100.000 / 1,03^22 = 52.189,25
+    expect(eenmaligInKoopkracht(100000, 2048, 2026, 3)).toBeCloseTo(52189.25, 2)
+    expect(eenmaligInKoopkracht(-50000, 2036, 2026, 2.5)).toBeCloseTo(-50000 / Math.pow(1.025, 10), 6)
+  })
+
+  it('laat een bedrag in het lopende jaar ongemoeid', () => {
+    expect(eenmaligInKoopkracht(100000, 2026, 2026, 3)).toBe(100000)
+  })
+
+  it('verhoogt geen bedrag uit een jaar dat al voorbij is', () => {
+    expect(eenmaligInKoopkracht(100000, 2020, 2026, 3)).toBe(100000)
+  })
+
+  it('telt bij nul inflatie het volle bedrag', () => {
+    // Bij 0% inflatie is nominaal gelijk aan reëel.
+    expect(eenmaligInKoopkracht(100000, 2048, 2026, 0)).toBe(100000)
+  })
+})
+
 // Bevinding 12 uit de audit van 7 september 2026: de kern gebruikt twaalf netto
 // maandbedragen en telde het vakantiegeld niet op, terwijl de SVB dat in mei apart
 // uitkeert. AOW_VAKANTIEGELD_BRUTO_MAAND stond wel in de config, maar werd nergens
 // gebruikt.
 describe('AOW-vakantiegeld', () => {
   it('verhoogt de AOW met de factor uit de gepubliceerde bedragen', () => {
-    // Alleenstaand: (1.662,64 + 106,55) / 1.662,64 = 1,064086.
-    // Samenwonend:  (1.139,25 +  76,10) / 1.139,25 = 1,066799.
-    expect(aowVakantiegeldFactor('alleenstaand')).toBeCloseTo(1.064086, 5)
-    expect(aowVakantiegeldFactor('samenwonend')).toBeCloseTo(1.066799, 5)
+    // SVB per 1 juli 2026, nagekeken 28 september 2026.
+    // Alleenstaand: (1.662,16 + 104,78) / 1.662,16 = 1,063038.
+    // Samenwonend:  (1.139,39 +  74,85) / 1.139,39 = 1,065693.
+    expect(aowVakantiegeldFactor('alleenstaand')).toBeCloseTo(1.063038, 5)
+    expect(aowVakantiegeldFactor('samenwonend')).toBeCloseTo(1.065693, 5)
   })
 
   it('verhoogt het AOW-inkomen in de jaartabel', () => {
@@ -800,7 +832,7 @@ describe('AOW-vakantiegeld', () => {
     const met = calculatePension(baseInputs({ aowVakantiegeld: true }), { currentYear: 2026 })
     const a = zonder.yearData.find(y => y.age === 70)!
     const b = met.yearData.find(y => y.age === 70)!
-    expect(b.aowIncome / a.aowIncome).toBeCloseTo(1.064086, 4)
+    expect(b.aowIncome / a.aowIncome).toBeCloseTo(1.063038, 4)
   })
 
   it('verlaagt daardoor het benodigde vermogen', () => {

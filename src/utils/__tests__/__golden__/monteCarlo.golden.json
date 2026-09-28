@@ -29,8 +29,8 @@
     }
   },
   "4_negatief_bedrag_na_pensioendatum": {
-    "successRate": 5.75,
-    "successRate75": 21.1,
+    "successRate": 6.85,
+    "successRate75": 25.6,
     "percentileDataLength": 46,
     "percentileFirst": {
       "age": 45,

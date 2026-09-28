@@ -1006,13 +1006,17 @@ function EenmaligeBedragenSection({ inputs, onChange }: Props) {
         een bepaald jaar raken. Ook de overwaarde die vrijkomt als je je huis verkoopt en kleiner
         gaat wonen hoort hier. Positief is een bijschrijving, negatief een afschrijving.
       </p>
-      {/* De planner rekent in koopkracht van vandaag, ook voor deze bedragen. Een
-          bedrag dat pas over twintig jaar vrijkomt en dat je alleen in euro's van
-          dan kent, telt anders te zwaar mee (review 22 september 2026, bevinding 4). */}
+      {/* Een eenmalig bedrag is nominaal: het bedrag zoals het in dat jaar op de
+          rekening staat. De planner rekent het terug naar koopkracht van vandaag
+          (eenmaligInKoopkracht in pensionCalc.ts). Besluit Hendrik 28 september 2026. */}
       <p className="text-xs text-body leading-relaxed">
-        Vul bedragen in euro's van vandaag in. Weet je alleen het bedrag dat je later krijgt,
-        reken het dan terug: bij 2,5% inflatie is € 100.000 over twintig jaar ongeveer
-        € 61.000 van nu.
+        Vul het bedrag in zoals het in dat jaar op je rekening komt of eraf gaat. De planner
+        rekent het zelf terug naar koopkracht van vandaag: bij{' '}
+        {inputs.inflation.toLocaleString('nl-NL', { maximumFractionDigits: 1 })}% inflatie is
+        € 100.000 over twintig jaar ongeveer €{' '}
+        {Math.round(100_000 / Math.pow(1 + inputs.inflation / 100, 20) / 1000).toLocaleString('nl-NL')}.000
+        van nu. Een verbouwing die vandaag € 50.000 kost, is over tien jaar duurder: vul dan
+        het bedrag van dat jaar in.
       </p>
       <div className="space-y-3">
         {rows.map((row, i) => {

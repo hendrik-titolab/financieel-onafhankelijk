@@ -6,7 +6,7 @@
  * Bron:      C:/Users/schak/Documents/Fiscale bron/fiscale-cijfers.json
  * Genereren: node genereer.mjs   (in die map)
  *
- * Versie 2026.1 · bijgewerkt 2026-09-08
+ * Versie 2026.1 · bijgewerkt 2026-09-28
  * Volgende controle: oktober/november 2026, zodra de Belastingdienst de cijfers voor 2027 publiceert
  *
  * Waarden met een ⚠️ wijken af van wat de bron zegt. Die staan bewust nog op de
@@ -43,7 +43,7 @@ export const HEFFINGSKORTING_PRE_AOW = {
     knik1: 11_965, pct1: 0.08324,
     knik2: 25_845, pct2: 0.31009,
     knik3: 45_592, pct3: 0.0195,
-    afbouwVanaf: 45_593, afbouwPct: 0.0651,
+    afbouwVanaf: 45_592, afbouwPct: 0.0651,
     max: 5_685,
   },
 } as const
@@ -70,7 +70,7 @@ export const HEFFINGSKORTING_POST_AOW = {
     knik1: 11_965, pct1: 0.04156,
     knik2: 25_845, pct2: 0.15483,
     knik3: 45_592, pct3: 0.00974,
-    afbouwVanaf: 45_593, afbouwPct: 0.0325,
+    afbouwVanaf: 45_592, afbouwPct: 0.0325,
     max: 2_840,
   },
 } as const
@@ -214,7 +214,7 @@ export const FISCAAL: Record<number, FiscaalJaar> = {
         knik1: 11_965, pct1: 0.08324,
         knik2: 25_845, pct2: 0.31009,
         knik3: 45_592, pct3: 0.0195,
-        afbouwVanaf: 45_593, afbouwPct: 0.0651, max: 5_685,
+        afbouwVanaf: 45_592, afbouwPct: 0.0651, max: 5_685,
       },
     },
     postAow: {
@@ -228,7 +228,7 @@ export const FISCAAL: Record<number, FiscaalJaar> = {
         knik1: 11_965, pct1: 0.04156,
         knik2: 25_845, pct2: 0.15483,
         knik3: 45_592, pct3: 0.00974,
-        afbouwVanaf: 45_593, afbouwPct: 0.0325, max: 2_840,
+        afbouwVanaf: 45_592, afbouwPct: 0.0325, max: 2_840,
       },
       ouderenkorting: { max: 2_067, afbouwVanaf: 46_002, afbouwPct: 0.15, nihilBij: 59_782 },
       alleenstaandeouderenkorting: 540,
@@ -315,20 +315,20 @@ export const AOW_NETTO_MAAND = {
 // belast wordt in plaats van alleen het aanvullend pensioen.
 // Bruto min loonheffing min Zvw-bijdrage geeft netto. Met loonheffingskorting is de loonheffing over alleen de AOW nul, omdat de algemene heffingskorting en de ouderenkorting samen hoger zijn dan de verschuldigde belasting. Zodra er aanvullend pensioen bij komt, is dat niet meer zo: dan bouwen die kortingen af en loopt het marginale tarief op tot boven de 55%. De brutobedragen staan hier zodat de FO-planner het totale box 1-inkomen kan belasten in plaats van alleen het aanvullend pensioen (E4).
 export const AOW_BRUTO_MAAND = {
-  alleenstaand: 1662.64,
-  samenwonend:  1139.25,
+  alleenstaand: 1662.16,
+  samenwonend:  1139.39,
 } as const
 
 export const AOW_VAKANTIEGELD_BRUTO_MAAND = {
-  alleenstaand: 106.55,
-  samenwonend:  76.1,
+  alleenstaand: 104.78,
+  samenwonend:  74.85,
 } as const
 
 // Bijdrage Zvw over de AOW, per maand. Geen box 1-belasting maar wel een inhouding
 // die het nettobedrag bepaalt.
 export const AOW_ZVW_BIJDRAGE_MAAND = {
-  alleenstaand: 80.64,
-  samenwonend:  55.25,
+  alleenstaand: 80.61,
+  samenwonend:  55.26,
 } as const
 
 export const AOW_LEEFTIJD = 67
