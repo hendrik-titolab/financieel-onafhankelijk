@@ -4,6 +4,7 @@ import { slagingskansPercentage } from './slagingskansTekst'
 import { opbouwDoelbedrag, indexatieTekst } from './opbouwDoelbedrag'
 import { scenarioOmschrijving } from './scenarios'
 import { vergelijkingsRegels } from './rapportVergelijking'
+import { tekenMcGrafiek, gezamenlijkeSchaal } from './pdfMcGrafiek'
 import type { Waarde } from './rapportVergelijking'
 
 function eur(v: number): string {
@@ -298,20 +299,42 @@ export async function exportToPDF(
   y += 4
 
   // --- Chart ---
-  const chartEl = document.getElementById(chartElementId)
+  // Met een scenario beide simulaties naast elkaar, zelf getekend en op dezelfde
+  // schaal (zie pdfMcGrafiek.ts). Zonder scenario de grafiek van het scherm.
+  const chartEl = basis ? null : document.getElementById(chartElementId)
+  if (basis) {
+    const schaal = gezamenlijkeSchaal([basis.mc.percentileData, mc.percentileData])
+    const hoogte = 60
+    ruimte(hoogte + 20)
+    pdf.setFont('helvetica', 'bold')
+    pdf.setFontSize(9)
+    pdf.setTextColor(41, 57, 46)
+    pdf.text(`Vermogen in ${N_SIMULATIONS.toLocaleString('nl-NL')} simulaties, zonder en met scenario`, margin, y)
+    y += 6
+    const breedte = (contentW - 6) / 2
+    tekenMcGrafiek(pdf, margin, y, breedte, hoogte, basis.mc.percentileData, schaal,
+      'Jouw invoer', basis.result.effectiveRetirementAge)
+    tekenMcGrafiek(pdf, margin + breedte + 6, y, breedte, hoogte, mc.percentileData, schaal,
+      'Met scenario', result.effectiveRetirementAge)
+    y += hoogte + 1
+    pdf.setFont('helvetica', 'normal')
+    pdf.setFontSize(7)
+    pdf.setTextColor(76, 90, 80)
+    for (const regel of pdf.splitTextToSize(
+      'Lichte band: 8 van de 10 simulaties. Donkere band: de middelste helft. Lijn: de mediaan. ' +
+      'Stippellijn: pensioendatum. Beide grafieken hebben dezelfde schaal.', contentW) as string[]) {
+      pdf.text(regel, margin, y)
+      y += 3.5
+    }
+    y += 4
+  }
   if (chartEl) {
     try {
       const canvas = await html2canvas(chartEl, { scale: 1.5, backgroundColor: '#F7F6F4' })
       const imgData = canvas.toDataURL('image/jpeg', 0.85)
       const imgH = (canvas.height / canvas.width) * contentW
       const chartH = Math.min(imgH, 70)
-      ruimte(chartH + 10)
-      if (basis) {
-        pdf.setFontSize(8)
-        pdf.setTextColor(76, 90, 80)
-        pdf.text('Vermogensontwikkeling met scenario', margin, y)
-        y += 3
-      }
+      ruimte(chartH + 6)
       pdf.addImage(imgData, 'JPEG', margin, y, contentW, chartH)
       y += chartH + 6
     } catch {

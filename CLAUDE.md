@@ -110,7 +110,14 @@ React-eiland (`client:only="react"`), component `src/components/PensionPlanner/`
   aanvullend pensioen. Het scherm en de exports tonen de uitkomst met en zonder scenario.
   Het partnerscenario (partner valt weg) ontbreekt bewust, zie het huishoudmodel
   hieronder. Monte Carlo-trekkingen heten in de UI "simulaties", om verwarring te
-  voorkomen.
+  voorkomen. Met een scenario tonen PDF en Excel beide uitkomsten volledig: een
+  vergelijkingstabel (`rapportVergelijking.ts`), en in de PDF beide Monte
+  Carlo-grafieken naast elkaar op dezelfde schaal, zelf getekend (`pdfMcGrafiek.ts`),
+  omdat het scherm alleen de scenariografiek toont.
+- **De kansmeters kleuren bewust** groen (vanaf 80%), zand (vanaf 60%) en rood, op het
+  scherm en in de PDF. Besluit Hendrik 28 september 2026: hij wil dat onderscheid zien.
+  Dat is geen restant van bevinding 15 (die haalde alleen de tekstuele oordelen weg);
+  niet "voor de consistentie" weghalen.
 - Resultaat blijft zichtbaar bij een invoerwijziging (met een "verouderd"-badge), verdwijnt niet
   meer zoals vóór de herstijling.
 - Export: PDF (`jsPDF` + `html2canvas`) en Excel (`exceljs`), max 3 gratis downloads samen
@@ -404,16 +411,18 @@ premie in de werkgeversregeling, dus werkgeversdeel én eigen bijdrage. Het veld
   zie de FO-planner hierboven. Wat nog openstaat: de uitlegartikelen noemen mogelijk nog de
   oude profielpercentages en gebruiken "scenario's" voor de Monte Carlo-simulaties (bewust
   later, besluit Hendrik). De notities `uitgangspunten.kostenVanBeleggen` en
-  `uitgangspunten.indexatiePensioen` in `fiscale-cijfers.json` zijn op 28 september 2026
-  bijgewerkt naar het huidige gedrag van de tool. `uitgangspunten.box3InRekentools` zegt
-  nog dat box 3 geen onderdeel is van de bestaande tools; dat klopt niet meer, maar is
-  nog niet aangepast.
+  `uitgangspunten.indexatiePensioen`, `uitgangspunten.box3InRekentools` en de status van
+  `box3._toekomstplan` in `fiscale-cijfers.json` zijn op 28 september 2026 bijgewerkt naar
+  het huidige gedrag van de tool.
 - **Lokaal draaien alleen `tsc` en `vitest`** op Hendriks Windows-machine. Een Application
   Control-beleid blokkeert native bestanden: eerst dat van de MDX-plugin
   (`satteri_napi.win32-x64-msvc.node`, 22 september 2026), sinds 28 september 2026 ook de
   Astro-compiler zelf (`astro.win32-x64-msvc.node`). Daardoor starten ook `astro dev` en
   `astro check` niet meer. De volledige poort draait in CI (`controle`); controleer het
-  scherm op de Vercel-preview van de PR (URL: zie "Vercel" hierboven). Oudere notities
+  scherm op de Vercel-preview van de PR (URL: zie "Vercel" hierboven). De preview vraagt
+  een Vercel-login, dus dat doet Hendrik; Claude kan exports wel controleren door ze in
+  Node te genereren met de echte exportcode. Oorzaak: Slimme app-controle (Smart App
+  Control) staat aan. Besluit Hendrik 28 september 2026: zo laten. Oudere notities
   over de cache, van toen `astro check` nog wel werkte:
   - `npm ci` of een verwijderde `node_modules` wist `node_modules/.astro/data-store.json`,
     de cache die `astro check` gebruikt. Herstel: kopieer `.astro/data-store.json` (de
