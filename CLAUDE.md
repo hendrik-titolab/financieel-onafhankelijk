@@ -140,9 +140,26 @@ reserveringsruimte-modi, berekeningen opslaan in `localStorage`.
 - Correcte formule per jaar: pre-2023 13,3% × grondslag − 6,27 × factor A; 2023+ 30% × grondslag
   − 6,27 × factor A (DB) of − werkgeverspremie (Wtp). De factor is 6,27 sinds 2019 (daarvoor 6,50);
   er is geen jaar waarin hij 7,44 was, zie `jaarruimte.ts`.
+- **Leeftijd en AOW** (sinds 28 september 2026). Met een geboortedatum rekent het
+  belastingvoordeel met de tarieven na de AOW-leeftijd (`aowFaseInJaar()`); in het AOW-jaar
+  gewogen per maand, want het tarief van schijf 1 loopt lineair per maand (fisin). Het
+  voordeel kan daardoor hoger én lager uitvallen dan voorheen: rond de afbouw van de
+  ouderenkorting is het marginale tarief ruim 55%. De AOW-leeftijd per jaar staat in
+  `AOW_LEEFTIJD_MAANDEN_PER_JAAR` (uit de fiscale bron). De leeftijdsgrens van de jaarruimte
+  (tot 2022: de AOW-leeftijd, vanaf 2023: AOW-leeftijd plus vijf jaar, art. 3.127 lid 1) is
+  een waarschuwing, geen blokkade, en volgt de lezing van de Belastingdienst ("geboren vóór
+  1 september 1953: geen jaarruimte 2026"). Letterlijk gelezen ligt de wettelijke grens een
+  jaar later; bij twijfel waarschuwt de tool dus niet.
+- **Oudedagsreserve**: voor 2021 en 2022 gaat `forVermindering` van de jaarruimte af (art.
+  3.127 lid 4 onderdeel b, oude tekst). Vanaf 2023 niet meer. De wizard "Bereken voor mij"
+  (`berekenJaarruimteEenvoudig`) kent de oudedagsreserve niet; voor ondernemers met een
+  FOR over jaren tot en met 2022 is de berekende onbenutte ruimte daar dus te hoog.
+- Het belastingvoordeel telt het hele inkomen als arbeidsinkomen. Voor iemand na de
+  AOW-leeftijd met vooral pensioen is dat te gunstig (arbeidskorting); de UI zegt het erbij.
 
 ### 4. Inflatie & spaargeld — `/tools/inflatie`
-React-component `src/components/Inflatie/`. Reëel vs. nominaal rendement, negeert bewust box 3.
+React-component `src/components/Inflatie/`, rekenlogica sinds 28 september 2026 in
+`src/utils/inflatie.ts` met toetsen. Reëel vs. nominaal rendement, negeert bewust box 3.
 De noot onderaan verwijst sinds 8 september 2026 door naar de box 3-tool.
 
 ### 5. Box 3 — `/tools/box3`
@@ -316,7 +333,11 @@ Op 28 september 2026 zijn alle waarden voor 2026 die de tools gebruiken nagelope
 primaire bronnen (Belastingdienst, SVB, Staatscourant), plus de belastingjaren 2021-2025 en de
 jaarruimte vanaf 2021. Gecorrigeerd: AOW-bruto, vakantiegeld en Zvw per 1 juli 2026 (waren
 afgeleid, nu van de SVB), de afbouw van de arbeidskorting 2026 (45.592) en de afkoopgrens
-kleine pensioenen (632,63). AOW, Zvw en lijfrente staan nu op "ok".
+kleine pensioenen (632,63). AOW, Zvw en lijfrente staan nu op "ok". Dezelfde dag zijn de
+cijfers ná de AOW-leeftijd voor 2021-2025 toegevoegd (fisin-pagina's van elk jaar, elk getal
+automatisch teruggevonden), plus de AOW-leeftijd per jaar. Eén afgeleide waarde: het maximum
+van de arbeidskorting 2023 na de AOW-leeftijd is 2.604; de fisin-pagina noemt in de
+afbouwregel 2.374, maar dat is het tussenbedrag bij 23.201 (tikfout, zie `_max` in de json).
 
 Waarom: dezelfde cijfers stonden op drie plekken en spraken elkaar aantoonbaar tegen (zie
 `FISCALE-BRONNEN.md`). Waarden waar de bron van de site afwijkt houden bewust de waarde die

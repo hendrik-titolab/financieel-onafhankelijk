@@ -140,6 +140,22 @@ export const FISCAAL: Record<number, FiscaalJaar> = {
         afbouwVanaf: 35_652, afbouwPct: 0.06, max: 4_205,
       },
     },
+    postAow: {
+      schijven: [
+        { tot: 35_129, tarief: 0.192 },
+        { tot: 68_507, tarief: 0.371 },
+        { tot: null, tarief: 0.495 },
+      ],
+      algemeneHeffingskorting: { max: 1_469, afbouwVanaf: 21_043, afbouwPct: 0.03093, nihilBij: 68_507 },
+      arbeidskorting: {
+        knik1: 10_108, pct1: 0.02371,
+        knik2: 21_835, pct2: 0.1489,
+        knik3: 35_652, pct3: 0.01378,
+        afbouwVanaf: 35_652, afbouwPct: 0.03105, max: 2_178,
+      },
+      ouderenkorting: { max: 1_703, afbouwVanaf: 37_970, afbouwPct: 0.15, nihilBij: 49_324 },
+      alleenstaandeouderenkorting: 443,
+    },
   },
   2022: {
     preAow: {
@@ -154,6 +170,22 @@ export const FISCAAL: Record<number, FiscaalJaar> = {
         knik3: 36_649, pct3: 0.0261,
         afbouwVanaf: 36_649, afbouwPct: 0.0586, max: 4_260,
       },
+    },
+    postAow: {
+      schijven: [
+        { tot: 35_472, tarief: 0.1917 },
+        { tot: 69_398, tarief: 0.3707 },
+        { tot: null, tarief: 0.495 },
+      ],
+      algemeneHeffingskorting: { max: 1_494, afbouwVanaf: 21_317, afbouwPct: 0.03106, nihilBij: 69_398 },
+      arbeidskorting: {
+        knik1: 10_350, pct1: 0.02348,
+        knik2: 22_356, pct2: 0.14718,
+        knik3: 36_649, pct3: 0.01349,
+        afbouwVanaf: 36_649, afbouwPct: 0.0303, max: 2_204,
+      },
+      ouderenkorting: { max: 1_726, afbouwVanaf: 38_464, afbouwPct: 0.15, nihilBij: 49_971 },
+      alleenstaandeouderenkorting: 449,
     },
   },
   2023: {
@@ -170,6 +202,22 @@ export const FISCAAL: Record<number, FiscaalJaar> = {
         afbouwVanaf: 37_691, afbouwPct: 0.0651, max: 5_052,
       },
     },
+    postAow: {
+      schijven: [
+        { tot: 37_149, tarief: 0.1903 },
+        { tot: 73_031, tarief: 0.3693 },
+        { tot: null, tarief: 0.495 },
+      ],
+      algemeneHeffingskorting: { max: 1_583, afbouwVanaf: 22_660, afbouwPct: 0.03141, nihilBij: 73_031 },
+      arbeidskorting: {
+        knik1: 10_740, pct1: 0.04241,
+        knik2: 23_201, pct2: 0.15388,
+        knik3: 37_691, pct3: 0.01589,
+        afbouwVanaf: 37_691, afbouwPct: 0.03355, max: 2_604,
+      },
+      ouderenkorting: { max: 1_835, afbouwVanaf: 40_888, afbouwPct: 0.15, nihilBij: 53_122 },
+      alleenstaandeouderenkorting: 478,
+    },
   },
   2024: {
     preAow: {
@@ -184,6 +232,22 @@ export const FISCAAL: Record<number, FiscaalJaar> = {
         knik3: 39_957, pct3: 0.02471,
         afbouwVanaf: 39_957, afbouwPct: 0.0651, max: 5_532,
       },
+    },
+    postAow: {
+      schijven: [
+        { tot: 38_098, tarief: 0.1907 },
+        { tot: 75_518, tarief: 0.3697 },
+        { tot: null, tarief: 0.495 },
+      ],
+      algemeneHeffingskorting: { max: 1_735, afbouwVanaf: 24_812, afbouwPct: 0.0342, nihilBij: 75_518 },
+      arbeidskorting: {
+        knik1: 11_490, pct1: 0.04346,
+        knik2: 24_820, pct2: 0.16214,
+        knik3: 39_957, pct3: 0.01275,
+        afbouwVanaf: 39_957, afbouwPct: 0.03358, max: 2_854,
+      },
+      ouderenkorting: { max: 2_010, afbouwVanaf: 44_770, afbouwPct: 0.15, nihilBij: 58_170 },
+      alleenstaandeouderenkorting: 524,
     },
   },
   2025: {
@@ -200,6 +264,22 @@ export const FISCAAL: Record<number, FiscaalJaar> = {
         knik3: 43_071, pct3: 0.02258,
         afbouwVanaf: 43_071, afbouwPct: 0.0651, max: 5_599,
       },
+    },
+    postAow: {
+      schijven: [
+        { tot: 38_441, tarief: 0.1792 },
+        { tot: 76_817, tarief: 0.3748 },
+        { tot: null, tarief: 0.495 },
+      ],
+      algemeneHeffingskorting: { max: 1_536, afbouwVanaf: 28_406, afbouwPct: 0.0317, nihilBij: 76_817 },
+      arbeidskorting: {
+        knik1: 12_169, pct1: 0.04029,
+        knik2: 26_288, pct2: 0.15023,
+        knik3: 43_071, pct3: 0.0113,
+        afbouwVanaf: 43_071, afbouwPct: 0.03257, max: 2_802,
+      },
+      ouderenkorting: { max: 2_035, afbouwVanaf: 45_308, afbouwPct: 0.15, nihilBij: 58_875 },
+      alleenstaandeouderenkorting: 531,
     },
   },
   2026: {
@@ -332,6 +412,24 @@ export const AOW_ZVW_BIJDRAGE_MAAND = {
 } as const
 
 export const AOW_LEEFTIJD = 67
+
+// AOW-leeftijd in maanden per kalenderjaar waarin je hem bereikt (artikel 7a AOW).
+// De AOW-leeftijd (artikel 7a Algemene Ouderdomswet) per kalenderjaar waarin je hem bereikt, in maanden. 2019 tot en met 2021 66 jaar en 4 maanden, 2022 66 jaar en 7 maanden, 2023 66 jaar en 10 maanden, 2024 tot en met 2027 67 jaar, 2028 tot en met 2031 67 jaar en 3 maanden. Bron 2025-2031: rijksoverheid.nl/onderwerpen/algemene-ouderdomswet-aow/aow-leeftijd, geraadpleegd 28 september 2026; 2021 en 2022 kruisen met reserveringsruimteVoor2023.aowLeeftijdMaanden. Gebruikt door de jaarruimtetool om te bepalen of iemand in het aftrekjaar de AOW-leeftijd al had of bereikte.
+export const AOW_LEEFTIJD_MAANDEN_PER_JAAR: Record<number, number> = {
+  2019: 796,
+  2020: 796,
+  2021: 796,
+  2022: 799,
+  2023: 802,
+  2024: 804,
+  2025: 804,
+  2026: 804,
+  2027: 804,
+  2028: 807,
+  2029: 807,
+  2030: 807,
+  2031: 807,
+}
 
 // ─── Jaarruimte parameters ──────────────────────────────────────────────────
 // premiegrondslag = min(inkomen, maxInkomen) - franchise, nooit negatief. Inkomen en factor A zijn die van het voorgaande kalenderjaar.

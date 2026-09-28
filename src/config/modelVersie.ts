@@ -28,7 +28,11 @@
 // van de arbeidskorting begint bij 45.592 in plaats van 45.593 (maximaal 7 cent).
 // Eenmalige bedragen zijn nominaal: het bedrag in het jaar zelf, teruggerekend naar
 // koopkracht van nu (besluit Hendrik, zelfde dag).
-export const MODEL_VERSIE = '2026.09.7'
+// 2026.09.8: jaarruimte. Het belastingvoordeel rekent met de tarieven na de
+// AOW-leeftijd als de geboortedatum dat aangeeft (in het AOW-jaar gewogen per maand),
+// een leeftijdswaarschuwing volgens art. 3.127 lid 1, en voor 2021 en 2022 gaat de
+// toevoeging aan de oudedagsreserve van de jaarruimte af (28 september 2026).
+export const MODEL_VERSIE = '2026.09.8'
 
 /** Belastingjaar waarop fiscaleParameters.ts is gebaseerd. */
 export const PARAMETER_JAAR = 2026

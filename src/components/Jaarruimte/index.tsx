@@ -4,7 +4,7 @@ import type { JaarruimteInputs, JaarruimteResult, SavedJaarruimte, Reserveringsr
 import {
   calculateJaarruimte, getAvailableYears, isPreWtp,
   berekenJaarruimteEenvoudig, getOudsteParameterJaar, getFormuleTekst,
-  controleerJaarruimteInvoer, terugkijktermijn, oudsteReserveringsjaar,
+  controleerJaarruimteInvoer, terugkijktermijn, oudsteReserveringsjaar, aowFaseInJaar,
 } from '../../utils/jaarruimte'
 import { MODEL_VERSIE, PARAMETER_JAAR, PARAMETER_PEILDATUM, modelStempel } from '../../config/modelVersie'
 import { parseBedrag, formatBedrag } from '../../utils/bedrag'
@@ -648,26 +648,25 @@ export function JaarruimteTab() {
             ))}
           </div>
 
-          {/* Tot en met 2022 hing het plafond van de reserveringsruimte af van de
-              leeftijd op 1 januari van dat jaar (art. 3.127 lid 2 Wet IB 2001).
-              Vanaf 2023 is dat plafond voor iedereen gelijk, dus dan vragen we het
-              niet. */}
-          {isPreWtp(inputs.year) && (
-            <div>
-              <label className="label">Geboortedatum</label>
-              <input
-                type="date"
-                value={inputs.geboortedatum ?? ''}
-                onChange={e => set('geboortedatum', e.target.value)}
-                className="input-field"
-              />
-              <p className="text-xs text-body mt-1">
-                In {inputs.year} was de reserveringsruimte hoger voor wie op 1 januari
-                binnen tien jaar van de AOW-leeftijd zat. Zonder geboortedatum rekenen
-                we met het lage bedrag.
-              </p>
-            </div>
-          )}
+          {/* Sinds 28 september 2026 voor elk jaar: de geboortedatum bepaalt ook het
+              tarief van het belastingvoordeel (na de AOW-leeftijd is schijf 1 lager en
+              komt de ouderenkorting erbij) en de leeftijdsgrens van de jaarruimte.
+              Tot en met 2022 bepaalt hij daarnaast het plafond van de
+              reserveringsruimte (art. 3.127 lid 2 Wet IB 2001). */}
+          <div>
+            <label className="label">Geboortedatum (optioneel)</label>
+            <input
+              type="date"
+              value={inputs.geboortedatum ?? ''}
+              onChange={e => set('geboortedatum', e.target.value)}
+              className="input-field"
+            />
+            <p className="text-xs text-body mt-1">
+              Heb je in {inputs.year} de AOW-leeftijd al, of bereik je hem dat jaar, dan geldt een
+              ander belastingtarief en valt het belastingvoordeel anders uit.
+              {isPreWtp(inputs.year) && ` In ${inputs.year} was de reserveringsruimte bovendien hoger voor wie op 1 januari binnen tien jaar van de AOW-leeftijd zat. Zonder geboortedatum rekenen we met het lage bedrag.`}
+            </p>
+          </div>
 
           <div>
             <label className="label">Naam berekening</label>
@@ -699,8 +698,24 @@ export function JaarruimteTab() {
             <NumberInput prefix="€" value={inputs.income} onChange={v => set('income', v)} min={0} max={100_000_000} />
             <p className="text-xs text-body mt-1">
               Bron: jaaropgave werkgever {inputs.year - 1} of aangifte inkomstenbelasting {inputs.year - 1} (box 1, loon)
+              {isPreWtp(inputs.year) && '. Ondernemer? Neem je winst vóór de toevoeging aan de oudedagsreserve.'}
             </p>
           </div>
+
+          {/* Oudedagsreserve: tot en met 2022 ging de netto toevoeging van het jaar
+              ervoor van de jaarruimte af (art. 3.127 lid 4 onderdeel b, oude tekst).
+              Vanaf 2023 niet meer (review 28 september 2026). */}
+          {isPreWtp(inputs.year) && (
+            <div>
+              <label className="label">Toevoeging oudedagsreserve {inputs.year - 1} (ondernemers)</label>
+              <NumberInput prefix="€" value={inputs.forVermindering ?? 0} onChange={v => set('forVermindering', v)} min={0} max={100_000_000} />
+              <p className="text-xs text-body mt-1">
+                Het bedrag waarmee de toevoeging aan je oudedagsreserve in {inputs.year - 1} de
+                afneming overtrof. Dat gaat van je jaarruimte af. Geen ondernemer, of geen
+                oudedagsreserve? Laat dit op € 0 staan.
+              </p>
+            </div>
+          )}
 
           {/* Pensioentype — bepaalt welk veld zichtbaar is */}
           <div>
@@ -907,7 +922,15 @@ export function JaarruimteTab() {
           <p className="text-xs text-body leading-relaxed">
             Het belastingvoordeel is een schatting: belasting zonder aftrek min belasting met aftrek,
             met de schijven en heffingskortingen van {inputs.year} en een verwacht inkomen van{' '}
-            {eur(inputs.aftrekjaarInkomen ?? inputs.income)} in het aftrekjaar. Geen definitief bedrag.
+            {eur(inputs.aftrekjaarInkomen ?? inputs.income)} in het aftrekjaar.{' '}
+            {(() => {
+              const fase = aowFaseInJaar(inputs.geboortedatum, inputs.year)
+              if (!fase) return 'Zonder geboortedatum met de tarieven van vóór de AOW-leeftijd.'
+              if (fase.soort === 'na') return 'Met de tarieven na de AOW-leeftijd, inclusief de ouderenkorting.'
+              if (fase.soort === 'in') return `Je bereikt in ${inputs.year} de AOW-leeftijd: het tarief is gewogen naar de maanden ervoor en erna, met de volledige ouderenkorting.`
+              return 'Met de tarieven van vóór de AOW-leeftijd.'
+            })()}{' '}
+            Het hele inkomen telt als arbeidsinkomen voor de arbeidskorting. Geen definitief bedrag.
             Deze berekening is educatief en indicatief, geen persoonlijk financieel advies.
           </p>
           {/* Modelversie en peildatum in beeld. Een gecachete offline versie draagt
