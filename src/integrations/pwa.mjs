@@ -42,11 +42,30 @@ export default function pwaIntegration() {
         const { count, size, warnings } = await generateSW({
           swDest: fileURLToPath(new URL('sw.js', dir)),
           globDirectory: outDir,
-          globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff,woff2}'],
+          // Geen HTML in de precache (28 september 2026). Een precachte pagina gaat
+          // vóór het netwerk, dus een terugkerende bezoeker zag na elke deploy bij het
+          // eerste bezoek de vorige versie, met de vorige cijfers. Pagina's lopen nu
+          // via de NetworkFirst-regel hieronder; alleen zonder verbinding komt de
+          // laatst bezochte versie uit de cache. De bestanden in /_astro/ hebben een
+          // hash in hun naam en mogen wel vooraf gecachet worden.
+          globPatterns: ['**/*.{js,css,ico,png,svg,webp,woff,woff2}'],
           globIgnores: ['sw.js', 'workbox-*.js'],
           skipWaiting: true,
           clientsClaim: true,
+          // Ruimt de precache van de vorige sw.js op, inclusief de oude HTML.
+          cleanupOutdatedCaches: true,
           runtimeCaching: [
+            {
+              urlPattern: ({ request }) => request.mode === 'navigate',
+              handler: 'NetworkFirst',
+              options: {
+                cacheName: 'paginas',
+                // Bij een trage verbinding na 4 seconden de bewaarde versie tonen.
+                networkTimeoutSeconds: 4,
+                expiration: { maxEntries: 50 },
+                cacheableResponse: { statuses: [200] },
+              },
+            },
             {
               // Google Fonts cachen voor offline gebruik.
               urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/i,

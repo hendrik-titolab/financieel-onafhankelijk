@@ -22,13 +22,17 @@
 // (5e percentiel) op de pensioendatum.
 // 2026.09.6: risicoprofielen afgeleid uit gepubliceerde bronnen (aandelen 8,0%,
 // obligaties 3,5%) en scenario-schakelaars (28 september 2026).
-export const MODEL_VERSIE = '2026.09.6'
+// 2026.09.7: fiscale cijfers nagelopen tegen de primaire bronnen (28 september 2026).
+// AOW-bruto, vakantiegeld en Zvw per 1 juli 2026 rechtstreeks van de SVB (de
+// vakantiegeldfactor daalt van 1,064086 naar 1,063038 alleenstaand), en de afbouw
+// van de arbeidskorting begint bij 45.592 in plaats van 45.593 (maximaal 7 cent).
+export const MODEL_VERSIE = '2026.09.7'
 
 /** Belastingjaar waarop fiscaleParameters.ts is gebaseerd. */
 export const PARAMETER_JAAR = 2026
 
 /** Datum waarop die parameters voor het laatst zijn nagelopen. */
-export const PARAMETER_PEILDATUM = '2026-09-07'
+export const PARAMETER_PEILDATUM = '2026-09-28'
 
 /** Korte weergave voor scherm en rapport, bijv. "model 2026.09.1 · cijfers 2026". */
 export function modelStempel(): string {

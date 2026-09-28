@@ -244,8 +244,9 @@ export function aowNettoNaarBruto(nettoMaand: number): number {
  * getIncomeBreakdown() het totaal, inclusief dit deel, tegen het juiste marginale
  * tarief.
  *
- * Alleenstaand: (1.662,64 + 106,55) / 1.662,64 = 1,064086.
- * Samenwonend:  (1.139,25 +  76,10) / 1.139,25 = 1,066799.
+ * Alleenstaand: (1.662,16 + 104,78) / 1.662,16 = 1,063038.
+ * Samenwonend:  (1.139,39 +  74,85) / 1.139,39 = 1,065693.
+ * (SVB per 1 juli 2026, nagekeken 28 september 2026.)
  */
 export function aowVakantiegeldFactor(woonsituatie: Woonsituatie): number {
   const bruto = AOW_BRUTO_MAAND[woonsituatie]

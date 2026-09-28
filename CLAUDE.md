@@ -192,7 +192,10 @@ formules en de uitkomsten moeten toetsbaar zijn. Zelfde criterium als bij `box3.
 - Geen server, geen database — alles client-side, hooguit `localStorage` voor
   downloadteller/opgeslagen jaarruimteberekeningen/PWA-installatiebanner-status.
 - PWA geconfigureerd (`src/integrations/pwa.mjs`, eigen minimale integratie, zie het
-  uitgebreide commentaar daar voor waarom niet `@vite-pwa/astro`).
+  uitgebreide commentaar daar voor waarom niet `@vite-pwa/astro`). Sinds 28 september 2026
+  zit er geen HTML meer in de precache: pagina's gaan NetworkFirst (cache `paginas`), anders
+  zag een terugkerende bezoeker na elke deploy eerst de vorige versie. Zet HTML niet terug in
+  `globPatterns`.
 
 ---
 
@@ -299,6 +302,12 @@ Een fiscaal cijfer bijwerken gaat zo: waarde aanpassen in die json, `node genere
 die map, en de gewijzigde config hier committen. Vercel bouwt uit deze repo en niet uit die map,
 dus zonder commit verandert er live niets. Draai daarna `node controleer-artikelen.mjs` om te zien
 of er bedragen in de uitlegartikelen achterlopen.
+
+Op 28 september 2026 zijn alle waarden voor 2026 die de tools gebruiken nagelopen tegen de
+primaire bronnen (Belastingdienst, SVB, Staatscourant), plus de belastingjaren 2021-2025 en de
+jaarruimte vanaf 2021. Gecorrigeerd: AOW-bruto, vakantiegeld en Zvw per 1 juli 2026 (waren
+afgeleid, nu van de SVB), de afbouw van de arbeidskorting 2026 (45.592) en de afkoopgrens
+kleine pensioenen (632,63). AOW, Zvw en lijfrente staan nu op "ok".
 
 Waarom: dezelfde cijfers stonden op drie plekken en spraken elkaar aantoonbaar tegen (zie
 `FISCALE-BRONNEN.md`). Waarden waar de bron van de site afwijkt houden bewust de waarde die

@@ -789,10 +789,11 @@ describe('lijfrente — levenslang of tijdelijk', () => {
 // gebruikt.
 describe('AOW-vakantiegeld', () => {
   it('verhoogt de AOW met de factor uit de gepubliceerde bedragen', () => {
-    // Alleenstaand: (1.662,64 + 106,55) / 1.662,64 = 1,064086.
-    // Samenwonend:  (1.139,25 +  76,10) / 1.139,25 = 1,066799.
-    expect(aowVakantiegeldFactor('alleenstaand')).toBeCloseTo(1.064086, 5)
-    expect(aowVakantiegeldFactor('samenwonend')).toBeCloseTo(1.066799, 5)
+    // SVB per 1 juli 2026, nagekeken 28 september 2026.
+    // Alleenstaand: (1.662,16 + 104,78) / 1.662,16 = 1,063038.
+    // Samenwonend:  (1.139,39 +  74,85) / 1.139,39 = 1,065693.
+    expect(aowVakantiegeldFactor('alleenstaand')).toBeCloseTo(1.063038, 5)
+    expect(aowVakantiegeldFactor('samenwonend')).toBeCloseTo(1.065693, 5)
   })
 
   it('verhoogt het AOW-inkomen in de jaartabel', () => {
@@ -800,7 +801,7 @@ describe('AOW-vakantiegeld', () => {
     const met = calculatePension(baseInputs({ aowVakantiegeld: true }), { currentYear: 2026 })
     const a = zonder.yearData.find(y => y.age === 70)!
     const b = met.yearData.find(y => y.age === 70)!
-    expect(b.aowIncome / a.aowIncome).toBeCloseTo(1.064086, 4)
+    expect(b.aowIncome / a.aowIncome).toBeCloseTo(1.063038, 4)
   })
 
   it('verlaagt daardoor het benodigde vermogen', () => {
