@@ -91,7 +91,7 @@ function invoerRijen(inputs: PensionInputs): (string | number)[][] {
         ]
       : [['Partner meegerekend', 'nee, berekening voor één persoon']]),
     ['', ''],
-    ['LIFE EVENTS', ''],
+    ["EENMALIGE BEDRAGEN (in euro's van dat jaar)", ''],
     ...((inputs.lifeEvents ?? []).length > 0
       ? (inputs.lifeEvents ?? []).map(e => [`${e.name} (${e.year})`, e.amount])
       : [['(geen)', '']]

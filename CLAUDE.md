@@ -95,6 +95,11 @@ React-eiland (`client:only="react"`), component `src/components/PensionPlanner/`
   beide rekenkernen gelijk lopen. In de UI start een lijfrente op 'vast',
   werkgeverspensioen op 'meestijgend'; in de code is de standaard 'meestijgend', zodat
   oude invoer en golden values niet verschuiven.
+- **Eenmalige bedragen zijn nominaal** (sinds 28 september 2026, besluit Hendrik): het
+  bedrag zoals het in dat jaar op de rekening staat. `eenmaligInKoopkracht()` in
+  `pensionCalc.ts` rekent het terug naar koopkracht van vandaag, in beide rekenkernen.
+  Daarvoor las de planner het als euro's van vandaag, waardoor een vast bedrag ver in de
+  toekomst te zwaar meetelde (review 22 september 2026, bevinding 4).
 - Met een partner erbij is het inkomensdoel **alleen netto**: hoe een bruto
   huishoudinkomen over twee apart belaste mensen verdeeld is, weet de tool niet.
 - **Risicoprofielen** (sinds 28 september 2026) zijn mengsels van aandelen 8,0% en

@@ -26,6 +26,8 @@
 // AOW-bruto, vakantiegeld en Zvw per 1 juli 2026 rechtstreeks van de SVB (de
 // vakantiegeldfactor daalt van 1,064086 naar 1,063038 alleenstaand), en de afbouw
 // van de arbeidskorting begint bij 45.592 in plaats van 45.593 (maximaal 7 cent).
+// Eenmalige bedragen zijn nominaal: het bedrag in het jaar zelf, teruggerekend naar
+// koopkracht van nu (besluit Hendrik, zelfde dag).
 export const MODEL_VERSIE = '2026.09.7'
 
 /** Belastingjaar waarop fiscaleParameters.ts is gebaseerd. */
