@@ -2,6 +2,7 @@ import type { BerekeningsSet } from '../types'
 import { N_SIMULATIONS } from './monteCarlo'
 import { slagingskansPercentage } from './slagingskansTekst'
 import { opbouwDoelbedrag, indexatieTekst } from './opbouwDoelbedrag'
+import { scenarioOmschrijving } from './scenarios'
 
 function eur(v: number): string {
   const r = Math.round(v)
@@ -86,13 +87,31 @@ export async function exportToPDF(
   pdf.setFontSize(7.5)
   pdf.setFont('helvetica', 'normal')
   pdf.setTextColor(76, 90, 80)
-  pdf.text('Bij het verwachte rendement: de helft van de scenario\'s valt beter uit, de helft slechter.', margin, y)
+  pdf.text('Bij het verwachte rendement: de helft van de simulaties valt beter uit, de helft slechter.', margin, y)
   y += 4
+  // Met een scenario horen de getallen hierboven bij het scenario. Zonder deze
+  // regels is uit het rapport niet af te leiden dat het een stresstest is, en ook
+  // niet wat de uitkomst zonder scenario was.
+  const scenarioRegels = scenarioOmschrijving(berekening.scenarios)
+  if (scenarioRegels.length > 0) {
+    pdf.setTextColor(...rood)
+    pdf.text(`Scenario (stresstest, geen verwachting): ${scenarioRegels.join(', ')}.`, margin, y)
+    pdf.setTextColor(76, 90, 80)
+    y += 4
+    if (berekening.basis) {
+      const b = berekening.basis
+      pdf.text(
+        `Zonder scenario: benodigd ${eur(b.result.requiredCapital)}, verwacht ${eur(b.result.projectedCapital)}, ` +
+        `kans op volledig inkomensdoel ${slagingskansPercentage(b.mc.successRate)}.`,
+        margin, y)
+      y += 4
+    }
+  }
   // Zelfde voorwaarden als op het scherm (ResultsPanel.tsx).
   if (result.yearsToRetirement > 0 && result.requiredCapital > 0 && opbouwTekort === null) {
     const tekortSlechtWeer = result.requiredCapital - mc.slechtWeerBijPensioen
     pdf.text(
-      `Bij slecht weer (1 op de 20 scenario's valt lager uit): ${eur(mc.slechtWeerBijPensioen)} op ${result.effectiveRetirementAge} jaar` +
+      `Bij slecht weer (1 op de 20 simulaties valt lager uit): ${eur(mc.slechtWeerBijPensioen)} op ${result.effectiveRetirementAge} jaar` +
       (tekortSlechtWeer > 0 ? `, ${eur(tekortSlechtWeer)} minder dan nodig.` : ', genoeg voor je doel.'),
       margin, y)
     y += 4

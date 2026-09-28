@@ -26,7 +26,7 @@ interface Props {
 
 // ---- Shared UI primitives ----
 
-function Toggle({ value, onChange, options }: {
+export function Toggle({ value, onChange, options }: {
   value: string; onChange: (v: string) => void
   options: { value: string; label: string }[]
 }) {
@@ -770,7 +770,7 @@ function RisicoprofielSection({ inputs, onChange }: Props) {
               onChange={v => onChange({ volatilityPost: v })} suffix="%" step={1} min={0} max={30} />
           </Field>
           <p className="text-xs text-body leading-relaxed">
-            Monte Carlo rekent met 2.000 scenario's rond dit gemiddelde rendement.
+            Monte Carlo rekent met 2.000 simulaties rond dit gemiddelde rendement.
           </p>
         </div>
       )}

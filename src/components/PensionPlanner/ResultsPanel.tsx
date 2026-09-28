@@ -30,6 +30,8 @@ interface Props {
   onRunMonteCarlo: () => void
   clientName: string
   onCloseSession: () => void
+  /** Het blok met scenario-schakelaars, direct boven het KPI-raster. */
+  scenarioPanel?: React.ReactNode
 }
 
 // Bedragen worden standaard mét teken getoond. Een negatief eindvermogen is een
@@ -133,7 +135,7 @@ function nominalIncome(realMonthly: number, inflation: number, yearsFromNow: num
   return realMonthly * Math.pow(1 + inflation / 100, yearsFromNow)
 }
 
-export function ResultsPanel({ inputs, result, berekening, mcStale, isCalculating, onRunMonteCarlo, clientName, onCloseSession }: Props) {
+export function ResultsPanel({ inputs, result, berekening, mcStale, isCalculating, onRunMonteCarlo, clientName, onCloseSession, scenarioPanel }: Props) {
   const mc = berekening?.mc ?? null
   const [showMonteCarlo, setShowMonteCarlo] = useState(true)
   const [isExportingPdf, setIsExportingPdf] = useState(false)
@@ -388,8 +390,10 @@ export function ResultsPanel({ inputs, result, berekening, mcStale, isCalculatin
           zekerheid, terwijl een plan dat precies uitkomt een kans van 50% heeft.
           Pensioenfondsen doen hetzelfde (50e percentiel als verwacht resultaat),
           en zetten er een slechtweerscenario naast; dat staat onder het raster. */}
+      {scenarioPanel}
+
       <p className="text-xs text-body leading-relaxed -mb-2">
-        Bij het verwachte rendement: de helft van de scenario's valt beter uit, de helft slechter.
+        Bij het verwachte rendement: de helft van de simulaties valt beter uit, de helft slechter.
       </p>
 
       {/* KPI-raster: haarlijnen tussen de cellen, precies één donkere cel */}
@@ -444,7 +448,7 @@ export function ResultsPanel({ inputs, result, berekening, mcStale, isCalculatin
 
       {slechtWeer && (
         <p className={`text-xs text-body leading-relaxed ${mcStale ? 'opacity-50' : ''}`}>
-          <span className="font-medium text-ink">Bij slecht weer</span> (één op de twintig scenario's
+          <span className="font-medium text-ink">Bij slecht weer</span> (één op de twintig simulaties
           valt lager uit) heb je op {slechtWeer.leeftijd} jaar{' '}
           <span className="font-numeric tabular text-ink">{eurAbs(slechtWeer.vermogen)}</span>
           {slechtWeer.tekort > 0
@@ -645,7 +649,7 @@ export function ResultsPanel({ inputs, result, berekening, mcStale, isCalculatin
             <TrendingUp size={40} strokeWidth={1} />
             <div className="text-center">
               <p className="text-sm font-medium">Klik op Bereken om de simulatie te starten</p>
-              <p className="text-xs mt-1 text-body">2.000 scenario's gebaseerd op opgegeven volatiliteit</p>
+              <p className="text-xs mt-1 text-body">2.000 simulaties gebaseerd op opgegeven volatiliteit</p>
             </div>
           </div>
         )}
@@ -711,8 +715,8 @@ export function ResultsPanel({ inputs, result, berekening, mcStale, isCalculatin
         het bedrag meestijgt of vast is. Een vast bedrag verliest elk jaar koopkracht; in de fasen
         hierboven staat dan wat het aan het begin van de fase waard is. Ook een meestijgend
         pensioen is niet gegarandeerd: indexatie kan achterblijven.
-        We berekenen in 2.000 scenario's met verschillende toekomstige rendementen hoe groot de kans is dat je jouw doel haalt.
-        De lijn in de grafiek is de mediaan van die 2.000 scenario's: de middelste uitkomst, niet het gemiddelde.
+        We berekenen in 2.000 simulaties met verschillende toekomstige rendementen hoe groot de kans is dat je jouw doel haalt.
+        De lijn in de grafiek is de mediaan van die 2.000 simulaties: de middelste uitkomst, niet het gemiddelde.
         Voor het gemiddelde rendement en de inflatie gaan we uit van wat er is ingevoerd.
         Dit is een indicatieve berekening en geen financieel advies.
         Voor goed advies raden wij aan een financieel planner te raadplegen:

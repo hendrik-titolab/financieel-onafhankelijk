@@ -20,7 +20,9 @@
 // opbouw van het doelbedrag (overbrugging, later geld, box 3), indexatiekeuze per
 // uitkering, Monte Carlo met een startwaarde uit de invoer, slechtweerwaarde
 // (5e percentiel) op de pensioendatum.
-export const MODEL_VERSIE = '2026.09.5'
+// 2026.09.6: risicoprofielen afgeleid uit gepubliceerde bronnen (aandelen 8,0%,
+// obligaties 3,5%) en scenario-schakelaars (28 september 2026).
+export const MODEL_VERSIE = '2026.09.6'
 
 /** Belastingjaar waarop fiscaleParameters.ts is gebaseerd. */
 export const PARAMETER_JAAR = 2026

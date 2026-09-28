@@ -59,7 +59,7 @@ const CustomTooltip = ({ active, payload, label }: {
     ? [
         { label: 'Mediaan', waarde: formatEur(r.a50) },
         { label: 'Middelste helft', waarde: `${formatEur(r.a25)} tot ${formatEur(r.a75)}` },
-        { label: '8 van de 10 scenario\u2019s', waarde: `${formatEur(r.a10)} tot ${formatEur(r.a90)}` },
+        { label: '8 van de 10 simulaties', waarde: `${formatEur(r.a10)} tot ${formatEur(r.a90)}` },
       ]
     : [{ label: 'Vermogen', waarde: formatEur(r.vermogen) }]
 
@@ -75,7 +75,7 @@ const CustomTooltip = ({ active, payload, label }: {
       {r.heeftMc && (
         <p className="text-[10px] text-body mt-2 leading-snug border-t border-line-soft pt-1.5">
           Standen bij deze leeftijd over 2.000 simulaties. Een band is geen enkel doorgerekend
-          levenspad: het beste scenario op je 70e hoeft niet hetzelfde te zijn als dat op je 85e.
+          levenspad: de beste simulatie op je 70e hoeft niet dezelfde te zijn als die op je 85e.
         </p>
       )}
     </div>

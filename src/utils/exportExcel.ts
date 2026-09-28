@@ -2,6 +2,7 @@ import type { BerekeningsSet } from '../types'
 import { N_SIMULATIONS } from './monteCarlo'
 import { slagingskansPercentage } from './slagingskansTekst'
 import { opbouwDoelbedrag, indexatieTekst } from './opbouwDoelbedrag'
+import { scenarioOmschrijving } from './scenarios'
 
 function eur(v: number) {
   return `€ ${Math.round(v).toLocaleString('nl-NL')}`
@@ -49,6 +50,9 @@ export async function exportToExcel(berekening: BerekeningsSet, clientName: stri
     ['Berekend op', new Date(peildatum).toLocaleString('nl-NL')],
     ['Modelversie', modelVersie],
     ['Fiscale cijfers belastingjaar', parameterJaar],
+    // De invoer hieronder is die waarmee gerekend is, dus ná de scenario's. Zonder
+    // deze regel lijkt een gehalveerde AOW een invoerfout.
+    ['Scenario (stresstest)', scenarioOmschrijving(berekening.scenarios).join(', ') || 'geen'],
     ['', ''],
     ['LEEFTIJD', ''],
     ['Huidige leeftijd', inputs.currentAge],
@@ -142,7 +146,15 @@ export async function exportToExcel(berekening: BerekeningsSet, clientName: stri
   // zit in het getalformaat, dat hieronder op de kolom wordt gezet.
   const resultRows: (string | number)[][] = [
     ['FINANCIËLE PLANNING - RESULTATEN', ''],
-    ['Bij het verwachte rendement: de helft van de scenario\'s valt beter uit, de helft slechter.', ''],
+    ['Bij het verwachte rendement: de helft van de simulaties valt beter uit, de helft slechter.', ''],
+    ...(berekening.basis
+      ? [
+          ['Scenario (stresstest, geen verwachting)', scenarioOmschrijving(berekening.scenarios).join(', ')],
+          ['Zonder scenario: benodigd eindvermogen', Math.round(berekening.basis.result.requiredCapital)],
+          ['Zonder scenario: verwacht eindvermogen', Math.round(berekening.basis.result.projectedCapital)],
+          ['Zonder scenario: kans op volledig inkomensdoel', slagingskansPercentage(berekening.basis.mc.successRate)],
+        ]
+      : []),
     ['', ''],
     ['Verwacht eindvermogen', Math.round(result.projectedCapital)],
     // De afleiding van het doelbedrag, met teken zodat een adviseur de kolom kan

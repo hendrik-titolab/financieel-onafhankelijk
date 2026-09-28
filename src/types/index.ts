@@ -2,6 +2,7 @@ export type IncomeType = 'bruto' | 'netto'
 export type ContributionFrequency = 'maandelijks' | 'jaarlijks'
 export type { RiskProfile } from '../config/risicoprofielen'
 import type { RiskProfile } from '../config/risicoprofielen'
+import type { Scenarios } from '../utils/scenarios'
 
 // A life event is a named one-time financial event (schenking, woningaankoop, erfenis…).
 export interface LifeEvent {
@@ -475,9 +476,21 @@ export interface SavedJaarruimte {
  * aangeraakt. De export leest uitsluitend hieruit.
  */
 export interface BerekeningsSet {
+  /**
+   * De invoer waarmee gerekend is, dus ná toepassing van de scenario's. Wat hier
+   * staat hoort bij result en mc; de export toont daarnaast welke scenario's aan
+   * stonden.
+   */
   inputs: PensionInputs
   result: PensionResult
   mc: MonteCarloResult
+  /** Welke scenario's aan stonden (zie utils/scenarios.ts). */
+  scenarios: Scenarios
+  /**
+   * Dezelfde berekening zonder scenario's, om te vergelijken. Null als er geen
+   * scenario aan stond: dan ís result de basis.
+   */
+  basis: { result: PensionResult; mc: MonteCarloResult } | null
   /** Wanneer er gerekend is, als ISO-string. */
   peildatum: string
   /** Versie van de rekenmodellen, zie config/modelVersie.ts. */
