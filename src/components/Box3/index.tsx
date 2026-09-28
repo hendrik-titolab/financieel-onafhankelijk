@@ -231,8 +231,9 @@ export function Box3Tool() {
             <h2 className="text-sm font-medium text-ink">Werkelijk rendement (tegenbewijs)</h2>
             <p className="text-xs text-body mt-1 leading-relaxed max-w-xl">
               Sinds de arresten van de Hoge Raad mag je aantonen dat je werkelijke rendement lager
-              was dan het forfait. Dan telt het werkelijke rendement. Let op: daarbij geldt géén
-              heffingsvrij vermogen, dus bij een kleiner vermogen pakt dit vaak juist ongunstiger uit.
+              was dan het forfait. Dan telt het werkelijke rendement. Duurder uitvallen kan niet: het
+              telt alleen als het gunstiger is. Maar daarbij geldt géén heffingsvrij vermogen, dus bij
+              een kleiner vermogen levert het vaak niets op.
             </p>
           </div>
           <label className="flex items-center gap-2 text-sm text-ink shrink-0 cursor-pointer">

@@ -194,6 +194,10 @@ formules en de uitkomsten moeten toetsbaar zijn. Zelfde criterium als bij `box3.
 
 ### Technische details, alle tools
 - Bedragen in reële koopkracht (na inflatie) tenzij expliciet "nominaal" vermeld.
+- **Elk bedrag- en percentageveld loopt via `parseBedrag()` (`utils/bedrag.ts`)**, meestal via
+  het gedeelde `NumberInput` uit `PensionPlanner/InputPanel.tsx`. Nooit `type="number"` met
+  `parseFloat`: dat leest "3.500" als 3,5. Op 28 september 2026 zat die fout nog in
+  bruto-netto, inflatie en jaarruimte, en gaf bijvoorbeeld € 4 netto bij € 3.500 bruto.
 - Geen server, geen database — alles client-side, hooguit `localStorage` voor
   downloadteller/opgeslagen jaarruimteberekeningen/PWA-installatiebanner-status.
 - PWA geconfigureerd (`src/integrations/pwa.mjs`, eigen minimale integratie, zie het

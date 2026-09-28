@@ -4,6 +4,8 @@ import { ChevronDown, ChevronUp, Info } from 'lucide-react'
 // draaien zonder deze component te renderen (bevinding A21).
 import { P, brutoNaarNetto, nettoNaarBruto } from '../../utils/brutoNetto'
 import type { BerekeningResultaat } from '../../utils/brutoNetto'
+import { parseBedrag } from '../../utils/bedrag'
+import { PARAMETER_PEILDATUM } from '../../config/modelVersie'
 
 // ── Format helpers ────────────────────────────────────────────────────────────
 
@@ -21,7 +23,10 @@ export function BrutoNettoCalculator() {
   const [invoer, setInvoer] = useState('')
   const [open, setOpen] = useState(false)
 
-  const bedrag = parseFloat(invoer.replace(',', '.')) || 0
+  // Via de gedeelde parser: parseFloat las "3.500" als 3,5 en toonde dan € 4 netto
+  // per maand, zonder melding (review 28 september 2026).
+  const gelezen = parseBedrag(invoer)
+  const bedrag = gelezen.waarde !== null && gelezen.waarde > 0 ? gelezen.waarde : 0
   const jaarBedrag = periode === 'maand' ? bedrag * 12 : bedrag
 
   const r = useMemo<BerekeningResultaat | null>(() => {
@@ -89,6 +94,7 @@ export function BrutoNettoCalculator() {
               onChange={(e) => setInvoer(e.target.value)}
               placeholder="0"
               className="input-field pl-8 text-lg"
+              aria-invalid={gelezen.fout !== null}
             />
           </div>
           <select
@@ -100,6 +106,9 @@ export function BrutoNettoCalculator() {
             <option value="jaar">per jaar</option>
           </select>
         </div>
+        {gelezen.fout && (
+          <p role="status" className="text-xs text-signal mt-1 leading-relaxed">{gelezen.fout}</p>
+        )}
       </div>
 
       {/* Uitkomst */}
@@ -247,12 +256,12 @@ export function BrutoNettoCalculator() {
                       <li>Opbouw {pct(P.ak.pct1, 3)} tot {eur(P.ak.knik1)}</li>
                       <li>Opbouw {pct(P.ak.pct2, 3)} tot {eur(P.ak.knik2)}</li>
                       <li>Opbouw {pct(P.ak.pct3, 2)} tot {eur(P.ak.knik3)} (maximum {eur(P.ak.max)})</li>
-                      <li>Afbouw {pct(P.ak.afbouwPct, 3)} vanaf {eur(P.ak.afbouwVanaf)}, nihil vanaf {eur(P.ak.afbouwVanaf + P.ak.max / P.ak.afbouwPct)}</li>
+                      <li>Afbouw {pct(P.ak.afbouwPct, 3)} vanaf {eur(P.ak.afbouwVanaf)}, nihil vanaf {eur(Math.ceil(P.ak.afbouwVanaf + P.ak.max / P.ak.afbouwPct))}</li>
                     </ul>
                   </div>
                   <div className="text-body pt-1 border-t border-line">
-                    Bron: Belastingdienst (Nieuwsbrief Loonheffingen {P.jaar}) en Belastingplan {P.jaar}.
-                    Peildatum: juni {P.jaar}. Vereenvoudigde berekening: geen pensioenpremie,
+                    Bron: Belastingdienst, tarieven en heffingskortingen {P.jaar}, nagelopen op{' '}
+                    {PARAMETER_PEILDATUM}. Vereenvoudigde berekening: geen pensioenpremie,
                     vakantiegeld, bijzondere beloningen, aftrekposten of toeslagen. Aan deze
                     tool kunnen geen rechten worden ontleend.
                   </div>

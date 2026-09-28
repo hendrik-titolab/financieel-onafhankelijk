@@ -4,6 +4,9 @@ import {
   Tooltip, ResponsiveContainer, Legend,
 } from 'recharts'
 import { Info, TrendingDown, TrendingUp } from 'lucide-react'
+// Gedeeld invoerveld met Nederlandse notatie. Hier stonden type="number"-velden met
+// parseFloat, waardoor "25.000" als 25 werd gelezen (review 28 september 2026).
+import { NumberInput } from '../PensionPlanner/InputPanel'
 
 // ---- Presentatie-helpers (NL-notatie) ----
 
@@ -33,7 +36,7 @@ interface JaarRij {
   jaar: number
   nominaal: number
   koopkracht: number
-  verlies: number // nominaal − koopkracht (het deel dat inflatie "opeet")
+  uitgehold: number // nominaal − koopkracht: wat inflatie van het saldo op de rekening afhaalt
 }
 
 interface Uitkomst {
@@ -56,7 +59,7 @@ function bereken({ startbedrag, inflatie, spaarrente, looptijd }: Inputs): Uitko
   for (let t = 0; t <= jaar; t++) {
     const nominaal = s * Math.pow(1 + r, t)
     const koopkracht = nominaal / Math.pow(1 + i, t)
-    jaren.push({ jaar: t, nominaal, koopkracht, verlies: Math.max(0, nominaal - koopkracht) })
+    jaren.push({ jaar: t, nominaal, koopkracht, uitgehold: Math.max(0, nominaal - koopkracht) })
   }
 
   const nominaalEind = jaren[jaren.length - 1].nominaal
@@ -116,7 +119,7 @@ const CustomTooltip = ({ active, payload, label }: {
         <span className="text-body font-mono">{eur(koopkracht)}</span>
       </div>
       <div className="flex items-center justify-between gap-4 py-0.5 border-t border-line-soft mt-1 pt-1">
-        <span className="font-medium text-signal">Koopkrachtverlies</span>
+        <span className="font-medium text-signal">Uitgehold door inflatie</span>
         <span className="text-body font-mono">{eur(Math.max(0, nominaal - koopkracht))}</span>
       </div>
     </div>
@@ -148,41 +151,16 @@ export function InflatieCalculator() {
           htmlFor="startbedrag"
           help="Het bedrag dat je nu op je spaarrekening hebt staan."
         >
-          <div className="relative flex items-center">
-            <span className="absolute left-3 text-body text-sm">€</span>
-            <input
-              id="startbedrag"
-              type="number"
-              min={0}
-              step={500}
-              value={startbedrag}
-              onChange={e => setStartbedrag(Math.max(0, parseFloat(e.target.value) || 0))}
-              onFocus={e => e.target.select()}
-              className="input-field pl-7"
-            />
-          </div>
+          <NumberInput prefix="€" id="startbedrag" value={startbedrag} onChange={setStartbedrag} min={0} max={100_000_000} />
         </Field>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field
             label="Verwachte inflatie"
             htmlFor="inflatie"
-            help="Gemiddelde prijsstijging per jaar. Historisch vaak rond 2–3%."
+            help="Gemiddelde prijsstijging per jaar. Het Nederlandse langjarige gemiddelde ligt rond 3,5% (CBS, 1960-2025)."
           >
-            <div className="relative flex items-center">
-              <input
-                id="inflatie"
-                type="number"
-                min={0}
-                max={20}
-                step={0.1}
-                value={inflatie}
-                onChange={e => setInflatie(Math.min(20, Math.max(0, parseFloat(e.target.value) || 0)))}
-                onFocus={e => e.target.select()}
-                className="input-field pr-8"
-              />
-              <span className="absolute right-3 text-body text-sm">%</span>
-            </div>
+            <NumberInput suffix="%" id="inflatie" value={inflatie} onChange={setInflatie} min={0} max={20} />
           </Field>
 
           <Field
@@ -190,20 +168,7 @@ export function InflatieCalculator() {
             htmlFor="spaarrente"
             help="De rente die je bank je per jaar geeft over je spaargeld."
           >
-            <div className="relative flex items-center">
-              <input
-                id="spaarrente"
-                type="number"
-                min={0}
-                max={20}
-                step={0.1}
-                value={spaarrente}
-                onChange={e => setSpaarrente(Math.min(20, Math.max(0, parseFloat(e.target.value) || 0)))}
-                onFocus={e => e.target.select()}
-                className="input-field pr-8"
-              />
-              <span className="absolute right-3 text-body text-sm">%</span>
-            </div>
+            <NumberInput suffix="%" id="spaarrente" value={spaarrente} onChange={setSpaarrente} min={0} max={20} />
           </Field>
         </div>
 
@@ -254,7 +219,8 @@ export function InflatieCalculator() {
       <div className="card">
         <h2 className="text-sm font-medium text-body mb-1">Nominaal saldo vs. koopkracht</h2>
         <p className="text-xs text-body mb-4">
-          Het gekleurde vlak tussen de lijnen is het deel van je saldo dat door inflatie aan waarde inboet.
+          Het gekleurde vlak tussen de lijnen is wat inflatie van het saldo op je rekening afhaalt.
+          Dat is iets anders dan je koopkrachtverlies hieronder: dat vergelijkt met je startbedrag.
         </p>
         <ResponsiveContainer width="100%" height={280}>
           <ComposedChart data={r.jaren} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
@@ -294,12 +260,12 @@ export function InflatieCalculator() {
             />
             {/* Bovenste band = koopkrachtverlies, stapelt tot het nominale saldo. */}
             <Area
-              dataKey="verlies"
+              dataKey="uitgehold"
               stackId="saldo"
               stroke="none"
               fill="#A85A3C"
               fillOpacity={0.35}
-              name="Koopkrachtverlies"
+              name="Uitgehold door inflatie"
               dot={false}
             />
             {/* Lijn op het nominale saldo (bovenrand van de stapel). */}
@@ -330,17 +296,17 @@ export function InflatieCalculator() {
           highlight
         />
         <ResultRow
-          label="Koopkrachtverlies"
+          label={stijgt ? 'Koopkrachtwinst ten opzichte van nu' : 'Koopkrachtverlies ten opzichte van nu'}
           value={`${eur(Math.abs(r.verliesEuro))} (${pct(Math.abs(r.verliesPct))})`}
           tone={daalt ? 'negatief' : stijgt ? 'positief' : undefined}
         />
         <ResultRow
-          label="Netto reëel rendement"
+          label="Reëel rendement"
           value={`${r.reeelRendement >= 0 ? '+' : '−'}${pct(Math.abs(r.reeelRendement))} p.j.`}
           tone={r.reeelRendement < 0 ? 'negatief' : r.reeelRendement > 0 ? 'positief' : undefined}
         />
         <p className="text-xs text-body pt-1">
-          Netto reëel rendement = (1 + spaarrente) ÷ (1 + inflatie) − 1. Zolang je spaarrente lager is
+          Reëel rendement = (1 + spaarrente) ÷ (1 + inflatie) − 1, vóór belasting. Zolang je spaarrente lager is
           dan de inflatie, daalt je koopkracht ondanks een groeiend saldo.
         </p>
       </div>

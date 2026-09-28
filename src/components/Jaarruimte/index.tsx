@@ -8,6 +8,10 @@ import {
 } from '../../utils/jaarruimte'
 import { MODEL_VERSIE, PARAMETER_JAAR, PARAMETER_PEILDATUM, modelStempel } from '../../config/modelVersie'
 import { parseBedrag, formatBedrag } from '../../utils/bedrag'
+// Gedeeld invoerveld met Nederlandse notatie. Inkomen, factor A en al ingelegd waren
+// type="number"-velden met parseFloat: "65.000" werd 65 en de jaarruimte € 0
+// (review 28 september 2026).
+import { NumberInput } from '../PensionPlanner/InputPanel'
 
 const STORAGE_KEY = 'jaarruimte_berekeningen'
 
@@ -569,7 +573,7 @@ export function JaarruimteTab() {
       return
     }
     if (!inputs.clientName.trim()) {
-      alert('Vul een klantnaam in om de berekening op te slaan.')
+      alert('Geef de berekening een naam om hem op te slaan.')
       return
     }
     const entry: SavedJaarruimte = {
@@ -665,18 +669,18 @@ export function JaarruimteTab() {
           )}
 
           <div>
-            <label className="label">Klantnaam</label>
+            <label className="label">Naam berekening</label>
             <input
               type="text"
               value={inputs.clientName}
               onChange={e => set('clientName', e.target.value)}
-              placeholder="Naam klant"
+              placeholder="Bijvoorbeeld je eigen naam of die van een klant"
               className="input-field"
             />
           </div>
 
           <div>
-            <label className="label">Adviseur</label>
+            <label className="label">Adviseur (optioneel)</label>
             <input
               type="text"
               value={inputs.adviseurNaam}
@@ -691,16 +695,7 @@ export function JaarruimteTab() {
             <label className="label">
               Bruto jaarinkomen {inputs.year - 1}
             </label>
-            <div className="relative flex items-center">
-              <span className="absolute left-3 text-body text-sm">€</span>
-              <input
-                type="number"
-                value={inputs.income}
-                min={0} step={500}
-                onChange={e => set('income', parseFloat(e.target.value) || 0)}
-                className="input-field pl-7"
-              />
-            </div>
+            <NumberInput prefix="€" value={inputs.income} onChange={v => set('income', v)} min={0} max={100_000_000} />
             <p className="text-xs text-body mt-1">
               Bron: jaaropgave werkgever {inputs.year - 1} of aangifte inkomstenbelasting {inputs.year - 1} (box 1, loon)
             </p>
@@ -753,16 +748,7 @@ export function JaarruimteTab() {
           {inputs.pensioenType === 'db' && (
             <div>
               <label className="label">Factor A (pensioenaangroei {inputs.year - 1})</label>
-              <div className="relative flex items-center">
-                <span className="absolute left-3 text-body text-sm">€</span>
-                <input
-                  type="number"
-                  value={inputs.factorA}
-                  min={0} step={100}
-                  onChange={e => set('factorA', parseFloat(e.target.value) || 0)}
-                  className="input-field pl-7"
-                />
-              </div>
+              <NumberInput prefix="€" value={inputs.factorA} onChange={v => set('factorA', v)} min={0} max={1_000_000} />
               <p className="text-xs text-body mt-1">
                 Bron: UPO {inputs.year - 1} (jaarlijks pensioenoverzicht), rubriek "pensioenaangroei" of "toename pensioenaanspraak", in €/jaar.
               </p>
@@ -815,18 +801,9 @@ export function JaarruimteTab() {
           {/* Al ingelegd dit jaar */}
           <div className="border-t border-line-soft pt-3">
             <label className="label">Al ingelegd dit jaar (lijfrente)</label>
-            <div className="relative flex items-center">
-              <span className="absolute left-3 text-body text-sm">€</span>
-              <input
-                type="number"
-                value={inputs.alIngelegd}
-                min={0} step={100}
-                onChange={e => set('alIngelegd', parseFloat(e.target.value) || 0)}
-                className="input-field pl-7"
-              />
-            </div>
+            <NumberInput prefix="€" value={inputs.alIngelegd} onChange={v => set('alIngelegd', v)} min={0} max={100_000_000} />
             <p className="text-xs text-body mt-1">
-              Bedrag dat je klant dit jaar al heeft ingelegd bij de verzekeraar.
+              Wat er dit jaar al is ingelegd bij de verzekeraar of bank.
             </p>
           </div>
 
@@ -912,13 +889,13 @@ export function JaarruimteTab() {
           </div>
 
           <InfoBox>
-            {getJaarruimteParamsNote(inputs.year)}
+            {getJaarruimteParamsNote(inputs.year, inputs.pensioenType)}
           </InfoBox>
 
           {parametersVoorlopig && (
             <WarningBox>
               De parameters voor {inputs.year} zijn schattingen op basis van indexatie. Controleer de
-              definitieve bedragen op belastingdienst.nl voordat je de klant adviseert.
+              definitieve bedragen op belastingdienst.nl voordat je er een beslissing op baseert.
             </WarningBox>
           )}
 
