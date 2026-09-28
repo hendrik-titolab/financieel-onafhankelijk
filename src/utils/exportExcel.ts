@@ -1,4 +1,6 @@
-import type { BerekeningsSet } from '../types'
+import type { BerekeningsSet, PensionInputs, PensionResult, MonteCarloResult } from '../types'
+import { vergelijkingsRegels } from './rapportVergelijking'
+import type { Waarde } from './rapportVergelijking'
 import { N_SIMULATIONS } from './monteCarlo'
 import { slagingskansPercentage } from './slagingskansTekst'
 import { opbouwDoelbedrag, indexatieTekst } from './opbouwDoelbedrag'
@@ -28,32 +30,13 @@ function euroKolommen(ws: import('exceljs').Worksheet, kolommen: number[]) {
 }
 
 /**
- * Schrijft een afgeronde berekening weg. Neemt bewust de hele BerekeningsSet en
- * niet drie losse argumenten: zo kan er geen invoer van nu met een simulatie van
- * daarnet in een bestand belanden (audit 7 september 2026, bevinding 6).
+ * De invoer als rijen van twee kolommen: label en waarde. Apart, zodat de export bij
+ * een scenario de eigen invoer en de invoer met scenario naast elkaar kan zetten.
+ * Beide lijsten hebben altijd dezelfde rijen, want een scenario verandert alleen
+ * waarden, geen partner of eenmalige bedragen.
  */
-export async function exportToExcel(berekening: BerekeningsSet, clientName: string) {
-  const { inputs, result, mc, peildatum, modelVersie, parameterJaar } = berekening
-  // exceljs is zwaar en alleen nodig bij export → dynamisch laden (code-splitting).
-  // De kant-en-klare browser-bundel gebruiken (niet de Node-hoofdingang), anders
-  // sleept de build fs/stream-polyfills mee.
-  const ExcelJS = (await import('exceljs/dist/exceljs.js')).default
-  const wb = new ExcelJS.Workbook()
-  const naam = clientName.trim() || 'Naamloze berekening'
-
-  // --- Sheet 1: Invoer ---
-  const inputRows = [
-    ['FINANCIËLE PLANNING - INVOER', ''],
-    ['Berekening', naam],
-    // De peildatum van de berekening, niet het moment van downloaden. Die twee
-    // kunnen uren schelen en het rapport hoort te zeggen wanneer er gerekend is.
-    ['Berekend op', new Date(peildatum).toLocaleString('nl-NL')],
-    ['Modelversie', modelVersie],
-    ['Fiscale cijfers belastingjaar', parameterJaar],
-    // De invoer hieronder is die waarmee gerekend is, dus ná de scenario's. Zonder
-    // deze regel lijkt een gehalveerde AOW een invoerfout.
-    ['Scenario (stresstest)', scenarioOmschrijving(berekening.scenarios).join(', ') || 'geen'],
-    ['', ''],
+function invoerRijen(inputs: PensionInputs): (string | number)[][] {
+  return [
     ['LEEFTIJD', ''],
     ['Huidige leeftijd', inputs.currentAge],
     ['Pensioenleeftijd', inputs.retirementAge],
@@ -116,10 +99,80 @@ export async function exportToExcel(berekening: BerekeningsSet, clientName: stri
     ['Totaal inkomsten', (inputs.lifeEvents ?? []).filter(e => e.amount > 0).reduce((s, e) => s + e.amount, 0)],
     ['Totaal uitgaven', (inputs.lifeEvents ?? []).filter(e => e.amount < 0).reduce((s, e) => s + e.amount, 0)],
   ]
+}
+
+/** Een vergelijkingswaarde als cel: euro's als getal, de rest als tekst. */
+function celWaarde(w: Waarde): string | number {
+  return w.soort === 'eur' ? Math.round(w.bedrag) : w.soort === 'kans' ? slagingskansPercentage(w.pct) : w.tekst
+}
+
+/** Een jaartabel als rijen, voor zowel de berekening met als zonder scenario. */
+function jaarRijen(yearData: PensionResult['yearData']): (string | number)[][] {
+  const headers = ['Leeftijd', 'Jaar', 'Fase', 'Vermogen bij vast rendement (€)',
+    'Gewenst uit vermogen (€/mnd)', 'Betaald uit vermogen (€/mnd)', 'Ongedekt tekort (€/mnd)',
+    'AOW (€/mnd)', 'Werkgever (€/mnd)', 'Lijfrente (€/mnd)', 'Totaal inkomen (€/mnd)']
+  return [headers, ...yearData.map(d => [
+    d.age,
+    d.year,
+    d.phase === 'opbouw' ? 'Opbouw' : 'Uitkering',
+    Math.round(Math.max(0, d.capital)),
+    Math.round(d.desiredFromCapital),
+    Math.round(d.incomeFromCapital),
+    Math.round(d.shortfall),
+    Math.round(d.aowIncome),
+    Math.round(d.employerIncome),
+    Math.round(d.lijfrenteIncome),
+    Math.round(d.totalIncome),
+  ])]
+}
+
+/** De percentielen van de simulatie, om het jaar. */
+function mcRijen(percentileData: MonteCarloResult['percentileData']): (string | number)[][] {
+  const headers = ['Leeftijd', 'P10 (€)', 'P25 (€)', 'P50 mediaan (€)', 'P75 (€)', 'P90 (€)']
+  return [headers, ...percentileData
+    .filter((_, i) => i % 2 === 0)
+    .map(d => [d.age, Math.round(d.p10), Math.round(d.p25), Math.round(d.p50), Math.round(d.p75), Math.round(d.p90)])]
+}
+
+/**
+ * Schrijft een afgeronde berekening weg. Neemt bewust de hele BerekeningsSet en
+ * niet drie losse argumenten: zo kan er geen invoer van nu met een simulatie van
+ * daarnet in een bestand belanden (audit 7 september 2026, bevinding 6).
+ */
+export async function exportToExcel(berekening: BerekeningsSet, clientName: string) {
+  const { inputs, result, mc, peildatum, modelVersie, parameterJaar } = berekening
+  // exceljs is zwaar en alleen nodig bij export → dynamisch laden (code-splitting).
+  // De kant-en-klare browser-bundel gebruiken (niet de Node-hoofdingang), anders
+  // sleept de build fs/stream-polyfills mee.
+  const ExcelJS = (await import('exceljs/dist/exceljs.js')).default
+  const wb = new ExcelJS.Workbook()
+  const naam = clientName.trim() || 'Naamloze berekening'
+  const basis = berekening.basis
+
+  // --- Sheet 1: Invoer ---
+  const inputRows = [
+    ['FINANCIËLE PLANNING - INVOER', ''],
+    ['Berekening', naam],
+    // De peildatum van de berekening, niet het moment van downloaden. Die twee
+    // kunnen uren schelen en het rapport hoort te zeggen wanneer er gerekend is.
+    ['Berekend op', new Date(peildatum).toLocaleString('nl-NL')],
+    ['Modelversie', modelVersie],
+    ['Fiscale cijfers belastingjaar', parameterJaar],
+    ['Scenario (stresstest)', scenarioOmschrijving(berekening.scenarios).join(', ') || 'geen'],
+    ['', ''],
+    // Met een scenario de eigen invoer en de invoer met scenario naast elkaar, zodat
+    // te zien is wat het scenario veranderde (besluit Hendrik 28 september 2026).
+    ...(basis
+      ? [
+          ['', 'Jouw invoer', 'Met scenario'],
+          ...invoerRijen(basis.inputs).map((rij, i) => [...rij, invoerRijen(inputs)[i][1]]),
+        ]
+      : invoerRijen(inputs)),
+  ]
 
   const ws1 = wb.addWorksheet('Invoer')
   ws1.addRows(inputRows)
-  setColumnWidths(ws1, [42, 24])
+  setColumnWidths(ws1, [42, 24, 24])
 
   // --- Sheet 2: Resultaten ---
   const phaseRows: (string | number)[][] = []
@@ -147,12 +200,17 @@ export async function exportToExcel(berekening: BerekeningsSet, clientName: stri
   const resultRows: (string | number)[][] = [
     ['FINANCIËLE PLANNING - RESULTATEN', ''],
     ['Bij het verwachte rendement: de helft van de simulaties valt beter uit, de helft slechter.', ''],
-    ...(berekening.basis
+    // Met een scenario eerst beide uitkomsten naast elkaar; de uitwerking daaronder
+    // (opbouw, fasen, simulatie) gaat over het scenario, zoals op het scherm. De
+    // jaartabel en de simulatie zonder scenario staan op eigen tabbladen.
+    ...(basis
       ? [
           ['Scenario (stresstest, geen verwachting)', scenarioOmschrijving(berekening.scenarios).join(', ')],
-          ['Zonder scenario: benodigd eindvermogen', Math.round(berekening.basis.result.requiredCapital)],
-          ['Zonder scenario: verwacht eindvermogen', Math.round(berekening.basis.result.projectedCapital)],
-          ['Zonder scenario: kans op volledig inkomensdoel', slagingskansPercentage(berekening.basis.mc.successRate)],
+          ['', ''],
+          ['VERGELIJKING', 'Jouw invoer', 'Met scenario'],
+          ...vergelijkingsRegels(basis, { inputs, result, mc }).map(r => [r.label, celWaarde(r.zonder), celWaarde(r.met)]),
+          ['', ''],
+          ['UITWERKING MET SCENARIO', ''],
         ]
       : []),
     ['', ''],
@@ -196,50 +254,35 @@ export async function exportToExcel(berekening: BerekeningsSet, clientName: stri
   const ws2 = wb.addWorksheet('Resultaten')
   ws2.addRows(resultRows)
   setColumnWidths(ws2, [46, 22, 26, 20])
-  euroKolommen(ws2, [2])
+  euroKolommen(ws2, [2, 3])
 
-  // --- Sheet 3: Jaarlijkse Prognose ---
+  // --- Jaarlijkse prognose en Monte Carlo ---
   // Gewenst, betaald en ongedekt tekort staan apart. De kolom "Eigen kapitaal"
   // toonde eerder het gewenste bedrag ook als de pot leeg was (bevinding 5).
-  const headers = ['Leeftijd', 'Jaar', 'Fase', 'Vermogen bij vast rendement (€)',
-    'Gewenst uit vermogen (€/mnd)', 'Betaald uit vermogen (€/mnd)', 'Ongedekt tekort (€/mnd)',
-    'AOW (€/mnd)', 'Werkgever (€/mnd)', 'Lijfrente (€/mnd)', 'Totaal inkomen (€/mnd)']
-  const dataRows = result.yearData.map(d => [
-    d.age,
-    d.year,
-    d.phase === 'opbouw' ? 'Opbouw' : 'Uitkering',
-    Math.round(Math.max(0, d.capital)),
-    Math.round(d.desiredFromCapital),
-    Math.round(d.incomeFromCapital),
-    Math.round(d.shortfall),
-    Math.round(d.aowIncome),
-    Math.round(d.employerIncome),
-    Math.round(d.lijfrenteIncome),
-    Math.round(d.totalIncome),
-  ])
+  // Met een scenario krijgt de berekening zonder scenario eigen tabbladen, zodat
+  // beide uitkomsten volledig in het bestand staan.
+  const jaarblad = (titel: string, yearData: PensionResult['yearData']) => {
+    const ws = wb.addWorksheet(titel)
+    ws.addRows(jaarRijen(yearData))
+    setColumnWidths(ws, [10, 8, 12, 30, 24, 24, 22, 14, 18, 16, 22])
+    euroKolommen(ws, [4, 5, 6, 7, 8, 9, 10, 11])
+  }
+  const mcBlad = (titel: string, percentileData: MonteCarloResult['percentileData']) => {
+    const ws = wb.addWorksheet(titel)
+    ws.addRows(mcRijen(percentileData))
+    setColumnWidths(ws, Array(6).fill(18))
+    euroKolommen(ws, [2, 3, 4, 5, 6])
+  }
 
-  const ws3 = wb.addWorksheet('Jaarlijkse Prognose')
-  ws3.addRows([headers, ...dataRows])
-  setColumnWidths(ws3, [10, 8, 12, 30, 24, 24, 22, 14, 18, 16, 22])
-  euroKolommen(ws3, [4, 5, 6, 7, 8, 9, 10, 11])
-
-  // --- Sheet 4: Monte Carlo Percentielen ---
-  const mcHeaders = ['Leeftijd', 'P10 (€)', 'P25 (€)', 'P50 mediaan (€)', 'P75 (€)', 'P90 (€)']
-  const mcRows = mc.percentileData
-    .filter((_, i) => i % 2 === 0)
-    .map(d => [
-      d.age,
-      Math.round(d.p10),
-      Math.round(d.p25),
-      Math.round(d.p50),
-      Math.round(d.p75),
-      Math.round(d.p90),
-    ])
-
-  const ws4 = wb.addWorksheet('Monte Carlo')
-  ws4.addRows([mcHeaders, ...mcRows])
-  setColumnWidths(ws4, Array(6).fill(18))
-  euroKolommen(ws4, [2, 3, 4, 5, 6])
+  if (basis) {
+    jaarblad('Prognose zonder scenario', basis.result.yearData)
+    jaarblad('Prognose met scenario', result.yearData)
+    mcBlad('Monte Carlo zonder scenario', basis.mc.percentileData)
+    mcBlad('Monte Carlo met scenario', mc.percentileData)
+  } else {
+    jaarblad('Jaarlijkse Prognose', result.yearData)
+    mcBlad('Monte Carlo', mc.percentileData)
+  }
 
   const filename = `financiele-planning_${naam.replace(/\s/g, '_')}_${peildatum.slice(0, 10)}.xlsx`
 

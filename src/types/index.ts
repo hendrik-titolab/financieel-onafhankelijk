@@ -487,10 +487,11 @@ export interface BerekeningsSet {
   /** Welke scenario's aan stonden (zie utils/scenarios.ts). */
   scenarios: Scenarios
   /**
-   * Dezelfde berekening zonder scenario's, om te vergelijken. Null als er geen
-   * scenario aan stond: dan ís result de basis.
+   * Dezelfde berekening zonder scenario's, om te vergelijken, met de eigen invoer.
+   * Null als er geen scenario aan stond: dan ís inputs de eigen invoer en result de
+   * basis.
    */
-  basis: { result: PensionResult; mc: MonteCarloResult } | null
+  basis: { inputs: PensionInputs; result: PensionResult; mc: MonteCarloResult } | null
   /** Wanneer er gerekend is, als ISO-string. */
   peildatum: string
   /** Versie van de rekenmodellen, zie config/modelVersie.ts. */

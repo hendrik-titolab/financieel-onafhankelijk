@@ -199,7 +199,7 @@ export function PensionPlanner({ clientName, onCloseSession }: Props) {
         // Met een scenario ook de basis doorrekenen, zodat de vergelijking op het
         // scherm en in de export uit dezelfde afgeronde berekening komt.
         basis: heeftScenario(scenarios)
-          ? { result: calculatePension(inputs), mc: runMonteCarlo(inputs) }
+          ? { inputs, result: calculatePension(inputs), mc: runMonteCarlo(inputs) }
           : null,
         peildatum: new Date().toISOString(),
         modelVersie: MODEL_VERSIE,

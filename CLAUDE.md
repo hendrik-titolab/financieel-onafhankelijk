@@ -402,10 +402,12 @@ premie in de werkgeversregeling, dus werkgeversdeel én eigen bijdrage. Het veld
 
 - ~~Rendementsparameters van de risicoprofielen (punt 9).~~ Opgelost op 28 september 2026,
   zie de FO-planner hierboven. Wat nog openstaat: de uitlegartikelen noemen mogelijk nog de
-  oude profielpercentages (bewust later, besluit Hendrik). En in `fiscale-cijfers.json`
-  beschrijven `uitgangspunten.kostenVanBeleggen` en `uitgangspunten.indexatiePensioen` nog
-  het oude gedrag (rendement netto, indexatie impliciet volledig); de tool doet sinds
-  september anders.
+  oude profielpercentages en gebruiken "scenario's" voor de Monte Carlo-simulaties (bewust
+  later, besluit Hendrik). De notities `uitgangspunten.kostenVanBeleggen` en
+  `uitgangspunten.indexatiePensioen` in `fiscale-cijfers.json` zijn op 28 september 2026
+  bijgewerkt naar het huidige gedrag van de tool. `uitgangspunten.box3InRekentools` zegt
+  nog dat box 3 geen onderdeel is van de bestaande tools; dat klopt niet meer, maar is
+  nog niet aangepast.
 - **Lokaal draaien alleen `tsc` en `vitest`** op Hendriks Windows-machine. Een Application
   Control-beleid blokkeert native bestanden: eerst dat van de MDX-plugin
   (`satteri_napi.win32-x64-msvc.node`, 22 september 2026), sinds 28 september 2026 ook de
