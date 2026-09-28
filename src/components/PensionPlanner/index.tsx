@@ -7,6 +7,7 @@ import { runMonteCarlo } from '../../utils/monteCarlo'
 import { MODEL_VERSIE, PARAMETER_JAAR } from '../../config/modelVersie'
 import { box3DrukAfgerond } from '../../utils/box3'
 import { AOW_NETTO } from '../../utils/pensionCalc'
+import { RISICOPROFIELEN } from '../../config/risicoprofielen'
 import { InputPanel } from './InputPanel'
 import { ResultsPanel } from './ResultsPanel'
 
@@ -17,8 +18,10 @@ const DEFAULT_INPUTS: PensionInputs = {
   currentCapital: 100000,
   monthlyContribution: 0,
   contributionFrequency: 'maandelijks',
-  returnBeforeRetirement: 6,
-  returnAfterRetirement: 4,
+  // Uit het profiel dat hieronder als riskProfile staat, niet als losse getallen:
+  // die liepen anders uit de pas zodra de profielen in de fiscale bron veranderen.
+  returnBeforeRetirement: RISICOPROFIELEN.neutraal.rendementVoor,
+  returnAfterRetirement: RISICOPROFIELEN.neutraal.rendementNa,
   inflation: 3.0,
   // Kosten standaard nul: die hangen af van het product en zijn niet uit de invoer
   // af te leiden. De gebruiker vult ze zelf in; het scherm zegt erbij dat de
@@ -66,8 +69,8 @@ const DEFAULT_INPUTS: PensionInputs = {
   lijfrenteEindLeeftijd: 87,
   lijfrenteIndexatie: 'vast',
   lifeEvents: [],
-  volatilityPre: 12,
-  volatilityPost: 8,
+  volatilityPre: RISICOPROFIELEN.neutraal.volatiliteitVoor,
+  volatilityPost: RISICOPROFIELEN.neutraal.volatiliteitNa,
   riskProfile: 'neutraal',
   useCustomReturns: false,
 }
