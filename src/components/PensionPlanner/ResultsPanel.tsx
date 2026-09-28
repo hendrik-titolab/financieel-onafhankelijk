@@ -5,7 +5,7 @@ import { WealthChart } from './WealthChart'
 import { exportToExcel } from '../../utils/exportExcel'
 import { exportToPDF } from '../../utils/exportPDF'
 import { FEEDBACK_URL } from '../../config/site'
-import { FREE_DOWNLOAD_LIMIT, getDownloadCount, incrementDownloadCount } from '../../utils/downloadLimit'
+import { FREE_DOWNLOAD_LIMIT, getDownloadCount, incrementDownloadCount, verwerkDownloadParameter, downloadsOnbeperkt } from '../../utils/downloadLimit'
 import { marginaalTarief, aowNettoNaarBruto } from '../../utils/pensionCalc'
 import { SLAGINGSKANS_LABEL, slagingskansPercentage } from '../../utils/slagingskansTekst'
 import { modelStempel } from '../../config/modelVersie'
@@ -143,11 +143,12 @@ export function ResultsPanel({ inputs, result, berekening, mcStale, isCalculatin
   const [confirmingClose, setConfirmingClose] = useState(false)
   const [showIntro, setShowIntro] = useState(true)
   const [downloadCount, setDownloadCount] = useState(() => getDownloadCount())
+  const [onbeperkt] = useState(() => { verwerkDownloadParameter(); return downloadsOnbeperkt() })
   const [installBannerDismissed, setInstallBannerDismissed] = useState(
     () => typeof window !== 'undefined' && window.localStorage.getItem(INSTALL_BANNER_DISMISSED_KEY) === 'true'
   )
   const { canInstall: canInstallApp } = useInstallPrompt()
-  const limitReached = downloadCount >= FREE_DOWNLOAD_LIMIT
+  const limitReached = !onbeperkt && downloadCount >= FREE_DOWNLOAD_LIMIT
 
   // Zicht op wie tegen de downloadlimiet aanloopt, los van hoeveel er daadwerkelijk
   // gedownload zijn — dat laatste blijkt al uit downloadCount, dit is het moment
@@ -381,7 +382,7 @@ export function ResultsPanel({ inputs, result, berekening, mcStale, isCalculatin
         </p>
       ) : (
         <p className="text-xs text-body">
-          Nog {FREE_DOWNLOAD_LIMIT - downloadCount} gratis download{FREE_DOWNLOAD_LIMIT - downloadCount === 1 ? '' : 's'} beschikbaar.
+          {onbeperkt ? 'Onbeperkt downloaden op dit apparaat.' : <>Nog {FREE_DOWNLOAD_LIMIT - downloadCount} gratis download{FREE_DOWNLOAD_LIMIT - downloadCount === 1 ? '' : 's'} beschikbaar.</>}
         </p>
       )}
 
