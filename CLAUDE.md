@@ -431,11 +431,14 @@ premie in de werkgeversregeling, dus werkgeversdeel én eigen bijdrage. Het veld
   - `npm ci` of een verwijderde `node_modules` wist `node_modules/.astro/data-store.json`,
     de cache die `astro check` gebruikt. Herstel: kopieer `.astro/data-store.json` (de
     dev-cache) naar `node_modules/.astro/`.
-  - Astro 7.3.x laadt dit bestand al bij het opstarten. Een update daarnaartoe maakt ook
-    `astro check` en de dev-server lokaal onbruikbaar, en is daarom teruggedraaid, hoewel
-    `npm audit` voor 7.2.0 een kritieke melding geeft (het omzetten van AVIF-afbeeldingen;
-    praktisch risico laag, want de site is statisch). Updaten kan zodra het beleid dit
-    bestand toestaat, of via een PR die alleen in CI wordt getoetst.
+  - Astro 7.3.x laadt dit bestand al bij het opstarten. Een update daarnaartoe is eerst
+    teruggedraaid omdat `astro check` lokaal dan niet meer werkte. Sinds 28 september 2026
+    draait dat lokaal toch niet meer, en is Astro via een PR met alleen de CI-toets naar
+    7.3.5 gegaan (kritieke `npm audit`-melding voor 7.2.0 opgelost), samen met `npm audit
+    fix` voor sharp, svgo, js-yaml, devalue en vitest. Wat `npm audit` daarna nog meldt:
+    `uuid` 8 onder exceljs. Die melding geldt voor uuid v3/v5/v6 met een eigen buffer;
+    exceljs gebruikt alleen v4 zonder buffer, dus bewust zo gelaten. De voorgestelde fix
+    (exceljs 3.4.0) is een terugval.
 
 - ~~Geen custom analytics-events, alleen kale paginabezoeken (Vercel Web Analytics).~~ Deels
   achterhaald, geconstateerd op 21 september 2026. Er zijn vijf events, allemaal in de
