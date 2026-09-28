@@ -1,10 +1,10 @@
 ---
 titel: "Hoeveel moet ik sparen om eerder te stoppen met werken?"
 beschrijving: "Je spaarquote bepaalt hoe snel je financieel onafhankelijk bent. Lees hoeveel jaar het ruwweg kost bij een spaarquote van 25%, 50% of meer, en welke aannames daarachter zitten."
-samenvatting: "Hoe groter het deel van je inkomen dat je spaart, hoe sneller je financieel onafhankelijk bent. Bij een spaarquote van 50% duurt het ruwweg 15 tot 17 jaar; bij 25% eerder richting 30 jaar. Dit zijn vuistregels die uitgaan van een gemiddeld reëel rendement van ongeveer 5%."
+samenvatting: "Hoe groter het deel van je inkomen dat je spaart, hoe sneller je financieel onafhankelijk bent. Bij een spaarquote van 50% duurt het ruwweg 18 tot 19 jaar; bij 25% eerder 35 tot 40 jaar. Dit zijn vuistregels die uitgaan van een gemiddeld reëel rendement van 3 à 4%."
 pillar: "wat-is-financiele-onafhankelijkheid"
 volgorde: 4
-bijgewerkt: "2026-07-20"
+bijgewerkt: "2026-09-28"
 tool:
   label: "Bereken jouw jaren tot financiële onafhankelijkheid"
   href: "/ben-ik-financieel-onafhankelijk"
@@ -24,18 +24,18 @@ De belangrijkste knop om eerder te stoppen is je **spaarquote**: het deel van je
 
 ## Indicatieve tabel: spaarquote en jaren
 
-De volgende tabel geeft een ruwe indicatie van het aantal jaren tot financiële onafhankelijkheid, als je vanaf nul begint. Uitgangspunten: een gemiddeld **reëel rendement van ongeveer 5%** (dus na inflatie) en de [4%-regel](/uitleg/wat-is-de-4-procent-regel) als opnamedoel.
+De volgende tabel geeft een ruwe indicatie van het aantal jaren tot financiële onafhankelijkheid, als je vanaf nul begint. Uitgangspunten: een gemiddeld **reëel rendement van 3 à 4%** (dus na inflatie) en de [4%-regel](/uitleg/wat-is-de-4-procent-regel) als opnamedoel. Dat rendement past bij het neutrale tot offensieve profiel in de planner: 6,3% tot 7,1% per jaar, na 3% inflatie ongeveer 3,2% tot 4,0%. Hoe die profielen zijn onderbouwd, lees je in [welke aannames de FO-planner gebruikt](/uitleg/welke-aannames-gebruikt-de-fo-planner).
 
-| Spaarquote | Jaren tot financieel onafhankelijk (indicatief) |
-| --- | --- |
-| 20% | ~37 jaar |
-| 30% | ~28 jaar |
-| 40% | ~22 jaar |
-| 50% | ~17 jaar |
-| 60% | ~12,5 jaar |
-| 70% | ~8,5 jaar |
+| Spaarquote | Jaren bij 3% reëel rendement | Jaren bij 4% reëel rendement |
+| --- | --- | --- |
+| 20% | ~47 jaar | ~41 jaar |
+| 30% | ~34 jaar | ~31 jaar |
+| 40% | ~26 jaar | ~23 jaar |
+| 50% | ~19 jaar | ~18 jaar |
+| 60% | ~14 jaar | ~13 jaar |
+| 70% | ~9 jaar | ~9 jaar |
 
-Je ziet: elke stap omhoog in je spaarquote scheelt flink. Van 30% naar 50% halveert de tijd bijna.
+Je ziet: elke stap omhoog in je spaarquote scheelt flink. Van 30% naar 50% scheelt 13 tot 15 jaar. Het rendement doet er minder toe naarmate je meer spaart: bij 70% maakt 3% of 4% vrijwel niets uit, want dan komt ruim 80% van je doelvermogen uit je eigen inleg.
 
 *Wil je zien wat jouw maandbedrag oplevert bij een bepaald rendement en een bepaalde looptijd? [Bereken wat maandelijks inleggen oplevert](/tools/maandelijks-beleggen/).*
 
@@ -47,7 +47,7 @@ Een hogere spaarquote werkt twee kanten op. Je legt meer geld opzij, waardoor je
 
 Deze getallen zijn vuistregels, geen belofte. Ze gaan uit van:
 
-- een stabiel reëel rendement van ongeveer 5% (de echte beurs schommelt sterk);
+- een stabiel reëel rendement van 3 à 4% (de echte beurs schommelt sterk);
 - gelijkblijvende uitgaven;
 - geen rekening met AOW, pensioen of box 3-belasting.
 
