@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Trash2, Plus, ChevronDown, ChevronUp, Info, AlertTriangle } from 'lucide-react'
 import type { JaarruimteInputs, JaarruimteResult, SavedJaarruimte, ReserveringsruimteRij, PensioenType } from '../../types'
 import {
-  calculateJaarruimte, getAvailableYears, getJaarruimteParamsNote, isPreWtp,
+  calculateJaarruimte, getAvailableYears, isPreWtp,
   berekenJaarruimteEenvoudig, getOudsteParameterJaar, getFormuleTekst,
   controleerJaarruimteInvoer, terugkijktermijn, oudsteReserveringsjaar,
 } from '../../utils/jaarruimte'
@@ -12,6 +12,7 @@ import { parseBedrag, formatBedrag } from '../../utils/bedrag'
 // type="number"-velden met parseFloat: "65.000" werd 65 en de jaarruimte € 0
 // (review 28 september 2026).
 import { NumberInput } from '../PensionPlanner/InputPanel'
+import { JAARRUIMTE_PARAMS } from '../../config/fiscaleParameters'
 
 const STORAGE_KEY = 'jaarruimte_berekeningen'
 
@@ -889,7 +890,11 @@ export function JaarruimteTab() {
           </div>
 
           <InfoBox>
-            {getJaarruimteParamsNote(inputs.year, inputs.pensioenType)}
+            {/* Met het pensioentype: getJaarruimteParamsNote() toont altijd de DB-formule
+                met "− 6,27 × factor A", ook bij "Geen" en "Wtp" (review 28 september 2026). */}
+            Franchise €{JAARRUIMTE_PARAMS[inputs.year].franchise.toLocaleString('nl-NL')} · Max inkomen
+            €{JAARRUIMTE_PARAMS[inputs.year].maxInkomen.toLocaleString('nl-NL')} ·{' '}
+            {getFormuleTekst(inputs.year, inputs.pensioenType)}
           </InfoBox>
 
           {parametersVoorlopig && (

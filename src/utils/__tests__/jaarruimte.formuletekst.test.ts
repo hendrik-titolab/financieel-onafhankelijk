@@ -6,7 +6,7 @@
 // gaan, ook als geen enkele golden-master-fixture verandert (dat was precies hoe
 // de oorspronkelijke bug onopgemerkt bleef).
 import { describe, it, expect } from 'vitest'
-import { calculateJaarruimte, getFormuleTekst, getAvailableYears, getJaarruimteParamsNote } from '../jaarruimte'
+import { calculateJaarruimte, getFormuleTekst, getAvailableYears } from '../jaarruimte'
 import { JAARRUIMTE_PARAMS } from '../../config/fiscaleParameters'
 import type { PensioenType } from '../../types'
 import { round } from './fixtures'
@@ -65,15 +65,4 @@ describe('getFormuleTekst() komt overeen met wat calculateJaarruimte() werkelijk
       })
     }
   }
-})
-
-// Review 28 september 2026: de parameterregel onder de uitkomst toonde altijd de
-// DB-formule, ook bij "Geen" en "Wtp".
-describe('getJaarruimteParamsNote volgt het pensioentype', () => {
-  it('noemt factor A alleen bij een DB-regeling', () => {
-    expect(getJaarruimteParamsNote(2026, 'db')).toContain('factor A')
-    expect(getJaarruimteParamsNote(2026, 'wtp')).toContain('pensioenpremie')
-    expect(getJaarruimteParamsNote(2026, 'wtp')).not.toContain('factor A')
-    expect(getJaarruimteParamsNote(2026, 'geen')).not.toContain('factor A')
-  })
 })

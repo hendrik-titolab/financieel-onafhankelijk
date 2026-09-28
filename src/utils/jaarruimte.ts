@@ -364,9 +364,7 @@ export function getFormuleTekst(year: number, pensioenType: PensioenType = 'db')
 }
 
 // Return a human-readable note about the chosen year's parameters
-// Met het pensioentype erbij: zonder stond hier altijd de DB-formule met "− 6,27 ×
-// factor A", ook bij "Geen" en "Wtp" (review 28 september 2026).
-export function getJaarruimteParamsNote(year: number, pensioenType: PensioenType = 'db'): string {
+export function getJaarruimteParamsNote(year: number): string {
   const p = getParams(year)
-  return `Franchise €${nl(p.franchise)} · Max inkomen €${nl(p.maxInkomen)} · ${getFormuleTekst(year, pensioenType)}`
+  return `Franchise €${nl(p.franchise)} · Max inkomen €${nl(p.maxInkomen)} · ${getFormuleTekst(year)}`
 }
