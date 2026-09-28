@@ -856,6 +856,15 @@ function RisicoprofielSection({ inputs, onChange }: Props) {
               vooral spaart betaalt in werkelijkheid minder. En het heffingsvrije vermogen loopt
               mee met de inflatie, zoals dat nu ook gebeurt.
             </p>
+            {/* Samenwonend = fiscaal partner, besluit Hendrik 28 september 2026. */}
+            {inputs.woonsituatie === 'samenwonend' && (
+              <p>
+                Samenwonend rekent de planner als fiscale partners: jullie delen het heffingsvrije
+                vermogen van twee personen. Zonder fiscaal partnerschap heeft ieder alleen een
+                vrijstelling over het eigen vermogen, en valt de heffing hoger uit als het vermogen
+                vooral op één naam staat.
+              </p>
+            )}
           </div>
         </Field>
       </div>
