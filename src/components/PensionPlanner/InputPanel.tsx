@@ -719,11 +719,13 @@ function RisicoprofielSection({ inputs, onChange }: Props) {
           <div className="rounded-[3px] bg-canvas border border-line-soft p-3 space-y-1.5">
             <div className="flex justify-between text-xs">
               <span className="text-body">Verwacht rendement</span>
-              <span className="font-medium text-ink">{profiel.rendementVoor}% vóór · {profiel.rendementNa}% ná pensioen</span>
+              {/* Via pct1 en niet als kaal getal: 6.3 kwam anders met een Engelse
+                  punt op het scherm (gemeld 28 september 2026). */}
+              <span className="font-medium text-ink">{pct1(profiel.rendementVoor)} vóór · {pct1(profiel.rendementNa)} ná pensioen</span>
             </div>
             <div className="flex justify-between text-xs">
               <span className="text-body">Schommeling (volatiliteit)</span>
-              <span className="font-medium text-ink">{profiel.volatiliteitVoor}% / {profiel.volatiliteitNa}%</span>
+              <span className="font-medium text-ink">{pct1(profiel.volatiliteitVoor)} / {pct1(profiel.volatiliteitNa)}</span>
             </div>
             <p className="text-xs text-body leading-relaxed pt-1">{profiel.uitleg}</p>
           </div>
