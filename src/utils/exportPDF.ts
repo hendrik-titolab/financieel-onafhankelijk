@@ -2,6 +2,10 @@ import type { BerekeningsSet } from '../types'
 import { N_SIMULATIONS } from './monteCarlo'
 import { slagingskansPercentage } from './slagingskansTekst'
 import { opbouwDoelbedrag, indexatieTekst } from './opbouwDoelbedrag'
+import { scenarioOmschrijving } from './scenarios'
+import { vergelijkingsRegels } from './rapportVergelijking'
+import { tekenMcGrafiek, gezamenlijkeSchaal } from './pdfMcGrafiek'
+import type { Waarde } from './rapportVergelijking'
 
 function eur(v: number): string {
   const r = Math.round(v)
@@ -48,6 +52,14 @@ export async function exportToPDF(
   pdf.text(`Berekend: ${new Date(peildatum).toLocaleDateString('nl-NL')}`, pageW - margin, 21, { align: 'right' })
 
   let y = 36
+  // Nieuwe pagina als het volgende blok de voettekst zou raken. Het rapport paste op
+  // één A4; met de scenariotabel erbij niet altijd meer, en jsPDF breekt zelf niet af.
+  const ruimte = (hoogte: number) => {
+    if (y + hoogte > 280) {
+      pdf.addPage()
+      y = 20
+    }
+  }
 
   // --- Key metrics row ---
   pdf.setTextColor(41, 57, 46)
@@ -65,8 +77,58 @@ export async function exportToPDF(
       : { label: isOnTrack ? 'Overschot' : 'Tekort', value: eur(Math.abs(surplus)), color: isOnTrack ? groen : rood },
   ]
 
+  const basis = berekening.basis
+  const scenarioRegels = scenarioOmschrijving(berekening.scenarios)
+
+  // Met een scenario: de kaders hieronder zouden alleen de scenariouitkomst tonen.
+  // Daarom dan één tabel met beide uitkomsten naast elkaar (besluit Hendrik
+  // 28 september 2026), en verder niets dubbel.
+  if (basis) {
+    pdf.setFontSize(11)
+    pdf.setFont('helvetica', 'bold')
+    pdf.setTextColor(41, 57, 46)
+    pdf.text('Ben ik financieel onafhankelijk? Zonder en met scenario', margin, y)
+    y += 5
+    pdf.setFontSize(7.5)
+    pdf.setFont('helvetica', 'normal')
+    pdf.setTextColor(...rood)
+    pdf.text(`Scenario (stresstest, geen verwachting): ${scenarioRegels.join(', ')}.`, margin, y)
+    y += 4
+    pdf.setTextColor(76, 90, 80)
+    pdf.text('Bij het verwachte rendement: de helft van de simulaties valt beter uit, de helft slechter.', margin, y)
+    y += 5
+
+    const kolomZonder = margin + contentW * 0.72
+    const kolomMet = margin + contentW
+    pdf.setFontSize(8)
+    pdf.setFont('helvetica', 'bold')
+    pdf.setTextColor(41, 57, 46)
+    pdf.text('Jouw invoer', kolomZonder, y, { align: 'right' })
+    pdf.text('Met scenario', kolomMet, y, { align: 'right' })
+    y += 2
+    pdf.setDrawColor(41, 57, 46)
+    pdf.line(margin, y, margin + contentW, y)
+    y += 4
+    pdf.setFont('helvetica', 'normal')
+    const fmt = (w: Waarde) =>
+      w.soort === 'eur' ? eur(w.bedrag) : w.soort === 'kans' ? slagingskansPercentage(w.pct) : w.tekst
+    vergelijkingsRegels(basis, { inputs, result, mc }).forEach((r, i) => {
+      if (i % 2 === 0) {
+        pdf.setFillColor(247, 246, 244)
+        pdf.rect(margin, y - 3.6, contentW, 5.2, 'F')
+      }
+      pdf.setTextColor(76, 90, 80)
+      pdf.text(r.label, margin + 2, y)
+      pdf.setTextColor(41, 57, 46)
+      pdf.text(fmt(r.zonder), kolomZonder, y, { align: 'right' })
+      pdf.text(fmt(r.met), kolomMet, y, { align: 'right' })
+      y += 5.2
+    })
+    y += 4
+  }
+
   const boxW = contentW / 3 - 2.67
-  metrics.forEach((m, i) => {
+  if (!basis) metrics.forEach((m, i) => {
     const x = margin + i * (boxW + 4)
     pdf.setFillColor(247, 246, 244)
     pdf.roundedRect(x, y, boxW, 22, 2, 2, 'F')
@@ -79,25 +141,28 @@ export async function exportToPDF(
     pdf.text(m.value, x + boxW / 2, y + 16, { align: 'center' })
     pdf.setFont('helvetica', 'normal')
   })
-  y += 28
+  if (!basis) y += 28
 
   // 8A: de drie getallen hierboven gaan uit van het verwachte rendement (de
-  // mediaan). Het slechtweerscenario erbij, zoals op een pensioenoverzicht.
+  // mediaan). Het slechtweerscenario erbij, zoals op een pensioenoverzicht. Met een
+  // scenario staat dat al in de tabel hierboven.
   pdf.setFontSize(7.5)
   pdf.setFont('helvetica', 'normal')
   pdf.setTextColor(76, 90, 80)
-  pdf.text('Bij het verwachte rendement: de helft van de scenario\'s valt beter uit, de helft slechter.', margin, y)
-  y += 4
+  if (!basis) {
+    pdf.text('Bij het verwachte rendement: de helft van de simulaties valt beter uit, de helft slechter.', margin, y)
+    y += 4
+  }
   // Zelfde voorwaarden als op het scherm (ResultsPanel.tsx).
-  if (result.yearsToRetirement > 0 && result.requiredCapital > 0 && opbouwTekort === null) {
+  if (!basis && result.yearsToRetirement > 0 && result.requiredCapital > 0 && opbouwTekort === null) {
     const tekortSlechtWeer = result.requiredCapital - mc.slechtWeerBijPensioen
     pdf.text(
-      `Bij slecht weer (1 op de 20 scenario's valt lager uit): ${eur(mc.slechtWeerBijPensioen)} op ${result.effectiveRetirementAge} jaar` +
+      `Bij slecht weer (1 op de 20 simulaties valt lager uit): ${eur(mc.slechtWeerBijPensioen)} op ${result.effectiveRetirementAge} jaar` +
       (tekortSlechtWeer > 0 ? `, ${eur(tekortSlechtWeer)} minder dan nodig.` : ', genoeg voor je doel.'),
       margin, y)
     y += 4
   }
-  if (opbouwTekort !== null) {
+  if (!basis && opbouwTekort !== null) {
     pdf.setTextColor(...rood)
     pdf.text(`Let op: je vermogen komt op leeftijd ${opbouwTekort.leeftijd} onder nul, tot ${eur(opbouwTekort.bedrag)} te weinig.`, margin, y)
     pdf.setTextColor(76, 90, 80)
@@ -109,17 +174,18 @@ export async function exportToPDF(
   const kansKleur = (v: number): [number, number, number] =>
     v >= 80 ? [41, 57, 46] : v >= 60 ? [154, 131, 91] : [168, 90, 60]
 
+  const halfW = contentW / 2 - 2
+  const kansen: { label: string; value: number | null }[] = [
+    { label: 'Kans op 100% van je inkomensdoel', value: mc.successRate },
+    { label: 'Kans op 75% van je inkomensdoel', value: mc.successRate75 },
+  ]
+  if (!basis) {
   pdf.setFontSize(11)
   pdf.setFont('helvetica', 'bold')
   pdf.setTextColor(41, 57, 46)
   pdf.text('Ben ik financieel onafhankelijk?', margin, y)
   y += 5
 
-  const halfW = contentW / 2 - 2
-  const kansen: { label: string; value: number | null }[] = [
-    { label: 'Kans op 100% van je inkomensdoel', value: mc.successRate },
-    { label: 'Kans op 75% van je inkomensdoel', value: mc.successRate75 },
-  ]
   kansen.forEach((k, i) => {
     const x = margin + i * (halfW + 4)
     const kleur: [number, number, number] = k.value === null ? [76, 90, 80] : kansKleur(k.value)
@@ -135,15 +201,20 @@ export async function exportToPDF(
     pdf.setFont('helvetica', 'normal')
   })
   y += 26
+  }
 
   // --- Inkomen per fase ---
+  // Met een scenario gaan de fasen, de opbouw en de grafiek hieronder over het
+  // scenario (zoals op het scherm). De tabel hierboven zet beide uitkomsten naast
+  // elkaar; de aannames onderaan tonen de eigen invoer.
   pdf.setTextColor(41, 57, 46)
   pdf.setFontSize(11)
   pdf.setFont('helvetica', 'bold')
-  pdf.text('Maandelijks inkomen per fase', margin, y)
+  pdf.text(basis ? 'Maandelijks inkomen per fase, met scenario' : 'Maandelijks inkomen per fase', margin, y)
   y += 6
 
   result.incomePhases.forEach((phase, fi) => {
+    ruimte(18)
     pdf.setFontSize(8.5)
     pdf.setFont('helvetica', 'bold')
     pdf.setFillColor(fi % 2 === 0 ? 247 : 255, fi % 2 === 0 ? 246 : 253, fi % 2 === 0 ? 244 : 250)
@@ -209,6 +280,7 @@ export async function exportToPDF(
   ]
 
   incomeRows.forEach(([label, value], i) => {
+    ruimte(9)
     const isFirst = i === 0
     if (isFirst) {
       pdf.setDrawColor(41, 57, 46)
@@ -227,13 +299,42 @@ export async function exportToPDF(
   y += 4
 
   // --- Chart ---
-  const chartEl = document.getElementById(chartElementId)
+  // Met een scenario beide simulaties naast elkaar, zelf getekend en op dezelfde
+  // schaal (zie pdfMcGrafiek.ts). Zonder scenario de grafiek van het scherm.
+  const chartEl = basis ? null : document.getElementById(chartElementId)
+  if (basis) {
+    const schaal = gezamenlijkeSchaal([basis.mc.percentileData, mc.percentileData])
+    const hoogte = 60
+    ruimte(hoogte + 20)
+    pdf.setFont('helvetica', 'bold')
+    pdf.setFontSize(9)
+    pdf.setTextColor(41, 57, 46)
+    pdf.text(`Vermogen in ${N_SIMULATIONS.toLocaleString('nl-NL')} simulaties, zonder en met scenario`, margin, y)
+    y += 6
+    const breedte = (contentW - 6) / 2
+    tekenMcGrafiek(pdf, margin, y, breedte, hoogte, basis.mc.percentileData, schaal,
+      'Jouw invoer', basis.result.effectiveRetirementAge)
+    tekenMcGrafiek(pdf, margin + breedte + 6, y, breedte, hoogte, mc.percentileData, schaal,
+      'Met scenario', result.effectiveRetirementAge)
+    y += hoogte + 1
+    pdf.setFont('helvetica', 'normal')
+    pdf.setFontSize(7)
+    pdf.setTextColor(76, 90, 80)
+    for (const regel of pdf.splitTextToSize(
+      'Lichte band: 8 van de 10 simulaties. Donkere band: de middelste helft. Lijn: de mediaan. ' +
+      'Stippellijn: pensioendatum. Beide grafieken hebben dezelfde schaal.', contentW) as string[]) {
+      pdf.text(regel, margin, y)
+      y += 3.5
+    }
+    y += 4
+  }
   if (chartEl) {
     try {
       const canvas = await html2canvas(chartEl, { scale: 1.5, backgroundColor: '#F7F6F4' })
       const imgData = canvas.toDataURL('image/jpeg', 0.85)
       const imgH = (canvas.height / canvas.width) * contentW
       const chartH = Math.min(imgH, 70)
+      ruimte(chartH + 6)
       pdf.addImage(imgData, 'JPEG', margin, y, contentW, chartH)
       y += chartH + 6
     } catch {
@@ -242,6 +343,7 @@ export async function exportToPDF(
   }
 
   // --- Aannames ---
+  ruimte(14)
   pdf.setFontSize(9)
   pdf.setFont('helvetica', 'bold')
   pdf.setTextColor(41, 57, 46)
@@ -252,17 +354,22 @@ export async function exportToPDF(
   // inleg", ook bij een jaarbedrag: bij 12.000 per jaar las het rapport dan
   // 12.000 per maand, terwijl de berekening met 1.000 per maand werkte
   // (bevinding 28). De frequentie stond nergens in het rapport.
-  const inlegLabel = inputs.contributionFrequency === 'jaarlijks' ? 'Jaarlijkse inleg' : 'Maandelijkse inleg'
-  const eenmalige = (inputs.lifeEvents ?? []).filter(e => e.amount !== 0)
+  // De eigen invoer, ook als er een scenario aan stond: de scenarioregel hieronder
+  // zegt wat het scenario daaraan veranderde. Anders stond hier bij "AOW
+  // gehalveerd" een AOW van € 791 alsof dat was ingevuld.
+  const invoer = basis ? basis.inputs : inputs
+  const inlegLabel = invoer.contributionFrequency === 'jaarlijks' ? 'Jaarlijkse inleg' : 'Maandelijkse inleg'
+  const eenmalige = (invoer.lifeEvents ?? []).filter(e => e.amount !== 0)
 
   const assumptions = [
-    `Leeftijd: ${inputs.currentAge} jr | Pensioen: ${result.effectiveRetirementAge} jr | AOW: ${inputs.aowStartAge} jr | Werkgeverspensioen: ${inputs.employerPensionStartAge} jr | Plannen tot: ${inputs.lifeExpectancy} jr`,
-    `Woonsituatie: ${inputs.woonsituatie === 'alleenstaand' ? 'alleenstaand' : 'samenwonend'} | Gewenst inkomen: ${eur(inputs.desiredRetirementIncome)}/mnd ${inputs.desiredRetirementIncomeType} | Netto omgerekend: ${eur(result.desiredMonthlyNetto)}/mnd`,
-    `Rendement voor pensioen: ${pct(inputs.returnBeforeRetirement)} nominaal | Na pensioen: ${pct(inputs.returnAfterRetirement)} | Inflatie: ${pct(inputs.inflation)} | Volatiliteit: ${pct(inputs.volatilityPre)} / ${pct(inputs.volatilityPost)}`,
-    `${inlegLabel}: ${eur(inputs.monthlyContribution)} | Huidig vermogen: ${eur(inputs.currentCapital)}`,
-    `Werkgeverspensioen: ${eur(inputs.employerPension)}/mnd bruto, ${indexatieTekst(inputs.employerPensionIndexatie)} | Lijfrente-/bankspaaruitkering: ${eur(inputs.lijfrenteUitkering)}/mnd bruto vanaf ${inputs.lijfrenteStartAge} jr, ${indexatieTekst(inputs.lijfrenteIndexatie)} | AOW: ${eur(inputs.aowMaandBedragNetto)}/mnd netto`,
-    inputs.partner?.actief
-      ? `Partner (apart belast): nu ${inputs.partner.leeftijd} jr | AOW ${eur(inputs.partner.aowMaandBedragNetto)}/mnd netto vanaf ${inputs.partner.aowStartAge} jr | werkgeverspensioen ${eur(inputs.partner.employerPension)}/mnd bruto vanaf ${inputs.partner.employerPensionStartAge} jr, ${indexatieTekst(inputs.partner.employerPensionIndexatie)}`
+    ...(basis ? [`Scenario (stresstest): ${scenarioRegels.join(', ')}. De invoer hieronder is je eigen invoer, zonder scenario.`] : []),
+    `Leeftijd: ${invoer.currentAge} jr | Pensioen: ${result.effectiveRetirementAge} jr | AOW: ${invoer.aowStartAge} jr | Werkgeverspensioen: ${invoer.employerPensionStartAge} jr | Plannen tot: ${invoer.lifeExpectancy} jr`,
+    `Woonsituatie: ${invoer.woonsituatie === 'alleenstaand' ? 'alleenstaand' : 'samenwonend'} | Gewenst inkomen: ${eur(invoer.desiredRetirementIncome)}/mnd ${invoer.desiredRetirementIncomeType} | Netto omgerekend: ${eur(result.desiredMonthlyNetto)}/mnd`,
+    `Rendement voor pensioen: ${pct(invoer.returnBeforeRetirement)} nominaal | Na pensioen: ${pct(invoer.returnAfterRetirement)} | Inflatie: ${pct(invoer.inflation)} | Volatiliteit: ${pct(invoer.volatilityPre)} / ${pct(invoer.volatilityPost)}`,
+    `${inlegLabel}: ${eur(invoer.monthlyContribution)} | Huidig vermogen: ${eur(invoer.currentCapital)}`,
+    `Werkgeverspensioen: ${eur(invoer.employerPension)}/mnd bruto, ${indexatieTekst(invoer.employerPensionIndexatie)} | Lijfrente-/bankspaaruitkering: ${eur(invoer.lijfrenteUitkering)}/mnd bruto vanaf ${invoer.lijfrenteStartAge} jr, ${indexatieTekst(invoer.lijfrenteIndexatie)} | AOW: ${eur(invoer.aowMaandBedragNetto)}/mnd netto`,
+    invoer.partner?.actief
+      ? `Partner (apart belast): nu ${invoer.partner.leeftijd} jr | AOW ${eur(invoer.partner.aowMaandBedragNetto)}/mnd netto vanaf ${invoer.partner.aowStartAge} jr | werkgeverspensioen ${eur(invoer.partner.employerPension)}/mnd bruto vanaf ${invoer.partner.employerPensionStartAge} jr, ${indexatieTekst(invoer.partner.employerPensionIndexatie)}`
       : 'Partner: niet meegerekend, deze berekening gaat over een persoon',
     eenmalige.length > 0
       ? `Eenmalige bedragen: ${eenmalige.map(e => `${e.name || 'zonder naam'} ${eur(e.amount)} in ${e.year}`).join(' | ')}`
@@ -274,17 +381,24 @@ export async function exportToPDF(
   pdf.setFont('helvetica', 'normal')
   pdf.setTextColor(76, 90, 80)
   pdf.setFontSize(7.5)
+  // Afbreken op de paginabreedte: lange regels liepen over de rechterrand.
   assumptions.forEach(line => {
-    pdf.text(line, margin, y)
-    y += 4.5
+    for (const deel of pdf.splitTextToSize(line, contentW) as string[]) {
+      ruimte(4.5)
+      pdf.text(deel, margin, y)
+      y += 4.5
+    }
   })
 
-  // --- Footer ---
-  pdf.setFillColor(247, 246, 244)
-  pdf.rect(0, 285, pageW, 12, 'F')
-  pdf.setFontSize(7)
-  pdf.setTextColor(110, 127, 114)
-  pdf.text('Dit rapport is indicatief en geen financieel advies. Rendementen uit het verleden bieden geen garantie voor de toekomst.', pageW / 2, 291, { align: 'center' })
+  // --- Footer, op elke pagina ---
+  for (let p = 1; p <= pdf.getNumberOfPages(); p++) {
+    pdf.setPage(p)
+    pdf.setFillColor(247, 246, 244)
+    pdf.rect(0, 285, pageW, 12, 'F')
+    pdf.setFontSize(7)
+    pdf.setTextColor(110, 127, 114)
+    pdf.text('Dit rapport is indicatief en geen financieel advies. Rendementen uit het verleden bieden geen garantie voor de toekomst.', pageW / 2, 291, { align: 'center' })
+  }
 
   const filename = `financiele-planning_${naam.replace(/\s/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`
   pdf.save(filename)

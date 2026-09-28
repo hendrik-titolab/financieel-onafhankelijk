@@ -26,7 +26,7 @@ interface Props {
 
 // ---- Shared UI primitives ----
 
-function Toggle({ value, onChange, options }: {
+export function Toggle({ value, onChange, options }: {
   value: string; onChange: (v: string) => void
   options: { value: string; label: string }[]
 }) {
@@ -692,6 +692,18 @@ function RisicoprofielSection({ inputs, onChange }: Props) {
         kosten en vóór belasting. Wat je daarvan overhoudt vul je hieronder in bij kosten en
         vermogensbelasting.
       </p>
+      {/* Bron van de profielen sinds 28 september 2026 (review 22 september 2026,
+          punt 9). Daarvoor stonden hier getallen uit een eigen huisvisie zonder
+          onderbouwing. De afleiding staat in fiscale-cijfers.json en wordt
+          nagerekend in risicoprofielen.test.ts. */}
+      <p className="text-xs text-body leading-relaxed">
+        De profielen zijn mengsels van aandelen en obligaties. Aandelen rekenen met 8,0% per jaar:
+        het gemiddelde dat maandelijks sparen in de wereldwijde aandelenindex MSCI World over 25 tot
+        30 jaar opleverde, in euro's (Deutsches Aktieninstitut, 1975 tot en met 2025). Obligaties
+        rekenen met 3,5%, de huidige rente op tienjarige staatsleningen met de hoogste
+        kredietwaardigheid in de eurozone (ECB, september 2026). Wat het verleden opleverde is geen
+        garantie voor later.
+      </p>
       {!inputs.useCustomReturns && (
         <div className="space-y-2">
           <div className="flex justify-between items-center">
@@ -758,7 +770,7 @@ function RisicoprofielSection({ inputs, onChange }: Props) {
               onChange={v => onChange({ volatilityPost: v })} suffix="%" step={1} min={0} max={30} />
           </Field>
           <p className="text-xs text-body leading-relaxed">
-            Monte Carlo rekent met 2.000 scenario's rond dit gemiddelde rendement.
+            Monte Carlo rekent met 2.000 simulaties rond dit gemiddelde rendement.
           </p>
         </div>
       )}

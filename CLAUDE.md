@@ -97,6 +97,27 @@ React-eiland (`client:only="react"`), component `src/components/PensionPlanner/`
   oude invoer en golden values niet verschuiven.
 - Met een partner erbij is het inkomensdoel **alleen netto**: hoe een bruto
   huishoudinkomen over twee apart belaste mensen verdeeld is, weet de tool niet.
+- **Risicoprofielen** (sinds 28 september 2026) zijn mengsels van aandelen 8,0% en
+  obligaties 3,5%, volatiliteit 20% en 8%, correlatie 0, omgerekend met rekenkundig =
+  meetkundig + ½σ² (art. 23a lid 6 Besluit FTK). Bronnen: Deutsches Aktieninstitut
+  (MSCI World-rendementsdriehoek, stand 31-12-2025), ECB-rentecurve (21-09-2026),
+  Commissie Parameters 2022. De afleiding staat in `fiscale-cijfers.json` en wordt
+  nagerekend in `risicoprofielen.test.ts`. Inflatie blijft standaard 3,0% (besluit
+  Hendrik).
+- **Scenario's** (sinds 28 september 2026, `utils/scenarios.ts` en `ScenarioPanel.tsx`):
+  stresstests die alleen de invoer aanpassen. AOW gehalveerd of weg, rendement ±2
+  procentpunt, inflatie ±1 procentpunt, 5 jaar langer leven, geen indexatie van
+  aanvullend pensioen. Het scherm en de exports tonen de uitkomst met en zonder scenario.
+  Het partnerscenario (partner valt weg) ontbreekt bewust, zie het huishoudmodel
+  hieronder. Monte Carlo-trekkingen heten in de UI "simulaties", om verwarring te
+  voorkomen. Met een scenario tonen PDF en Excel beide uitkomsten volledig: een
+  vergelijkingstabel (`rapportVergelijking.ts`), en in de PDF beide Monte
+  Carlo-grafieken naast elkaar op dezelfde schaal, zelf getekend (`pdfMcGrafiek.ts`),
+  omdat het scherm alleen de scenariografiek toont.
+- **De kansmeters kleuren bewust** groen (vanaf 80%), zand (vanaf 60%) en rood, op het
+  scherm en in de PDF. Besluit Hendrik 28 september 2026: hij wil dat onderscheid zien.
+  Dat is geen restant van bevinding 15 (die haalde alleen de tekstuele oordelen weg);
+  niet "voor de consistentie" weghalen.
 - Resultaat blijft zichtbaar bij een invoerwijziging (met een "verouderd"-badge), verdwijnt niet
   meer zoals vóór de herstijling.
 - Export: PDF (`jsPDF` + `html2canvas`) en Excel (`exceljs`), max 3 gratis downloads samen
@@ -386,22 +407,23 @@ premie in de werkgeversregeling, dus werkgeversdeel én eigen bijdrage. Het veld
 
 ## Bekende openstaande punten (niet opgelost, alleen genoteerd)
 
-- **Rendementsparameters van de risicoprofielen (review 22 september 2026, punt 9).**
-  `risicoprofielen.ts` is "eigen huisvisie, geen externe onderbouwing". Onderzocht: de
-  Commissie Parameters 2022 (aandelen 5,4%, een wettelijk maximum voor pensioenfondsen,
-  te laag als beste schatting), UBS/DMS Yearbook 2026 (ontwikkelde markten 8,5% per jaar
-  1900-2025, nominaal in USD), Damodaran (S&P 500 10,0% 1928-2025), MSCI World EUR
-  (6,64% sinds 2000) en J.P. Morgan LTCMA 2026 (7,0% vooruitkijkend). Hendrik wil het
-  Dimensional Matrix Book erbij halen voordat hij kiest. Aandachtspunt bij elke keuze:
-  een historisch rendement hoort bij de historische inflatie (circa 3%), dus niet
-  combineren met 2% inflatie. En "zeer offensief" op 9% ligt boven het
-  wereldgemiddelde; alleen de VS of een start in 1960 komt hoger uit.
-- **De productiebuild draait lokaal niet** op Hendriks Windows-machine: een Application
-  Control-beleid blokkeert het native bestand van de MDX-plugin (`satteri_napi.win32-x64-msvc.node`).
-  `tsc`, `astro check`, `vitest` en `astro dev` werken wel, maar alleen dankzij een
-  contentcache: zolang de markdown niet opnieuw gerenderd hoeft te worden, is dat bestand
-  niet nodig. De build draait in CI. Twee valkuilen, allebei op 22 september 2026
-  tegengekomen:
+- ~~Rendementsparameters van de risicoprofielen (punt 9).~~ Opgelost op 28 september 2026,
+  zie de FO-planner hierboven. Wat nog openstaat: de uitlegartikelen noemen mogelijk nog de
+  oude profielpercentages en gebruiken "scenario's" voor de Monte Carlo-simulaties (bewust
+  later, besluit Hendrik). De notities `uitgangspunten.kostenVanBeleggen` en
+  `uitgangspunten.indexatiePensioen`, `uitgangspunten.box3InRekentools` en de status van
+  `box3._toekomstplan` in `fiscale-cijfers.json` zijn op 28 september 2026 bijgewerkt naar
+  het huidige gedrag van de tool.
+- **Lokaal draaien alleen `tsc` en `vitest`** op Hendriks Windows-machine. Een Application
+  Control-beleid blokkeert native bestanden: eerst dat van de MDX-plugin
+  (`satteri_napi.win32-x64-msvc.node`, 22 september 2026), sinds 28 september 2026 ook de
+  Astro-compiler zelf (`astro.win32-x64-msvc.node`). Daardoor starten ook `astro dev` en
+  `astro check` niet meer. De volledige poort draait in CI (`controle`); controleer het
+  scherm op de Vercel-preview van de PR (URL: zie "Vercel" hierboven). De preview vraagt
+  een Vercel-login, dus dat doet Hendrik; Claude kan exports wel controleren door ze in
+  Node te genereren met de echte exportcode. Oorzaak: Slimme app-controle (Smart App
+  Control) staat aan. Besluit Hendrik 28 september 2026: zo laten. Oudere notities
+  over de cache, van toen `astro check` nog wel werkte:
   - `npm ci` of een verwijderde `node_modules` wist `node_modules/.astro/data-store.json`,
     de cache die `astro check` gebruikt. Herstel: kopieer `.astro/data-store.json` (de
     dev-cache) naar `node_modules/.astro/`.

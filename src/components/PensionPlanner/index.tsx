@@ -7,8 +7,12 @@ import { runMonteCarlo } from '../../utils/monteCarlo'
 import { MODEL_VERSIE, PARAMETER_JAAR } from '../../config/modelVersie'
 import { box3DrukAfgerond } from '../../utils/box3'
 import { AOW_NETTO } from '../../utils/pensionCalc'
+import { RISICOPROFIELEN } from '../../config/risicoprofielen'
+import { GEEN_SCENARIO, heeftScenario, pasScenarioToe } from '../../utils/scenarios'
+import type { Scenarios } from '../../utils/scenarios'
 import { InputPanel } from './InputPanel'
 import { ResultsPanel } from './ResultsPanel'
+import { ScenarioPanel } from './ScenarioPanel'
 
 const DEFAULT_INPUTS: PensionInputs = {
   currentAge: 40,
@@ -17,8 +21,10 @@ const DEFAULT_INPUTS: PensionInputs = {
   currentCapital: 100000,
   monthlyContribution: 0,
   contributionFrequency: 'maandelijks',
-  returnBeforeRetirement: 6,
-  returnAfterRetirement: 4,
+  // Uit het profiel dat hieronder als riskProfile staat, niet als losse getallen:
+  // die liepen anders uit de pas zodra de profielen in de fiscale bron veranderen.
+  returnBeforeRetirement: RISICOPROFIELEN.neutraal.rendementVoor,
+  returnAfterRetirement: RISICOPROFIELEN.neutraal.rendementNa,
   inflation: 3.0,
   // Kosten standaard nul: die hangen af van het product en zijn niet uit de invoer
   // af te leiden. De gebruiker vult ze zelf in; het scherm zegt erbij dat de
@@ -66,8 +72,8 @@ const DEFAULT_INPUTS: PensionInputs = {
   lijfrenteEindLeeftijd: 87,
   lijfrenteIndexatie: 'vast',
   lifeEvents: [],
-  volatilityPre: 12,
-  volatilityPost: 8,
+  volatilityPre: RISICOPROFIELEN.neutraal.volatiliteitVoor,
+  volatilityPost: RISICOPROFIELEN.neutraal.volatiliteitNa,
   riskProfile: 'neutraal',
   useCustomReturns: false,
 }
@@ -91,6 +97,7 @@ export function PensionPlanner({ clientName, onCloseSession }: Props) {
   // zonder eerst je uitkomst kwijt te raken.
   const [mcStale, setMcStale] = useState(false)
   const [isCalculating, setIsCalculating] = useState(false)
+  const [scenarios, setScenarios] = useState<Scenarios>(GEEN_SCENARIO)
 
   // Scroll-aanwijzing: hangt vast aan de onderkant van het zichtbare vlak
   // (niet aan een vaste plek in de inhoud) zodat hij op elke schermhoogte
@@ -156,9 +163,21 @@ export function PensionPlanner({ clientName, onCloseSession }: Props) {
   const leeftijden = controleerLeeftijden(inputs.currentAge, inputs.retirementAge, inputs.lifeExpectancy)
   const isGeldig = leeftijden.errors.length === 0
 
+  // Scenario's veranderen alleen de invoer die de rekenkernen krijgen. Het invoerpaneel
+  // blijft de eigen invoer tonen; de uitkomst rekent met de aangepaste invoer, en
+  // daarnaast staat ter vergelijking dezelfde berekening zonder scenario.
+  const scenarioActief = heeftScenario(scenarios)
+  const rekenInputs = pasScenarioToe(inputs, scenarios)
+
   // Bij een ongeldige combinatie wordt er niet gerekend. Een uitkomst tonen die
   // op een onmogelijke aanname rust is in het Wft-domein erger dan geen uitkomst.
-  const result: PensionResult | null = isGeldig ? calculatePension(inputs) : null
+  const result: PensionResult | null = isGeldig ? calculatePension(rekenInputs) : null
+  const basisResult: PensionResult | null = isGeldig && scenarioActief ? calculatePension(inputs) : null
+
+  const handleScenarios = useCallback((s: Scenarios) => {
+    setScenarios(s)
+    setMcStale(true)
+  }, [])
 
   const handleRunMonteCarlo = useCallback(() => {
     // Zicht op of bezoekers de tool daadwerkelijk gebruiken, niet alleen de
@@ -171,10 +190,17 @@ export function PensionPlanner({ clientName, onCloseSession }: Props) {
       // resultaat wordt hier apart berekend en niet uit de live `result`
       // overgenomen: die hoort bij wat er nú op het scherm staat, en dat is
       // precies wat er in de export niet door elkaar mag lopen.
+      const metScenario = pasScenarioToe(inputs, scenarios)
       setBerekening({
-        inputs,
-        result: calculatePension(inputs),
-        mc: runMonteCarlo(inputs),
+        inputs: metScenario,
+        result: calculatePension(metScenario),
+        mc: runMonteCarlo(metScenario),
+        scenarios,
+        // Met een scenario ook de basis doorrekenen, zodat de vergelijking op het
+        // scherm en in de export uit dezelfde afgeronde berekening komt.
+        basis: heeftScenario(scenarios)
+          ? { inputs, result: calculatePension(inputs), mc: runMonteCarlo(inputs) }
+          : null,
         peildatum: new Date().toISOString(),
         modelVersie: MODEL_VERSIE,
         parameterJaar: PARAMETER_JAAR,
@@ -191,7 +217,7 @@ export function PensionPlanner({ clientName, onCloseSession }: Props) {
         })
       }
     }, 50)
-  }, [inputs, isGeldig])
+  }, [inputs, scenarios, isGeldig])
 
   return (
     // Responsive: stacked on mobile/portrait tablet, side-by-side on desktop/landscape
@@ -253,8 +279,19 @@ export function PensionPlanner({ clientName, onCloseSession }: Props) {
           </div>
         ) : (
         <ResultsPanel
-          inputs={inputs}
+          inputs={rekenInputs}
           result={result}
+          scenarioPanel={
+            <ScenarioPanel
+              scenarios={scenarios}
+              onChange={handleScenarios}
+              inputs={inputs}
+              result={result}
+              basisResult={basisResult}
+              berekening={berekening}
+              mcStale={mcStale}
+            />
+          }
           berekening={berekening}
           mcStale={mcStale}
           isCalculating={isCalculating}
