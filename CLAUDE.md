@@ -469,7 +469,9 @@ premie in de werkgeversregeling, dus werkgeversdeel én eigen bijdrage. Het veld
 
   Wat bewust niet meegaat, en in de UI ook zo benoemd staat: het vermogen telt volledig als
   beleggingen (de planner kent geen vermogensmix, wie vooral spaart betaalt minder), en er zijn
-  geen schulden. Fiscaal partnerschap gaat wél mee, via `woonsituatie`.
+  geen schulden. Fiscaal partnerschap gaat wél mee, via `woonsituatie`: samenwonend geldt
+  als fiscaal partner (dubbele vrijstelling). Dat is een bewuste aanname, besluit Hendrik
+  28 september 2026, en het invoerveld vermogensbelasting zegt het er bij samenwonend bij.
 
   Twee dingen om te weten bij een volgende wijziging. De heffing gaat over het saldo aan het begin
   van het jaar, want box 3 kent één peildatum. De contante-waardeopbouw
