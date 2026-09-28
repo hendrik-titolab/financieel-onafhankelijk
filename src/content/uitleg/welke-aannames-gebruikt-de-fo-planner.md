@@ -13,6 +13,8 @@ faq:
     antwoord: "Omdat niemand het toekomstige rendement kent. Eén vast getal zou net zo goed verzonnen kunnen zijn. Een slagingskans over 2.000 simulaties laat zien hoe gevoelig je plan is voor tegenvallende jaren, in plaats van te doen alsof de uitkomst vaststaat."
   - vraag: "Wat als ik geen zin heb om zelf rendement en volatiliteit in te vullen?"
     antwoord: "Dan gebruik je een van de vijf standaard risicoprofielen (van defensief tot offensief). Die zijn vooraf ingevuld met een verwacht rendement en een bijbehorende schommeling, onderbouwd met historische aandelenrendementen en de huidige rente op staatsleningen. Zelf invullen kan altijd via het vinkje bij risicoprofiel."
+  - vraag: "Kan ik testen wat er gebeurt als de AOW lager uitvalt of het rendement tegenvalt?"
+    antwoord: "Ja, met de scenario's rechts boven de uitkomst. Je kunt de AOW halveren of weglaten, het rendement 2 procentpunt lager of hoger zetten, de inflatie 1 procentpunt lager of hoger, vijf jaar langer plannen en de indexatie van je pensioen uitzetten. Scenario's zijn te combineren. De planner zet de uitkomst met en zonder scenario naast elkaar."
   - vraag: "Rekent de planner ook met box 3 (vermogensbelasting)?"
     antwoord: "Ja, standaard. De planner berekent de heffing elk jaar opnieuw over het vermogen van dat jaar, met het tarief, het forfait voor beleggingen en het heffingsvrije vermogen van 2026, en haalt dat bedrag van je saldo af. Wil je liever zelf een vast percentage invullen, dan kan dat via de keuze bij vermogensbelasting. Twee vereenvoudigingen: je hele vermogen telt als beleggingen (wie vooral spaart betaalt minder), en schulden tellen niet mee."
   - vraag: "Klopt de uitkomst ook als mijn geld in een lijfrente of op een bankspaarrekening staat?"
@@ -161,6 +163,73 @@ ingangsdatum van AOW en werkgeverspensioen. Niets ligt vast. Verander een aannam
 bedragen rekenen meteen opnieuw. Voor de slagingskans klik je op Bereken: die komt uit 2.000
 simulaties en draait daarom niet bij elke toetsaanslag mee.
 
+## Wat als het anders loopt dan je invult?
+
+Elke aanname hierboven is een verwachting. De vraag is wat er gebeurt als die tegenvalt.
+Daarvoor heeft de planner een blok Scenario's, rechts boven de uitkomst. Een scenario is een
+stresstest, geen voorspelling: het verandert een aanname, rekent opnieuw en zet de uitkomst
+naast die van je eigen invoer. Links blijft je eigen invoer gewoon staan.
+
+Je kunt scenario's combineren, bijvoorbeeld een lager rendement én vijf jaar langer leven. De
+vergelijking toont het benodigde vermogen, het verwachte vermogen, het overschot of tekort en,
+zodra je op Bereken hebt geklikt, de slagingskans. Staat er een scenario aan, dan zet ook de
+PDF- en Excel-export beide uitkomsten naast elkaar.
+
+### AOW: zoals ingevuld, gehalveerd of geen AOW
+
+In de planner stijgt de AOW mee met de inflatie. Hoe hoog hij over twintig jaar is, beslist de
+politiek van dan. Kies je Gehalveerd, dan rekent de planner met de helft van het netto
+AOW-bedrag dat je hebt ingevuld; bij Geen AOW met nul. Rekent er een partner mee, dan geldt
+dat voor jullie allebei. De belasting over je werkgeverspensioen rekent de planner daarna
+opnieuw uit, want de heffingskortingen hangen af van je totale inkomen.
+
+### Rendement: 2 procentpunt lager of hoger
+
+Dit verschuift het rendement vóór én ná je pensioendatum. Het neutrale profiel rekent dan met
+4,3% of 8,3% in plaats van 6,3%. Twee procentpunt is ongeveer het verschil tussen het
+defensieve en het offensieve profiel.
+
+Het klinkt als een klein verschil, maar het stapelt zich op. € 100.000 groeit in 25 jaar bij
+het neutrale profiel en 3% inflatie tot ongeveer € 220.000 aan koopkracht van vandaag (zonder
+kosten en belasting). Met 2 procentpunt minder rendement wordt dat ongeveer € 137.000.
+
+Dit is iets anders dan de bandbreedte van de simulaties. Die laten goede en slechte jaren
+elkaar afwisselen rond je gemiddelde. Dit scenario verschuift het gemiddelde zelf, voor de hele
+looptijd. De keuze Hoger laat zien hoeveel je plan op meevallers leunt: werkt het alleen met
+2 procentpunt extra, dan is het kwetsbaar.
+
+### Inflatie: 1 procentpunt lager of hoger
+
+Inflatie is in de planner één vast percentage voor de hele looptijd. Met dit scenario zie je
+wat een blijvend hogere of lagere inflatie doet. Het rendement blijft gelijk, dus bij hogere
+inflatie houd je minder over na inflatie: het neutrale profiel zakt bij 4% inflatie van 3,2%
+naar 2,2% per jaar. Dezelfde € 100.000 groeit in 25 jaar dan tot ongeveer € 173.000 in plaats
+van € 220.000.
+
+Hogere inflatie raakt je een tweede keer via uitkeringen die niet meestijgen. Een vast
+pensioen van € 1.000 per maand is over twintig jaar bij 3% inflatie nog ongeveer € 554 aan
+koopkracht van vandaag waard, bij 4% nog € 456. Je gewenste inkomen staat in euro's van
+vandaag en groeit dus vanzelf mee.
+
+### Vijf jaar langer leven
+
+De planner rekent dan door tot je ingevulde levensverwachting plus vijf jaar, en je vermogen
+moet die jaren ook nog meegaan. Een levensverwachting is een gemiddelde. Veel mensen worden
+ouder, en dan moet het geld er nog steeds zijn.
+
+### Geen indexatie
+
+Je werkgeverspensioen en een lijfrente stijgen dan niet mee met de inflatie, je AOW wel. Bij
+het invullen kies je per uitkering al of die meestijgt of een vast bedrag is; dit scenario zet
+ze allemaal op vast. Stonden ze al op vast, dan verandert er niets. Het effect is hetzelfde als
+in het voorbeeld hierboven: een vast bedrag verliest elk jaar koopkracht.
+
+### Wat de scenario's niet doen
+
+Wat er gebeurt als je partner wegvalt, kan de planner nog niet doorrekenen. Daarvoor zijn een
+moment van overlijden, een nabestaandenpensioen en een ander inkomensdoel nodig, en die zitten
+nog niet in het model.
+
 ## Wat de planner bewust niet doet
 
 Het rendement dat bij een risicoprofiel hoort is een brutorendement: dat is het verwachte
@@ -185,7 +254,8 @@ alleen dat deel in. Heb je daarnaast een lijfrente, banksparen of pensioenbelegg
 daar een apart veld voor: die uitkering is belast in box 1 en kan niet vrij worden opgenomen,
 dus hoort niet bij je vrije vermogen.
 
-Verander één aanname en klik opnieuw op Bereken, dan zie je hoe de slagingskans meebeweegt. Die
+Verander één aanname of zet een scenario aan, klik opnieuw op Bereken, en je ziet hoe de
+slagingskans meebeweegt. Die
 kans komt uit 2.000 doorgerekende simulaties en verschijnt dus niet vanzelf terwijl je typt: je
 vorige uitkomst blijft staan met de melding dat hij verouderd is. Dat is het hele punt van de
 tool: niet één vast antwoord, maar zicht op wat je uitkomst kwetsbaar maakt.
