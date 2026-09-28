@@ -409,8 +409,9 @@ premie in de werkgeversregeling, dus werkgeversdeel én eigen bijdrage. Het veld
 
 - ~~Rendementsparameters van de risicoprofielen (punt 9).~~ Opgelost op 28 september 2026,
   zie de FO-planner hierboven. Wat nog openstaat: de uitlegartikelen noemen mogelijk nog de
-  oude profielpercentages en gebruiken "scenario's" voor de Monte Carlo-simulaties (bewust
-  later, besluit Hendrik). De notities `uitgangspunten.kostenVanBeleggen` en
+  oude profielpercentages (bewust later, besluit Hendrik). Het woord "scenario's" voor de
+  Monte Carlo-simulaties is op 28 september 2026 in de artikelen en op /over vervangen door
+  "simulaties", zodat het niet botst met de scenario-schakelaars. De notities `uitgangspunten.kostenVanBeleggen` en
   `uitgangspunten.indexatiePensioen`, `uitgangspunten.box3InRekentools` en de status van
   `box3._toekomstplan` in `fiscale-cijfers.json` zijn op 28 september 2026 bijgewerkt naar
   het huidige gedrag van de tool.

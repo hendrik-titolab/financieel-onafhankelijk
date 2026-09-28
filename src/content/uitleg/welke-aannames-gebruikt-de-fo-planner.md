@@ -10,7 +10,7 @@ tool:
   href: "/ben-ik-financieel-onafhankelijk"
 faq:
   - vraag: "Waarom geeft de planner geen vast eindbedrag?"
-    antwoord: "Omdat niemand het toekomstige rendement kent. Eén vast getal zou net zo goed verzonnen kunnen zijn. Een slagingskans over 2.000 scenario's laat zien hoe gevoelig je plan is voor tegenvallende jaren, in plaats van te doen alsof de uitkomst vaststaat."
+    antwoord: "Omdat niemand het toekomstige rendement kent. Eén vast getal zou net zo goed verzonnen kunnen zijn. Een slagingskans over 2.000 simulaties laat zien hoe gevoelig je plan is voor tegenvallende jaren, in plaats van te doen alsof de uitkomst vaststaat."
   - vraag: "Wat als ik geen zin heb om zelf rendement en volatiliteit in te vullen?"
     antwoord: "Dan gebruik je een van de vijf standaard risicoprofielen (van defensief tot offensief). Die zijn vooraf ingevuld met een redelijk rendement en bijbehorende schommeling. Zelf invullen kan altijd via het vinkje bij risicoprofiel."
   - vraag: "Rekent de planner ook met box 3 (vermogensbelasting)?"
@@ -111,7 +111,7 @@ Zelf in te stellen staan verder: je leeftijd, pensioenleeftijd en levensverwacht
 huidige vermogen en inleg, je gewenste inkomen, de inflatieverwachting, en de hoogte en
 ingangsdatum van AOW en werkgeverspensioen. Niets ligt vast. Verander een aanname, en de
 bedragen rekenen meteen opnieuw. Voor de slagingskans klik je op Bereken: die komt uit 2.000
-scenario's en draait daarom niet bij elke toetsaanslag mee.
+simulaties en draait daarom niet bij elke toetsaanslag mee.
 
 ## Wat de planner bewust niet doet
 
@@ -138,6 +138,6 @@ daar een apart veld voor: die uitkering is belast in box 1 en kan niet vrij word
 dus hoort niet bij je vrije vermogen.
 
 Verander één aanname en klik opnieuw op Bereken, dan zie je hoe de slagingskans meebeweegt. Die
-kans komt uit 2.000 doorgerekende scenario's en verschijnt dus niet vanzelf terwijl je typt: je
+kans komt uit 2.000 doorgerekende simulaties en verschijnt dus niet vanzelf terwijl je typt: je
 vorige uitkomst blijft staan met de melding dat hij verouderd is. Dat is het hele punt van de
 tool: niet één vast antwoord, maar zicht op wat je uitkomst kwetsbaar maakt.
