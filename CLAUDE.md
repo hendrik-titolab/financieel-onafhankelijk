@@ -408,8 +408,9 @@ premie in de werkgeversregeling, dus werkgeversdeel én eigen bijdrage. Het veld
 ## Bekende openstaande punten (niet opgelost, alleen genoteerd)
 
 - ~~Rendementsparameters van de risicoprofielen (punt 9).~~ Opgelost op 28 september 2026,
-  zie de FO-planner hierboven. Wat nog openstaat: de uitlegartikelen noemen mogelijk nog de
-  oude profielpercentages (bewust later, besluit Hendrik). Het woord "scenario's" voor de
+  zie de FO-planner hierboven. Geen artikel noemde de oude profielpercentages; sinds
+  28 september 2026 staan de nieuwe met bronnen in `welke-aannames-gebruikt-de-fo-planner.md`.
+  Nog open: een alinea over de scenario-schakelaars in dat artikel. Het woord "scenario's" voor de
   Monte Carlo-simulaties is op 28 september 2026 in de artikelen en op /over vervangen door
   "simulaties", zodat het niet botst met de scenario-schakelaars. De notities `uitgangspunten.kostenVanBeleggen` en
   `uitgangspunten.indexatiePensioen`, `uitgangspunten.box3InRekentools` en de status van
