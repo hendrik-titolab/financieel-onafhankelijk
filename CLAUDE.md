@@ -150,12 +150,16 @@ reserveringsruimte-modi, berekeningen opslaan in `localStorage`.
   een waarschuwing, geen blokkade, en volgt de lezing van de Belastingdienst ("geboren vóór
   1 september 1953: geen jaarruimte 2026"). Letterlijk gelezen ligt de wettelijke grens een
   jaar later; bij twijfel waarschuwt de tool dus niet.
-- **Oudedagsreserve**: voor 2021 en 2022 gaat `forVermindering` van de jaarruimte af (art.
-  3.127 lid 4 onderdeel b, oude tekst). Vanaf 2023 niet meer. De wizard "Bereken voor mij"
-  (`berekenJaarruimteEenvoudig`) kent de oudedagsreserve niet; voor ondernemers met een
-  FOR over jaren tot en met 2022 is de berekende onbenutte ruimte daar dus te hoog.
-- Het belastingvoordeel telt het hele inkomen als arbeidsinkomen. Voor iemand na de
-  AOW-leeftijd met vooral pensioen is dat te gunstig (arbeidskorting); de UI zegt het erbij.
+- **Oudedagsreserve**: voor jaren tot en met 2022 gaat de netto toevoeging aan de
+  oudedagsreserve van de jaarruimte af (art. 3.127 lid 4 onderdeel b, oude tekst), zowel in
+  de hoofdberekening (`forVermindering`) als in de wizard "Bereken voor mij"
+  (`berekenJaarruimteEenvoudig`, sinds 28 september 2026). Vanaf 2023 niet meer.
+- **Inkomen in het aftrekjaar**: `aftrekjaarInkomen` en `aftrekjaarArbeidsinkomen` zijn
+  optionele velden; leeg is het inkomen van het jaar ervoor, en het hele inkomen als
+  arbeidsinkomen. Het arbeidsinkomen maakt alleen verschil als de kortingen de belasting
+  op nul brengen, want de arbeidskorting verandert niet door de aftrek.
+- De bedragvelden van beide reserveringsruimte-modi lopen sinds 28 september 2026 ook via
+  `parseBedrag()`; die waren in de eerste herstelronde gemist.
 
 ### 4. Inflatie & spaargeld — `/tools/inflatie`
 React-component `src/components/Inflatie/`, rekenlogica sinds 28 september 2026 in

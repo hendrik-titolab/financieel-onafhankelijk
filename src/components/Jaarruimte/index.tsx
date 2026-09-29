@@ -194,6 +194,46 @@ function SavedCard({ item, onDelete, onLoad }: SavedCardProps) {
 
 type Reserveringsmodus = 'direct' | 'berekenen'
 
+// Tekst naar bedrag via de gedeelde parser, null als het leeg of onleesbaar is. De
+// velden hieronder waren type="number" met Number(): "65.000" werd 65
+// (review 28 september 2026).
+const bedragUit = (tekst: string): number | null => parseBedrag(tekst).waarde
+
+/**
+ * Optioneel bedragveld: leeg betekent "gebruik de standaard", en die staat als
+ * voorbeeld in het veld. NumberInput kan dat niet, want die toont altijd een getal.
+ */
+function OptioneelBedrag({ value, standaard, onChange }: {
+  value: number | undefined; standaard: number; onChange: (v: number | undefined) => void
+}) {
+  const [tekst, setTekst] = useState(value === undefined ? '' : formatBedrag(value))
+  const gelezen = parseBedrag(tekst)
+  // Meebewegen als de waarde van buitenaf verandert, bijvoorbeeld bij het laden van
+  // een opgeslagen berekening. Niet bij elke toetsaanslag, zelfde patroon als NumberInput.
+  useEffect(() => {
+    const huidig = tekst.trim() === '' ? undefined : parseBedrag(tekst).waarde ?? undefined
+    if (huidig !== value) setTekst(value === undefined ? '' : formatBedrag(value))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value])
+  return (
+    <div>
+      <div className="relative flex items-center">
+        <span className="absolute left-3 text-body text-sm">€</span>
+        <input type="text" inputMode="decimal" value={tekst}
+          placeholder={formatBedrag(Math.round(standaard))}
+          onChange={e => {
+            setTekst(e.target.value)
+            const r = parseBedrag(e.target.value)
+            if (e.target.value.trim() === '') onChange(undefined)
+            else if (r.waarde !== null && r.waarde >= 0) onChange(r.waarde)
+          }}
+          className="input-field pl-7" />
+      </div>
+      {gelezen.fout && <p role="status" className="text-xs text-signal mt-1">{gelezen.fout}</p>}
+    </div>
+  )
+}
+
 interface ReserveringProps {
   rijen: ReserveringsruimteRij[]
   onChange: (rijen: ReserveringsruimteRij[]) => void
@@ -210,8 +250,8 @@ function ReserveringsruimteDirect({ rijen, onChange, baseYear }: ReserveringProp
 
   useEffect(() => {
     const valid = rows
-      .filter(r => r.jaar && r.bedrag && !isNaN(Number(r.jaar)) && !isNaN(Number(r.bedrag)) && Number(r.bedrag) > 0)
-      .map(r => ({ jaar: Number(r.jaar), onbenutBedrag: Number(r.bedrag) }))
+      .filter(r => r.jaar && !isNaN(Number(r.jaar)) && (bedragUit(r.bedrag) ?? 0) > 0)
+      .map(r => ({ jaar: Number(r.jaar), onbenutBedrag: bedragUit(r.bedrag) ?? 0 }))
     onChange(valid)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rows])
@@ -220,7 +260,7 @@ function ReserveringsruimteDirect({ rijen, onChange, baseYear }: ReserveringProp
     const newRows = rows.map((r, i) => i === index ? { ...r, [field]: value } : r)
     const updated = newRows[index]
     const isLast = index === newRows.length - 1
-    const isFilled = updated.bedrag && Number(updated.bedrag) > 0
+    const isFilled = (bedragUit(updated.bedrag) ?? 0) > 0
     if (isLast && isFilled && newRows.length < maxRijen(baseYear)) {
       newRows.push({ jaar: String(Number(updated.jaar) - 1), bedrag: '' })
     }
@@ -247,7 +287,7 @@ function ReserveringsruimteDirect({ rijen, onChange, baseYear }: ReserveringProp
       </div>
       {rows.map((row, i) => {
         const isLast = i === rows.length - 1
-        const isDraft = isLast && (!row.bedrag || Number(row.bedrag) === 0)
+        const isDraft = isLast && !((bedragUit(row.bedrag) ?? 0) > 0)
         return (
           <div key={i} className={`flex gap-1.5 items-center ${isDraft ? 'opacity-50' : ''}`}>
             <div className="flex-1">
@@ -257,7 +297,7 @@ function ReserveringsruimteDirect({ rijen, onChange, baseYear }: ReserveringProp
             </div>
             <div className="flex-[2] relative flex items-center">
               <span className="absolute left-3 text-body text-sm">€</span>
-              <input type="number" value={row.bedrag} min={0} max={200000} step={100}
+              <input type="text" inputMode="decimal" value={row.bedrag}
                 placeholder="Bijv. 3.000" onChange={e => handleChange(i, 'bedrag', e.target.value)}
                 className="input-field pl-7 text-sm" />
             </div>
@@ -282,19 +322,23 @@ function ReserveringsruimteBerekenen({ onChange, baseYear }: ReserveringProps) {
     factorA: string
     pensioenpremie: string
     ingelegd: string
+    forToevoeging: string
     open: boolean
   }
 
   const [kaarten, setKaarten] = useState<JaarKaart[]>([
-    { jaar: baseYear - 1, inkomen: '', pensioenType: 'geen', factorA: '', pensioenpremie: '', ingelegd: '', open: true },
+    { jaar: baseYear - 1, inkomen: '', pensioenType: 'geen', factorA: '', pensioenpremie: '', ingelegd: '', forToevoeging: '', open: true },
   ])
 
-  // Bereken jaarruimte en onbenut voor een kaart
+  // Bereken jaarruimte en onbenut voor een kaart. Bedragen via de gedeelde parser:
+  // Number("65.000") is 65 (review 28 september 2026).
   const bereken = (k: JaarKaart) => {
-    const ink = Number(k.inkomen)
-    if (!k.inkomen || isNaN(ink)) return { jaarruimte: null, onbenut: null }
-    const jr = berekenJaarruimteEenvoudig(k.jaar, ink, k.pensioenType, Number(k.factorA) || 0, Number(k.pensioenpremie) || 0)
-    const ing = Number(k.ingelegd) || 0
+    const ink = bedragUit(k.inkomen)
+    if (ink === null) return { jaarruimte: null, onbenut: null }
+    const jr = berekenJaarruimteEenvoudig(
+      k.jaar, ink, k.pensioenType, bedragUit(k.factorA) ?? 0, bedragUit(k.pensioenpremie) ?? 0,
+      bedragUit(k.forToevoeging) ?? 0)
+    const ing = bedragUit(k.ingelegd) ?? 0
     return { jaarruimte: jr, onbenut: Math.max(0, jr - ing) }
   }
 
@@ -315,7 +359,7 @@ function ReserveringsruimteBerekenen({ onChange, baseYear }: ReserveringProps) {
     const vorigeJaar = kaarten[kaarten.length - 1].jaar - 1
     setKaarten(prev => [
       ...prev.map(k => ({ ...k, open: false })),
-      { jaar: vorigeJaar, inkomen: '', pensioenType: 'geen', factorA: '', pensioenpremie: '', ingelegd: '', open: true },
+      { jaar: vorigeJaar, inkomen: '', pensioenType: 'geen', factorA: '', pensioenpremie: '', ingelegd: '', forToevoeging: '', open: true },
     ])
   }
 
@@ -381,12 +425,29 @@ function ReserveringsruimteBerekenen({ onChange, baseYear }: ReserveringProps) {
                   <label className="label text-xs">Bruto jaarinkomen {k.jaar - 1}</label>
                   <div className="relative flex items-center">
                     <span className="absolute left-3 text-body text-sm">€</span>
-                    <input type="number" value={k.inkomen} min={0} step={500} placeholder="Bijv. 65.000"
+                    <input type="text" inputMode="decimal" value={k.inkomen} placeholder="Bijv. 65.000"
                       onChange={e => update(i, { inkomen: e.target.value })}
                       className="input-field pl-7 text-sm" />
                   </div>
-                  <p className="text-xs text-body mt-0.5">Bron: jaaropgave of aangifte {k.jaar - 1}</p>
+                  <p className="text-xs text-body mt-0.5">
+                    Bron: jaaropgave of aangifte {k.jaar - 1}
+                    {k.jaar <= 2022 && '. Ondernemer? Neem je winst vóór de toevoeging aan de oudedagsreserve.'}
+                  </p>
                 </div>
+
+                {/* Oudedagsreserve, alleen tot en met 2022 (art. 3.127 lid 4 onderdeel b, oude tekst) */}
+                {k.jaar <= 2022 && (
+                  <div>
+                    <label className="label text-xs">Toevoeging oudedagsreserve {k.jaar - 1} (ondernemers)</label>
+                    <div className="relative flex items-center">
+                      <span className="absolute left-3 text-body text-sm">€</span>
+                      <input type="text" inputMode="decimal" value={k.forToevoeging} placeholder="0"
+                        onChange={e => update(i, { forToevoeging: e.target.value })}
+                        className="input-field pl-7 text-sm" />
+                    </div>
+                    <p className="text-xs text-body mt-0.5">Wat de toevoeging boven de afneming uitkwam. Gaat van de jaarruimte af.</p>
+                  </div>
+                )}
 
                 {/* Pensioentype */}
                 <div>
@@ -411,7 +472,7 @@ function ReserveringsruimteBerekenen({ onChange, baseYear }: ReserveringProps) {
                     <label className="label text-xs">Factor A {k.jaar - 1} (van UPO)</label>
                     <div className="relative flex items-center">
                       <span className="absolute left-3 text-body text-sm">€</span>
-                      <input type="number" value={k.factorA} min={0} step={50} placeholder="0"
+                      <input type="text" inputMode="decimal" value={k.factorA} placeholder="0"
                         onChange={e => update(i, { factorA: e.target.value })}
                         className="input-field pl-7 text-sm" />
                     </div>
@@ -424,7 +485,7 @@ function ReserveringsruimteBerekenen({ onChange, baseYear }: ReserveringProps) {
                     <label className="label text-xs">Totale pensioenpremie {k.jaar - 1}</label>
                     <div className="relative flex items-center">
                       <span className="absolute left-3 text-body text-sm">€</span>
-                      <input type="number" value={k.pensioenpremie} min={0} step={100} placeholder="0"
+                      <input type="text" inputMode="decimal" value={k.pensioenpremie} placeholder="0"
                         onChange={e => update(i, { pensioenpremie: e.target.value })}
                         className="input-field pl-7 text-sm" />
                     </div>
@@ -444,7 +505,7 @@ function ReserveringsruimteBerekenen({ onChange, baseYear }: ReserveringProps) {
                   <label className="label text-xs">Ingelegd in {k.jaar} (lijfrente)</label>
                   <div className="relative flex items-center">
                     <span className="absolute left-3 text-body text-sm">€</span>
-                    <input type="number" value={k.ingelegd} min={0} step={100} placeholder="0"
+                    <input type="text" inputMode="decimal" value={k.ingelegd} placeholder="0"
                       onChange={e => update(i, { ingelegd: e.target.value })}
                       className="input-field pl-7 text-sm" />
                   </div>
@@ -814,6 +875,35 @@ export function JaarruimteTab() {
             </div>
           )}
 
+          {/* Voor de schatting van het belastingvoordeel, beide optioneel. Het voordeel
+              valt in het aftrekjaar, de jaarruimte zelf rekent met het jaar ervoor
+              (review 28 september 2026). */}
+          <div className="border-t border-line-soft pt-3 space-y-3">
+            <div>
+              <label className="label">Verwacht belastbaar inkomen in {inputs.year} (optioneel)</label>
+              <OptioneelBedrag
+                value={inputs.aftrekjaarInkomen}
+                standaard={inputs.income}
+                onChange={v => set('aftrekjaarInkomen', v)}
+              />
+              <p className="text-xs text-body mt-1">
+                Voor het belastingvoordeel. Leeg: het inkomen van {inputs.year - 1} hierboven.
+                Na de AOW-leeftijd hoort je AOW en pensioen hier ook bij.
+              </p>
+            </div>
+            <div>
+              <label className="label">Waarvan arbeidsinkomen (loon of winst) in {inputs.year} (optioneel)</label>
+              <OptioneelBedrag
+                value={inputs.aftrekjaarArbeidsinkomen}
+                standaard={inputs.aftrekjaarInkomen ?? inputs.income}
+                onChange={v => set('aftrekjaarArbeidsinkomen', v)}
+              />
+              <p className="text-xs text-body mt-1">
+                Voor de arbeidskorting. AOW en pensioen zijn geen arbeidsinkomen. Leeg: het hele inkomen.
+              </p>
+            </div>
+          </div>
+
           {/* Al ingelegd dit jaar */}
           <div className="border-t border-line-soft pt-3">
             <label className="label">Al ingelegd dit jaar (lijfrente)</label>
@@ -930,7 +1020,10 @@ export function JaarruimteTab() {
               if (fase.soort === 'in') return `Je bereikt in ${inputs.year} de AOW-leeftijd: het tarief is gewogen naar de maanden ervoor en erna, met de volledige ouderenkorting.`
               return 'Met de tarieven van vóór de AOW-leeftijd.'
             })()}{' '}
-            Het hele inkomen telt als arbeidsinkomen voor de arbeidskorting. Geen definitief bedrag.
+            {inputs.aftrekjaarArbeidsinkomen === undefined
+              ? 'Het hele inkomen telt als arbeidsinkomen voor de arbeidskorting.'
+              : `Arbeidsinkomen voor de arbeidskorting: ${eur(inputs.aftrekjaarArbeidsinkomen)}.`}{' '}
+            Geen definitief bedrag.
             Deze berekening is educatief en indicatief, geen persoonlijk financieel advies.
           </p>
           {/* Modelversie en peildatum in beeld. Een gecachete offline versie draagt
