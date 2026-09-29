@@ -406,9 +406,20 @@ export interface JaarruimteInputs {
   pensioenpremie: number
   alIngelegd: number           // already deposited in lijfrente this year
   reserveringsruimteRijen: ReserveringsruimteRij[]  // up to 10 past years, progressive UI
-  // Alleen nodig bij belastingjaar 2021 of 2022. Het plafond van de
-  // reserveringsruimte hing toen af van de leeftijd op 1 januari van dat jaar.
+  /**
+   * Optioneel. Drie toepassingen: het plafond van de reserveringsruimte in 2021 en
+   * 2022 (leeftijd op 1 januari), het tarief van het belastingvoordeel als je in het
+   * aftrekjaar de AOW-leeftijd al had of bereikte, en de leeftijdsgrens van de
+   * jaarruimte zelf (art. 3.127 lid 1 Wet IB 2001).
+   */
   geboortedatum?: string       // ISO, bijv. '1964-08-15'
+  /**
+   * Alleen 2021 en 2022: het bedrag waarmee de toevoeging aan de oudedagsreserve in
+   * het voorafgaande jaar de afneming overtrof (art. 3.127 lid 4 onderdeel b, zoals
+   * dat tot en met 2022 luidde). Gaat van de jaarruimte af. Vanaf 2023 bestaat deze
+   * vermindering niet meer.
+   */
+  forVermindering?: number
   /**
    * Verwacht belastbaar inkomen in het jaar waarin je de lijfrentepremie aftrekt.
    *

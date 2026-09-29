@@ -2,6 +2,7 @@ import type { JaarruimteInputs, JaarruimteResult, PensioenType } from '../types'
 import {
   JAARRUIMTE_PARAMS, JAARRUIMTE_BELASTINGJAREN, FISCAAL,
   RESERVERINGSRUIMTE_PCT_VOOR_2023, RESERVERINGSRUIMTE_TERUGKIJK,
+  AOW_LEEFTIJD_MAANDEN_PER_JAAR,
 } from '../config/fiscaleParameters'
 import { belastingBox1 } from './brutoNetto'
 import { PARAMETER_JAAR } from '../config/modelVersie'
@@ -33,6 +34,94 @@ export function leeftijdInMaandenOp1Januari(geboortedatum: string, jaar: number)
   let maanden = (jaar - d.getFullYear()) * 12 - d.getMonth()
   if (d.getDate() > 1) maanden -= 1   // de maand is op 1 januari nog niet vol
   return maanden
+}
+
+/**
+ * De datum waarop iemand de AOW-leeftijd bereikt.
+ *
+ * De AOW-leeftijd hangt af van het kalenderjaar waarin je hem bereikt (artikel 7a
+ * AOW): 66 jaar en 10 maanden in 2023, 67 jaar in 2024. Dus per jaar uit de tabel
+ * proberen: valt geboortedatum plus de AOW-leeftijd van jaar J in jaar J, dan is dat
+ * de datum. Valt hij vóór het eerste jaar van de tabel, dan is hij in elk geval
+ * bereikt vóór alles wat deze tool rekent. Null bij een onbruikbare datum, of als
+ * hij na de tabel valt.
+ */
+export function aowDatum(geboortedatum: string): Date | null {
+  const d = new Date(geboortedatum)
+  if (isNaN(d.getTime())) return null
+  const plus = (maanden: number) => new Date(d.getFullYear(), d.getMonth() + maanden, d.getDate())
+  const jaren = Object.keys(AOW_LEEFTIJD_MAANDEN_PER_JAAR).map(Number).sort((a, b) => a - b)
+  for (const jaar of jaren) {
+    const kandidaat = plus(AOW_LEEFTIJD_MAANDEN_PER_JAAR[jaar])
+    if (kandidaat.getFullYear() === jaar) return kandidaat
+  }
+  const vroegst = plus(AOW_LEEFTIJD_MAANDEN_PER_JAAR[jaren[0]])
+  if (vroegst.getFullYear() < jaren[0]) return vroegst
+  return null
+}
+
+export type AowFase =
+  | { soort: 'voor' }
+  | { soort: 'in'; maand: number }   // maand 1-12 waarin de AOW-leeftijd wordt bereikt
+  | { soort: 'na' }
+
+/** Of iemand in een kalenderjaar de AOW-leeftijd nog niet had, bereikte of al had. */
+export function aowFaseInJaar(geboortedatum: string | undefined, jaar: number): AowFase | null {
+  if (!geboortedatum || isNaN(new Date(geboortedatum).getTime())) return null
+  const aow = aowDatum(geboortedatum)
+  if (!aow || aow.getFullYear() > jaar) return { soort: 'voor' }
+  if (aow.getFullYear() < jaar) return { soort: 'na' }
+  return { soort: 'in', maand: aow.getMonth() + 1 }
+}
+
+/**
+ * Of er volgens de geboortedatum in dit jaar nog jaarruimte is (art. 3.127 lid 1).
+ *
+ * De grens: tot en met 2022 de AOW-leeftijd, vanaf 2023 (Wtp, met terugwerkende
+ * kracht) de AOW-leeftijd plus vijf jaar. De wettekst toetst die "bij de aanvang van
+ * het kalenderjaar". De Belastingdienst schrijft voor 2026 echter "Bent u geboren
+ * vóór 1 september 1953? Dan kunt u niet gebruikmaken van de jaarruimte 2026", en
+ * dat komt precies uit als je toetst op 1 januari van het jaar ervóór, het jaar van
+ * het pensioentekort, waarbij wie de grens op 1 januari zelf bereikt nog meedoet.
+ * Letterlijk gelezen ligt de grens een jaar later. Deze functie volgt de
+ * Belastingdienst, dus de ruimste lezing: de tool waarschuwt alleen als het onder
+ * beide lezingen niet kan (review 28 september 2026). Null zonder bruikbare
+ * geboortedatum.
+ */
+export function jaarruimteLeeftijdToegestaan(geboortedatum: string | undefined, jaar: number): boolean | null {
+  if (!geboortedatum || isNaN(new Date(geboortedatum).getTime())) return null
+  const aow = aowDatum(geboortedatum)
+  if (!aow) return true
+  const grens = jaar <= 2022
+    ? aow
+    : new Date(aow.getFullYear() + 5, aow.getMonth(), aow.getDate())
+  return grens.getTime() >= new Date(jaar - 1, 0, 1).getTime()
+}
+
+/**
+ * Belasting in het aftrekjaar, met het tarief dat bij de AOW-status hoort.
+ *
+ * In het jaar waarin je de AOW-leeftijd bereikt, is het tarief van schijf 1 lineair
+ * in het aantal maanden daarvóór: 17,85% bij januari, 34,25% bij december in 2026
+ * (Belastingdienst, fisin 2026, belastingberekening). Het schijfdeel is daarom exact
+ * het gewogen gemiddelde van vóór en ná. De algemene heffingskorting en de
+ * arbeidskorting worden op dezelfde manier gewogen, als benadering; de ouderenkorting
+ * geldt volledig, want die krijg je als je aan het eind van het jaar de AOW-leeftijd
+ * hebt. De alleenstaandeouderenkorting blijft buiten beschouwing: die hangt niet van
+ * het inkomen af en verandert het voordeel van een aftrek dus niet.
+ */
+function teBetalenInAftrekjaar(
+  inkomen: number, arbeidsinkomen: number, belastingjaar: number, fase: AowFase | null,
+): number {
+  const opties = { arbeidsinkomen, belastingjaar }
+  if (!fase || fase.soort === 'voor') return belastingBox1(inkomen, { ...opties, pastAow: false }).teBetalen
+  if (fase.soort === 'na') return belastingBox1(inkomen, { ...opties, pastAow: true }).teBetalen
+  const voor = belastingBox1(inkomen, { ...opties, pastAow: false })
+  const na = belastingBox1(inkomen, { ...opties, pastAow: true })
+  const f = (fase.maand - 1) / 12
+  const belasting = f * voor.belastingBruto + (1 - f) * na.belastingBruto
+  const kortingen = f * (voor.ahk + voor.ak) + (1 - f) * (na.ahk + na.ak) + na.ouderenkorting
+  return belasting - Math.min(belasting, kortingen)
 }
 
 export interface Plafond {
@@ -167,6 +256,22 @@ export function controleerJaarruimteInvoer(inputs: JaarruimteInputs): Jaarruimte
   if (!getal(inputs.alIngelegd) || inputs.alIngelegd < 0) {
     errors.push('Vul een reeds ingelegd bedrag in van nul of hoger.')
   }
+  if (inputs.year <= 2022 && inputs.forVermindering !== undefined
+    && (!getal(inputs.forVermindering) || inputs.forVermindering < 0)) {
+    errors.push('Vul bij de oudedagsreserve een bedrag in van nul of hoger.')
+  }
+
+  // Een waarschuwing en geen blokkade, zie jaarruimteLeeftijdToegestaan() voor de
+  // twee lezingen van de leeftijdsgrens (review 28 september 2026).
+  if (jaarruimteLeeftijdToegestaan(inputs.geboortedatum, inputs.year) === false) {
+    waarschuwingen.push(
+      `Volgens je geboortedatum ben je voor ${inputs.year} waarschijnlijk te oud voor jaarruimte: ` +
+      (inputs.year <= 2022
+        ? `tot en met 2022 gold die alleen tot de AOW-leeftijd`
+        : `die geldt tot vijf jaar na de AOW-leeftijd`) +
+      ` (art. 3.127 lid 1 Wet IB 2001). Reserveringsruimte uit eerdere jaren kan nog wel. ` +
+      `Controleer dit bij de Belastingdienst.`)
+  }
 
   const oudste = oudsteReserveringsjaar(inputs.year)
   const gezien = new Set<number>()
@@ -226,14 +331,20 @@ export function calculateJaarruimte(inputs: JaarruimteInputs): JaarruimteResult 
   // - db:    percentage × grondslag − factorMultiplier × factorA
   // - wtp:   percentage × grondslag − pensioenpremie (de totale inleg in de
   //          werkgeversregeling, werkgeversdeel én eigen bijdrage, vervangt factor A)
+  // Tot en met 2022 ging daar ook de vermindering voor dotaties aan de
+  // oudedagsreserve af (art. 3.127 lid 4 onderdeel b, oude tekst). Vanaf 2023 niet
+  // meer: de wettekst per 1 januari 2023 noemt alleen de pensioenopbouw
+  // (review 28 september 2026).
+  const forAftrek = year <= 2022 ? Math.max(0, inputs.forVermindering ?? 0) : 0
+
   let jaarruimte: number
   if (pensioenType === 'db') {
-    jaarruimte = Math.max(0, p.percentage * base - p.factorMultiplier * factorA)
+    jaarruimte = Math.max(0, p.percentage * base - p.factorMultiplier * factorA - forAftrek)
   } else if (pensioenType === 'wtp') {
-    jaarruimte = Math.max(0, p.percentage * base - (pensioenpremie ?? 0))
+    jaarruimte = Math.max(0, p.percentage * base - (pensioenpremie ?? 0) - forAftrek)
   } else {
     // geen pensioenregeling
-    jaarruimte = Math.max(0, p.percentage * base)
+    jaarruimte = Math.max(0, p.percentage * base - forAftrek)
   }
 
   // Reserveringsruimte: som van de onbenutte jaarruimten uit voorgaande jaren,
@@ -298,13 +409,15 @@ export function calculateJaarruimte(inputs: JaarruimteInputs): JaarruimteResult 
   // erbij; een harde fout zou de tool onbruikbaar maken voor een jaar dat hij zelf
   // aanbiedt (WP9, fase 3).
   const tariefJaar = FISCAAL[inputs.year] !== undefined ? inputs.year : PARAMETER_JAAR
-  const voorAftrek = belastingBox1(Math.max(0, aftrekInkomen), {
-    pastAow: false, arbeidsinkomen: Math.max(0, aftrekInkomen), belastingjaar: tariefJaar,
-  })
-  const naAftrek = belastingBox1(Math.max(0, aftrekInkomen - nogTeDoen), {
-    pastAow: false, arbeidsinkomen: Math.max(0, aftrekInkomen), belastingjaar: tariefJaar,
-  })
-  const belastingVoordeel = Math.max(0, voorAftrek.teBetalen - naAftrek.teBetalen)
+  // Met de tarieven die bij de AOW-status in het aftrekjaar horen. Rekende tot
+  // 28 september 2026 altijd met die van vóór de AOW-leeftijd, terwijl er tot vijf
+  // jaar erna nog jaarruimte is: het voordeel viel dan te hoog uit (35,75% in plaats
+  // van 17,85% in schijf 1). Zonder geboortedatum: vóór de AOW-leeftijd, zoals voorheen.
+  const fase = aowFaseInJaar(inputs.geboortedatum, inputs.year)
+  const arbeid = Math.max(0, aftrekInkomen)
+  const voorAftrek = teBetalenInAftrekjaar(Math.max(0, aftrekInkomen), arbeid, tariefJaar, fase)
+  const naAftrek = teBetalenInAftrekjaar(Math.max(0, aftrekInkomen - nogTeDoen), arbeid, tariefJaar, fase)
+  const belastingVoordeel = Math.max(0, voorAftrek - naAftrek)
   // Het effectieve tarief over déze aftrek, niet een schijftarief. Bij een aftrek
   // die twee schijven doorkruist ligt dit er ergens tussenin.
   const belastingTarief = nogTeDoen > 0 ? belastingVoordeel / nogTeDoen : 0

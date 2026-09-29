@@ -211,12 +211,19 @@ describe('belastingBox1 — het belastingjaar werkt door', () => {
       .toThrow(/Geen fiscale cijfers bekend voor belastingjaar 2015/)
   })
 
-  it('weigert de cijfers van na de AOW-leeftijd voor een jaar dat ze niet heeft', () => {
-    // Alleen het huidige jaar heeft postAow-cijfers, zie _dekking in
-    // fiscale-cijfers.json. Vragen om 2023 na de AOW-leeftijd hoort te stoppen.
-    expect(() => belastingBox1(30_000, { pastAow: true, belastingjaar: 2023 }))
-      .toThrow(/alleen de cijfers van vóór de AOW-leeftijd/)
-    expect(() => belastingBox1(30_000, { pastAow: true, belastingjaar: PARAMETER_JAAR }))
-      .not.toThrow()
+  it('kent sinds 28 september 2026 ook de cijfers van na de AOW-leeftijd voor 2021-2025', () => {
+    // Tot die datum had alleen het huidige jaar postAow-cijfers en weigerde deze
+    // functie 2023 na de AOW-leeftijd. De jaarruimtetool heeft ze nu nodig voor het
+    // belastingvoordeel van wie in het aftrekjaar de AOW-leeftijd al had.
+    // 2023, fisin: schijf 1 na de AOW-leeftijd 19,03% tot 37.149; 30.000 × 19,03% = 5.709.
+    const r = belastingBox1(30_000, { pastAow: true, belastingjaar: 2023, arbeidsinkomen: 0 })
+    expect(r.belastingBruto).toBeCloseTo(5709, 6)
+    // Ouderenkorting 2023: 1.835 onder 40.888.
+    expect(r.ouderenkorting).toBe(1835)
+    // Algemene heffingskorting 2023 na AOW: 1.583 − 3,141% × (30.000 − 22.660) = 1.352,45.
+    expect(r.ahk).toBeCloseTo(1352.4506, 4)
+    for (const jaar of [2021, 2022, 2024, 2025]) {
+      expect(() => belastingBox1(30_000, { pastAow: true, belastingjaar: jaar })).not.toThrow()
+    }
   })
 })
