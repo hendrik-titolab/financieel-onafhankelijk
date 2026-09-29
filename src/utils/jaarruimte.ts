@@ -182,18 +182,23 @@ function bepaalPlafond(year: number, premiegrondslag: number, geboortedatum?: st
 }
 
 // Berekent alleen de jaarruimte voor een enkel jaar — gebruikt in de reserveringsruimte-wizard
+// forVermindering: tot en met 2022 de netto toevoeging aan de oudedagsreserve in het
+// jaar ervoor (art. 3.127 lid 4 onderdeel b, oude tekst), zoals in calculateJaarruimte().
+// Vanaf 2023 genegeerd. Toegevoegd op 28 september 2026: de wizard kende hem niet.
 export function berekenJaarruimteEenvoudig(
   jaar: number,
   inkomen: number,
   pensioenType: PensioenType,
   factorA: number,
   pensioenpremie: number,
+  forVermindering = 0,
 ): number {
   const p = getParams(jaar)
   const base = Math.max(0, Math.min(inkomen, p.maxInkomen) - p.franchise)
-  if (pensioenType === 'db')  return Math.max(0, p.percentage * base - p.factorMultiplier * factorA)
-  if (pensioenType === 'wtp') return Math.max(0, p.percentage * base - pensioenpremie)
-  return Math.max(0, p.percentage * base)
+  const forAftrek = jaar <= 2022 ? Math.max(0, forVermindering || 0) : 0
+  if (pensioenType === 'db')  return Math.max(0, p.percentage * base - p.factorMultiplier * factorA - forAftrek)
+  if (pensioenType === 'wtp') return Math.max(0, p.percentage * base - pensioenpremie - forAftrek)
+  return Math.max(0, p.percentage * base - forAftrek)
 }
 
 /**
@@ -414,7 +419,8 @@ export function calculateJaarruimte(inputs: JaarruimteInputs): JaarruimteResult 
   // jaar erna nog jaarruimte is: het voordeel viel dan te hoog uit (35,75% in plaats
   // van 17,85% in schijf 1). Zonder geboortedatum: vóór de AOW-leeftijd, zoals voorheen.
   const fase = aowFaseInJaar(inputs.geboortedatum, inputs.year)
-  const arbeid = Math.max(0, aftrekInkomen)
+  // Arbeidsinkomen apart op te geven; leeg is het hele inkomen, zoals tot 28 september 2026.
+  const arbeid = Math.max(0, inputs.aftrekjaarArbeidsinkomen ?? aftrekInkomen)
   const voorAftrek = teBetalenInAftrekjaar(Math.max(0, aftrekInkomen), arbeid, tariefJaar, fase)
   const naAftrek = teBetalenInAftrekjaar(Math.max(0, aftrekInkomen - nogTeDoen), arbeid, tariefJaar, fase)
   const belastingVoordeel = Math.max(0, voorAftrek - naAftrek)

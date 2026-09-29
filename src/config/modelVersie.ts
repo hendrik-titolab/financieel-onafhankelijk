@@ -32,7 +32,10 @@
 // AOW-leeftijd als de geboortedatum dat aangeeft (in het AOW-jaar gewogen per maand),
 // een leeftijdswaarschuwing volgens art. 3.127 lid 1, en voor 2021 en 2022 gaat de
 // toevoeging aan de oudedagsreserve van de jaarruimte af (28 september 2026).
-export const MODEL_VERSIE = '2026.09.8'
+// 2026.09.9: jaarruimte. De wizard voor eerdere jaren trekt de oudedagsreserve af
+// (tot en met 2022), en het belastingvoordeel kan rekenen met een apart opgegeven
+// inkomen en arbeidsinkomen in het aftrekjaar (28 september 2026).
+export const MODEL_VERSIE = '2026.09.9'
 
 /** Belastingjaar waarop fiscaleParameters.ts is gebaseerd. */
 export const PARAMETER_JAAR = 2026

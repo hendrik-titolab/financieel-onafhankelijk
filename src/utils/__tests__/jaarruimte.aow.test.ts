@@ -5,7 +5,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   calculateJaarruimte, aowDatum, aowFaseInJaar, jaarruimteLeeftijdToegestaan,
-  controleerJaarruimteInvoer,
+  controleerJaarruimteInvoer, berekenJaarruimteEenvoudig,
 } from '../jaarruimte'
 import type { JaarruimteInputs } from '../../types'
 
@@ -108,5 +108,44 @@ describe('oudedagsreserve in 2021 en 2022', () => {
   })
   it('geeft nooit een negatieve jaarruimte', () => {
     expect(calculateJaarruimte(basis({ year: 2021, income: 30_000, forVermindering: 99_999 })).jaarruimte).toBe(0)
+  })
+})
+
+// Review 28 september 2026, de twee beperkingen die na PR #23 overbleven.
+describe('arbeidsinkomen in het aftrekjaar', () => {
+  it('telt alleen mee waar de kortingen de belasting opsouperen', () => {
+    // € 30.000, AOW sinds 2025, geen arbeidsinkomen (alleen AOW en pensioen).
+    // Jaarruimte 30% × (30.000 − 19.172) = 3.248,40; na aftrek 26.751,60.
+    // Vóór aftrek: 30.000 × 17,85% = 5.355; AHK 1.556 − 3,195% × 264 = 1.547,5652;
+    //   ouderenkorting 2.067; geen arbeidskorting; te betalen 1.740,4348.
+    // Na aftrek: 26.751,60 × 17,85% = 4.775,1606; AHK 1.556; OK 2.067; te betalen 1.152,1606.
+    // Voordeel 588,2742. Met het hele inkomen als arbeidsinkomen was het 0: de
+    // arbeidskorting maakte de belasting al nul.
+    const zonderArbeid = calculateJaarruimte(basis({
+      income: 30_000, geboortedatum: '1958-01-15', aftrekjaarArbeidsinkomen: 0,
+    }))
+    expect(zonderArbeid.belastingVoordeel).toBeCloseTo(588.2742, 3)
+    const heleInkomen = calculateJaarruimte(basis({ income: 30_000, geboortedatum: '1958-01-15' }))
+    expect(heleInkomen.belastingVoordeel).toBe(0)
+  })
+
+  it('verandert niets bij een inkomen waar de belasting niet op nul komt', () => {
+    const a = calculateJaarruimte(basis({ geboortedatum: '1958-01-15' }))
+    const b = calculateJaarruimte(basis({ geboortedatum: '1958-01-15', aftrekjaarArbeidsinkomen: 0 }))
+    expect(b.belastingVoordeel).toBeCloseTo(a.belastingVoordeel, 6)
+  })
+})
+
+describe('de wizard voor eerdere jaren kent de oudedagsreserve', () => {
+  it('trekt hem af tot en met 2022, daarna niet', () => {
+    // 13,3% × (50.000 − 12.837) = 4.942,679
+    expect(berekenJaarruimteEenvoudig(2022, 50_000, 'geen', 0, 0, 1_000)).toBeCloseTo(3_942.679, 3)
+    expect(berekenJaarruimteEenvoudig(2022, 50_000, 'geen', 0, 0)).toBeCloseTo(4_942.679, 3)
+    expect(berekenJaarruimteEenvoudig(2023, 50_000, 'geen', 0, 0, 1_000))
+      .toBe(berekenJaarruimteEenvoudig(2023, 50_000, 'geen', 0, 0))
+  })
+  it('rekent hetzelfde als de hoofdberekening', () => {
+    const hoofd = calculateJaarruimte(basis({ year: 2021, income: 55_000, forVermindering: 750 }))
+    expect(berekenJaarruimteEenvoudig(2021, 55_000, 'geen', 0, 0, 750)).toBeCloseTo(hoofd.jaarruimte, 9)
   })
 })

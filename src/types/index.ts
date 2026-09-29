@@ -429,6 +429,13 @@ export interface JaarruimteInputs {
    * `income` en zegt de UI dat erbij (audit 7 september 2026, bevinding 19).
    */
   aftrekjaarInkomen?: number
+  /**
+   * Deel van het inkomen in het aftrekjaar dat arbeidsinkomen is (loon of winst), voor
+   * de arbeidskorting. Leeg: het hele inkomen. AOW en pensioen zijn geen
+   * arbeidsinkomen, dus voor wie na de AOW-leeftijd vooral daarvan leeft, gaf het hele
+   * inkomen een te hoge arbeidskorting (review 28 september 2026).
+   */
+  aftrekjaarArbeidsinkomen?: number
   clientName: string
   adviseurNaam: string
   notities: string
