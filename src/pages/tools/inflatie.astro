@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import { InflatieCalculator } from '../../components/Inflatie'
-import { articleSchema, faqSchema, breadcrumbSchema } from '../../lib/seo'
+import { articleSchema, faqSchema, breadcrumbSchema, rekentoolSchema } from '../../lib/seo'
 
 const title = 'Inflatie en je spaargeld: koopkrachtberekening | Ben ik financieel onafhankelijk?'
 const description =
@@ -26,6 +26,7 @@ const faq = [
 ]
 
 const schemas = [
+  rekentoolSchema('/tools/inflatie/'),
   articleSchema({ title, description, path: '/tools/inflatie/', dateModified: '2026-07-21' }),
   faqSchema(faq),
   breadcrumbSchema([

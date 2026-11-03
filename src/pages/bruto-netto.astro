@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro'
 import { BrutoNettoCalculator } from '../components/BrutoNetto'
-import { articleSchema, faqSchema, breadcrumbSchema } from '../lib/seo'
+import { articleSchema, faqSchema, breadcrumbSchema, rekentoolSchema } from '../lib/seo'
 
 const title = 'Bruto-netto berekenen 2026 | Ben ik financieel onafhankelijk?'
 const description =
@@ -21,6 +21,7 @@ const faq = [
 ]
 
 const schemas = [
+  rekentoolSchema('/bruto-netto/'),
   articleSchema({ title, description, path: '/bruto-netto/', dateModified: '2026-06-01' }),
   faqSchema(faq),
   breadcrumbSchema([

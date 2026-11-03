@@ -3,20 +3,54 @@
  * Wordt gebruikt door BaseLayout.astro en per-pagina.
  */
 import { SITE } from '../config/site'
+import { rekentool } from '../config/rekentools'
 
 /** Maak een absolute URL van een pad (bijv. "/bruto-netto"). */
 export function absUrl(path: string): string {
   return new URL(path, SITE.url).href
 }
 
-/** Organisatie — sitebreed. */
+/**
+ * Organisatie — sitebreed.
+ *
+ * sameAs staat bij de oprichter en niet bij de organisatie: sameAs betekent "dit
+ * is dezelfde entiteit", en een persoonlijk LinkedIn-profiel is niet de site.
+ */
 export function organizationSchema() {
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: SITE.name,
     url: SITE.url,
+    logo: absUrl('/icon-512.png'),
     description: SITE.description,
+    publisher: { '@type': 'Organization', name: SITE.publisher },
+    founder: {
+      '@type': 'Person',
+      name: SITE.oprichter.naam,
+      sameAs: SITE.oprichter.profielen,
+    },
+  }
+}
+
+/**
+ * Rekentool — voor elke toolpagina. Gratis staat er expliciet in (offers van € 0),
+ * zodat een zoekmachine of AI-assistent dat niet uit de lopende tekst hoeft af te
+ * leiden.
+ */
+export function rekentoolSchema(path: string) {
+  const t = rekentool(path)
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    name: t.naam,
+    description: t.tekst,
+    url: absUrl(path),
+    applicationCategory: 'FinanceApplication',
+    operatingSystem: 'Web',
+    inLanguage: 'nl-NL',
+    isAccessibleForFree: true,
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
     publisher: { '@type': 'Organization', name: SITE.publisher },
   }
 }

@@ -14,5 +14,10 @@ export const SITE = {
   description:
     'Onafhankelijke uitleg en gratis rekentools over financiële onafhankelijkheid, pensioen en vermogensopbouw. Kort, begrijpelijk en voor iedereen te gebruiken.',
   publisher: 'Titolab',
+  // Alleen in de structured data (founder + sameAs), nergens zichtbaar op de site.
+  oprichter: {
+    naam: 'Hendrik Schakel',
+    profielen: ['https://www.linkedin.com/in/hendrikschakel/'],
+  },
   locale: 'nl_NL',
 } as const

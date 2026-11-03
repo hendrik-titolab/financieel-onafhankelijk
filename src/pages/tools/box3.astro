@@ -1,7 +1,8 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import { Box3Tool } from '../../components/Box3'
-import { articleSchema, faqSchema, breadcrumbSchema } from '../../lib/seo'
+import ToolVragen from '../../components/ToolVragen.astro'
+import { articleSchema, faqSchema, breadcrumbSchema, rekentoolSchema } from '../../lib/seo'
 import { BOX3_JAREN } from '../../config/fiscaleParameters'
 import { PARAMETER_JAAR } from '../../config/modelVersie'
 
@@ -40,6 +41,7 @@ const faq = [
 ]
 
 const schemas = [
+  rekentoolSchema('/tools/box3/'),
   articleSchema({ title, description, path: '/tools/box3/', dateModified: '2026-09-08' }),
   faqSchema(faq),
   breadcrumbSchema([
@@ -59,6 +61,15 @@ const schemas = [
         of het loont om je werkelijke rendement door te geven in plaats van het forfait.
       </p>
       <Box3Tool client:only="react" />
+      <ToolVragen
+        faq={faq}
+        leesOok={[
+          {
+            titel: 'Hoeveel belasting betaal ik over mijn vermogen?',
+            href: '/uitleg/hoeveel-belasting-betaal-ik-over-mijn-vermogen',
+          },
+        ]}
+      />
     </div>
   </main>
 </BaseLayout>
