@@ -3,63 +3,11 @@ import { Image } from 'astro:assets'
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import { breadcrumbSchema, itemListSchema } from '../../lib/seo'
 import hoofdtoolPreview from '../../assets/hoofdtool-preview.webp'
+import { HOOFDTOOL as hoofdtool, TOOLS as tools } from '../../config/rekentools'
 
 const title = 'Rekentools | Gratis financiële calculators'
 const description =
   'Alle gratis rekentools op een rij: financiële onafhankelijkheid, bruto-netto, jaarruimte, inflatie, box 3 en wat rente op rente met je vermogen doet.'
-
-const hoofdtool = {
-  href: '/ben-ik-financieel-onafhankelijk/',
-  naam: 'Rekentool financieel onafhankelijk?',
-  tekst: 'Reken eenvoudig uit wat er voor jou nodig is om financieel onafhankelijk te zijn.',
-  onderschrift:
-    'Vul je pensioen, je vermogen, het gewenste inkomen en spaargedrag in en check met welke aannames je wilt rekenen. Je krijgt als resultaat een uitgebreide kansverdeling voor het wel of niet kunnen halen van je financiële doelen.',
-}
-
-const tools = [
-  {
-    href: '/bruto-netto/',
-    naam: 'Bruto-netto berekenen',
-    label: 'Salaris',
-    tekst:
-      'Zie wat je van je brutosalaris netto overhoudt (of andersom), inclusief belastingschijven en heffingskortingen voor 2026.',
-  },
-  {
-    href: '/tools/jaarruimte/',
-    naam: 'Jaarruimte berekenen',
-    label: 'Pensioen',
-    tekst:
-      'Bereken hoeveel je fiscaal aftrekbaar mag inleggen voor extra pensioen om een pensioentekort aan te vullen.',
-  },
-  {
-    href: '/tools/inflatie/',
-    naam: 'Inflatie & spaargeld',
-    label: 'Inflatie',
-    tekst:
-      'Zie hoe snel inflatie de koopkracht van je spaargeld uitholt, ook als het rente oplevert.',
-  },
-  {
-    href: '/tools/box3/',
-    naam: 'Box 3 berekenen',
-    label: 'Vermogen',
-    tekst:
-      'Bereken de belasting over je spaargeld en beleggingen, met het forfait en het tegenbewijs naast elkaar.',
-  },
-  {
-    href: '/tools/maandelijks-beleggen/',
-    naam: 'Maandelijks beleggen',
-    label: 'Vermogensopbouw',
-    tekst:
-      'Zie wat een vaste maandelijkse inleg oplevert bij verschillende rendementen en looptijden.',
-  },
-  {
-    href: '/tools/rente-op-rente/',
-    naam: 'Rente op rente',
-    label: 'Rendement',
-    tekst:
-      'Start met één bedrag en zie hoe snel het groeit. En hoelang duurt het voordat het bedrag verdubbelt?',
-  },
-]
 
 const crumbs = [
   { name: 'Home', path: '/' },

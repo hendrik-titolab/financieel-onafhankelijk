@@ -1,0 +1,41 @@
+---
+// Eigen 404. Vercel serveert 404.html uit de build automatisch, met status 404.
+// Zonder deze pagina kreeg een bezoeker Vercels kale "NOT_FOUND", zonder weg terug.
+// @astrojs/sitemap slaat 404 zelf over, dus hij komt niet in de sitemap.
+import BaseLayout from '../layouts/BaseLayout.astro'
+import { HOOFDTOOL, TOOLS } from '../config/rekentools'
+
+const title = 'Pagina niet gevonden | Ben ik financieel onafhankelijk?'
+const description = 'Deze pagina bestaat niet. Hier vind je de rekentools en de uitleg.'
+---
+
+<BaseLayout title={title} description={description} canonical="/404" noindex>
+  <main class="flex-1">
+    <div class="max-w-2xl mx-auto px-4 md:px-6 py-10">
+      <h1 class="font-serif text-3xl md:text-4xl text-ink">Deze pagina bestaat niet</h1>
+      <p class="mt-3 text-body leading-relaxed">
+        Het adres klopt niet, of de pagina is verplaatst. Hieronder staan alle rekentools. Uitleg
+        over financiële onafhankelijkheid, pensioen en belasting vind je bij de{' '}
+        <a href="/uitleg/" class="text-data-700 hover:underline">uitleg</a>.
+      </p>
+
+      <h2 class="label-mono mt-8 mb-3">Rekentools</h2>
+      <ul class="space-y-3 text-sm">
+        {
+          [HOOFDTOOL, ...TOOLS].map((t) => (
+            <li>
+              <a href={t.href} class="text-data-700 hover:underline">
+                {t.naam}
+              </a>
+              <span class="block text-body leading-relaxed">{t.tekst}</span>
+            </li>
+          ))
+        }
+      </ul>
+
+      <p class="mt-8 text-sm">
+        <a href="/" class="text-data-700 hover:underline">Naar de homepage</a>
+      </p>
+    </div>
+  </main>
+</BaseLayout>

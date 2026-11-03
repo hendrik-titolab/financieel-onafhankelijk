@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import { EenmaligeInlegTool } from '../../components/RenteOpRente'
-import { articleSchema, faqSchema, breadcrumbSchema } from '../../lib/seo'
+import { articleSchema, faqSchema, breadcrumbSchema, rekentoolSchema } from '../../lib/seo'
 
 const title = 'Rente op rente berekenen | Wat wordt je bedrag waard?'
 const description =
@@ -31,6 +31,7 @@ const faq = [
 ]
 
 const schemas = [
+  rekentoolSchema('/tools/rente-op-rente/'),
   articleSchema({
     title,
     description,

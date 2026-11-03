@@ -1,0 +1,47 @@
+---
+/**
+ * Veelgestelde vragen en verder lezen onder een rekentool.
+ *
+ * Voor de tools met client:only: daar rendert de tool zelf niets op de server, dus
+ * zonder dit blok staat er voor een zoekmachine of AI-crawler zonder JavaScript
+ * bijna niets op de pagina. Dezelfde faq-lijst voedt ook de FAQPage-structured
+ * data, zodat wat er zichtbaar staat en wat er in de JSON-LD staat gelijk blijft.
+ */
+interface Props {
+  faq: { vraag: string; antwoord: string }[]
+  leesOok?: { titel: string; href: string }[]
+}
+
+const { faq, leesOok = [] } = Astro.props
+---
+
+<section class="mt-8 border-t border-line-soft pt-6">
+  <h2 class="label-mono mb-4">Veelgestelde vragen</h2>
+  <div class="space-y-4">
+    {
+      faq.map((i) => (
+        <div>
+          <h3 class="text-base text-ink mb-1">{i.vraag}</h3>
+          <p class="text-sm text-body leading-relaxed">{i.antwoord}</p>
+        </div>
+      ))
+    }
+  </div>
+</section>
+
+{
+  leesOok.length > 0 && (
+    <section class="mt-8 border-t border-line-soft pt-6">
+      <h2 class="label-mono mb-3">Lees ook</h2>
+      <ul class="space-y-2 text-sm">
+        {leesOok.map((l) => (
+          <li>
+            <a href={l.href} class="text-data-700 hover:underline">
+              {l.titel}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}

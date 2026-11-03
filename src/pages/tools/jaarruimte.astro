@@ -1,7 +1,8 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import { JaarruimteTab } from '../../components/Jaarruimte'
-import { articleSchema, faqSchema, breadcrumbSchema } from '../../lib/seo'
+import ToolVragen from '../../components/ToolVragen.astro'
+import { articleSchema, faqSchema, breadcrumbSchema, rekentoolSchema } from '../../lib/seo'
 
 const title = 'Jaarruimte berekenen 2026 | Ben ik financieel onafhankelijk?'
 const description =
@@ -21,6 +22,7 @@ const faq = [
 ]
 
 const schemas = [
+  rekentoolSchema('/tools/jaarruimte/'),
   articleSchema({ title, description, path: '/tools/jaarruimte/', dateModified: '2026-06-01' }),
   faqSchema(faq),
   breadcrumbSchema([
@@ -39,6 +41,13 @@ const schemas = [
         pensioentekort aan te vullen. Vul je inkomen en pensioenopbouw in.
       </p>
       <JaarruimteTab client:only="react" />
+      <ToolVragen
+        faq={faq}
+        leesOok={[
+          { titel: 'Wat is jaarruimte?', href: '/uitleg/wat-is-jaarruimte' },
+          { titel: 'Wat is een pensioentekort?', href: '/uitleg/wat-is-een-pensioentekort' },
+        ]}
+      />
     </div>
   </main>
 </BaseLayout>

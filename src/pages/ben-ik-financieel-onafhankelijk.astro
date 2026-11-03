@@ -1,12 +1,13 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro'
 import PensionPlannerApp from '../components/PensionPlannerApp.tsx'
-import { breadcrumbSchema } from '../lib/seo'
+import { breadcrumbSchema, rekentoolSchema } from '../lib/seo'
 
 const title = 'Ben ik financieel onafhankelijk? | Gratis rekentool'
 const description =
   'Reken uit of en wanneer je financieel onafhankelijk bent. Vul je vermogen, inleg en gewenste inkomen in en zie met een Monte Carlo-simulatie hoe groot de kans is dat je het redt.'
 const schemas = [
+  rekentoolSchema('/ben-ik-financieel-onafhankelijk/'),
   breadcrumbSchema([
     { name: 'Home', path: '/' },
     { name: 'Ben ik financieel onafhankelijk?', path: '/ben-ik-financieel-onafhankelijk/' },
@@ -18,7 +19,38 @@ const schemas = [
   <main class="flex-1 min-h-0 overflow-y-auto md:overflow-hidden p-4 md:p-6 flex flex-col">
     <h1 class="font-serif text-xl md:text-2xl text-ink mb-3 flex-shrink-0">Ben ik financieel onafhankelijk?</h1>
     <div class="flex-1 min-h-0">
-      <PensionPlannerApp client:only="react" />
+      <!-- client:only rendert niets op de server. De fallback staat wél in de gebouwde
+      HTML, en is dus wat een zoekmachine of AI-crawler zonder JavaScript van deze
+      pagina ziet. Een bezoeker ziet hem alleen zolang de tool laadt. Ruimte voor
+      tekst onder de tool is er niet: de pagina is schermvullend. -->
+      <PensionPlannerApp client:only="react">
+        <div slot="fallback" class="max-w-2xl text-sm text-body leading-relaxed space-y-3">
+          <p>
+            Met deze rekentool zie je of je vermogen en je pensioen genoeg zijn voor het inkomen
+            dat je wilt, vanaf de leeftijd die je kiest. De tool rekent in je eigen browser. Wat je
+            invult gaat niet naar een server.
+          </p>
+          <p>
+            Je vult onder meer je leeftijd in, je vermogen, wat je per maand inlegt, het inkomen
+            dat je later wilt, je AOW en je aanvullend pensioen, en hoeveel risico je wilt lopen
+            met beleggen. Grote bedragen op een vast moment, zoals een erfenis of een verbouwing,
+            zet je er apart bij. Een partner kun je meerekenen.
+          </p>
+          <p>
+            Je ziet welk vermogen je verwacht te hebben en welk vermogen je nodig hebt, het
+            overschot of tekort daartussen, en wat je per maand moet inleggen om het doel te
+            halen. Met 2.000 simulaties van wisselende rendementen zie je ook hoe groot de kans is
+            dat je je inkomensdoel haalt. Alle bedragen zijn in koopkracht van vandaag.
+          </p>
+          <p>
+            De uitkomst is een indicatie op basis van wat je invult en de aannames van de tool,
+            geen persoonlijk financieel advies.{' '}
+            <a href="/uitleg/welke-aannames-gebruikt-de-fo-planner" class="text-data-700 hover:underline">
+              Lees welke aannames de tool gebruikt
+            </a>.
+          </p>
+        </div>
+      </PensionPlannerApp>
     </div>
   </main>
 </BaseLayout>
