@@ -35,7 +35,12 @@
 // 2026.09.9: jaarruimte. De wizard voor eerdere jaren trekt de oudedagsreserve af
 // (tot en met 2022), en het belastingvoordeel kan rekenen met een apart opgegeven
 // inkomen en arbeidsinkomen in het aftrekjaar (28 september 2026).
-export const MODEL_VERSIE = '2026.09.9'
+// 2026.11.1: jaarruimte. Een geboortedatum wordt als lokale kalenderdatum gelezen en
+// niet als middernacht UTC. Ten westen van Greenwich viel de AOW-datum een dag te
+// vroeg, en voor wie op de 1e geboren is in de maand ervoor: dan verschoof ook de
+// AOW-fase en daarmee het belastingvoordeel. In Nederland verandert er niets
+// (3 november 2026).
+export const MODEL_VERSIE = '2026.11.1'
 
 /** Belastingjaar waarop fiscaleParameters.ts is gebaseerd. */
 export const PARAMETER_JAAR = 2026
