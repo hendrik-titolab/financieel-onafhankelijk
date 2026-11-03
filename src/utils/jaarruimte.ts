@@ -21,6 +21,28 @@ function getParams(year: number) {
 }
 
 /**
+ * Een geboortedatum als lokale kalenderdatum.
+ *
+ * new Date('1959-03-15') leest een kale datum als middernacht UTC, terwijl
+ * getFullYear/getMonth/getDate in lokale tijd lezen. Ten westen van Greenwich gaf
+ * dat de dag ervoor, en voor wie op de 1e geboren is zelfs een andere maand: een
+ * AOW-datum een dag te vroeg en een leeftijd een maand te hoog. In Nederland
+ * (UTC+1/+2) viel het niet op, de CI draait in UTC. Daarom de delen zelf uitlezen.
+ * Andere notaties gaan nog via Date, met dezelfde lokale lezing.
+ */
+function parseGeboortedatum(geboortedatum: string): Date | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(geboortedatum)
+  if (!m) {
+    const d = new Date(geboortedatum)
+    return isNaN(d.getTime()) ? null : d
+  }
+  const [j, mnd, dag] = [Number(m[1]), Number(m[2]) - 1, Number(m[3])]
+  const d = new Date(j, mnd, dag)
+  // 1959-02-31 rolt anders door naar 3 maart; new Date('1959-02-31') gaf al Invalid Date
+  return d.getFullYear() === j && d.getMonth() === mnd && d.getDate() === dag ? d : null
+}
+
+/**
  * Leeftijd in hele maanden op 1 januari van het opgegeven jaar.
  *
  * Artikel 3.127 lid 2 Wet IB 2001 toetst de leeftijd uitdrukkelijk "bij het begin
@@ -29,8 +51,8 @@ function getParams(year: number) {
  * in plaats van met een stille nul verder te rekenen.
  */
 export function leeftijdInMaandenOp1Januari(geboortedatum: string, jaar: number): number | null {
-  const d = new Date(geboortedatum)
-  if (isNaN(d.getTime())) return null
+  const d = parseGeboortedatum(geboortedatum)
+  if (!d) return null
   let maanden = (jaar - d.getFullYear()) * 12 - d.getMonth()
   if (d.getDate() > 1) maanden -= 1   // de maand is op 1 januari nog niet vol
   return maanden
@@ -47,8 +69,8 @@ export function leeftijdInMaandenOp1Januari(geboortedatum: string, jaar: number)
  * hij na de tabel valt.
  */
 export function aowDatum(geboortedatum: string): Date | null {
-  const d = new Date(geboortedatum)
-  if (isNaN(d.getTime())) return null
+  const d = parseGeboortedatum(geboortedatum)
+  if (!d) return null
   const plus = (maanden: number) => new Date(d.getFullYear(), d.getMonth() + maanden, d.getDate())
   const jaren = Object.keys(AOW_LEEFTIJD_MAANDEN_PER_JAAR).map(Number).sort((a, b) => a - b)
   for (const jaar of jaren) {
@@ -67,7 +89,7 @@ export type AowFase =
 
 /** Of iemand in een kalenderjaar de AOW-leeftijd nog niet had, bereikte of al had. */
 export function aowFaseInJaar(geboortedatum: string | undefined, jaar: number): AowFase | null {
-  if (!geboortedatum || isNaN(new Date(geboortedatum).getTime())) return null
+  if (!geboortedatum || !parseGeboortedatum(geboortedatum)) return null
   const aow = aowDatum(geboortedatum)
   if (!aow || aow.getFullYear() > jaar) return { soort: 'voor' }
   if (aow.getFullYear() < jaar) return { soort: 'na' }
@@ -89,7 +111,7 @@ export function aowFaseInJaar(geboortedatum: string | undefined, jaar: number): 
  * geboortedatum.
  */
 export function jaarruimteLeeftijdToegestaan(geboortedatum: string | undefined, jaar: number): boolean | null {
-  if (!geboortedatum || isNaN(new Date(geboortedatum).getTime())) return null
+  if (!geboortedatum || !parseGeboortedatum(geboortedatum)) return null
   const aow = aowDatum(geboortedatum)
   if (!aow) return true
   const grens = jaar <= 2022
