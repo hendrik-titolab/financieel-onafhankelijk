@@ -1,18 +1,18 @@
 import { useState, useEffect } from 'react'
 import { Trash2, Plus, ChevronDown, ChevronUp, Info, AlertTriangle } from 'lucide-react'
-import type { JaarruimteInputs, JaarruimteResult, SavedJaarruimte, ReserveringsruimteRij, PensioenType } from '../../types'
+import type { JaarruimteInputs, JaarruimteResult, SavedJaarruimte, ReserveringsruimteRij, PensioenType } from 'rekenkern/types/index'
 import {
   calculateJaarruimte, getAvailableYears, isPreWtp,
   berekenJaarruimteEenvoudig, getOudsteParameterJaar, getFormuleTekst,
   controleerJaarruimteInvoer, terugkijktermijn, oudsteReserveringsjaar, aowFaseInJaar,
-} from '../../utils/jaarruimte'
-import { MODEL_VERSIE, PARAMETER_JAAR, PARAMETER_PEILDATUM, modelStempel } from '../../config/modelVersie'
-import { parseBedrag, formatBedrag } from '../../utils/bedrag'
+} from 'rekenkern/utils/jaarruimte'
+import { MODEL_VERSIE, PARAMETER_JAAR, PARAMETER_PEILDATUM, modelStempel } from 'rekenkern/config/modelVersie'
+import { parseBedrag, formatBedrag } from 'rekenkern/utils/bedrag'
 // Gedeeld invoerveld met Nederlandse notatie. Inkomen, factor A en al ingelegd waren
 // type="number"-velden met parseFloat: "65.000" werd 65 en de jaarruimte € 0
 // (review 28 september 2026).
 import { NumberInput } from '../PensionPlanner/InputPanel'
-import { JAARRUIMTE_PARAMS } from '../../config/fiscaleParameters'
+import { JAARRUIMTE_PARAMS } from 'rekenkern/config/fiscaleParameters'
 
 const STORAGE_KEY = 'jaarruimte_berekeningen'
 

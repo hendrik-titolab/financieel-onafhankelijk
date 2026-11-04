@@ -10,4 +10,6 @@ export default defineConfig({
   site: 'https://benikfinancieelonafhankelijk.nl',
   integrations: [react(), mdx(), sitemap(), pwa()],
   devToolbar: { enabled: false },
+  // De rekenkern wordt als TypeScript geleverd en moet dus mee door de bundler.
+  vite: { ssr: { noExternal: ['rekenkern'] } },
 })

@@ -1,10 +1,10 @@
-import type { BerekeningsSet, PensionInputs, PensionResult, MonteCarloResult } from '../types'
-import { vergelijkingsRegels } from './rapportVergelijking'
-import type { Waarde } from './rapportVergelijking'
-import { N_SIMULATIONS } from './monteCarlo'
-import { slagingskansPercentage } from './slagingskansTekst'
-import { opbouwDoelbedrag, indexatieTekst } from './opbouwDoelbedrag'
-import { scenarioOmschrijving } from './scenarios'
+import type { BerekeningsSet, PensionInputs, PensionResult, MonteCarloResult } from 'rekenkern/types/index'
+import { vergelijkingsRegels } from 'rekenkern/utils/rapportVergelijking'
+import type { Waarde } from 'rekenkern/utils/rapportVergelijking'
+import { N_SIMULATIONS } from 'rekenkern/utils/monteCarlo'
+import { slagingskansPercentage } from 'rekenkern/utils/slagingskansTekst'
+import { opbouwDoelbedrag, indexatieTekst } from 'rekenkern/utils/opbouwDoelbedrag'
+import { scenarioOmschrijving } from 'rekenkern/utils/scenarios'
 
 function eur(v: number) {
   return `€ ${Math.round(v).toLocaleString('nl-NL')}`

@@ -1,11 +1,11 @@
-import type { BerekeningsSet } from '../types'
-import { N_SIMULATIONS } from './monteCarlo'
-import { slagingskansPercentage } from './slagingskansTekst'
-import { opbouwDoelbedrag, indexatieTekst } from './opbouwDoelbedrag'
-import { scenarioOmschrijving } from './scenarios'
-import { vergelijkingsRegels } from './rapportVergelijking'
+import type { BerekeningsSet } from 'rekenkern/types/index'
+import { N_SIMULATIONS } from 'rekenkern/utils/monteCarlo'
+import { slagingskansPercentage } from 'rekenkern/utils/slagingskansTekst'
+import { opbouwDoelbedrag, indexatieTekst } from 'rekenkern/utils/opbouwDoelbedrag'
+import { scenarioOmschrijving } from 'rekenkern/utils/scenarios'
+import { vergelijkingsRegels } from 'rekenkern/utils/rapportVergelijking'
 import { tekenMcGrafiek, gezamenlijkeSchaal } from './pdfMcGrafiek'
-import type { Waarde } from './rapportVergelijking'
+import type { Waarde } from 'rekenkern/utils/rapportVergelijking'
 
 function eur(v: number): string {
   const r = Math.round(v)

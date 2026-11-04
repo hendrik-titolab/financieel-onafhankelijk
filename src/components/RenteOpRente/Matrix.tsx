@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { verdubbeltijd, HEAT_STAPPEN } from '../../utils/renteOpRente'
+import { verdubbeltijd, HEAT_STAPPEN } from 'rekenkern/utils/renteOpRente'
 import type { VariantConfig } from './varianten'
 import { eur, pctKort } from './format'
 

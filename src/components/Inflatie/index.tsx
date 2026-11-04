@@ -7,7 +7,7 @@ import { Info, TrendingDown, TrendingUp } from 'lucide-react'
 // Gedeeld invoerveld met Nederlandse notatie. Hier stonden type="number"-velden met
 // parseFloat, waardoor "25.000" als 25 werd gelezen (review 28 september 2026).
 import { NumberInput } from '../PensionPlanner/InputPanel'
-import { bereken } from '../../utils/inflatie'
+import { bereken } from 'rekenkern/utils/inflatie'
 
 // ---- Presentatie-helpers (NL-notatie) ----
 

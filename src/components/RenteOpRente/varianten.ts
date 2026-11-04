@@ -8,7 +8,7 @@ import {
   type Eindwaarde,
   type Matrix,
   type MatrixCel,
-} from '../../utils/renteOpRente'
+} from 'rekenkern/utils/renteOpRente'
 import { eur, maalTekst } from './format'
 
 export interface VariantConfig {
