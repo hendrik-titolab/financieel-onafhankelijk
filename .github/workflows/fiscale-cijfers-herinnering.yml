@@ -47,7 +47,7 @@ jobs:
               '4. Zet `bijgewerkt` in de bron op vandaag.',
               '5. Verandert een cijfer een rekenuitkomst? Reken de nieuwe waarde eerst ' +
                 'onafhankelijk na, werk de golden-fixtures bij, en hoog `MODEL_VERSIE` op ' +
-                '(`src/config/modelVersie.ts`).',
+                'in de repo rekenkern (`src/config/modelVersie.ts`).',
               '',
               'Volledige werkwijze: `CLAUDE.md` en `HANDOFF-borging-2026-09.md` in de repo-root.',
             ].join('\n')

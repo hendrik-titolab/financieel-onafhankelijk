@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { ChevronDown } from 'lucide-react'
-import type { PensionInputs, PensionResult, BerekeningsSet } from '../../types'
-import type { Scenarios, AowScenario, Richting } from '../../utils/scenarios'
-import { GEEN_SCENARIO, SCENARIO_STAPPEN, heeftScenario, scenarioOmschrijving } from '../../utils/scenarios'
-import { slagingskansPercentage } from '../../utils/slagingskansTekst'
+import type { PensionInputs, PensionResult, BerekeningsSet } from 'rekenkern/types/index'
+import type { Scenarios, AowScenario, Richting } from 'rekenkern/utils/scenarios'
+import { GEEN_SCENARIO, SCENARIO_STAPPEN, heeftScenario, scenarioOmschrijving } from 'rekenkern/utils/scenarios'
+import { slagingskansPercentage } from 'rekenkern/utils/slagingskansTekst'
 import { Toggle } from './InputPanel'
 
 interface Props {

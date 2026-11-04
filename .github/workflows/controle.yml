@@ -73,12 +73,6 @@ jobs:
       - name: Astro-controle
         run: npm run check
 
-      - name: Versiecheck
-        # Alleen zinvol op een PR: vergelijkt met de basisbranch. Zie
-        # scripts/check-modelversie.mjs voor de reden.
-        if: github.event_name == 'pull_request'
-        run: node scripts/check-modelversie.mjs
-
       - name: Tests
         # Bevat de golden masters, de fiscale referentiegevallen en de
         # grensgevallen uit de audit van september 2026.

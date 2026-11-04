@@ -1,5 +1,5 @@
 import type { jsPDF } from 'jspdf'
-import type { PercentilePoint } from '../types'
+import type { PercentilePoint } from 'rekenkern/types/index'
 
 /**
  * Een Monte Carlo-grafiek rechtstreeks in de PDF getekend.

@@ -1,6 +1,6 @@
 import { useId, useMemo } from 'react'
 import { NumberInput } from '../PensionPlanner/InputPanel'
-import { verdubbeltijd } from '../../utils/renteOpRente'
+import { verdubbeltijd } from 'rekenkern/utils/renteOpRente'
 import type { VariantConfig } from './varianten'
 import { eur, maalTekst, pctKort } from './format'
 

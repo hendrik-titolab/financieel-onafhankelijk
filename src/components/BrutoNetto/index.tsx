@@ -2,10 +2,10 @@ import { useState, useMemo } from 'react'
 import { ChevronDown, ChevronUp, Info } from 'lucide-react'
 // De rekenlogica staat in src/utils/brutoNetto.ts, zodat er tests op kunnen
 // draaien zonder deze component te renderen (bevinding A21).
-import { P, brutoNaarNetto, nettoNaarBruto } from '../../utils/brutoNetto'
-import type { BerekeningResultaat } from '../../utils/brutoNetto'
-import { parseBedrag } from '../../utils/bedrag'
-import { PARAMETER_PEILDATUM } from '../../config/modelVersie'
+import { P, brutoNaarNetto, nettoNaarBruto } from 'rekenkern/utils/brutoNetto'
+import type { BerekeningResultaat } from 'rekenkern/utils/brutoNetto'
+import { parseBedrag } from 'rekenkern/utils/bedrag'
+import { PARAMETER_PEILDATUM } from 'rekenkern/config/modelVersie'
 
 // ── Format helpers ────────────────────────────────────────────────────────────
 

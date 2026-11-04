@@ -5,9 +5,9 @@ import {
   type Box3Invoer,
   type Box3Jaar,
   type WerkelijkRendementInvoer,
-} from '../../utils/box3'
-import { BOX3_JAREN, BOX3_JAREN_IN_TOOL } from '../../config/fiscaleParameters'
-import { modelStempel, PARAMETER_JAAR } from '../../config/modelVersie'
+} from 'rekenkern/utils/box3'
+import { BOX3_JAREN, BOX3_JAREN_IN_TOOL } from 'rekenkern/config/fiscaleParameters'
+import { modelStempel, PARAMETER_JAAR } from 'rekenkern/config/modelVersie'
 // Gedeeld met de FO-planner, zie InputPanel.tsx: was hier een bijna-identieke
 // eigen kopie (BedragVeld), tot de code-review van 14 september 2026.
 import { NumberInput } from '../PensionPlanner/InputPanel'

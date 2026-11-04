@@ -11,6 +11,8 @@ breed publiek als financieel adviseurs. Staat live op https://benikfinancieelona
 **Repo:** https://github.com/hendrik-titolab/financieel-onafhankelijk
 **Lokaal:** `C:\Users\schak\financiele-planning`
 
+**Rekenkern:** sinds november 2026 los van deze site, in de privé-repo [hendrik-titolab/rekenkern](https://github.com/hendrik-titolab/rekenkern). De berekeningen, fiscale parameters, risicoprofielen, modelversie en types staan daar, niet meer in `src/utils` en `src/config`. Deze site gebruikt het pakket uit `vendor/`. Paden als `src/utils/box3.ts` hieronder zijn sindsdien `rekenkern/utils/box3`. Wijzig een berekening dus in die repo, verhoog daar `MODEL_VERSIE`, en zet een nieuw pakket in `vendor/`. De tests en de versiecheck draaien daar ook.
+
 **Branch, dit is belangrijk:** `astro-migratie` is sinds 10 augustus 2026 de live
 productiebranch én de GitHub-default-branch. **`main` is gearchiveerd** (`ARCHIVED.md` erop) en
 draait niet meer. Neem bij een nieuwe sessie nooit aan dat `main` de actuele staat is — eerst
@@ -323,6 +325,8 @@ de live URL, niet via het Vercel-dashboard, want daar is geen toegang toe.
 ---
 
 ## Fiscale cijfers: `fiscaleParameters.ts` is een gegenereerd bestand
+
+**Let op:** dit bestand staat sinds november 2026 in de repo rekenkern. De generator moet daar dus heen schrijven.
 
 **Pas `src/config/fiscaleParameters.ts` niet met de hand aan.** Het wordt gegenereerd uit
 `C:\Users\schak\Documents\Fiscale bron\fiscale-cijfers.json`. Een handmatige wijziging is bij de

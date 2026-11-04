@@ -2,7 +2,7 @@ import {
   ComposedChart, Area, XAxis, YAxis, CartesianGrid,
   Tooltip, ReferenceLine, ResponsiveContainer, Legend,
 } from 'recharts'
-import type { PensionResult, MonteCarloResult, LifeEvent } from '../../types'
+import type { PensionResult, MonteCarloResult, LifeEvent } from 'rekenkern/types/index'
 
 interface Props {
   result: PensionResult

@@ -1,14 +1,14 @@
 import { useState, useEffect, useRef, useId, Children, isValidElement, cloneElement } from 'react'
-import { parseBedrag, parseBedragBegrensd, formatBedrag } from '../../utils/bedrag'
-import { box3DrukAfgerond, geschatteBox3Druk } from '../../utils/box3'
-import { aowVakantiegeldFactor, brutoMaandNaarNettoMaand } from '../../utils/pensionCalc'
-import { PARAMETER_JAAR } from '../../config/modelVersie'
+import { parseBedrag, parseBedragBegrensd, formatBedrag } from 'rekenkern/utils/bedrag'
+import { box3DrukAfgerond, geschatteBox3Druk } from 'rekenkern/utils/box3'
+import { aowVakantiegeldFactor, brutoMaandNaarNettoMaand } from 'rekenkern/utils/pensionCalc'
+import { PARAMETER_JAAR } from 'rekenkern/config/modelVersie'
 import { track } from '@vercel/analytics'
 import { X } from 'lucide-react'
-import type { PensionInputs, PensionResult, IncomeType, ContributionFrequency, LifeEvent, RiskProfile, Woonsituatie, LijfrenteSoort, Indexatie } from '../../types'
-import { RISICOPROFIELEN, PROFIEL_VOLGORDE } from '../../config/risicoprofielen'
-import { AOW_NETTO } from '../../utils/pensionCalc'
-import { LIJFRENTE } from '../../config/fiscaleParameters'
+import type { PensionInputs, PensionResult, IncomeType, ContributionFrequency, LifeEvent, RiskProfile, Woonsituatie, LijfrenteSoort, Indexatie } from 'rekenkern/types/index'
+import { RISICOPROFIELEN, PROFIEL_VOLGORDE } from 'rekenkern/config/risicoprofielen'
+import { AOW_NETTO } from 'rekenkern/utils/pensionCalc'
+import { LIJFRENTE } from 'rekenkern/config/fiscaleParameters'
 
 const MAX_ROWS = 20
 
