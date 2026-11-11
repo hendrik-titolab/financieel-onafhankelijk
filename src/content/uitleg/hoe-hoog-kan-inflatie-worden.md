@@ -42,9 +42,9 @@ Centrale banken, zoals de Europese Centrale Bank, proberen [inflatie](/uitleg/wa
 
 ## Hoe hoog kan de inflatie worden?
 
-In normale jaren blijft de inflatie in Nederland binnen een paar procent. Sinds de jaren zeventig zijn er maar twee jaren geweest die daar ver bovenuit schoten.
+In normale jaren blijft de inflatie in Nederland binnen een paar procent. Tussen 1973 en 1976 lag de inflatie op of boven 8%, en in 2022 nog een keer.
 
-Het eerste was 1975, het jaar van de oliecrisis: de prijzen stegen dat jaar gemiddeld 10,2%. Het tweede was 2022, ook met een energiecrisis als aanleiding: 10,0%.
+De piek was 1975, twee jaar na de oliecrisis van 1973: de prijzen stegen dat jaar gemiddeld 10,2%. Het tweede hoogtepunt was 2022, ook met een energiecrisis als aanleiding: 10,0%.
 
 Wat dat voor spaarders betekent, lees je in [Sparen maakt mensen arm](/uitleg/sparen-maakt-mensen-arm).
 
