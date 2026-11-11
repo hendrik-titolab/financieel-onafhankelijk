@@ -165,6 +165,9 @@ Nagerekend en in orde, zodat niemand het opnieuw hoeft te doen:
 
 ### C1. Een leeggemaakt veld in de box 3-tool springt naar min 100 miljoen
 
+- [x] **Afgerond (11 november 2026):** `NumberInput` gebruikt `verwerkInvoer()` uit
+  `src/utils/invoerVeld.ts` met een aparte terugvalwaarde (standaard 0, of `min` als die boven 0
+  ligt). Tests in `src/utils/__tests__/invoerVeld.test.ts`.
 - **Waar:** `src/components/Box3/index.tsx`, regel 278, 307 en 315. `NumberInput` in
   `PensionPlanner/InputPanel.tsx`, functie `commit()`.
 - **Wat:** een leeg of onleesbaar veld valt terug op de ondergrens. Meestal is die 0. Drie velden
