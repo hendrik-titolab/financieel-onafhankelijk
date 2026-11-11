@@ -81,6 +81,9 @@ Nagerekend en in orde, zodat niemand het opnieuw hoeft te doen:
 
 ### A3. Argentinië rekende in 1989 niet in peso's
 
+- [x] **Afgerond (11 november 2026):** "100 peso" wordt "100 australes". Nagezocht bij de
+  centrale bank van Argentinië (BCRA, "Banknotes and coins, previous issues"): de austral gold
+  vanaf 15 juni 1985, de peso pas weer vanaf 1 januari 1992.
 - **Waar:** hetzelfde artikel, "een product dat aan het begin van de maand 100 peso kostte".
 - **Wat:** de munt was toen de austral. De peso kwam pas daarna terug.
 - **Zekerheid:** vrij zeker, niet nagezocht. Controleer het en schrijf anders "100 australes" of
