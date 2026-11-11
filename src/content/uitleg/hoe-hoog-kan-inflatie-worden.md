@@ -50,7 +50,7 @@ Wat dat voor spaarders betekent, lees je in [Sparen maakt mensen arm](/uitleg/sp
 
 ## Wanneer inflatie echt ontspoort: hyperinflatie
 
-Boven een maandelijkse inflatie van 50% spreken economen van hyperinflatie: de grens die Phillip Cagan in 1956 vastlegde. Bij dat tempo verdubbelen prijzen in minder dan drie weken. Drie voorbeelden laten zien hoe extreem het daarna nog kan worden.
+Boven een maandelijkse inflatie van 50% spreken economen van hyperinflatie: de grens die Phillip Cagan in 1956 vastlegde. Bij dat tempo verdubbelen prijzen in ruim zeven weken. Drie voorbeelden laten zien hoe extreem het daarna nog kan worden.
 
 | Land | Periode | Piekmaand | Piek maandinflatie | Prijzen verdubbelden elke |
 |---|---|---|---|---|
