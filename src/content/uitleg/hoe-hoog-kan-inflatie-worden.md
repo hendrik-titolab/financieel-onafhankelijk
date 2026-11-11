@@ -22,6 +22,10 @@ bronnen:
     url: "https://www.cbs.nl/nl-nl/nieuws/2022/40/inflatie-stijgt-naar-14-5-procent-in-september"
   - titel: "CBS: Consumentenprijzen; prijsindex 1900=100"
     url: "https://www.cbs.nl/nl-nl/cijfers/detail/71905ned"
+  - titel: "CBS: Jaarmutatie consumentenprijsindex; vanaf 1963 (tabel 70936NED)"
+    url: "https://www.cbs.nl/nl-nl/cijfers/detail/70936NED"
+  - titel: "FRED (St. Louis Fed): inflatie consumentenprijzen Nederland, jaarreeks (controle 1973-1976)"
+    url: "https://fred.stlouisfed.org/data/FPCPITOTLZGNLD.txt"
   - titel: "Hanke, S. & Krus, N. (2012): World Hyperinflations, Cato Working Paper no. 8"
     url: "https://www.cato.org/sites/cato.org/files/pubs/pdf/hanke-krus-hyperinflation-table.pdf"
 ---
@@ -42,9 +46,9 @@ Centrale banken, zoals de Europese Centrale Bank, proberen [inflatie](/uitleg/wa
 
 ## Hoe hoog kan de inflatie worden?
 
-In normale jaren blijft de inflatie in Nederland binnen een paar procent. Sinds de jaren zeventig zijn er maar twee jaren geweest die daar ver bovenuit schoten.
+In normale jaren blijft de inflatie in Nederland binnen een paar procent. Tussen 1973 en 1976 lag de inflatie op of boven 8%, en in 2022 nog een keer.
 
-Het eerste was 1975, het jaar van de oliecrisis: de prijzen stegen dat jaar gemiddeld 10,2%. Het tweede was 2022, ook met een energiecrisis als aanleiding: 10,0%.
+De piek was 1975, twee jaar na de oliecrisis van 1973: de prijzen stegen dat jaar gemiddeld 10,2%. Het tweede hoogtepunt was 2022, ook met een energiecrisis als aanleiding: 10,0%.
 
 Wat dat voor spaarders betekent, lees je in [Sparen maakt mensen arm](/uitleg/sparen-maakt-mensen-arm).
 
