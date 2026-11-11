@@ -204,6 +204,10 @@ Nagerekend en in orde, zodat niemand het opnieuw hoeft te doen:
 
 ### D2. De site heeft zelf bijna geen tests meer
 
+- [x] **Afgerond (11 november 2026):** `src/utils/__tests__/exports.test.ts` genereert de PDF- en
+  Excel-export in Node met de echte exportcode en controleert modelversie, verwacht en benodigd
+  eindvermogen, verschil en slagingskans. `commit()` uit `NumberInput` staat als pure functie met
+  tests in de PR van C1 (`invoerVeld.ts`).
 - **Wat:** sinds de rekenkern is afgesplitst, staat hier één testbestand (`pdfMcGrafiek.test.ts`,
   3 tests). De componenten, de exports en de koppeling met de kern zijn niet getest. C1 is zo'n
   fout die een eenvoudige test op `NumberInput` had gevangen.
