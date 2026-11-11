@@ -22,6 +22,10 @@ bronnen:
     url: "https://www.cbs.nl/nl-nl/nieuws/2022/40/inflatie-stijgt-naar-14-5-procent-in-september"
   - titel: "CBS: Consumentenprijzen; prijsindex 1900=100"
     url: "https://www.cbs.nl/nl-nl/cijfers/detail/71905ned"
+  - titel: "CBS: Jaarmutatie consumentenprijsindex; vanaf 1963 (tabel 70936NED)"
+    url: "https://www.cbs.nl/nl-nl/cijfers/detail/70936NED"
+  - titel: "FRED (St. Louis Fed): inflatie consumentenprijzen Nederland, jaarreeks (controle 1973-1976)"
+    url: "https://fred.stlouisfed.org/data/FPCPITOTLZGNLD.txt"
   - titel: "Hanke, S. & Krus, N. (2012): World Hyperinflations, Cato Working Paper no. 8"
     url: "https://www.cato.org/sites/cato.org/files/pubs/pdf/hanke-krus-hyperinflation-table.pdf"
 ---
