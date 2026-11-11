@@ -182,6 +182,9 @@ Nagerekend en in orde, zodat niemand het opnieuw hoeft te doen:
 
 ### C2. Afhankelijkheden met een melding
 
+- [x] **Afgerond (11 november 2026):** `npm audit fix`. `npm audit --omit=dev` meldt alleen nog
+  `uuid` onder `exceljs` (2 matig). Beide exports in Node gegenereerd en gecontroleerd
+  (`exports.test.ts`, uit D2).
 - **Wat:** `npm audit --omit=dev` meldt 8 kwetsbaarheden, waarvan 1 kritiek (`dompurify`, via
   `jspdf`) en 5 hoog. Voor zes is er een oplossing zonder breuk. De twee rond `exceljs` en `uuid`
   heb je al bewust laten staan.
