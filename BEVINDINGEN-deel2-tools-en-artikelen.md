@@ -99,6 +99,8 @@ Nagerekend en in orde, zodat niemand het opnieuw hoeft te doen:
 
 ### A5. Jaarruimte kijkt naar vorig jaar, niet naar dit jaar
 
+- [x] **Afgerond (10 november 2026):** "dit jaar" is "vorig jaar" in `wat-is-jaarruimte.md`, met de zin "De cijfers van dit jaar zijn nog niet bekend."
+
 - **Waar:** `wat-is-jaarruimte.md`, "Daar gaat af wat je dit jaar al aan pensioen opbouwt".
 - **Wat:** de jaarruimte van een jaar rekent met het inkomen en de pensioenopbouw van het jaar
   ervoor. De tool doet dat goed en zegt het ook. Het artikel zegt "dit jaar".
