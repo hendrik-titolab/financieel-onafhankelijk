@@ -37,7 +37,7 @@ Kijk eerst op mijnpensioenoverzicht.nl: daar staat je AOW en je werkgeverspensio
 
 ## Hoe vul je een tekort aan?
 
-Een tekort kun je deels zelf oplossen door te sparen of te beleggen. Vaak is een **lijfrente** aantrekkelijk: als je een tekort hebt, mag je binnen je [jaarruimte](/uitleg/wat-is-jaarruimte) inleggen en die inleg aftrekken van de belasting.
+Een tekort kun je deels zelf oplossen door te sparen of te beleggen. Vaak is een **lijfrente** aantrekkelijk: als je een tekort hebt, mag je binnen je [jaarruimte](/uitleg/wat-is-jaarruimte) inleggen en die inleg aftrekken van je inkomen.
 
 ## Reken je jaarruimte uit
 

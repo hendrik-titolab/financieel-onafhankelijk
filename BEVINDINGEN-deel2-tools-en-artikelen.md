@@ -71,6 +71,8 @@ Nagerekend en in orde, zodat niemand het opnieuw hoeft te doen:
 
 ### A2. "Minder dan drie weken" klopt niet bij 50% per maand
 
+- [x] **Afgerond (10 november 2026):** de zin onder "hyperinflatie" zegt nu "in ruim zeven weken". De FAQ-tekst in dezelfde pagina (regel 17) is op verzoek van Hendrik ook aangepast naar "in ruim zeven weken".
+
 - **Waar:** `hoe-hoog-kan-inflatie-worden.md`, onder "hyperinflatie".
 - **Wat er staat:** "Boven een maandelijkse inflatie van 50% [...] Bij dat tempo verdubbelen
   prijzen in minder dan drie weken."
@@ -99,12 +101,16 @@ Nagerekend en in orde, zodat niemand het opnieuw hoeft te doen:
 
 ### A5. Jaarruimte kijkt naar vorig jaar, niet naar dit jaar
 
+- [x] **Afgerond (10 november 2026):** "dit jaar" is "vorig jaar" in `wat-is-jaarruimte.md`, met de zin "De cijfers van dit jaar zijn nog niet bekend."
+
 - **Waar:** `wat-is-jaarruimte.md`, "Daar gaat af wat je dit jaar al aan pensioen opbouwt".
 - **Wat:** de jaarruimte van een jaar rekent met het inkomen en de pensioenopbouw van het jaar
   ervoor. De tool doet dat goed en zegt het ook. Het artikel zegt "dit jaar".
 - **Oplossing:** "vorig jaar", met één zin waarom: de cijfers van dit jaar zijn nog niet bekend.
 
 ### A6. "Aftrekken van de belasting" moet "van je inkomen" zijn
+
+- [x] **Afgerond (10 november 2026):** in `wat-is-een-pensioentekort.md` staat nu "aftrekken van je inkomen".
 
 - **Waar:** `wat-is-een-pensioentekort.md`, "en die inleg aftrekken van de belasting".
 - **Wat:** een lijfrentepremie verlaagt je inkomen, niet je belasting. Het verschil is groot: wie
