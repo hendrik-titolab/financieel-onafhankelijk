@@ -106,6 +106,8 @@ Nagerekend en in orde, zodat niemand het opnieuw hoeft te doen:
 
 ### A6. "Aftrekken van de belasting" moet "van je inkomen" zijn
 
+- [x] **Afgerond (10 november 2026):** in `wat-is-een-pensioentekort.md` staat nu "aftrekken van je inkomen".
+
 - **Waar:** `wat-is-een-pensioentekort.md`, "en die inleg aftrekken van de belasting".
 - **Wat:** een lijfrentepremie verlaagt je inkomen, niet je belasting. Het verschil is groot: wie
   € 5.000 inlegt, krijgt niet € 5.000 terug. Het jaarruimte-artikel zegt het wel goed.
