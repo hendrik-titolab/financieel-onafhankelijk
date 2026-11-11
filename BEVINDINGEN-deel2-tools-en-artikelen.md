@@ -120,6 +120,11 @@ Nagerekend en in orde, zodat niemand het opnieuw hoeft te doen:
 - `hoeveel-belasting-betaal-ik-over-mijn-vermogen.md`: de vaststelling van de percentages voor
   2025 en de stemming in de Tweede Kamer staan allebei op 12 februari 2026. Dat kan kloppen. Het
   is wel het soort toeval dat ik één keer zou nakijken.
+  - [x] **Nagekeken (11 november 2026), beide kloppen, tekst ongewijzigd.** De regeling is van
+    12 februari 2026 (Stcrt. 2026, 3708: banktegoeden 1,37%, schulden 2,70% voor 2025). De
+    Eerste Kamer-pagina van wetsvoorstel 36748 zegt "op 12 februari 2026 aangenomen door de
+    Tweede Kamer". Opgemerkt, buiten dit punt: op 3 november 2026 is een novelle ingediend
+    (37.053); de alinea over Prinsjesdag ("wordt niet behandeld") loopt daardoor mogelijk achter.
 
 ---
 
