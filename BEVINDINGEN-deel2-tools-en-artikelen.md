@@ -71,6 +71,8 @@ Nagerekend en in orde, zodat niemand het opnieuw hoeft te doen:
 
 ### A2. "Minder dan drie weken" klopt niet bij 50% per maand
 
+- [x] **Afgerond (10 november 2026):** de zin onder "hyperinflatie" zegt nu "in ruim zeven weken". De FAQ-tekst in dezelfde pagina (regel 17) is op verzoek van Hendrik ook aangepast naar "in ruim zeven weken".
+
 - **Waar:** `hoe-hoog-kan-inflatie-worden.md`, onder "hyperinflatie".
 - **Wat er staat:** "Boven een maandelijkse inflatie van 50% [...] Bij dat tempo verdubbelen
   prijzen in minder dan drie weken."

@@ -14,7 +14,7 @@ faq:
   - vraag: "Kan Nederland ooit hyperinflatie krijgen?"
     antwoord: "Uit te sluiten is het nooit, maar het risico is klein. De ECB is onafhankelijk en drukt niet op verzoek van een overheid geld bij om een begrotingstekort te dekken. Elke hyperinflatie in de tabel hierboven ontstond juist wel op die manier."
   - vraag: "Vanaf welk percentage spreek je van hyperinflatie?"
-    antwoord: "Econoom Phillip Cagan trok in 1956 de grens bij een maandelijkse inflatie boven de 50%. Dat betekent dat prijzen in minder dan drie weken verdubbelen. Onder die grens heet het, hoe vervelend ook, gewoon hoge inflatie."
+    antwoord: "Econoom Phillip Cagan trok in 1956 de grens bij een maandelijkse inflatie boven de 50%. Dat betekent dat prijzen in ruim zeven weken verdubbelen. Onder die grens heet het, hoe vervelend ook, gewoon hoge inflatie."
 bronnen:
   - titel: "CBS: Inflatie 10 procent in 2022"
     url: "https://www.cbs.nl/nl-nl/nieuws/2023/02/inflatie-10-procent-in-2022"
@@ -50,7 +50,7 @@ Wat dat voor spaarders betekent, lees je in [Sparen maakt mensen arm](/uitleg/sp
 
 ## Wanneer inflatie echt ontspoort: hyperinflatie
 
-Boven een maandelijkse inflatie van 50% spreken economen van hyperinflatie: de grens die Phillip Cagan in 1956 vastlegde. Bij dat tempo verdubbelen prijzen in minder dan drie weken. Drie voorbeelden laten zien hoe extreem het daarna nog kan worden.
+Boven een maandelijkse inflatie van 50% spreken economen van hyperinflatie: de grens die Phillip Cagan in 1956 vastlegde. Bij dat tempo verdubbelen prijzen in ruim zeven weken. Drie voorbeelden laten zien hoe extreem het daarna nog kan worden.
 
 | Land | Periode | Piekmaand | Piek maandinflatie | Prijzen verdubbelden elke |
 |---|---|---|---|---|
