@@ -212,6 +212,8 @@ Nagerekend en in orde, zodat niemand het opnieuw hoeft te doen:
 
 ### D3. Losse eindjes
 
+- [x] **Afgerond (10 november 2026):** `jaarruimte_test.ts` verwijderd, en "Veertien artikelen" in `CLAUDE.md` is "Vijftien artikelen". Het punt over `currentIncome` staat niet in het ticket en is niet aangeraakt.
+
 - `src/components/PensionPlanner/jaarruimte_test.ts` bevat alleen "placeholder, verwijder dit
   bestand".
 - `currentIncome` wordt ingevuld en alleen in de Excel gebruikt. Staat al in `CLAUDE.md`.
