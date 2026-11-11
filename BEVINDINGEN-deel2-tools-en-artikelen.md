@@ -71,6 +71,8 @@ Nagerekend en in orde, zodat niemand het opnieuw hoeft te doen:
 
 ### A2. "Minder dan drie weken" klopt niet bij 50% per maand
 
+- [x] **Afgerond (10 november 2026):** de zin onder "hyperinflatie" zegt nu "in ruim zeven weken". De FAQ-tekst in dezelfde pagina (regel 17) is op verzoek van Hendrik ook aangepast naar "in ruim zeven weken".
+
 - **Waar:** `hoe-hoog-kan-inflatie-worden.md`, onder "hyperinflatie".
 - **Wat er staat:** "Boven een maandelijkse inflatie van 50% [...] Bij dat tempo verdubbelen
   prijzen in minder dan drie weken."
@@ -99,6 +101,8 @@ Nagerekend en in orde, zodat niemand het opnieuw hoeft te doen:
 
 ### A5. Jaarruimte kijkt naar vorig jaar, niet naar dit jaar
 
+- [x] **Afgerond (10 november 2026):** "dit jaar" is "vorig jaar" in `wat-is-jaarruimte.md`, met de zin "De cijfers van dit jaar zijn nog niet bekend."
+
 - **Waar:** `wat-is-jaarruimte.md`, "Daar gaat af wat je dit jaar al aan pensioen opbouwt".
 - **Wat:** de jaarruimte van een jaar rekent met het inkomen en de pensioenopbouw van het jaar
   ervoor. De tool doet dat goed en zegt het ook. Het artikel zegt "dit jaar".
@@ -106,11 +110,15 @@ Nagerekend en in orde, zodat niemand het opnieuw hoeft te doen:
 
 ### A6. "Aftrekken van de belasting" moet "van je inkomen" zijn
 
+- [x] **Afgerond (10 november 2026):** in `wat-is-een-pensioentekort.md` staat nu "aftrekken van je inkomen".
+
 - **Waar:** `wat-is-een-pensioentekort.md`, "en die inleg aftrekken van de belasting".
 - **Wat:** een lijfrentepremie verlaagt je inkomen, niet je belasting. Het verschil is groot: wie
   € 5.000 inlegt, krijgt niet € 5.000 terug. Het jaarruimte-artikel zegt het wel goed.
 
 ### A7. Kleine onnauwkeurigheden
+
+- [ ] **Deels afgerond (10 november 2026):** het derde punt is gedaan: "bij 2% een tiende daarvan". De punten over de inflatiejaren zijn ook gedaan, na controle bij het CBS. Het punt over de datum 12 februari 2026 in het artikel over vermogensbelasting staat nog open.
 
 - `hoe-hoog-kan-inflatie-worden.md`: "Het eerste was 1975, het jaar van de oliecrisis". De
   oliecrisis begon in 1973. En "maar twee jaren" die ver boven een paar procent uitkwamen: de
@@ -211,6 +219,8 @@ Nagerekend en in orde, zodat niemand het opnieuw hoeft te doen:
   in Node genereren en op kernbedragen controleren. `CLAUDE.md` zegt dat dat kan.
 
 ### D3. Losse eindjes
+
+- [x] **Afgerond (10 november 2026):** `jaarruimte_test.ts` verwijderd, en "Veertien artikelen" in `CLAUDE.md` is "Vijftien artikelen". Het punt over `currentIncome` staat niet in het ticket en is niet aangeraakt.
 
 - `src/components/PensionPlanner/jaarruimte_test.ts` bevat alleen "placeholder, verwijder dit
   bestand".
