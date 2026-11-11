@@ -112,7 +112,7 @@ Nagerekend en in orde, zodat niemand het opnieuw hoeft te doen:
 
 ### A7. Kleine onnauwkeurigheden
 
-- [ ] **Deels afgerond (10 november 2026):** het derde punt is gedaan: "bij 2% een tiende daarvan" in `wanneer-ben-je-financieel-onafhankelijk.mdx`. De eerste twee punten (1973 en de inflatiejaren) staan nog open, want het ticket noemt alleen het derde punt.
+- [ ] **Deels afgerond (10 november 2026):** het derde punt is gedaan: "bij 2% een tiende daarvan". De punten over de inflatiejaren zijn ook gedaan, na controle bij het CBS. Het punt over de datum 12 februari 2026 in het artikel over vermogensbelasting staat nog open.
 
 - `hoe-hoog-kan-inflatie-worden.md`: "Het eerste was 1975, het jaar van de oliecrisis". De
   oliecrisis begon in 1973. En "maar twee jaren" die ver boven een paar procent uitkwamen: de
