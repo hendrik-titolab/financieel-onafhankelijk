@@ -42,3 +42,33 @@ describe('welke-aannames-gebruikt-de-fo-planner.md: het pensioenvoorbeeld (deel 
     expect(tekst).toContain('Het vakantiegeld over de AOW telt mee')
   })
 })
+
+describe('wanneer-ben-je-financieel-onafhankelijk.mdx: het volgorde-risico (deel 2, A4)', () => {
+  const tekst = artikel('wanneer-ben-je-financieel-onafhankelijk.mdx')
+  // € 500.000, aan het begin van elk jaar € 30.000 opnemen, dan het rendement van dat jaar.
+  // Zuivere rekenkunde: de planner heeft geen functie voor een vaste reeks rendementen.
+  const reeks = [20, 15, 4, -7, -12]
+  const naVijfJaar = (rendementen: number[]) =>
+    rendementen.reduce((v, r) => (v - 30_000) * (1 + r / 100), 500_000)
+  const goedEerst = naVijfJaar(reeks)
+  const slechtEerst = naVijfJaar([...reeks].reverse())
+  const honderdtal = (x: number) => Math.round(x / 100) * 100
+
+  it('de reeks is gemiddeld 4% per jaar', () => {
+    expect(reeks.reduce((a, b) => a + b, 0) / reeks.length).toBe(4)
+  })
+
+  it('de eindbedragen', () => {
+    expect(goedEerst).toBeCloseTo(446_196.54, 2)
+    expect(slechtEerst).toBeCloseTo(391_548.73, 2)
+    expect(honderdtal(goedEerst) - honderdtal(slechtEerst)).toBe(54_700)
+  })
+
+  it('het artikel noemt de reeks en die bedragen', () => {
+    expect(tekst).toContain('20%, 15%, 4%, -7% en -12% rendement, gemiddeld 4% per jaar')
+    expect(tekst).toContain('aan het begin van elk jaar €30.000 op')
+    expect(tekst).toContain(`€${honderdtal(goedEerst).toLocaleString('nl-NL')} over`)
+    expect(tekst).toContain(`€${honderdtal(slechtEerst).toLocaleString('nl-NL')}.`)
+    expect(tekst).toContain('€54.700 verschil')
+  })
+})
