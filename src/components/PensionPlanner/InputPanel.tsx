@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useId, Children, isValidElement, cloneElement } from 'react'
-import { parseBedrag, parseBedragBegrensd, formatBedrag } from 'rekenkern/utils/bedrag'
+import { parseBedrag, formatBedrag } from 'rekenkern/utils/bedrag'
+import { verwerkInvoer } from '../../utils/invoerVeld'
 import { box3DrukAfgerond, geschatteBox3Druk } from 'rekenkern/utils/box3'
 import { aowVakantiegeldFactor, brutoMaandNaarNettoMaand } from 'rekenkern/utils/pensionCalc'
 import { PARAMETER_JAAR } from 'rekenkern/config/modelVersie'
@@ -90,10 +91,12 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
  * handen wegspringt. Begrenzen en melden gebeurt pas bij het verlaten van het
  * veld.
  */
-export function NumberInput({ id, value, onChange, prefix, suffix, min = 0, max }: {
+export function NumberInput({ id, value, onChange, prefix, suffix, min = 0, max, terugval }: {
   id?: string
   value: number; onChange: (v: number) => void
   prefix?: string; suffix?: string; step?: number; min?: number; max?: number
+  /** Waarde bij een leeg of onleesbaar veld. Standaard 0, of `min` als die boven 0 ligt. */
+  terugval?: number
 }) {
   const [text, setText] = useState(() => formatBedrag(value))
   const [melding, setMelding] = useState<string | null>(null)
@@ -112,16 +115,9 @@ export function NumberInput({ id, value, onChange, prefix, suffix, min = 0, max 
   }, [value])
 
   const commit = (raw: string) => {
-    const r = parseBedragBegrensd(raw, min, max)
-    if (r.waarde === null) {
-      // Niet te lezen of leeg. Een leeg veld valt terug op de ondergrens (meestal
-      // 0), zodat de berekening altijd een getal heeft om mee te werken.
-      const terugval = min ?? 0
-      setText(formatBedrag(terugval))
-      setMelding(r.fout)
-      onChange(terugval)
-      return
-    }
+    // Een leeg of onleesbaar veld krijgt de terugval (zie verwerkInvoer), zodat de berekening
+    // altijd een getal heeft. Niet de ondergrens: die kan -100.000.000 zijn.
+    const r = verwerkInvoer(raw, { min, max, terugval })
     setText(formatBedrag(r.waarde))
     setMelding(r.fout)
     onChange(r.waarde)
