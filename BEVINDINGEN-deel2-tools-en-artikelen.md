@@ -52,6 +52,9 @@ Nagerekend en in orde, zodat niemand het opnieuw hoeft te doen:
 
 ### A1. Het pensioenvoorbeeld in het aannamenartikel loopt achter
 
+- [x] **Afgerond (11 november 2026):** met vakantiegeld (standaard van de planner), € 1.639 netto
+  tegen € 1.933 met alleen de eerste schijf en de bijdrage Zorgverzekeringswet, verschil bijna
+  € 300. Vastgelegd in `src/utils/__tests__/artikelvoorbeelden.test.ts`.
 - **Waar:** `welke-aannames-gebruikt-de-fo-planner.md`, de alinea "Een voorbeeld met de cijfers
   van 2026".
 - **Wat er staat:** alleenstaand, volledige AOW, € 2.500 bruto pensioen per maand. Daarvan blijft
@@ -71,6 +74,8 @@ Nagerekend en in orde, zodat niemand het opnieuw hoeft te doen:
 
 ### A2. "Minder dan drie weken" klopt niet bij 50% per maand
 
+- [x] **Afgerond (10 november 2026):** de zin onder "hyperinflatie" zegt nu "in ruim zeven weken". De FAQ-tekst in dezelfde pagina (regel 17) is op verzoek van Hendrik ook aangepast naar "in ruim zeven weken".
+
 - **Waar:** `hoe-hoog-kan-inflatie-worden.md`, onder "hyperinflatie".
 - **Wat er staat:** "Boven een maandelijkse inflatie van 50% [...] Bij dat tempo verdubbelen
   prijzen in minder dan drie weken."
@@ -81,6 +86,9 @@ Nagerekend en in orde, zodat niemand het opnieuw hoeft te doen:
 
 ### A3. Argentinië rekende in 1989 niet in peso's
 
+- [x] **Afgerond (11 november 2026):** "100 peso" wordt "100 australes". Nagezocht bij de
+  centrale bank van Argentinië (BCRA, "Banknotes and coins, previous issues"): de austral gold
+  vanaf 15 juni 1985, de peso pas weer vanaf 1 januari 1992.
 - **Waar:** hetzelfde artikel, "een product dat aan het begin van de maand 100 peso kostte".
 - **Wat:** de munt was toen de austral. De peso kwam pas daarna terug.
 - **Zekerheid:** vrij zeker, niet nagezocht. Controleer het en schrijf anders "100 australes" of
@@ -99,6 +107,8 @@ Nagerekend en in orde, zodat niemand het opnieuw hoeft te doen:
 
 ### A5. Jaarruimte kijkt naar vorig jaar, niet naar dit jaar
 
+- [x] **Afgerond (10 november 2026):** "dit jaar" is "vorig jaar" in `wat-is-jaarruimte.md`, met de zin "De cijfers van dit jaar zijn nog niet bekend."
+
 - **Waar:** `wat-is-jaarruimte.md`, "Daar gaat af wat je dit jaar al aan pensioen opbouwt".
 - **Wat:** de jaarruimte van een jaar rekent met het inkomen en de pensioenopbouw van het jaar
   ervoor. De tool doet dat goed en zegt het ook. Het artikel zegt "dit jaar".
@@ -106,11 +116,15 @@ Nagerekend en in orde, zodat niemand het opnieuw hoeft te doen:
 
 ### A6. "Aftrekken van de belasting" moet "van je inkomen" zijn
 
+- [x] **Afgerond (10 november 2026):** in `wat-is-een-pensioentekort.md` staat nu "aftrekken van je inkomen".
+
 - **Waar:** `wat-is-een-pensioentekort.md`, "en die inleg aftrekken van de belasting".
 - **Wat:** een lijfrentepremie verlaagt je inkomen, niet je belasting. Het verschil is groot: wie
   € 5.000 inlegt, krijgt niet € 5.000 terug. Het jaarruimte-artikel zegt het wel goed.
 
 ### A7. Kleine onnauwkeurigheden
+
+- [ ] **Deels afgerond (10 november 2026):** het derde punt is gedaan: "bij 2% een tiende daarvan". De punten over de inflatiejaren zijn ook gedaan, na controle bij het CBS. Het punt over de datum 12 februari 2026 in het artikel over vermogensbelasting staat nog open.
 
 - `hoe-hoog-kan-inflatie-worden.md`: "Het eerste was 1975, het jaar van de oliecrisis". De
   oliecrisis begon in 1973. En "maar twee jaren" die ver boven een paar procent uitkwamen: de
@@ -120,6 +134,11 @@ Nagerekend en in orde, zodat niemand het opnieuw hoeft te doen:
 - `hoeveel-belasting-betaal-ik-over-mijn-vermogen.md`: de vaststelling van de percentages voor
   2025 en de stemming in de Tweede Kamer staan allebei op 12 februari 2026. Dat kan kloppen. Het
   is wel het soort toeval dat ik één keer zou nakijken.
+  - [x] **Nagekeken (11 november 2026), beide kloppen, tekst ongewijzigd.** De regeling is van
+    12 februari 2026 (Stcrt. 2026, 3708: banktegoeden 1,37%, schulden 2,70% voor 2025). De
+    Eerste Kamer-pagina van wetsvoorstel 36748 zegt "op 12 februari 2026 aangenomen door de
+    Tweede Kamer". Opgemerkt, buiten dit punt: op 3 november 2026 is een novelle ingediend
+    (37.053); de alinea over Prinsjesdag ("wordt niet behandeld") loopt daardoor mogelijk achter.
 
 ---
 
@@ -165,6 +184,9 @@ Nagerekend en in orde, zodat niemand het opnieuw hoeft te doen:
 
 ### C1. Een leeggemaakt veld in de box 3-tool springt naar min 100 miljoen
 
+- [x] **Afgerond (11 november 2026):** `NumberInput` gebruikt `verwerkInvoer()` uit
+  `src/utils/invoerVeld.ts` met een aparte terugvalwaarde (standaard 0, of `min` als die boven 0
+  ligt). Tests in `src/utils/__tests__/invoerVeld.test.ts`.
 - **Waar:** `src/components/Box3/index.tsx`, regel 278, 307 en 315. `NumberInput` in
   `PensionPlanner/InputPanel.tsx`, functie `commit()`.
 - **Wat:** een leeg of onleesbaar veld valt terug op de ondergrens. Meestal is die 0. Drie velden
@@ -198,6 +220,9 @@ Nagerekend en in orde, zodat niemand het opnieuw hoeft te doen:
 
 ### D1. Rekenvoorbeelden in artikelen zijn maar deels bewaakt
 
+- [x] **Deels afgerond (11 november 2026):** `src/utils/__tests__/artikelvoorbeelden.test.ts`
+  bestaat, met het pensioenvoorbeeld (A1). **Open:** het volgorde-risico (A4) komt erbij zodra
+  Hendrik de tekst heeft goedgekeurd.
 - **Wat:** de box 3-voorbeelden en de rendementstabel staan in tests. Het pensioenvoorbeeld (A1)
   en het volgorde-risico (A4) niet, en precies die twee kloppen niet of zijn niet na te rekenen.
   `controleer-artikelen.mjs` in de bronnenrepo bewaakt alleen losse parameters, geen afgeleide
@@ -218,6 +243,8 @@ Nagerekend en in orde, zodat niemand het opnieuw hoeft te doen:
   in Node genereren en op kernbedragen controleren. `CLAUDE.md` zegt dat dat kan.
 
 ### D3. Losse eindjes
+
+- [x] **Afgerond (10 november 2026):** `jaarruimte_test.ts` verwijderd, en "Veertien artikelen" in `CLAUDE.md` is "Vijftien artikelen". Het punt over `currentIncome` staat niet in het ticket en is niet aangeraakt.
 
 - `src/components/PensionPlanner/jaarruimte_test.ts` bevat alleen "placeholder, verwijder dit
   bestand".
