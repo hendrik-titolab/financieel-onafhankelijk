@@ -37,7 +37,7 @@ vakwoorden omschreven in gewone taal, rekenvoorbeelden als bewijs, geen harde CT
 **Nooit** gedachtestreepjes (em-dashes) — een komma, dubbele punt of twee losse zinnen. Geen
 engagement-vraag als afsluiter, geen verkooptaal, geen "in dit artikel…".
 
-Veertien artikelen in `src/content/uitleg/` (Content Layer API, glob-loader), drie daarvan
+Vijftien artikelen in `src/content/uitleg/` (Content Layer API, glob-loader), drie daarvan
 pillars. Elk artikel opent met een answer-first box (`samenvatting`-veld) plus een tool-CTA, sluit
 af met verder-lezen/FAQ/bronnen. Twee body-formats:
 - **Standaard** (`.md`): H2-secties met lopende tekst.
