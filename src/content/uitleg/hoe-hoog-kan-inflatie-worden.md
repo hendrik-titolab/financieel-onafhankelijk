@@ -64,7 +64,7 @@ Boven een maandelijkse inflatie van 50% spreken economen van hyperinflatie: de g
 
 **Duitsland, 1923.** Het bekendste voorbeeld, en het meest bestudeerde: elke maand kwamen er statistieken bij, waardoor economen deze episode tot in detail konden reconstrueren. Mensen kregen hun loon soms twee keer per dag uitbetaald, en gaven het meteen uit. Wachten tot de avond betekende dat het minder waard was.
 
-**Argentinië, 1989.** Veel milder dan de andere twee, maar nog altijd extreem: een product dat aan het begin van de maand 100 peso kostte, kostte aan het eind bijna 300. President Alfonsín trad af voordat zijn termijn erop zat, mede door de onrust die dit veroorzaakte.
+**Argentinië, 1989.** Veel milder dan de andere twee, maar nog altijd extreem: een product dat aan het begin van de maand 100 australes kostte, kostte aan het eind bijna 300. President Alfonsín trad af voordat zijn termijn erop zat, mede door de onrust die dit veroorzaakte.
 
 **Zimbabwe, 2008.** De ernstigste hyperinflatie ooit gemeten. Op het hoogtepunt had het land een bankbiljet van 100 biljoen (dat is een 1 met veertien nullen erachter, oftewel 100.000 miljard) Zimbabwaanse dollar in omloop, en dat was niet eens genoeg voor een buskaartje.
 
