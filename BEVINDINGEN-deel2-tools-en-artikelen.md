@@ -96,6 +96,9 @@ Nagerekend en in orde, zodat niemand het opnieuw hoeft te doen:
 
 ### A4. Het voorbeeld van het volgorde-risico is niet na te rekenen
 
+- [x] **Afgerond, wacht op goedkeuring van de tekst door Hendrik (11 november 2026):** reeks 20%,
+  15%, 4%, -7% en -12%, opname aan het begin van het jaar: €446.200 tegen €391.500, verschil
+  €54.700. Vastgelegd in `artikelvoorbeelden.test.ts`.
 - **Waar:** `wanneer-ben-je-financieel-onafhankelijk.mdx`, factor "Volgorde-risico".
 - **Wat er staat:** € 500.000, € 30.000 opname per jaar, gemiddeld 4%, na vijf jaar € 448.000 of
   € 387.000 naargelang de volgorde.
@@ -221,8 +224,7 @@ Nagerekend en in orde, zodat niemand het opnieuw hoeft te doen:
 ### D1. Rekenvoorbeelden in artikelen zijn maar deels bewaakt
 
 - [x] **Deels afgerond (11 november 2026):** `src/utils/__tests__/artikelvoorbeelden.test.ts`
-  bestaat, met het pensioenvoorbeeld (A1). **Open:** het volgorde-risico (A4) komt erbij zodra
-  Hendrik de tekst heeft goedgekeurd.
+  bestaat, met het pensioenvoorbeeld (A1) en het volgorde-risico (A4).
 - **Wat:** de box 3-voorbeelden en de rendementstabel staan in tests. Het pensioenvoorbeeld (A1)
   en het volgorde-risico (A4) niet, en precies die twee kloppen niet of zijn niet na te rekenen.
   `controleer-artikelen.mjs` in de bronnenrepo bewaakt alleen losse parameters, geen afgeleide
