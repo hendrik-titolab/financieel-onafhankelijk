@@ -52,6 +52,9 @@ Nagerekend en in orde, zodat niemand het opnieuw hoeft te doen:
 
 ### A1. Het pensioenvoorbeeld in het aannamenartikel loopt achter
 
+- [x] **Afgerond (11 november 2026):** met vakantiegeld (standaard van de planner), € 1.639 netto
+  tegen € 1.933 met alleen de eerste schijf en de bijdrage Zorgverzekeringswet, verschil bijna
+  € 300. Vastgelegd in `src/utils/__tests__/artikelvoorbeelden.test.ts`.
 - **Waar:** `welke-aannames-gebruikt-de-fo-planner.md`, de alinea "Een voorbeeld met de cijfers
   van 2026".
 - **Wat er staat:** alleenstaand, volledige AOW, € 2.500 bruto pensioen per maand. Daarvan blijft
@@ -214,6 +217,9 @@ Nagerekend en in orde, zodat niemand het opnieuw hoeft te doen:
 
 ### D1. Rekenvoorbeelden in artikelen zijn maar deels bewaakt
 
+- [x] **Deels afgerond (11 november 2026):** `src/utils/__tests__/artikelvoorbeelden.test.ts`
+  bestaat, met het pensioenvoorbeeld (A1). **Open:** het volgorde-risico (A4) komt erbij zodra
+  Hendrik de tekst heeft goedgekeurd.
 - **Wat:** de box 3-voorbeelden en de rendementstabel staan in tests. Het pensioenvoorbeeld (A1)
   en het volgorde-risico (A4) niet, en precies die twee kloppen niet of zijn niet na te rekenen.
   `controleer-artikelen.mjs` in de bronnenrepo bewaakt alleen losse parameters, geen afgeleide
