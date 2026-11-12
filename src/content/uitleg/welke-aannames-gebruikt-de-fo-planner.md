@@ -86,10 +86,11 @@ heffingskorting en de ouderenkorting terug naarmate je inkomen stijgt. Over een 
 van je inkomen kan het effectieve tarief daardoor boven de 55% uitkomen.
 
 Een voorbeeld met de cijfers van 2026. Je bent alleenstaand, hebt een volledige AOW en
-daarnaast € 2.500 bruto pensioen per maand. Van dat pensioen houd je ongeveer € 1.712
-netto per maand over. Zou je alleen naar het tarief van de eerste schijf kijken, dan zou
-je op ruim € 2.050 uitkomen. Dat verschil van ruim € 300 per maand is precies wat de
-afbouw van de kortingen en de tweede schijf samen doen.
+daarnaast € 2.500 bruto pensioen per maand. Het vakantiegeld over de AOW telt mee, zoals
+de planner standaard rekent. Van dat pensioen houd je ongeveer € 1.639 netto per maand
+over. Zou je alleen naar het tarief van de eerste schijf en de bijdrage
+Zorgverzekeringswet kijken, dan zou je op ongeveer € 1.933 uitkomen. Dat verschil van
+bijna € 300 per maand is wat de afbouw van de kortingen en de tweede schijf samen doen.
 
 Of je alleenstaand bent of samenwoont maakt hierbij uit, en niet alleen voor de hoogte
 van je AOW. Alleenstaanden hebben ook recht op de alleenstaandeouderenkorting. Daarom
