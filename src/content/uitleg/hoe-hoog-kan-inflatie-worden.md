@@ -14,7 +14,7 @@ faq:
   - vraag: "Kan Nederland ooit hyperinflatie krijgen?"
     antwoord: "Uit te sluiten is het nooit, maar het risico is klein. De ECB is onafhankelijk en drukt niet op verzoek van een overheid geld bij om een begrotingstekort te dekken. Elke hyperinflatie in de tabel hierboven ontstond juist wel op die manier."
   - vraag: "Vanaf welk percentage spreek je van hyperinflatie?"
-    antwoord: "Econoom Phillip Cagan trok in 1956 de grens bij een maandelijkse inflatie boven de 50%. Dat betekent dat prijzen in minder dan drie weken verdubbelen. Onder die grens heet het, hoe vervelend ook, gewoon hoge inflatie."
+    antwoord: "Econoom Phillip Cagan trok in 1956 de grens bij een maandelijkse inflatie boven de 50%. Dat betekent dat prijzen in ruim zeven weken verdubbelen. Onder die grens heet het, hoe vervelend ook, gewoon hoge inflatie."
 bronnen:
   - titel: "CBS: Inflatie 10 procent in 2022"
     url: "https://www.cbs.nl/nl-nl/nieuws/2023/02/inflatie-10-procent-in-2022"
@@ -22,6 +22,10 @@ bronnen:
     url: "https://www.cbs.nl/nl-nl/nieuws/2022/40/inflatie-stijgt-naar-14-5-procent-in-september"
   - titel: "CBS: Consumentenprijzen; prijsindex 1900=100"
     url: "https://www.cbs.nl/nl-nl/cijfers/detail/71905ned"
+  - titel: "CBS: Jaarmutatie consumentenprijsindex; vanaf 1963 (tabel 70936NED)"
+    url: "https://www.cbs.nl/nl-nl/cijfers/detail/70936NED"
+  - titel: "FRED (St. Louis Fed): inflatie consumentenprijzen Nederland, jaarreeks (controle 1973-1976)"
+    url: "https://fred.stlouisfed.org/data/FPCPITOTLZGNLD.txt"
   - titel: "Hanke, S. & Krus, N. (2012): World Hyperinflations, Cato Working Paper no. 8"
     url: "https://www.cato.org/sites/cato.org/files/pubs/pdf/hanke-krus-hyperinflation-table.pdf"
 ---
@@ -42,15 +46,15 @@ Centrale banken, zoals de Europese Centrale Bank, proberen [inflatie](/uitleg/wa
 
 ## Hoe hoog kan de inflatie worden?
 
-In normale jaren blijft de inflatie in Nederland binnen een paar procent. Sinds de jaren zeventig zijn er maar twee jaren geweest die daar ver bovenuit schoten.
+In normale jaren blijft de inflatie in Nederland binnen een paar procent. Tussen 1973 en 1976 lag de inflatie op of boven 8%, en in 2022 nog een keer.
 
-Het eerste was 1975, het jaar van de oliecrisis: de prijzen stegen dat jaar gemiddeld 10,2%. Het tweede was 2022, ook met een energiecrisis als aanleiding: 10,0%.
+De piek was 1975, twee jaar na de oliecrisis van 1973: de prijzen stegen dat jaar gemiddeld 10,2%. Het tweede hoogtepunt was 2022, ook met een energiecrisis als aanleiding: 10,0%.
 
 Wat dat voor spaarders betekent, lees je in [Sparen maakt mensen arm](/uitleg/sparen-maakt-mensen-arm).
 
 ## Wanneer inflatie echt ontspoort: hyperinflatie
 
-Boven een maandelijkse inflatie van 50% spreken economen van hyperinflatie: de grens die Phillip Cagan in 1956 vastlegde. Bij dat tempo verdubbelen prijzen in minder dan drie weken. Drie voorbeelden laten zien hoe extreem het daarna nog kan worden.
+Boven een maandelijkse inflatie van 50% spreken economen van hyperinflatie: de grens die Phillip Cagan in 1956 vastlegde. Bij dat tempo verdubbelen prijzen in ruim zeven weken. Drie voorbeelden laten zien hoe extreem het daarna nog kan worden.
 
 | Land | Periode | Piekmaand | Piek maandinflatie | Prijzen verdubbelden elke |
 |---|---|---|---|---|
@@ -60,7 +64,7 @@ Boven een maandelijkse inflatie van 50% spreken economen van hyperinflatie: de g
 
 **Duitsland, 1923.** Het bekendste voorbeeld, en het meest bestudeerde: elke maand kwamen er statistieken bij, waardoor economen deze episode tot in detail konden reconstrueren. Mensen kregen hun loon soms twee keer per dag uitbetaald, en gaven het meteen uit. Wachten tot de avond betekende dat het minder waard was.
 
-**Argentinië, 1989.** Veel milder dan de andere twee, maar nog altijd extreem: een product dat aan het begin van de maand 100 peso kostte, kostte aan het eind bijna 300. President Alfonsín trad af voordat zijn termijn erop zat, mede door de onrust die dit veroorzaakte.
+**Argentinië, 1989.** Veel milder dan de andere twee, maar nog altijd extreem: een product dat aan het begin van de maand 100 australes kostte, kostte aan het eind bijna 300. President Alfonsín trad af voordat zijn termijn erop zat, mede door de onrust die dit veroorzaakte.
 
 **Zimbabwe, 2008.** De ernstigste hyperinflatie ooit gemeten. Op het hoogtepunt had het land een bankbiljet van 100 biljoen (dat is een 1 met veertien nullen erachter, oftewel 100.000 miljard) Zimbabwaanse dollar in omloop, en dat was niet eens genoeg voor een buskaartje.
 
