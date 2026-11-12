@@ -29,7 +29,7 @@ De overheid wil dat iedereen genoeg pensioen kan opbouwen. Wie via het werk te w
 De berekening kijkt naar je inkomen en naar wat je al aan pensioen opbouwt. Grof gezegd:
 
 - Je neemt een vast **percentage** (30% in 2026) van je inkomen boven een drempel (de AOW-franchise).
-- Daar gaat af wat je dit jaar al aan pensioen opbouwt (via je werkgever).
+- Daar gaat af wat je vorig jaar aan pensioen opbouwt (via je werkgever). De cijfers van dit jaar zijn nog niet bekend.
 
 Wat overblijft, is je jaarruimte. Omdat er drempels en maxima gelden, kun je het beste laten uitrekenen in plaats van schatten.
 
