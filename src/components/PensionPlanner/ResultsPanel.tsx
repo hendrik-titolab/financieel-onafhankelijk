@@ -1,4 +1,4 @@
-import { track } from '@vercel/analytics'
+import { track } from '../../lib/tool-meting'
 import { FileText, Sheet, TrendingUp, LogOut, X, MessageSquare, RotateCcw } from 'lucide-react'
 import type { PensionResult, PensionInputs, BerekeningsSet } from 'rekenkern/types/index'
 import { WealthChart } from './WealthChart'
@@ -139,6 +139,7 @@ export function ResultsPanel({ inputs, result, berekening, mcStale, isCalculatin
   const mc = berekening?.mc ?? null
   const [showMonteCarlo, setShowMonteCarlo] = useState(true)
   const [isExportingPdf, setIsExportingPdf] = useState(false)
+  const [exportError, setExportError] = useState(false)
   const [showInflationDetail, setShowInflationDetail] = useState(false)
   const [confirmingClose, setConfirmingClose] = useState(false)
   const [showIntro, setShowIntro] = useState(true)
@@ -249,11 +250,15 @@ export function ResultsPanel({ inputs, result, berekening, mcStale, isCalculatin
 
   const handlePDF = async () => {
     if (exportGeblokkeerd || !berekening) return
-    track('download_pdf')
+    setExportError(false)
     setIsExportingPdf(true)
     try {
       await exportToPDF(berekening, clientName, 'wealth-chart')
+      track('download_pdf')
       setDownloadCount(incrementDownloadCount())
+    } catch {
+      setExportError(true)
+      window.siteMeting?.event('tool_error', { tool_id: 'fo-planner', step: 'export', error_type: 'unknown' })
     } finally {
       setIsExportingPdf(false)
     }
@@ -261,9 +266,15 @@ export function ResultsPanel({ inputs, result, berekening, mcStale, isCalculatin
 
   const handleExcel = async () => {
     if (exportGeblokkeerd || !berekening) return
-    track('download_excel')
-    await exportToExcel(berekening, clientName)
-    setDownloadCount(incrementDownloadCount())
+    setExportError(false)
+    try {
+      await exportToExcel(berekening, clientName)
+      track('download_excel')
+      setDownloadCount(incrementDownloadCount())
+    } catch {
+      setExportError(true)
+      window.siteMeting?.event('tool_error', { tool_id: 'fo-planner', step: 'export', error_type: 'unknown' })
+    }
   }
 
   // Wis alle invoer zonder iets op te slaan (na bevestiging)
@@ -274,6 +285,7 @@ export function ResultsPanel({ inputs, result, berekening, mcStale, isCalculatin
 
   return (
     <div className="space-y-5" id="results-panel">
+      {exportError && <p role="alert" className="text-sm text-signal">Het bestand kon niet worden gemaakt. Probeer opnieuw. Je berekening blijft staan.</p>}
       {/* Welkom / invulinstructie */}
       {showIntro && (
         <div className="relative rounded-[3px] border border-line bg-morning p-4 pr-10">

@@ -1,0 +1,11 @@
+/* Kleuren en lettertype komen uit het ontwerp van de betreffende site. */
+.meting-banner { position: sticky; bottom: 0; z-index: 90; background: var(--meting-bg, var(--avi-paper)); color: var(--meting-fg, var(--avi-ink)); border-top: 3px solid currentColor; font: inherit; }
+.meting-banner[hidden] { display: none; }
+.meting-inner { max-width: 1200px; margin: 0 auto; padding: 16px; display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+.meting-inner p { flex: 1 1 420px; margin: 0; max-width: 65ch; }
+.meting-inner a { color: inherit; text-decoration: underline; }
+.meting-buttons { display: flex; flex-wrap: wrap; gap: 12px; }
+.meting-buttons button { font: inherit; font-weight: 600; min-height: 48px; padding: 10px 18px; border: 2px solid currentColor; border-radius: 0; background: transparent; color: inherit; cursor: pointer; }
+.meting-buttons button[data-yes] { background: var(--meting-fg, var(--avi-ink)); color: var(--meting-bg, var(--avi-paper)); border-color: var(--meting-fg, var(--avi-ink)); }
+
+:root { --meting-bg: #F7F6F4; --meting-fg: #29392E; }

@@ -1,3 +1,4 @@
+import { useToolMeting } from '../../lib/tool-meting'
 import { useId, useMemo } from 'react'
 import { NumberInput } from '../PensionPlanner/InputPanel'
 import { verdubbeltijd } from 'rekenkern/utils/renteOpRente'
@@ -39,6 +40,8 @@ export function Rekentool({
     () => variant.bereken(inleg, rendement / 100, jaren),
     [variant, inleg, rendement, jaren]
   )
+  useToolMeting(variant.id === 'maandelijks' ? 'maandelijks-beleggen' : 'rente-op-rente', r)
+
   const dubbel = verdubbeltijd(rendement / 100)
 
   return (

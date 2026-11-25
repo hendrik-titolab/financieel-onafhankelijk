@@ -1,5 +1,4 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
-import { track } from '@vercel/analytics'
 import { RefreshCw, ChevronDown } from 'lucide-react'
 import type { PensionInputs, PensionResult, BerekeningsSet } from 'rekenkern/types/index'
 import { calculatePension, controleerLeeftijden } from 'rekenkern/utils/pensionCalc'
@@ -97,6 +96,7 @@ export function PensionPlanner({ clientName, onCloseSession }: Props) {
   // zonder eerst je uitkomst kwijt te raken.
   const [mcStale, setMcStale] = useState(false)
   const [isCalculating, setIsCalculating] = useState(false)
+  const [calculationError, setCalculationError] = useState(false)
   const [scenarios, setScenarios] = useState<Scenarios>(GEEN_SCENARIO)
 
   // Scroll-aanwijzing: hangt vast aan de onderkant van het zichtbare vlak
@@ -183,13 +183,15 @@ export function PensionPlanner({ clientName, onCloseSession }: Props) {
     // Zicht op of bezoekers de tool daadwerkelijk gebruiken, niet alleen de
     // pagina bezoeken (Vercel Web Analytics gaf tot nu toe alleen dat laatste).
     if (!isGeldig) return
-    track('bereken_geklikt')
+    window.siteMeting?.toolAttempt('fo-planner')
+    setCalculationError(false)
     setIsCalculating(true)
     setTimeout(() => {
       // Beide kernen in één keer, op dezelfde invoer. Het deterministische
       // resultaat wordt hier apart berekend en niet uit de live `result`
       // overgenomen: die hoort bij wat er nú op het scherm staat, en dat is
       // precies wat er in de export niet door elkaar mag lopen.
+      try {
       const metScenario = pasScenarioToe(inputs, scenarios)
       setBerekening({
         inputs: metScenario,
@@ -206,7 +208,14 @@ export function PensionPlanner({ clientName, onCloseSession }: Props) {
         parameterJaar: PARAMETER_JAAR,
       })
       setMcStale(false)
-      setIsCalculating(false)
+      window.siteMeting?.toolResult('fo-planner', true)
+      } catch {
+        window.siteMeting?.toolResult('fo-planner', false)
+        setCalculationError(true)
+        return
+      } finally {
+        setIsCalculating(false)
+      }
       // Op mobiel staat de invoerkolom boven de resultaten (gestapelde layout
       // onder het lg:-breakpoint), dus na Bereken zie je zonder zelf te
       // scrollen niet dat er iets is gebeurd. Vanaf lg: staan ze al naast
@@ -255,6 +264,7 @@ export function PensionPlanner({ clientName, onCloseSession }: Props) {
                 {leeftijden.errors[0]}
               </p>
             )}
+            {calculationError && <p role="alert" className="text-sm text-signal">De berekening is niet gelukt. Probeer opnieuw. Je invoer blijft staan.</p>}
             {isGeldig && mcStale && berekening && !isCalculating && (
               <p className="text-xs text-body mt-2 text-center">Invoer gewijzigd — resultaat hiernaast is nog van de vorige berekening.</p>
             )}

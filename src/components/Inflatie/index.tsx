@@ -1,3 +1,4 @@
+import { useToolMeting } from '../../lib/tool-meting'
 import { useMemo, useState } from 'react'
 import {
   ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid,
@@ -96,6 +97,8 @@ export function InflatieCalculator() {
     () => bereken({ startbedrag, inflatie, spaarrente, looptijd }),
     [startbedrag, inflatie, spaarrente, looptijd],
   )
+
+  useToolMeting('inflatie', r)
 
   const daalt = r.verliesEuro > 0.5 // koopkracht daalt t.o.v. nu
   const stijgt = r.verliesEuro < -0.5

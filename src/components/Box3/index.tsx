@@ -1,3 +1,4 @@
+import { useToolMeting } from '../../lib/tool-meting'
 import { useMemo, useState } from 'react'
 import { Info, Scale } from 'lucide-react'
 import {
@@ -116,6 +117,8 @@ export function Box3Tool() {
   const tegenbewijsHelpt = r.geldt === 'werkelijk'
 
   const statusTekst = (s: string) => (s === 'definitief' ? 'definitief' : 'voorlopig')
+
+  useToolMeting('box3', r)
 
   return (
     <div className="space-y-5">

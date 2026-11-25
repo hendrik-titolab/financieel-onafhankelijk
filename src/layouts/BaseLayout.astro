@@ -98,11 +98,8 @@ const schemas = [organizationSchema(), websiteSchema(), ...jsonLd]
 
     {schemas.map((s) => <script type="application/ld+json" set:html={JSON.stringify(s)} />)}
 
-    <!-- Vercel Analytics: alleen paginabezoeken, geen cookies, geen persoonsgegevens -->
-    <script>
-      import { inject } from '@vercel/analytics'
-      inject()
-    </script>
+    <link rel="stylesheet" href="/site-meting.css" />
+    <script is:inline defer src="/site-meting.js" data-site="fo" data-ga={import.meta.env.PUBLIC_GA_MEASUREMENT_ID || 'G-QT8H2CEQ29'}></script>
 
     <!-- PWA-service worker registreren (gegenereerd door src/integrations/pwa.mjs) -->
     <script is:inline>
@@ -117,5 +114,6 @@ const schemas = [organizationSchema(), websiteSchema(), ...jsonLd]
     <Header />
     <slot />
     {showFooter && <Footer />}
+    {!showFooter && <div class="px-4 py-2 text-sm"><button type="button" data-meting-settings class="underline">Cookiekeuze</button></div>}
   </body>
 </html>
