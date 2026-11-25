@@ -4,15 +4,15 @@
 # faalde op een ontbrekende typedeclaratie, en niets dwong af dat de tests draaiden
 # voordat er naar productie werd gepusht (audit 7 september 2026, bevinding 24).
 #
-# Vercel bouwt uit deze repo en deployt automatisch bij een push naar
-# astro-migratie. Deze workflow draait daar naast: hij houdt een kapotte push niet
-# tegen, maar maakt hem wel meteen zichtbaar. Wie dit hard wil maken, zet
-# branch protection op astro-migratie met deze workflow als verplichte check.
+# Vercel bouwt uit deze repo en deployt automatisch bij een merge naar main.
+# Sinds 17 september 2026 is deze workflow daar een verplichte check: de ruleset op
+# de standaardbranch laat geen pull request door zonder groene controle. Tot
+# 25 november 2026 heette die branch astro-migratie.
 name: Controle
 
 on:
   push:
-    branches: [astro-migratie, main]
+    branches: [main]
   pull_request:
   workflow_dispatch:
 

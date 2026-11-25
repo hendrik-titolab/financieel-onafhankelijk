@@ -7,16 +7,16 @@ Combinatie van een kennisautoriteitssite (uitlegartikelen) en zeven rekentools, 
 breed publiek als financieel adviseurs. Staat live op https://benikfinancieelonafhankelijk.nl
 
 **Stack:** Astro 7 + React 18 (eilanden) + TypeScript + Tailwind CSS 3
-**Hosting:** Vercel (automatisch deploy zodra er iets op **`astro-migratie`** landt, via een PR)
+**Hosting:** Vercel (automatisch deploy zodra er iets op **`main`** landt, via een PR)
 **Repo:** https://github.com/hendrik-titolab/financieel-onafhankelijk
 **Lokaal:** `C:\Users\schak\financiele-planning`
 
 **Rekenkern:** sinds november 2026 los van deze site, in de privé-repo [hendrik-titolab/rekenkern](https://github.com/hendrik-titolab/rekenkern). De berekeningen, fiscale parameters, risicoprofielen, modelversie en types staan daar, niet meer in `src/utils` en `src/config`. Deze site gebruikt het pakket uit `vendor/`. Paden als `src/utils/box3.ts` hieronder zijn sindsdien `rekenkern/utils/box3`. Wijzig een berekening dus in die repo, verhoog daar `MODEL_VERSIE`, en zet een nieuw pakket in `vendor/`. De tests en de versiecheck draaien daar ook.
 
-**Branch, dit is belangrijk:** `astro-migratie` is sinds 10 augustus 2026 de live
-productiebranch én de GitHub-default-branch. **`main` is gearchiveerd** (`ARCHIVED.md` erop) en
-draait niet meer. Neem bij een nieuwe sessie nooit aan dat `main` de actuele staat is — eerst
-`git branch -a` en `git log --oneline` op beide branches checken.
+**Branch, dit is belangrijk:** `main` is de live productiebranch en de GitHub-default-branch.
+Tot 25 november 2026 heette die branch `astro-migratie`. Die naam staat nog in oudere handoffs,
+bevindingen en `docs/archief`: lees daar `main`. De oude `main` van vóór de overstap naar Astro
+(10 augustus 2026) is bewaard als tag `archief/main-spa-2026-08` en draait niet meer.
 
 ---
 
@@ -238,7 +238,7 @@ https://benikfinancieelonafhankelijk.nl (domein via TransIP, DNS A-record → Ve
 
 ### Vercel
 - Project: `financieel-onafhankelijk`, account `titolab`
-- **Automatische deploy zodra er een commit op `astro-migratie` landt** (niet `main`). Rechtstreeks
+- **Automatische deploy zodra er een commit op `main` landt.** Rechtstreeks
   pushen kan sinds 17 september 2026 niet meer, zie "Update deployen" hieronder
 - Vercel bouwt ook een **preview per pull request**. Die URL is op te halen zonder
   dashboardtoegang:
@@ -266,7 +266,7 @@ ingesteld.
 compileert met esbuild en meldt typefouten niet, dus die losse `tsc`-stap is de enige die dat
 wel doet. `npm audit` draait niet-blokkerend.
 
-**Deze workflow is sinds 17 september 2026 een harde poort.** Op `astro-migratie` staat branch
+**Deze workflow is sinds 17 september 2026 een harde poort.** Op `main` staat branch
 protection met `controle` als verplichte status check. Vóór die datum maakte de workflow een
 kapotte push alleen zichtbaar; nu houdt hij hem tegen. Praktisch gevolg: een mislukte `controle`
 betekent dat de PR niet te mergen is, niet dat er een rood vinkje in de historie komt te staan.
@@ -291,17 +291,17 @@ zonder één CSP-melding. Wijzig je de CSP, test hem dan opnieuw op die manier e
 
 ### Update deployen
 
-**Rechtstreeks pushen naar `astro-migratie` werkt niet meer.** Sinds 17 september 2026 staat er
-branch protection op met `controle` als verplichte check; een `git push origin astro-migratie`
+**Rechtstreeks pushen naar `main` werkt niet meer.** Sinds 17 september 2026 staat er
+branch protection op met `controle` als verplichte check; een `git push origin main`
 wordt geweigerd met "push declined due to repository rule violations". Alles gaat via een pull
 request. Dat is geen omweg maar het punt: de releasepoort kan zo niet meer overgeslagen worden.
 
-Begin altijd met ophalen, want `origin/astro-migratie` kan vooruit lopen op je lokale kopie
+Begin altijd met ophalen, want `origin/main` kan vooruit lopen op je lokale kopie
 doordat PR's op GitHub zelf gemerged worden:
 ```
 cd C:\Users\schak\financiele-planning
 git fetch origin
-git checkout -b omschrijvende-branchnaam origin/astro-migratie
+git checkout -b omschrijvende-branchnaam origin/main
 ```
 Werk, en draai de poort lokaal vóór je pusht (dit is exact wat CI ook doet):
 ```
@@ -312,10 +312,10 @@ Dan pushen en een PR openen:
 git add .
 git commit -m "Omschrijving van wijziging"
 git push -u origin omschrijvende-branchnaam
-gh pr create --base astro-migratie
+gh pr create --base main
 ```
 Wacht tot `controle` groen is (`gh pr checks <nr> --watch`) en merge dan met
-`gh pr merge <nr> --merge`. Vercel deployt zodra de merge op `astro-migratie` landt.
+`gh pr merge <nr> --merge`. Vercel deployt zodra de merge op `main` landt.
 
 Twee dingen voor Claude in het bijzonder. Het mergen zelf wordt in auto-mode geblokkeerd door de
 classifier ("merge without review"), dus die knop is een handeling van Hendrik tenzij hij er in
