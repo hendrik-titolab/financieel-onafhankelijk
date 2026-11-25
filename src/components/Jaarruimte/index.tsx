@@ -1,3 +1,4 @@
+import { useToolMeting } from '../../lib/tool-meting'
 import { useState, useEffect } from 'react'
 import { Trash2, Plus, ChevronDown, ChevronUp, Info, AlertTriangle } from 'lucide-react'
 import type { JaarruimteInputs, JaarruimteResult, SavedJaarruimte, ReserveringsruimteRij, PensioenType } from 'rekenkern/types/index'
@@ -628,6 +629,8 @@ export function JaarruimteTab() {
   const result: JaarruimteResult | null = controle.errors.length === 0
     ? calculateJaarruimte(inputs)
     : null
+
+  useToolMeting('jaarruimte', result)
 
   const handleSave = () => {
     if (!result) {

@@ -1,3 +1,4 @@
+import { useToolMeting } from '../../lib/tool-meting'
 import { useState, useMemo } from 'react'
 import { ChevronDown, ChevronUp, Info } from 'lucide-react'
 // De rekenlogica staat in src/utils/brutoNetto.ts, zodat er tests op kunnen
@@ -33,6 +34,8 @@ export function BrutoNettoCalculator() {
     if (jaarBedrag <= 0) return null
     return richting === 'brutoNetto' ? brutoNaarNetto(jaarBedrag) : nettoNaarBruto(jaarBedrag)
   }, [jaarBedrag, richting])
+
+  useToolMeting('bruto-netto', r)
 
   const uitkomstJaar = r ? (richting === 'brutoNetto' ? r.nettoJaar : r.brutoJaar) : 0
   const uitkomstLabel = richting === 'brutoNetto' ? 'Netto' : 'Bruto'

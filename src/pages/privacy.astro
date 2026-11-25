@@ -5,7 +5,7 @@ import { breadcrumbSchema } from '../lib/seo'
 
 const title = 'Privacy en gegevensgebruik | Ben ik financieel onafhankelijk?'
 const description =
-  'Wat deze site wel en niet met je gegevens doet: geen accounts, geen tracking cookies, wel cookieloze bezoekersstatistieken, en welke berekeningen lokaal in je browser blijven staan.'
+  'Wat deze site wel en niet met je gegevens doet: geen accounts, bezoekersstatistieken alleen na toestemming, en welke berekeningen lokaal in je browser blijven staan.'
 
 const schemas = [
   breadcrumbSchema([
@@ -13,7 +13,7 @@ const schemas = [
     { name: 'Privacy', path: '/privacy/' },
   ]),
 ]
-const bijgewerkt = new Date('2026-08-10').toLocaleDateString('nl-NL', {
+const bijgewerkt = new Date('2026-11-25').toLocaleDateString('nl-NL', {
   year: 'numeric',
   month: 'long',
   day: 'numeric',
@@ -27,9 +27,9 @@ const bijgewerkt = new Date('2026-08-10').toLocaleDateString('nl-NL', {
 
       <div class="text-body leading-relaxed space-y-4">
         <p>
-          Kort samengevat: je hoeft geen account aan te maken, we zetten geen trackingcookies,
-          en we verkopen je gegevens niet. We tellen wel, cookieloos, hoeveel bezoekers de site
-          en de tools gebruiken. Hieronder staat precies wat er wel gebeurt.
+          Kort samengevat: je hoeft geen account aan te maken en we verkopen je gegevens niet.
+          Met jouw toestemming meten we hoe de site wordt gebruikt. Ingevulde bedragen en
+          berekeningen blijven op je eigen apparaat.
         </p>
 
         <h2 class="font-serif text-xl text-ink pt-4">Wie is verantwoordelijk</h2>
@@ -80,25 +80,13 @@ const bijgewerkt = new Date('2026-08-10').toLocaleDateString('nl-NL', {
         </p>
 
         <h2 class="font-serif text-xl text-ink pt-4">Cookies en meetgegevens</h2>
-        <p>
-          Deze site zet geen trackingcookies. We gebruiken wel Vercel Web Analytics om te
-          zien hoeveel mensen de site en de rekentools bezoeken. Die meting werkt zonder
-          cookies en zonder een profiel van jou persoonlijk op te bouwen: we zien
-          bezoekersaantallen per pagina en waar bezoekers vandaan komen, niet wie je bent.
-        </p>
-        <p>
-          De hostingpartij (Vercel) verwerkt, zoals elke webhost, technische gegevens die
-          nodig zijn om de site te laten werken en beschikbaar te houden, zoals IP-adressen in
-          serverlogs. Dat gebeurt buiten onze directe controle om, op infrastructuurniveau.
-        </p>
-
+        <p>We gebruiken Google Analytics alleen als je toestemming geeft. Zeg je nee, dan werken alle tools gewoon. Veranderen of intrekken kan via Cookiekeuze onderaan de pagina.</p>
+        <p>Google krijgt gegevens over je bezoek en plaatst meetcookies. We meten welke pagina's en tools worden gebruikt en of een handeling lukt. Namen, notities, zoekteksten, ingevulde bedragen en berekende uitkomsten sturen we niet mee. We gebruiken de gegevens niet voor advertenties.</p>
+        <p>De meetcookies blijven maximaal één jaar staan. Je eigen browser onthoudt je keuze maximaal zes maanden. Bij intrekken verwijderen we de meetcookies die de site kan verwijderen.</p>
+        <p>Gegevens over gebeurtenissen bewaren we maximaal veertien maanden in Analytics. Rapporten met totalen kunnen langer blijven bestaan.</p>
+        <p>Vercel verwerkt technische gegevens om de site te tonen en te beveiligen. Bijvoorbeeld je IP-adres. Voor statistieken over agents gebruiken we technische totalen, zonder financiële invoer.</p>
         <h2 class="font-serif text-xl text-ink pt-4">Externe verbindingen</h2>
-        <p>
-          Je browser laadt alleen bestanden van deze site zelf. De lettertypen kwamen tot
-          8 september 2026 van Google Fonts, waarbij Google je IP-adres zag en welke pagina je
-          opvroeg. Ze staan nu op onze eigen server, dus die verbinding is er niet meer. Er
-          worden geen scripts, lettertypen of afbeeldingen van andere partijen ingeladen.
-        </p>
+        <p>Lettertypen en de bestanden voor de rekentools staan op onze eigen server. Alleen na toestemming laadt je browser ook Google Analytics.</p>
 
         <h2 class="font-serif text-xl text-ink pt-4">Feedbackformulier</h2>
         <p>
