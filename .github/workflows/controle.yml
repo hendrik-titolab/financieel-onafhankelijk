@@ -51,10 +51,13 @@ jobs:
           # 10 augustus 2026 in gebruik) vereist Node >=22.12.0 en weigert te draaien
           # op 20. Dat kwam pas op 14 september aan het licht, omdat de workflow
           # altijd al eerder vastliep (zie hierboven).
-          # Sinds 17 september 2026 staat >=22.12.0 ook in package.json, dus deze
-          # regel en dat veld lopen weer gelijk. Verhoog je hier de major, verhoog
-          # dan ook engines.node, anders bouwt Vercel op een andere Node dan CI.
-          node-version: '22'
+          # Sinds 17 september 2026 staat >=22.12.0 ook in package.json. Dat bleek
+          # niet genoeg: Vercel nam de nieuwste versie die daaraan voldoet en bouwde
+          # op 24, terwijl deze controle op 22 draaide (gezien 25 november 2026).
+          # Sindsdien staat engines.node vast op 24.x en draait deze controle op 24.
+          # Verhoog je hier de major, verhoog dan ook engines.node, anders bouwt
+          # Vercel op een andere Node dan CI.
+          node-version: '24'
           cache: npm
 
       - name: Afhankelijkheden installeren
