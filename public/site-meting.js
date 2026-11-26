@@ -85,8 +85,12 @@
     window.dataLayer = window.dataLayer || [];
     window.gtag = function () { window.dataLayer.push(arguments); };
     window.gtag('consent', 'default', { analytics_storage: 'granted', ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied' });
+    // Ook de initialisatie van de tag krijgt veilige standaardwaarden, voordat
+    // Google-code laadt. Zo zijn we niet alleen afhankelijk van stream-config.
+    const defaults = { send_page_view: false, allow_google_signals: false, allow_ad_personalization_signals: false, cookie_expires: 31536000, cookie_update: false, page_location: `https://${domain}${path()}`, page_referrer: referrer(), page_title: `${domain}${path()}` };
+    window.gtag('set', defaults);
     window.gtag('js', new Date());
-    window.gtag('config', id, { send_page_view: false, allow_google_signals: false, allow_ad_personalization_signals: false, cookie_expires: 31536000, cookie_update: false, page_location: `https://${domain}${path()}`, page_referrer: referrer(), page_title: `${domain}${path()}` });
+    window.gtag('config', id, defaults);
     const tag = document.createElement('script');
     tag.async = true;
     tag.id = 'site-meting-google';
